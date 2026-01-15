@@ -35,12 +35,12 @@ const content = {
   },
   ar: {
     welcome: "Shokran u merhba bik f 3alam Okeyo! ✨",
-    problem: "Kna 3arfin kifash katkun: baghi tsafar walakin katbqay f dark hitash takhtit s3ib. 🤯",
-    solution: "Hadshi 3lash saybna Okeyo Travel lik.",
-    valueProp: "Nsa sda3 d reservations: l'IA dialna katqad lik detox d 3 iam f ql mn 2 d qayq. ⏱️",
+    problem: "Hna 3arfin fach katbghi dir un voyage bach tertah, katweli f stress akhor dyal takhtit, tgerer l budget, o ma 3arefch rassek ghatkun satisfait wla la o we9tek me7doud 🤯",
+    solution: "Hadchi 3lach fekerna f Okeyo travel, hit hta hna kan3icho nefss tajriba",
+    valueProp: "Nsa sda3 had sda3 kamel: l'IA dyalkom katqad lik voyage d ra7a kamel dyal 3 jours f 9el men 2 min . ⏱️",
     features: [
-      "✨ Wijha 3la hsab lgana.",
-      "✨ Anshita u transport dakhl."
+      "✨ Wijha 3la hssab lgana dialek",
+      "✨ Activités o transport li ghaydik men la gare hta l lminta9a li baghi"
     ],
     cta_main: "Ma tdir walo, ghir stmte3. 💙🤖",
     launch: "Ghadi ntlaqaw fl qrib! Ghadi ywslek email fih -20% smana qbl l'lancement. 🎁",
@@ -173,8 +173,8 @@ export default function PreOrderPage() {
             </div>
 
             <ul className="space-y-3 text-left">
-              {t.features.map((feature, idx) => (
-                <li key={idx} className="text-gray-700 font-medium text-lg">
+              {t.features.map((feature) => (
+                <li key={feature} className="text-gray-700 font-medium text-lg">
                   {feature}
                 </li>
               ))}
