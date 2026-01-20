@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display, Inter } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import Link from "next/link";
 import "./globals.css";
+import FacebookPixel from "@/components/FacebookPixel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <FacebookPixel />
       <head>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
       </head>
@@ -45,6 +47,15 @@ export default function RootLayout({
         <main className="flex-1">
           {children}
         </main>
+              <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=4169949499921104&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
       </body>
     </html>
   );

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         NOM: lastName || '',
         // Add other attributes if you have them configured in Brevo
       },
-      listIds: listId ? [parseInt(listId, 10)] : [],
+      listIds: listId ? Array.from(new Set([parseInt(listId, 10), 22])) : [22],
       updateEnabled: true, // Update if exists
     };
 
