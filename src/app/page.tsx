@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 const TESTIMONIALS = [
   {
@@ -44,6 +45,7 @@ const TESTIMONIALS = [
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const router = useRouter()
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % TESTIMONIALS.length)
@@ -61,6 +63,10 @@ export default function Home() {
       document.body.style.overflow = ""
     }
   }
+
+  useEffect(() => {
+    router.push("/preorder")
+  }, [])
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased relative">

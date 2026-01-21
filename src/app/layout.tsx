@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Inter } from "next/font/google";
-import { Navbar } from "@/components/navbar";
-import Link from "next/link";
 import "./globals.css";
 import FacebookPixel from "@/components/FacebookPixel";
 
