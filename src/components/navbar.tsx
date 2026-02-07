@@ -22,6 +22,16 @@ export function Navbar() {
 
         {/* Desktop Nav - Only the two requested buttons */}
         <nav className="flex items-center gap-4">
+          <Link href="/collections">
+            <Button variant="ghost" className="font-medium">
+              Nos collections
+            </Button>
+          </Link>
+          <Link href="/agent">
+            <Button variant="ghost" className="font-medium">
+              Assistant IA
+            </Button>
+          </Link>
           <Link href="/explore">
             <Button 
               className={cn(

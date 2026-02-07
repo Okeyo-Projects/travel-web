@@ -1,78 +1,42 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Search } from "lucide-react"
+import { useState } from "react"
+import { Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { ExperienceCard } from "@/components/experience-card"
 import { Filters } from "@/components/filters"
-import { EXPERIENCES } from "@/lib/mock-data"
 import type { ExperienceType, ExperienceSort } from "@/types/experience"
+import { useInfiniteExperiences } from "@/hooks/use-experiences"
+import { useDebounce } from "@/hooks/use-debounce"
 
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const debouncedSearch = useDebounce(searchQuery, 500)
+  
   const [activeType, setActiveType] = useState<ExperienceType | "all">("all")
   const [activeSort, setActiveSort] = useState<ExperienceSort>("newest")
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000])
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false)
 
-  const filteredExperiences = useMemo(() => {
-    let result = [...EXPERIENCES]
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError
+  } = useInfiniteExperiences({
+    search: debouncedSearch,
+    type: activeType === "all" ? undefined : activeType,
+    sort: activeSort,
+    priceMin: priceRange[0],
+    priceMax: priceRange[1] === 10000 ? undefined : priceRange[1],
+    featured: showFeaturedOnly,
+    pageSize: 12
+  })
 
-    // Filter by Search Query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (exp) =>
-          exp.title.toLowerCase().includes(query) ||
-          exp.city.toLowerCase().includes(query) ||
-          exp.short_description.toLowerCase().includes(query)
-      )
-    }
-
-    // Filter by Type
-    if (activeType !== "all") {
-      result = result.filter((exp) => exp.type === activeType)
-    }
-
-    // Filter by Price
-    result = result.filter((exp) => {
-      const price = (exp.trip?.price_cents ?? exp.lodging?.price_cents ?? 0) / 100
-      return price >= priceRange[0] && price <= priceRange[1]
-    })
-
-    // Filter by Featured (Mock logic: rating > 4.9)
-    if (showFeaturedOnly) {
-      result = result.filter((exp) => (exp.avg_rating ?? 0) > 4.9)
-    }
-
-    // Sort
-    switch (activeSort) {
-      case "price_low":
-        result.sort((a, b) => {
-          const priceA = (a.trip?.price_cents ?? a.lodging?.price_cents ?? 0)
-          const priceB = (b.trip?.price_cents ?? b.lodging?.price_cents ?? 0)
-          return priceA - priceB
-        })
-        break
-      case "price_high":
-        result.sort((a, b) => {
-          const priceA = (a.trip?.price_cents ?? a.lodging?.price_cents ?? 0)
-          const priceB = (b.trip?.price_cents ?? b.lodging?.price_cents ?? 0)
-          return priceB - priceA
-        })
-        break
-      case "rating":
-        result.sort((a, b) => (b.avg_rating ?? 0) - (a.avg_rating ?? 0))
-        break
-      case "popular":
-        result.sort((a, b) => (b.reviews_count ?? 0) - (a.reviews_count ?? 0))
-        break
-      default: // newest (mock: keep original order or shuffle)
-        break
-    }
-
-    return result
-  }, [searchQuery, activeType, activeSort, priceRange, showFeaturedOnly])
+  const experiences = data?.pages.flatMap(page => page.items) || []
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -112,26 +76,58 @@ export default function ExplorePage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredExperiences.map((experience) => (
-          <ExperienceCard key={experience.id} experience={experience} />
-        ))}
-      </div>
-
-      {filteredExperiences.length === 0 && (
-        <div className="text-center py-24">
-          <p className="text-muted-foreground text-lg">Aucun résultat trouvé pour votre recherche.</p>
-          <button 
-            onClick={() => {
-              setSearchQuery("")
-              setActiveType("all")
-              setPriceRange([0, 10000])
-            }}
-            className="text-primary hover:underline mt-2"
-          >
-            Réinitialiser les filtres
-          </button>
+      {isError ? (
+        <div className="text-center py-24 text-red-500">
+          Une erreur est survenue lors du chargement des expériences.
         </div>
+      ) : isLoading ? (
+        <div className="flex justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {experiences.map((experience) => (
+              <ExperienceCard key={experience.id} experience={experience} />
+            ))}
+          </div>
+
+          {experiences.length === 0 && (
+            <div className="text-center py-24">
+              <p className="text-muted-foreground text-lg">Aucun résultat trouvé pour votre recherche.</p>
+              <Button 
+                variant="link"
+                onClick={() => {
+                  setSearchQuery("")
+                  setActiveType("all")
+                  setPriceRange([0, 10000])
+                }}
+                className="mt-2"
+              >
+                Réinitialiser les filtres
+              </Button>
+            </div>
+          )}
+
+          {hasNextPage && (
+            <div className="flex justify-center py-8">
+              <Button
+                variant="outline"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Chargement...
+                  </>
+                ) : (
+                  "Voir plus"
+                )}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

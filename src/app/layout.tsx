@@ -28,10 +28,13 @@ export const metadata: Metadata = {
   description: "En 2 minutes, OKEYO vous recommande l'endroit le plus adapté à vos envies.",
 };
 
+import QueryProvider from "@/providers/query-provider";
+import type { ReactNode } from "react";
+
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="fr">
@@ -42,10 +45,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col bg-white`}
       >
-        <main className="flex-1">
-          {children}
-        </main>
-              <noscript>
+        <QueryProvider>
+          <main className="flex-1">
+            {children}
+          </main>
+        </QueryProvider>
+        <noscript>
           <img
             height="1"
             width="1"
