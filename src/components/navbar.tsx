@@ -1,21 +1,22 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
-  const pathname = usePathname()
-
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-start gap-1">
           <div className="flex flex-col items-center">
-             <span className="font-bold text-3xl tracking-tight leading-none">okeyo</span>
-             <span className="text-[0.6rem] font-bold tracking-[0.2em] text-primary uppercase leading-none self-end">TRAVEL</span>
+            <span className="font-bold text-3xl tracking-tight leading-none">
+              okeyo
+            </span>
+            <span className="text-[0.6rem] font-bold tracking-[0.2em] text-primary uppercase leading-none self-end">
+              TRAVEL
+            </span>
           </div>
           <div className="w-1.5 h-1.5 rounded-full bg-primary mt-4 ml-0.5"></div>
         </Link>
@@ -27,27 +28,27 @@ export function Navbar() {
               Nos collections
             </Button>
           </Link>
-          <Link href="/agent">
+          <Link href="/chat">
             <Button variant="ghost" className="font-medium">
               Assistant IA
             </Button>
           </Link>
           <Link href="/explore">
-            <Button 
+            <Button
               className={cn(
                 "rounded-lg px-6 font-medium transition-colors",
-                "bg-black text-white hover:bg-black/80 border-0"
+                "bg-black text-white hover:bg-black/80 border-0",
               )}
             >
               Explorer nos trésors
             </Button>
           </Link>
           <Link href="/offers">
-            <Button 
+            <Button
               variant="outline"
               className={cn(
                 "rounded-lg px-6 font-medium transition-colors",
-                "bg-white text-black border border-input hover:bg-accent"
+                "bg-white text-black border border-input hover:bg-accent",
               )}
             >
               Nos offres du moment
@@ -56,5 +57,5 @@ export function Navbar() {
         </nav>
       </div>
     </header>
-  )
+  );
 }

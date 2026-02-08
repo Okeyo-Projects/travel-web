@@ -1,28 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Loader2, Search, MapPin, Bike, Calendar, Users } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ExperienceCard } from "@/components/experience-card"
-import { ExperienceGroup } from "@/components/explore"
-import { TestimonialSection } from "@/components/home/TestimonialSection"
-import { FooterSection } from "@/components/home/FooterSection"
-import { useInfiniteExperiences } from "@/hooks/use-experiences"
-import { useAllCategoryGroups } from "@/hooks/use-experiences-by-category"
-import { useDebounce } from "@/hooks/use-debounce"
-import type { ExperienceType, ExperienceSort } from "@/types/experience"
+import { Bike, Calendar, Loader2, MapPin, Search, Users } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import { ExperienceCard } from "@/components/experience-card";
+import { ExperienceGroup } from "@/components/explore";
+import { FooterSection } from "@/components/home/FooterSection";
+import { TestimonialSection } from "@/components/home/TestimonialSection";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useInfiniteExperiences } from "@/hooks/use-experiences";
+import { useAllCategoryGroups } from "@/hooks/use-experiences-by-category";
+import type { ExperienceSort, ExperienceType } from "@/types/experience";
 
 export default function ExplorePage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [locationQuery, setLocationQuery] = useState("")
-  const [isSearching, setIsSearching] = useState(false)
-  const debouncedSearch = useDebounce(searchQuery, 500)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  const [activeType, setActiveType] = useState<ExperienceType | "all">("all")
-  const [activeSort, setActiveSort] = useState<ExperienceSort>("newest")
+  const [activeType, setActiveType] = useState<ExperienceType | "all">("all");
+  const [activeSort] = useState<ExperienceSort>("newest");
 
   // Fetch category groups for the browse view (when not searching)
-  const { data: categoryGroups, isLoading: isLoadingGroups } = useAllCategoryGroups(8)
+  const { data: categoryGroups, isLoading: isLoadingGroups } =
+    useAllCategoryGroups(8);
 
   // Fetch experiences for search results
   const {
@@ -40,19 +42,19 @@ export default function ExplorePage() {
       pageSize: 12,
     },
     // Only enable search when user has entered a query
-    !!(debouncedSearch || locationQuery)
-  )
+    !!(debouncedSearch || locationQuery),
+  );
 
-  const searchResults = searchData?.pages.flatMap((page) => page.items) || []
+  const searchResults = searchData?.pages.flatMap((page) => page.items) || [];
 
   const handleSearch = () => {
-    setIsSearching(true)
     if (locationQuery) {
-      setSearchQuery(locationQuery)
+      setSearchQuery(locationQuery);
     }
-  }
+  };
 
-  const showSearchResults = debouncedSearch.length > 0 || locationQuery.length > 0
+  const showSearchResults =
+    debouncedSearch.length > 0 || locationQuery.length > 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -60,22 +62,29 @@ export default function ExplorePage() {
       <div className="relative h-[400px] sm:h-[500px]">
         {/* Background Image */}
         <div className="absolute inset-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=2000&q=80"
             alt="Travel promotion"
+            fill
             className="w-full h-full object-cover"
+            sizes="100vw"
           />
           <div className="absolute inset-0 bg-black/40" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 container mx-auto px-4 h-full flex flex-col items-center justify-center text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-            Travel With Our Royal Service
-          </h1>
-          <p className="text-white/80 text-sm sm:text-base max-w-2xl">
-            Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do Eiusmod Tempor Incididunt Ut Labore Et Dolore Magna Aliqua. Ut Enim Ad Minim Veniam, Quis No
-          </p>
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-[1280px] flex-col px-5 pt-5 sm:px-8 sm:pt-8">
+          <MarketingHeader />
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
+              Travel With Our Royal Service
+            </h1>
+            <p className="text-white/80 text-sm sm:text-base max-w-2xl">
+              Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do
+              Eiusmod Tempor Incididunt Ut Labore Et Dolore Magna Aliqua. Ut
+              Enim Ad Minim Veniam, Quis No
+            </p>
+          </div>
         </div>
       </div>
 
@@ -103,7 +112,10 @@ export default function ExplorePage() {
             <div className="w-px h-8 bg-white/10" />
 
             {/* Activity */}
-            <button className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0">
+            <button
+              type="button"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
+            >
               <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
               <div className="text-left min-w-0 hidden sm:block">
                 <p className="text-xs text-gray-400">Activity</p>
@@ -115,7 +127,10 @@ export default function ExplorePage() {
             <div className="w-px h-8 bg-white/10" />
 
             {/* When */}
-            <button className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0">
+            <button
+              type="button"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
+            >
               <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
               <div className="text-left min-w-0 hidden sm:block">
                 <p className="text-xs text-gray-400">When</p>
@@ -127,7 +142,10 @@ export default function ExplorePage() {
             <div className="w-px h-8 bg-white/10" />
 
             {/* Guests */}
-            <button className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0">
+            <button
+              type="button"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
+            >
               <Users className="w-5 h-5 text-[#ff2566] shrink-0" />
               <div className="text-left min-w-0 hidden sm:block">
                 <p className="text-xs text-gray-400">Guests</p>
@@ -140,6 +158,7 @@ export default function ExplorePage() {
 
             {/* Search Button */}
             <button
+              type="button"
               onClick={handleSearch}
               className="w-12 h-12 bg-[#ff2566] hover:bg-[#e0205a] rounded-full flex items-center justify-center transition-colors shrink-0 ml-2"
             >
@@ -161,9 +180,8 @@ export default function ExplorePage() {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setSearchQuery("")
-                  setLocationQuery("")
-                  setIsSearching(false)
+                  setSearchQuery("");
+                  setLocationQuery("");
                 }}
                 className="text-gray-600 hover:text-gray-900"
               >
@@ -199,9 +217,9 @@ export default function ExplorePage() {
                     <Button
                       variant="link"
                       onClick={() => {
-                        setSearchQuery("")
-                        setLocationQuery("")
-                        setActiveType("all")
+                        setSearchQuery("");
+                        setLocationQuery("");
+                        setActiveType("all");
                       }}
                       className="mt-2 text-[#ff2566]"
                     >
@@ -248,7 +266,7 @@ export default function ExplorePage() {
                   experiences={group.experiences}
                   onMoreClick={() => {
                     // Could navigate to a category-specific page
-                    console.log("More clicked for", group.categoryTitle)
+                    console.log("More clicked for", group.categoryTitle);
                   }}
                 />
               ))
@@ -283,5 +301,5 @@ export default function ExplorePage() {
         }
       `}</style>
     </div>
-  )
+  );
 }

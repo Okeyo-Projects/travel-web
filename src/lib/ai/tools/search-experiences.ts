@@ -62,6 +62,34 @@ function getCityVariants(city: string): string[] {
   return [lower];
 }
 
+function uniqueStrings(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const output: string[] = [];
+
+  for (const value of values) {
+    if (!value) continue;
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    output.push(trimmed);
+  }
+
+  return output;
+}
+
+function toCitySlug(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[’']/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 async function executeSearch(
   db: any,
   queryEmbedding: number[] | null,
@@ -83,33 +111,56 @@ async function executeSearch(
     sortBy = 'promo_priority';
   }
 
-  const { data: results, error } = await db.rpc('search_experiences_enhanced', {
-    query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
-    semantic_threshold: overrides.semantic_threshold ?? 0.3,
-    text_query: params.query,
-    exp_type: params.type || null,
-    city_filter: overrides.city_filter !== undefined ? overrides.city_filter : (params.city || null),
-    region_filter: overrides.region_filter !== undefined ? overrides.region_filter : (params.region || null),
-    price_min_cents: null,
-    price_max_cents: maxPriceCents,
-    min_rating: params.min_rating || null,
-    min_guests: params.guests || null,
-    date_from: overrides.date_from !== undefined ? overrides.date_from : (params.date_from || null),
-    date_to: overrides.date_to !== undefined ? overrides.date_to : (params.date_to || null),
-    // Never filter by availability in search — lodging_availability table is deprecated.
-    // Real availability is calculated on-demand from bookings via checkAvailability tool.
-    check_availability: false,
-    user_lat: params.user_lat || null,
-    user_lng: params.user_lng || null,
-    max_distance_km: params.max_distance_km || null,
-    only_with_promo: params.only_with_promo || false,
-    only_auto_apply: params.only_auto_apply || false,
-    sort_by: sortBy,
-    result_limit: params.limit || 10,
-    result_offset: 0,
-  });
+  const thresholds =
+    overrides.semantic_threshold !== undefined
+      ? [overrides.semantic_threshold]
+      : queryEmbedding
+        ? [0.3, 0.2, 0.15]
+        : [0.3];
 
-  return { results, error };
+  let lastResults: any[] | null = null;
+  let lastThreshold = thresholds[0] ?? 0.3;
+
+  for (const threshold of thresholds) {
+    const { data: results, error } = await db.rpc('search_experiences_enhanced', {
+      query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
+      semantic_threshold: threshold,
+      text_query: params.query,
+      exp_type: params.type || null,
+      city_filter: overrides.city_filter !== undefined ? overrides.city_filter : (params.city || null),
+      region_filter: overrides.region_filter !== undefined ? overrides.region_filter : (params.region || null),
+      price_min_cents: null,
+      price_max_cents: maxPriceCents,
+      min_rating: params.min_rating || null,
+      min_guests: params.guests || null,
+      date_from: overrides.date_from !== undefined ? overrides.date_from : (params.date_from || null),
+      date_to: overrides.date_to !== undefined ? overrides.date_to : (params.date_to || null),
+      // Never filter by availability in search — lodging_availability table is deprecated.
+      // Real availability is calculated on-demand from bookings via checkAvailability tool.
+      check_availability: false,
+      user_lat: params.user_lat || null,
+      user_lng: params.user_lng || null,
+      max_distance_km: params.max_distance_km || null,
+      only_with_promo: params.only_with_promo || false,
+      only_auto_apply: params.only_auto_apply || false,
+      sort_by: sortBy,
+      result_limit: params.limit || 10,
+      result_offset: 0,
+    });
+
+    if (error) {
+      return { results, error, used_threshold: threshold };
+    }
+
+    lastResults = results;
+    lastThreshold = threshold;
+
+    if (results && results.length > 0) {
+      return { results, error: null, used_threshold: threshold };
+    }
+  }
+
+  return { results: lastResults, error: null, used_threshold: lastThreshold };
 }
 
 async function formatResults(results: any[], db: any) {
@@ -220,16 +271,39 @@ The tool automatically handles city name variants and does progressive fallback 
       }
 
       // --- Attempt 2: If city was specified, try variant spellings ---
-      if (params.city) {
-        const variants = getCityVariants(params.city);
-        for (const variant of variants) {
-          if (variant.toLowerCase() === params.city.trim().toLowerCase()) continue;
+      const locationInputs = uniqueStrings([params.city, params.region]);
+      const locationCandidates = uniqueStrings(
+        locationInputs.flatMap((location) => [
+          location,
+          normalizeCity(location),
+          ...getCityVariants(location),
+        ]),
+      ).slice(0, 12);
+
+      for (const candidate of locationCandidates) {
+        const attempt = await executeSearch(db, queryEmbedding, params, {
+          city_filter: candidate,
+          region_filter: null,
+        });
+
+        if (attempt.results && attempt.results.length > 0) {
+          results = attempt.results;
+          searchNote = `Résultats trouvés en filtrant la ville avec "${candidate}".`;
+          break;
+        }
+      }
+
+      // --- Attempt 3: If city/region was ambiguous, try candidate as region ---
+      if (!results || results.length === 0) {
+        for (const candidate of locationCandidates) {
           const attempt = await executeSearch(db, queryEmbedding, params, {
-            city_filter: variant,
+            city_filter: null,
+            region_filter: candidate,
           });
+
           if (attempt.results && attempt.results.length > 0) {
             results = attempt.results;
-            searchNote = `Résultats trouvés avec la variante "${variant}" pour "${params.city}".`;
+            searchNote = `Résultats trouvés en filtrant la région avec "${candidate}".`;
             break;
           }
         }
@@ -245,15 +319,46 @@ The tool automatically handles city name variants and does progressive fallback 
         };
       }
 
-      // --- Attempt 3: Maybe the "city" is actually a region (e.g., "Imlil") ---
-      if (params.city && !params.region) {
-        const attempt = await executeSearch(db, queryEmbedding, params, {
-          city_filter: null,
-          region_filter: params.city,
-        });
-        if (attempt.results && attempt.results.length > 0) {
-          results = attempt.results;
-          searchNote = `"${params.city}" est une région/zone. Voici les expériences dans cette zone.`;
+      // --- Attempt 4: Resolve by city_slug, then retry with canonical city/region ---
+      const slugCandidates = uniqueStrings(locationCandidates.map((location) => toCitySlug(location))).slice(0, 12);
+
+      if ((!results || results.length === 0) && slugCandidates.length > 0) {
+        const { data: slugMatches, error: slugError } = await db
+          .from('experiences')
+          .select('city, region, city_slug')
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .in('city_slug', slugCandidates);
+
+        if (!slugError && slugMatches && slugMatches.length > 0) {
+          const matchedCities = uniqueStrings(slugMatches.map((match: any) => match.city));
+          const matchedRegions = uniqueStrings(slugMatches.map((match: any) => match.region));
+
+          for (const matchedCity of matchedCities) {
+            const attempt = await executeSearch(db, queryEmbedding, params, {
+              city_filter: matchedCity,
+              region_filter: null,
+            });
+            if (attempt.results && attempt.results.length > 0) {
+              results = attempt.results;
+              searchNote = `Résultats trouvés via city_slug pour la ville "${matchedCity}".`;
+              break;
+            }
+          }
+
+          if (!results || results.length === 0) {
+            for (const matchedRegion of matchedRegions) {
+              const attempt = await executeSearch(db, queryEmbedding, params, {
+                city_filter: null,
+                region_filter: matchedRegion,
+              });
+              if (attempt.results && attempt.results.length > 0) {
+                results = attempt.results;
+                searchNote = `Résultats trouvés via city_slug pour la région "${matchedRegion}".`;
+                break;
+              }
+            }
+          }
         }
       }
 
@@ -267,7 +372,7 @@ The tool automatically handles city name variants and does progressive fallback 
         };
       }
 
-      // --- Attempt 4: Drop location filters entirely ---
+      // --- Attempt 5: Drop location filters entirely ---
       if (params.city || params.region) {
         const attempt = await executeSearch(db, queryEmbedding, params, {
           city_filter: null,

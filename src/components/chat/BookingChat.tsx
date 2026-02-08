@@ -1,55 +1,339 @@
-'use client';
+"use client";
 
-import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from 'react';
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import { useChatContext } from '@/contexts/ChatContext';
-import { ChatInput } from './ChatInput';
-import { MessageList } from './MessageList';
-import { ChatWelcome } from './ChatWelcome';
-import { Loader2 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useChat } from "@ai-sdk/react";
+import type { UIMessage } from "ai";
+import { DefaultChatTransport } from "ai";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useChatContext } from "@/contexts/ChatContext";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  useConversation,
+  useCreateConversation,
+  useSaveMessage,
+} from "@/hooks/use-conversations";
+import { ChatInput } from "./ChatInput";
+import { ChatWelcome } from "./ChatWelcome";
+import { MessageList } from "./MessageList";
 
-export function BookingChat() {
-  const { userLocation, setUserLocation, sessionId } = useChatContext();
+interface BookingChatProps {
+  initialConversationId?: string | null;
+}
+
+type StoredConversationMessage = Pick<UIMessage, "id" | "role" | "parts"> & {
+  content?: string | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isStreamingPart(part: unknown): boolean {
+  if (!isRecord(part)) return false;
+  const state = part.state;
+  return typeof state === "string" && state.includes("stream");
+}
+
+function sanitizeMessageParts(parts: unknown): unknown[] | undefined {
+  if (!Array.isArray(parts)) return undefined;
+
+  const filtered = parts.filter((part) => {
+    if (!isRecord(part)) return false;
+
+    if (part.type === "step-start") return false;
+    if (isStreamingPart(part)) return false;
+
+    if (part.type === "text") {
+      const text = part.text;
+      return typeof text === "string" && text.trim().length > 0;
+    }
+
+    return true;
+  });
+
+  return filtered.length > 0 ? filtered : undefined;
+}
+
+function extractTextFromParts(parts: unknown): string {
+  if (!Array.isArray(parts)) return "";
+
+  return parts
+    .map((part) => {
+      if (!isRecord(part)) return "";
+      if (part.type !== "text") return "";
+      return typeof part.text === "string" ? part.text : "";
+    })
+    .filter((value) => value.trim().length > 0)
+    .join("\n")
+    .trim();
+}
+
+function hasRenderableAssistantContent(
+  content: string,
+  parts: unknown[] | undefined,
+): boolean {
+  if (content.trim().length > 0) return true;
+  if (!parts || parts.length === 0) return false;
+
+  return parts.some((part) => {
+    if (!isRecord(part)) return false;
+
+    if (part.type === "text") {
+      return typeof part.text === "string" && part.text.trim().length > 0;
+    }
+
+    const state = part.state;
+    return (
+      state === "done" ||
+      state === "output-available" ||
+      state === "input-available"
+    );
+  });
+}
+
+function shouldPersistMessage(
+  message: UIMessage,
+  status: "submitted" | "streaming" | "ready" | "error",
+): boolean {
+  if (message.role !== "assistant") return true;
+  if (status !== "ready") return false;
+
+  if (Array.isArray(message.parts) && message.parts.some(isStreamingPart)) {
+    return false;
+  }
+
+  const content = typeof message.content === "string" ? message.content : "";
+  const sanitizedParts = sanitizeMessageParts(message.parts);
+  return hasRenderableAssistantContent(content, sanitizedParts);
+}
+
+function buildPersistedMessagePayload(message: UIMessage) {
+  const sanitizedParts = sanitizeMessageParts(message.parts);
+  const contentFromMessage =
+    typeof message.content === "string" ? message.content.trim() : "";
+  const contentFromParts = extractTextFromParts(sanitizedParts);
+  const content = contentFromMessage || contentFromParts;
+
+  return {
+    role: message.role,
+    content,
+    parts: sanitizedParts,
+  };
+}
+
+export function BookingChat({ initialConversationId }: BookingChatProps) {
+  const { user } = useAuth();
+  const {
+    userLocation,
+    setUserLocation,
+    sessionId,
+    conversationId,
+    setConversationId,
+    newConversationNonce,
+    clientId,
+  } = useChatContext();
   const [mounted, setMounted] = useState(false);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const pathname = usePathname();
+  const isSendingRef = useRef(false);
+  const inFlightTextRef = useRef<string | null>(null);
+  const persistedMessageIds = useRef(new Set<string>());
+  const persistingMessageIds = useRef(new Set<string>());
+  const previousPathname = useRef(pathname);
+  const activeConversationId = initialConversationId || conversationId;
+
+  const { data: conversationData, isLoading: loadingConversation } =
+    useConversation(initialConversationId || null);
+  const createConversation = useCreateConversation();
+  const saveMessage = useSaveMessage();
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: '/api/ai/chat',
+        api: "/api/ai/chat",
       }),
-    []
+    [],
   );
 
-  const { messages, status, sendMessage } = useChat({
+  const { messages, status, sendMessage, setMessages } = useChat({
     transport,
+    initialMessages: [],
   });
 
-  const isLoading = status === 'submitted' || status === 'streaming';
+  const isLoading = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    if (status === "ready") {
+      isSendingRef.current = false;
+      inFlightTextRef.current = null;
+    }
+  }, [status]);
+
+  // Load existing messages from conversation
+  useEffect(() => {
+    if (!conversationData) return;
+
+    const loadedMessages = (conversationData.messages || []).map(
+      (msg: StoredConversationMessage) => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content || "",
+        parts: msg.parts,
+      }),
+    );
+
+    setMessages(loadedMessages);
+    persistedMessageIds.current.clear();
+    persistingMessageIds.current.clear();
+
+    // Mark loaded messages as already persisted
+    loadedMessages.forEach((msg) => {
+      persistedMessageIds.current.add(msg.id);
+    });
+  }, [conversationData, setMessages]);
+
+  // Set conversationId from URL param
+  useEffect(() => {
+    if (initialConversationId && initialConversationId !== conversationId) {
+      setConversationId(initialConversationId);
+      setMessages([]);
+      persistedMessageIds.current.clear();
+      persistingMessageIds.current.clear();
+    }
+  }, [initialConversationId, conversationId, setConversationId, setMessages]);
+
+  // Hard reset UI state when user starts a new conversation
+  useEffect(() => {
+    if (newConversationNonce === 0) return;
+
+    setMessages([]);
+    setInput("");
+    setIsCreatingConversation(false);
+    persistedMessageIds.current.clear();
+    persistingMessageIds.current.clear();
+  }, [newConversationNonce, setMessages]);
+
+  // Reset when navigating from /chat/:id -> /chat (e.g., navbar click)
+  useEffect(() => {
+    const movedToRootChat =
+      pathname === "/chat" && previousPathname.current !== "/chat";
+
+    previousPathname.current = pathname;
+
+    if (!movedToRootChat) return;
+
+    setConversationId(null);
+    setMessages([]);
+    setInput("");
+    setIsCreatingConversation(false);
+    persistedMessageIds.current.clear();
+    persistingMessageIds.current.clear();
+  }, [pathname, setConversationId, setMessages]);
 
   // Handle client-side mounting
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const buildRequestBody = () => ({
-    sessionId,
-    userLocation: userLocation ? { lat: userLocation.lat, lng: userLocation.lng } : null,
-  });
+  // Persist new messages to database
+  useEffect(() => {
+    if (!activeConversationId || messages.length === 0) return;
+
+    // Find messages that haven't been persisted yet
+    const messagesToPersist = messages.filter((message) => {
+      if (persistedMessageIds.current.has(message.id)) return false;
+      if (persistingMessageIds.current.has(message.id)) return false;
+      return shouldPersistMessage(message, status);
+    });
+
+    if (messagesToPersist.length === 0) return;
+
+    // Persist each new message
+    messagesToPersist.forEach((message) => {
+      const payload = buildPersistedMessagePayload(message);
+      persistingMessageIds.current.add(message.id);
+
+      saveMessage.mutate(
+        {
+          conversationId: activeConversationId,
+          message: payload,
+        },
+        {
+          onSuccess: () => {
+            persistingMessageIds.current.delete(message.id);
+            persistedMessageIds.current.add(message.id);
+          },
+          onError: () => {
+            persistingMessageIds.current.delete(message.id);
+          },
+        },
+      );
+    });
+  }, [activeConversationId, messages, saveMessage, status]);
 
   const sendUserMessage = async (text: string) => {
     const normalizedText = text.trim();
-    if (!normalizedText || isLoading) return;
+    if (
+      !normalizedText ||
+      isLoading ||
+      isCreatingConversation ||
+      isSendingRef.current ||
+      inFlightTextRef.current === normalizedText
+    ) {
+      return;
+    }
 
-    await sendMessage(
-      { text: normalizedText },
-      {
-        body: buildRequestBody(),
+    let currentConvId = activeConversationId;
+    isSendingRef.current = true;
+    inFlightTextRef.current = normalizedText;
+
+    try {
+      // Create conversation if this is the first message
+      if (!currentConvId) {
+        setIsCreatingConversation(true);
+        const result = await createConversation.mutateAsync({
+          userId: user?.id,
+          clientId: !user ? clientId : undefined,
+          userLocation: userLocation || undefined,
+        });
+
+        currentConvId = result.conversation.id;
+        setConversationId(currentConvId);
+
+        // Update URL without navigation (to preserve component state)
+        window.history.replaceState(null, "", `/chat/${currentConvId}`);
       }
-    );
-    setInput('');
+
+      await sendMessage(
+        { text: normalizedText },
+        {
+          body: {
+            sessionId,
+            conversationId: currentConvId,
+            userLocation: userLocation
+              ? { lat: userLocation.lat, lng: userLocation.lng }
+              : null,
+          },
+        },
+      );
+      setInput("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      isSendingRef.current = false;
+      inFlightTextRef.current = null;
+    } finally {
+      setIsCreatingConversation(false);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -78,12 +362,12 @@ export function BookingChat() {
         });
       },
       (error) => {
-        console.error('Error getting location:', error);
-      }
+        console.error("Error getting location:", error);
+      },
     );
   };
 
-  if (!mounted) {
+  if (!mounted || loadingConversation) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -91,7 +375,12 @@ export function BookingChat() {
     );
   }
 
-  const showWelcome = messages.length === 0;
+  // Only show welcome screen if:
+  // - No messages yet
+  // - No active conversation selected
+  // - NOT in the process of creating a conversation
+  const showWelcome =
+    messages.length === 0 && !activeConversationId && !isCreatingConversation;
 
   return (
     <div className="flex flex-col h-full bg-background relative overflow-hidden">
@@ -106,7 +395,10 @@ export function BookingChat() {
               exit={{ opacity: 0, y: -20 }}
               className="h-full flex flex-col"
             >
-              <ChatWelcome onSelectSuggestion={handleSuggestionClick} />
+              <ChatWelcome
+                onSelectSuggestion={handleSuggestionClick}
+                disabled={isLoading || isCreatingConversation}
+              />
             </motion.div>
           ) : (
             <motion.div
@@ -123,10 +415,11 @@ export function BookingChat() {
 
       {/* Input Area */}
       <div className="flex-shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4">
-        <ChatInput 
+        <ChatInput
           input={input}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
+          onSubmitMessage={() => void sendUserMessage(input)}
           isLoading={isLoading}
           onRequestLocation={handleRequestLocation}
         />

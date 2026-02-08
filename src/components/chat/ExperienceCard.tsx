@@ -1,11 +1,9 @@
-'use client';
-
+import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Star, Users, BedDouble, DoorOpen } from 'lucide-react';
+import { MapPin, Star, Users, BedDouble, DoorOpen, Play } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { getImageUrl } from '@/utils/functions';
 
 interface RoomInfo {
@@ -32,6 +30,7 @@ interface ExperienceCardProps {
     has_promo?: boolean;
     promo_badge?: string;
     thumbnail_url?: string;
+    video_url?: string;
     host_name?: string;
     rooms?: RoomInfo[];
   };
@@ -46,33 +45,68 @@ const typeLabels = {
 };
 
 export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsPlaying(true);
+    setTimeout(() => {
+      videoRef.current?.play();
+    }, 0);
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative h-48 w-full">
-        {experience.thumbnail_url ? (
-          <Image
-            src={getImageUrl(experience.thumbnail_url)!}
-            alt={experience.title}
-            fill
-            className="object-cover"
+      <div className="relative h-48 w-full group">
+        {isPlaying && experience.video_url ? (
+          <video
+            ref={videoRef}
+            src={experience.video_url}
+            className="w-full h-full object-cover"
+            controls
+            autoPlay
+            playsInline
           />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-muted-foreground">Pas d'image</span>
-          </div>
+          <>
+            {experience.thumbnail_url ? (
+              <Image
+                src={getImageUrl(experience.thumbnail_url)!}
+                alt={experience.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                <span className="text-muted-foreground">Pas d'image</span>
+              </div>
+            )}
+
+            {experience.video_url && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-all">
+                <button
+                  onClick={handlePlay}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-background/30 backdrop-blur-md border border-white/30 text-white hover:scale-110 transition-transform duration-300 hover:bg-background/40"
+                >
+                  <Play className="w-5 h-5 fill-white ml-1" />
+                </button>
+              </div>
+            )}
+
+            {experience.has_promo && experience.promo_badge && (
+              <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600">
+                {experience.promo_badge}
+              </Badge>
+            )}
+
+            <Badge className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm text-foreground">
+              {typeLabels[experience.type]}
+            </Badge>
+          </>
         )}
-        
-        {experience.has_promo && experience.promo_badge && (
-          <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600">
-            {experience.promo_badge}
-          </Badge>
-        )}
-        
-        <Badge className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm text-foreground">
-          {typeLabels[experience.type]}
-        </Badge>
       </div>
-      
+
       <CardContent className="p-4 space-y-3">
         <div>
           <h3 className="font-semibold text-lg line-clamp-2">{experience.title}</h3>
@@ -82,13 +116,13 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
             </p>
           )}
         </div>
-        
+
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <MapPin className="w-4 h-4" />
             <span>{experience.city}</span>
           </div>
-          
+
           {experience.rating && (
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -98,7 +132,7 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
               )}
             </div>
           )}
-          
+
           {experience.distance_km !== null && experience.distance_km !== undefined && (
             <div className="flex items-center gap-1">
               <Users className="w-4 h-4" />
@@ -106,7 +140,7 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
             </div>
           )}
         </div>
-        
+
         {experience.host_name && (
           <p className="text-xs text-muted-foreground">Par {experience.host_name}</p>
         )}
@@ -137,7 +171,7 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
               {experience.type === 'lodging' ? 'par nuit' : 'par personne'}
             </p>
           </div>
-          
+
           <div className="flex gap-2">
             {onSelect && (
               <Button variant="outline" size="sm" onClick={onSelect}>

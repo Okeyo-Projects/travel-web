@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import FacebookPixel from "@/components/FacebookPixel";
 
@@ -25,12 +25,14 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Okeyo Travel - Laissez parler votre mood",
-  description: "En 2 minutes, OKEYO vous recommande l'endroit le plus adapté à vos envies.",
+  description:
+    "En 2 minutes, OKEYO vous recommande l'endroit le plus adapté à vos envies.",
 };
 
-import QueryProvider from "@/providers/query-provider";
-import { Navbar } from "@/components/navbar";
 import type { ReactNode } from "react";
+import { AuthModal } from "@/components/auth/auth-modal";
+import { AuthProvider } from "@/providers/auth-provider";
+import QueryProvider from "@/providers/query-provider";
 
 export default function RootLayout({
   children,
@@ -41,16 +43,19 @@ export default function RootLayout({
     <html lang="fr">
       <FacebookPixel />
       <head>
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+        <link
+          href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+          rel="stylesheet"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col bg-white`}
       >
         <QueryProvider>
-          <Navbar />
-          <main className="flex-1">
-            {children}
-          </main>
+          <AuthProvider>
+            <main className="flex-1">{children}</main>
+            <AuthModal />
+          </AuthProvider>
         </QueryProvider>
         <noscript>
           <img
