@@ -3,9 +3,18 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Star, Users } from 'lucide-react';
+import { MapPin, Star, Users, BedDouble, DoorOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { getImageUrl } from '@/utils/functions';
+
+interface RoomInfo {
+  name: string;
+  type?: string;
+  price_mad: number;
+  capacity_beds?: number;
+  max_persons?: number;
+}
 
 interface ExperienceCardProps {
   experience: {
@@ -24,6 +33,7 @@ interface ExperienceCardProps {
     promo_badge?: string;
     thumbnail_url?: string;
     host_name?: string;
+    rooms?: RoomInfo[];
   };
   onSelect?: () => void;
   onBook?: () => void;
@@ -41,7 +51,7 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
       <div className="relative h-48 w-full">
         {experience.thumbnail_url ? (
           <Image
-            src={experience.thumbnail_url}
+            src={getImageUrl(experience.thumbnail_url)!}
             alt={experience.title}
             fill
             className="object-cover"
@@ -100,7 +110,26 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
         {experience.host_name && (
           <p className="text-xs text-muted-foreground">Par {experience.host_name}</p>
         )}
-        
+
+        {experience.type === 'lodging' && experience.rooms && experience.rooms.length > 0 && (
+          <div className="border-t pt-2 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <DoorOpen className="w-3 h-3" />
+              {experience.rooms.length} type{experience.rooms.length > 1 ? 's' : ''} de chambre
+            </p>
+            {experience.rooms.slice(0, 3).map((room, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <BedDouble className="w-3 h-3" />
+                  {room.name}
+                  {room.max_persons && <span className="text-[10px]">({room.max_persons} pers.)</span>}
+                </span>
+                <span className="font-medium">{room.price_mad} MAD</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between pt-2">
           <div>
             <p className="text-2xl font-bold">{experience.price_mad} MAD</p>

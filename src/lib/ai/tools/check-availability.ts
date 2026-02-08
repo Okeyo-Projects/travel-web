@@ -36,10 +36,10 @@ Returns available options with pricing.`,
       }
 
       if (experience.type === 'lodging') {
-        // Check lodging availability
+        // Check lodging availability by checking actual bookings
         const { data: roomTypes } = await db
           .from('lodging_room_types')
-          .select('*')
+          .select('id, room_type, name, capacity_beds, max_persons, price_cents, total_rooms')
           .eq('experience_id', experience_id)
           .is('deleted_at', null);
 
@@ -52,22 +52,26 @@ Returns available options with pricing.`,
           };
         }
 
-        // Check availability for each room type
+        // Check availability for each room type by counting overlapping bookings
         const availabilityChecks = await Promise.all(
           roomTypes.map(async (roomType: any) => {
-            const { data: availability } = await db
-              .from('lodging_availability')
-              .select('*')
+            // Get all active bookings that overlap with the requested date range
+            const { data: overlappingBookings } = await db
+              .from('bookings')
+              .select('id')
+              .eq('experience_id', experience_id)
               .eq('room_type_id', roomType.id)
-              .gte('date', date_from)
-              .lte('date', date_to || date_from)
-              .order('date', { ascending: true });
+              .in('status', ['pending', 'confirmed', 'ongoing'])
+              .lte('check_in', date_to || date_from)
+              .gte('check_out', date_from);
 
-            // Check if all dates have availability
-            const hasAvailability = availability && availability.every(
-              (avail: any) => avail.rooms_available > 0 && 
-                        (!guests || roomType.max_persons >= guests)
-            );
+            const bookedRooms = overlappingBookings?.length || 0;
+            const totalRooms = roomType.total_rooms || 1;
+            const availableRooms = totalRooms - bookedRooms;
+
+            // Check if room capacity meets guest requirements
+            const meetsGuestRequirement = !guests || roomType.max_persons >= guests;
+            const hasAvailability = availableRooms > 0 && meetsGuestRequirement;
 
             return {
               room_type_id: roomType.id,
@@ -77,11 +81,9 @@ Returns available options with pricing.`,
               max_persons: roomType.max_persons,
               base_price_mad: roomType.price_cents / 100,
               available: hasAvailability,
-              availability_details: availability?.map((a: any) => ({
-                date: a.date,
-                rooms_available: a.rooms_available,
-                price_mad: a.price_override_cents ? a.price_override_cents / 100 : roomType.price_cents / 100,
-              })),
+              total_rooms: totalRooms,
+              available_rooms: availableRooms,
+              booked_rooms: bookedRooms,
             };
           })
         );

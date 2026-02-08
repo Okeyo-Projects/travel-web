@@ -1,6 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { convertToModelMessages, stepCountIs, streamText } from 'ai';
-import { SYSTEM_PROMPT } from '@/lib/ai/system-prompt';
+import { buildSystemPrompt } from '@/lib/ai/system-prompt';
+import { loadCatalogContext } from '@/lib/ai/catalog-context';
 import {
   searchExperiences,
   getExperienceDetails,
@@ -9,6 +10,8 @@ import {
   validatePromoCode,
   findSimilar,
   requestUserLocation,
+  getLinkedExperiences,
+  createBookingIntent,
 } from '@/lib/ai/tools';
 
 // Allow streaming responses up to 30 seconds
@@ -19,8 +22,15 @@ export async function POST(req: Request) {
   try {
     const { messages = [], sessionId, userLocation } = await req.json();
 
-    // Add user location context to system prompt if available
-    let systemPrompt = SYSTEM_PROMPT;
+    // Build system prompt with today's date for smart date resolution
+    const todayDate = new Date().toISOString().split('T')[0];
+    let systemPrompt = buildSystemPrompt(todayDate);
+
+    // Load catalog context so the AI knows what experiences are available
+    const catalogContext = await loadCatalogContext();
+    systemPrompt += catalogContext;
+
+    // Add user location context if available
     if (userLocation?.lat && userLocation?.lng) {
       systemPrompt += `\n\n## Current User Location\nLatitude: ${userLocation.lat}\nLongitude: ${userLocation.lng}\n\nUse these coordinates for distance-based searches without asking for location again.`;
     }
@@ -37,9 +47,11 @@ export async function POST(req: Request) {
         validatePromoCode,
         findSimilar,
         requestUserLocation,
+        getLinkedExperiences,
+        createBookingIntent,
       },
       stopWhen: stepCountIs(5), // Allow multiple tool calls in sequence
-      temperature: 0.7,
+      temperature: 0.4, // Lower temperature for consistent, action-oriented responses
       onFinish: async ({ usage, finishReason }) => {
         // Log usage for monitoring (optional)
         console.log('Chat completion finished:', {

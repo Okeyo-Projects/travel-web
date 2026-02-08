@@ -3,12 +3,12 @@
 import * as React from "react"
 import Image from "next/image"
 import { useParams } from "next/navigation"
-import { 
-  Loader2, 
-  MapPin, 
-  Star, 
-  Share2, 
-  Heart, 
+import {
+  Loader2,
+  MapPin,
+  Star,
+  Share2,
+  Heart,
   ChevronLeft,
   Calendar,
   Users,
@@ -22,11 +22,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useExperienceDetail } from "@/hooks/use-experience-detail"
+import { getImageUrl } from "@/utils/functions"
+import { useBooking } from "@/hooks/use-booking"
 
 export default function ExperiencePage() {
   const params = useParams()
   const id = params?.id as string
   const { data, isLoading, isError } = useExperienceDetail(id)
+  const { openBooking, BookingModal } = useBooking()
 
   if (isLoading) {
     return (
@@ -53,8 +56,8 @@ export default function ExperiencePage() {
   const price = trip?.price_per_person
     ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: trip.price_currency }).format(trip.price_per_person / 100)
     : lodging?.rooms[0]?.price_cents
-    ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: lodging.rooms[0].currency }).format(lodging.rooms[0].price_cents / 100)
-    : "Sur demande"
+      ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: lodging.rooms[0].currency }).format(lodging.rooms[0].price_cents / 100)
+      : "Sur demande"
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -70,7 +73,7 @@ export default function ExperiencePage() {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-        
+
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center text-white">
           <Button variant="ghost" size="icon" className="rounded-full bg-black/20 hover:bg-black/40 text-white" onClick={() => window.history.back()}>
             <ChevronLeft className="h-6 w-6" />
@@ -198,7 +201,7 @@ export default function ExperiencePage() {
                       <Card key={room.id}>
                         <div className="aspect-video relative bg-muted rounded-t-lg overflow-hidden">
                           {room.photoUrls[0] && (
-                            <Image src={room.photoUrls[0]} alt={room.name || "Room"} fill className="object-cover" />
+                            <Image src={getImageUrl(room.photoUrls[0])!} alt={room.name || "Room"} fill className="object-cover" />
                           )}
                         </div>
                         <CardHeader>
@@ -259,7 +262,7 @@ export default function ExperiencePage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="border rounded-lg p-3">
                     <label className="text-xs text-muted-foreground font-semibold uppercase block mb-1">Voyageurs</label>
                     <div className="flex items-center gap-2">
@@ -269,7 +272,7 @@ export default function ExperiencePage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full" size="lg" onClick={() => openBooking(experience)}>
                     Réserver
                   </Button>
                 </CardFooter>
@@ -278,6 +281,7 @@ export default function ExperiencePage() {
           </div>
         </div>
       </div>
+      <BookingModal />
     </div>
   )
 }

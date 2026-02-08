@@ -192,6 +192,7 @@ export function useExperiences(params: FetchExperiencesParams = {}) {
 
 export function useInfiniteExperiences(
   params: Omit<FetchExperiencesParams, 'limit' | 'offset'> & { pageSize?: number } = {},
+  enabled = true,
 ) {
   const { pageSize = 12, ...rest } = params;
 
@@ -213,5 +214,6 @@ export function useInfiniteExperiences(
     },
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     staleTime: 1000 * 60 * 5,
+    enabled,
   });
 }

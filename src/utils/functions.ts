@@ -22,7 +22,30 @@ function formatPrice(amount: number, currency: string): string {
   }
 }
 
-export function resolveStorageUrl(path: string | null): string | null {
+const DEFAULT_STORAGE_BUCKET = 'experiences';
+const KNOWN_STORAGE_BUCKETS = ['experiences', 'hosts', 'profiles', 'media', 'assets'] as const;
+const STORAGE_PUBLIC_PREFIX = 'storage/v1/object/public/';
+
+const normalizeStoragePath = (value: string) => value.replace(/^\/+/, '');
+const encodeStoragePath = (value: string) =>
+  value
+    .split('/')
+    .map((segment) => {
+      if (!segment) {
+        return segment;
+      }
+      try {
+        return encodeURIComponent(decodeURIComponent(segment));
+      } catch {
+        return encodeURIComponent(segment);
+      }
+    })
+    .join('/');
+
+const hasKnownBucketPrefix = (value: string) =>
+  KNOWN_STORAGE_BUCKETS.some((bucket) => value.startsWith(`${bucket}/`));
+
+export function resolveStorageUrl(path: string | null, bucket: string = DEFAULT_STORAGE_BUCKET): string | null {
   if (!path) {
     return null;
   }
@@ -36,5 +59,21 @@ export function resolveStorageUrl(path: string | null): string | null {
     return null;
   }
 
-  return `${baseUrl}/storage/v1/object/public/experiences/${path}`;
+  const normalized = encodeStoragePath(normalizeStoragePath(path));
+
+  if (normalized.startsWith(STORAGE_PUBLIC_PREFIX)) {
+    return `${baseUrl}/${normalized}`;
+  }
+
+  const hasBucketPrefix = Boolean(bucket) && normalized.startsWith(`${bucket}/`);
+  const finalPath = hasBucketPrefix || hasKnownBucketPrefix(normalized)
+    ? normalized
+    : bucket
+      ? `${bucket}/${normalized}`
+      : normalized;
+
+  return `${baseUrl}/${STORAGE_PUBLIC_PREFIX}${finalPath}`;
 }
+
+export const getImageUrl = (path?: string, bucket?: string) =>
+  resolveStorageUrl(path ?? null, bucket);

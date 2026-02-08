@@ -29,6 +29,7 @@ export const metadata: Metadata = {
 };
 
 import QueryProvider from "@/providers/query-provider";
+import { Navbar } from "@/components/navbar";
 import type { ReactNode } from "react";
 
 export default function RootLayout({
@@ -46,6 +47,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col bg-white`}
       >
         <QueryProvider>
+          <Navbar />
           <main className="flex-1">
             {children}
           </main>

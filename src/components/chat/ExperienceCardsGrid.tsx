@@ -22,19 +22,22 @@ export function ExperienceCardsGrid({
   }
 
   const promoCount = experiences.filter(exp => exp.has_promo).length;
+  const isSingle = experiences.length === 1;
 
   return (
     <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        {experiences.length} résultat{experiences.length > 1 ? 's' : ''}
-        {promoCount > 0 && (
-          <span className="ml-2 text-orange-500 font-medium">
-            ({promoCount} en promo)
-          </span>
-        )}
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {!isSingle && (
+        <div className="text-sm text-muted-foreground">
+          {experiences.length} résultat{experiences.length > 1 ? 's' : ''}
+          {promoCount > 0 && (
+            <span className="ml-2 text-orange-500 font-medium">
+              ({promoCount} en promo)
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className={isSingle ? 'max-w-md' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}>
         {experiences.map((experience) => (
           <ExperienceCard
             key={experience.id}

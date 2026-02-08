@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ExperienceListItem } from "@/types/experience"
+import { getImageUrl } from "@/utils/functions"
 
 interface ExperienceCardProps {
   experience: ExperienceListItem
@@ -51,7 +52,7 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
         <div className="relative aspect-[4/3] w-full overflow-hidden">
           {experience.thumbnail_url ? (
             <Image
-              src={experience.thumbnail_url}
+              src={getImageUrl(experience.thumbnail_url)!}
               alt={experience.title}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -95,7 +96,7 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
           <div className="flex items-center gap-2 mb-4">
             {experience.host?.avatar_url ? (
               <div className="relative w-6 h-6 rounded-full overflow-hidden shrink-0">
-                <Image src={experience.host.avatar_url} alt={experience.host.name} fill className="object-cover" />
+                {experience.host.avatar_url && <Image src={getImageUrl(experience.host.avatar_url)!} alt={experience.host.name} fill className="object-cover" />}
               </div>
             ) : (
               <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">

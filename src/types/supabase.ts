@@ -380,6 +380,185 @@ export type Database = {
           },
         ]
       }
+      booking_transports: {
+        Row: {
+          booking_id: string
+          city_slug: string
+          created_at: string
+          currency: string
+          id: string
+          max_persons: number
+          metadata: Json | null
+          price_additional_per_person_cents: number
+          price_cents: number
+          quantity: number
+          total_cents: number
+          transport_id: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          city_slug: string
+          created_at?: string
+          currency?: string
+          id?: string
+          max_persons: number
+          metadata?: Json | null
+          price_additional_per_person_cents?: number
+          price_cents: number
+          quantity?: number
+          total_cents: number
+          transport_id?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          city_slug?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          max_persons?: number
+          metadata?: Json | null
+          price_additional_per_person_cents?: number
+          price_cents?: number
+          quantity?: number
+          total_cents?: number
+          transport_id?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_transports_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_transports_transport_id_fkey"
+            columns: ["transport_id"]
+            isOneToOne: false
+            referencedRelation: "transports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cities: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          lat: number | null
+          lon: number | null
+          metadata: Json | null
+          name: string
+          name_ar: string | null
+          postal_code: string | null
+          region: string | null
+          slug: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          lat?: number | null
+          lon?: number | null
+          metadata?: Json | null
+          name: string
+          name_ar?: string | null
+          postal_code?: string | null
+          region?: string | null
+          slug: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          lat?: number | null
+          lon?: number | null
+          metadata?: Json | null
+          name?: string
+          name_ar?: string | null
+          postal_code?: string | null
+          region?: string | null
+          slug?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transports: {
+        Row: {
+          city_slug: string
+          created_at: string
+          currency: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          is_available: boolean
+          max_persons: number
+          metadata: Json | null
+          price_additional_per_person_cents: number
+          price_cents: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          city_slug: string
+          created_at?: string
+          currency?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_available?: boolean
+          max_persons: number
+          metadata?: Json | null
+          price_additional_per_person_cents?: number
+          price_cents: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          city_slug?: string
+          created_at?: string
+          currency?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          is_available?: boolean
+          max_persons?: number
+          metadata?: Json | null
+          price_additional_per_person_cents?: number
+          price_cents?: number
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transports_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       chats_messages: {
         Row: {
           booking_id: string | null
@@ -592,6 +771,42 @@ export type Database = {
           },
         ]
       }
+      experience_links: {
+        Row: {
+          created_at: string
+          id: string
+          source_experience_id: string
+          target_experience_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source_experience_id: string
+          target_experience_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source_experience_id?: string
+          target_experience_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_links_source_experience_id_fkey"
+            columns: ["source_experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experience_links_target_experience_id_fkey"
+            columns: ["target_experience_id"]
+            isOneToOne: false
+            referencedRelation: "experiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       experience_services_excluded: {
         Row: {
           experience_id: string
@@ -665,6 +880,7 @@ export type Database = {
           bookings_count: number | null
           cancellation_policy: Database["public"]["Enums"]["cancellation_policy"]
           city: string
+          city_slug: string | null
           created_at: string
           deleted_at: string | null
           host_id: string
@@ -681,6 +897,7 @@ export type Database = {
           search_vector: unknown | null
           short_description: string
           slug: string | null
+          show_case: boolean
           status: Database["public"]["Enums"]["experience_status"] | null
           tags: string[] | null
           thumbnail_url: string | null
@@ -696,6 +913,7 @@ export type Database = {
           bookings_count?: number | null
           cancellation_policy?: Database["public"]["Enums"]["cancellation_policy"]
           city: string
+          city_slug?: string | null
           created_at?: string
           deleted_at?: string | null
           host_id: string
@@ -712,6 +930,7 @@ export type Database = {
           search_vector?: unknown | null
           short_description: string
           slug?: string | null
+          show_case?: boolean
           status?: Database["public"]["Enums"]["experience_status"] | null
           tags?: string[] | null
           thumbnail_url?: string | null
@@ -727,6 +946,7 @@ export type Database = {
           bookings_count?: number | null
           cancellation_policy?: Database["public"]["Enums"]["cancellation_policy"]
           city?: string
+          city_slug?: string | null
           created_at?: string
           deleted_at?: string | null
           host_id?: string
@@ -743,6 +963,7 @@ export type Database = {
           search_vector?: unknown | null
           short_description?: string
           slug?: string | null
+          show_case?: boolean
           status?: Database["public"]["Enums"]["experience_status"] | null
           tags?: string[] | null
           thumbnail_url?: string | null
@@ -759,6 +980,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hosts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiences_city_slug_fkey"
+            columns: ["city_slug"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["slug"]
           },
           {
             foreignKeyName: "fk_experiences_video"
