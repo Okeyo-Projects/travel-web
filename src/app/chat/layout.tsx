@@ -27,16 +27,18 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
               <MessageSquare className="h-4 w-4" />
               <span>Conversations</span>
             </div>
-            <div className="hidden items-center gap-2 md:flex">
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/collections">Collections</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/explore">Explore</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/offers">Offres</Link>
-              </Button>
+            <div className="flex items-center gap-2">
+              <div className="hidden items-center gap-2 md:flex">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/collections">Collections</Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/explore">Explore</Link>
+                </Button>
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/offers">Offres</Link>
+                </Button>
+              </div>
               {user ? (
                 <Button variant="outline" size="sm" onClick={() => signOut()}>
                   Logout

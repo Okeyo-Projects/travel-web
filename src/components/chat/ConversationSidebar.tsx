@@ -93,7 +93,7 @@ export function ConversationSidebar() {
                   Aucune conversation
                 </div>
               ) : (
-                conversations.map((conv) => {
+                conversations.map((conv: any) => {
                   const isActive =
                     pathname === `/chat/${conv.id}` ||
                     conversationId === conv.id;

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Compass } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { parseMessageContent } from "@/lib/chat/parse-message";
+import { AuthRequiredCard } from "./AuthRequiredCard";
 import { ExperienceCardsGrid } from "./ExperienceCardsGrid";
 import { LocationRequest } from "./LocationRequest";
 
@@ -51,6 +52,16 @@ function extractLocationReason(output: unknown): string {
   return "pour trouver des expériences près de vous";
 }
 
+function extractAuthRequiredReason(output: unknown): string | null {
+  if (!isRecord(output) || output.requires_auth !== true) return null;
+
+  if (typeof output.error === "string" && output.error.trim()) {
+    return output.error;
+  }
+
+  return "Vous devez être connecté pour réserver.";
+}
+
 function isExperienceCardsData(
   data: unknown,
 ): data is { experiences: ExperienceResult[] } {
@@ -62,6 +73,10 @@ function isExperienceCardsData(
 }
 
 function isLocationRequestData(data: unknown): data is { reason: string } {
+  return isRecord(data) && typeof data.reason === "string";
+}
+
+function isAuthRequiredData(data: unknown): data is { reason: string } {
   return isRecord(data) && typeof data.reason === "string";
 }
 
@@ -241,6 +256,26 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
         signature,
       );
     }
+
+    if (
+      part.type === "tool-createBookingIntent" &&
+      part.state === "output-available"
+    ) {
+      const reason = extractAuthRequiredReason(part.output);
+      if (!reason) continue;
+
+      pushUniqueBlock(
+        {
+          key: `auth_required:${reason}`,
+          type: "ui",
+          content: {
+            component: "auth_required",
+            data: { reason },
+          },
+        },
+        `auth_required:${reason}`,
+      );
+    }
   }
 
   if (blocks.length > 0) {
@@ -292,11 +327,15 @@ function UIBlock({ component, data }: { component: string; data: unknown }) {
   switch (component) {
     case "experience_cards":
       if (!isExperienceCardsData(data)) return null;
-      return <ExperienceCardsGrid experiences={data.experiences} />;
+      return <ExperienceCardsGrid experiences={data.experiences as any} />;
 
     case "location_request":
       if (!isLocationRequestData(data)) return null;
       return <LocationRequest reason={data.reason} />;
+
+    case "auth_required":
+      if (!isAuthRequiredData(data)) return null;
+      return <AuthRequiredCard reason={data.reason} />;
 
     default:
       return (

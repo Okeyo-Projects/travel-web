@@ -271,7 +271,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
         nights,
         openBooking,
         closeBooking,
-        setDates: (s, e) => { setStartDate(s); setEndDate(e) },
+        setDates: (s: any, e: any) => { setStartDate(s); setEndDate(e) },
         setGuests,
         setDepartureId,
         setRoomSelection,

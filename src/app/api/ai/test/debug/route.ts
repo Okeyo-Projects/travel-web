@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { generateText } from 'ai';
+import { generateText, stepCountIs   } from 'ai';
 import { buildSystemPrompt } from '@/lib/ai/system-prompt';
 import { loadCatalogContext } from '@/lib/ai/catalog-context';
 import { searchExperiences } from '@/lib/ai/tools';
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: [{ role: 'user', content: 'je veux aller à marrakech' }],
       tools: { searchExperiences },
-      maxSteps: 5,
+      stopWhen: stepCountIs(5),
       temperature: 0.4,
     });
 
@@ -34,14 +34,14 @@ export async function POST(req: Request) {
         toolCalls: step.toolCalls?.map(tc => ({
           toolName: tc.toolName,
           toolCallId: tc.toolCallId,
-          argsKeys: Object.keys(tc.args || {}),
-          args: tc.args,
+          argsKeys: Object.keys((tc as any).input || {}),
+          args: (tc as any).args,
         })),
         toolResultsCount: step.toolResults?.length || 0,
         toolResults: step.toolResults?.map(tr => ({
           toolCallId: tr.toolCallId,
-          resultKeys: Object.keys(tr.result || {}),
-          result: tr.result,
+          resultKeys: Object.keys((tr as any).result || {}),
+          result: (tr as any).result,
         })),
       })),
     });

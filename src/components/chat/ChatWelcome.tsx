@@ -6,13 +6,19 @@ import { Compass, Hotel, Map as MapIcon, Tag } from "lucide-react";
 interface ChatWelcomeProps {
   onSelectSuggestion: (suggestion: string) => void;
   disabled?: boolean;
+  welcomeTitle?: string;
+  welcomeDescription?: string;
+  suggestedPrompts?: string[];
 }
 
 export function ChatWelcome({
   onSelectSuggestion,
   disabled = false,
+  welcomeTitle,
+  welcomeDescription,
+  suggestedPrompts,
 }: ChatWelcomeProps) {
-  const suggestions = [
+  const defaultSuggestions = [
     {
       icon: Hotel,
       title: "Hébergement Romantique",
@@ -38,6 +44,30 @@ export function ChatWelcome({
       color: "text-amber-500 bg-amber-500/10",
     },
   ];
+
+  const iconPalette = [Hotel, MapIcon, Compass, Tag];
+  const colorPalette = [
+    "text-rose-500 bg-rose-500/10",
+    "text-emerald-500 bg-emerald-500/10",
+    "text-blue-500 bg-blue-500/10",
+    "text-amber-500 bg-amber-500/10",
+  ];
+
+  const suggestions =
+    Array.isArray(suggestedPrompts) && suggestedPrompts.length > 0
+      ? suggestedPrompts.slice(0, 4).map((prompt, index) => ({
+          icon: iconPalette[index % iconPalette.length],
+          title: `Suggestion ${index + 1}`,
+          prompt,
+          color: colorPalette[index % colorPalette.length],
+        }))
+      : defaultSuggestions;
+
+  const title =
+    welcomeTitle || "Bonjour, je suis votre Assistant Voyage";
+  const description =
+    welcomeDescription ||
+    "Je peux vous aider à planifier votre séjour au Maroc, trouver des hébergements uniques et réserver des expériences inoubliables.";
 
   const container = {
     hidden: { opacity: 0 },
@@ -65,13 +95,9 @@ export function ChatWelcome({
         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
           <Compass className="w-8 h-8 text-primary" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-4">
-          Bonjour, je suis votre{" "}
-          <span className="text-primary">Assistant Voyage</span>
-        </h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-4">{title}</h1>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-          Je peux vous aider à planifier votre séjour au Maroc, trouver des
-          hébergements uniques et réserver des expériences inoubliables.
+          {description}
         </p>
       </motion.div>
 

@@ -1,5 +1,10 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, Message } from 'ai';
+import { stepCountIs, streamText } from 'ai';
+
+/** Simple message format for streamText (role + content); distinct from UIMessage which uses parts */
+type ChatMessage =
+  | { role: 'user'; content: string }
+  | { role: 'assistant'; content: string };
 import { buildSystemPrompt } from '@/lib/ai/system-prompt';
 import { loadCatalogContext } from '@/lib/ai/catalog-context';
 import {
@@ -18,7 +23,7 @@ export const maxDuration = 30;
 const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5.2';
 
 // In-memory conversation storage (for testing only)
-const conversations = new Map<string, Message[]>();
+const conversations = new Map<string, ChatMessage[]>();
 
 export async function POST(req: Request) {
   try {
@@ -32,7 +37,7 @@ export async function POST(req: Request) {
     const conversationId = conversation_id || `test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
     // Get or create conversation history
-    let messages: Message[] = [];
+    let messages: ChatMessage[] = [];
     if (!reset_context && conversations.has(conversationId)) {
       messages = conversations.get(conversationId)!;
     }
@@ -69,7 +74,7 @@ export async function POST(req: Request) {
         getLinkedExperiences,
         createBookingIntent,
       },
-      maxToolRoundtrips: 5,
+      stopWhen: stepCountIs(6),
       temperature: 0.4,
     });
 
@@ -79,17 +84,17 @@ export async function POST(req: Request) {
 
     for await (const chunk of result.fullStream) {
       if (chunk.type === 'text-delta') {
-        fullText += chunk.textDelta;
+        fullText += chunk.text;
       } else if (chunk.type === 'tool-call') {
         toolCalls.push({
           tool: chunk.toolName,
-          arguments: chunk.args,
+          arguments: chunk.input,
           toolCallId: chunk.toolCallId,
         });
       } else if (chunk.type === 'tool-result') {
         const toolCall = toolCalls.find(tc => tc.toolCallId === chunk.toolCallId);
         if (toolCall) {
-          toolCall.result = chunk.result;
+          toolCall.result = chunk.output;
         }
       }
     }
@@ -124,8 +129,8 @@ export async function POST(req: Request) {
       metadata: {
         model: CHAT_MODEL,
         tokens_used: usage?.totalTokens || 0,
-        prompt_tokens: usage?.promptTokens || 0,
-        completion_tokens: usage?.completionTokens || 0,
+          prompt_tokens: (usage as any)?.promptTokens || 0,
+          completion_tokens: (usage as any)?.completionTokens || 0,
         response_time_ms: responseTime,
         finish_reason: finishReason,
         tool_calls_count: toolCalls.length,

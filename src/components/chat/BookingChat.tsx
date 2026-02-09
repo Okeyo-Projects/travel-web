@@ -15,7 +15,6 @@ import {
   useState,
 } from "react";
 import { useChatContext } from "@/contexts/ChatContext";
-import { useAuth } from "@/hooks/use-auth";
 import {
   useConversation,
   useCreateConversation,
@@ -27,6 +26,20 @@ import { MessageList } from "./MessageList";
 
 interface BookingChatProps {
   initialConversationId?: string | null;
+}
+
+interface PublicAgentConfigResponse {
+  version_id: string | null;
+  fallback_language: string;
+  supported_languages: string[];
+  welcome_messages: Record<
+    string,
+    {
+      title: string;
+      description: string;
+    }
+  >;
+  suggested_prompts: Record<string, string[]>;
 }
 
 type StoredConversationMessage = Pick<UIMessage, "id" | "role" | "parts"> & {
@@ -104,6 +117,7 @@ function shouldPersistMessage(
   message: UIMessage,
   status: "submitted" | "streaming" | "ready" | "error",
 ): boolean {
+  const messageAny = message as any;
   if (message.role !== "assistant") return true;
   if (status !== "ready") return false;
 
@@ -111,15 +125,17 @@ function shouldPersistMessage(
     return false;
   }
 
-  const content = typeof message.content === "string" ? message.content : "";
+  const content =
+    typeof messageAny.content === "string" ? messageAny.content : "";
   const sanitizedParts = sanitizeMessageParts(message.parts);
   return hasRenderableAssistantContent(content, sanitizedParts);
 }
 
 function buildPersistedMessagePayload(message: UIMessage) {
+  const messageAny = message as any;
   const sanitizedParts = sanitizeMessageParts(message.parts);
   const contentFromMessage =
-    typeof message.content === "string" ? message.content.trim() : "";
+    typeof messageAny.content === "string" ? messageAny.content.trim() : "";
   const contentFromParts = extractTextFromParts(sanitizedParts);
   const content = contentFromMessage || contentFromParts;
 
@@ -131,7 +147,6 @@ function buildPersistedMessagePayload(message: UIMessage) {
 }
 
 export function BookingChat({ initialConversationId }: BookingChatProps) {
-  const { user } = useAuth();
   const {
     userLocation,
     setUserLocation,
@@ -144,6 +159,8 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [publicAgentConfig, setPublicAgentConfig] =
+    useState<PublicAgentConfigResponse | null>(null);
   const pathname = usePathname();
   const isSendingRef = useRef(false);
   const inFlightTextRef = useRef<string | null>(null);
@@ -165,10 +182,20 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     [],
   );
 
-  const { messages, status, sendMessage, setMessages } = useChat({
+  const { messages, status, sendMessage, setMessages } = (useChat as any)({
     transport,
     initialMessages: [],
   });
+
+  const browserLanguage = useMemo(() => {
+    if (!mounted || typeof navigator === "undefined") return null;
+
+    const language = navigator.language?.toLowerCase() || "";
+    if (language.startsWith("fr")) return "fr";
+    if (language.startsWith("ar")) return "ar";
+    if (language.startsWith("en")) return "en";
+    return null;
+  }, [mounted]);
 
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -197,7 +224,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     persistingMessageIds.current.clear();
 
     // Mark loaded messages as already persisted
-    loadedMessages.forEach((msg) => {
+    loadedMessages.forEach((msg: any) => {
       persistedMessageIds.current.add(msg.id);
     });
   }, [conversationData, setMessages]);
@@ -245,12 +272,39 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setMounted(true);
   }, []);
 
+  // Load public agent config for welcome messages and suggestions
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadPublicConfig = async () => {
+      try {
+        const response = await fetch("/api/ai/config/public", {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const data = (await response.json()) as PublicAgentConfigResponse;
+        if (isCancelled) return;
+        setPublicAgentConfig(data);
+      } catch (error) {
+        console.warn("Failed to load public agent config:", error);
+      }
+    };
+
+    void loadPublicConfig();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   // Persist new messages to database
   useEffect(() => {
     if (!activeConversationId || messages.length === 0) return;
 
     // Find messages that haven't been persisted yet
-    const messagesToPersist = messages.filter((message) => {
+    const messagesToPersist = messages.filter((message: any) => {
       if (persistedMessageIds.current.has(message.id)) return false;
       if (persistingMessageIds.current.has(message.id)) return false;
       return shouldPersistMessage(message, status);
@@ -259,7 +313,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     if (messagesToPersist.length === 0) return;
 
     // Persist each new message
-    messagesToPersist.forEach((message) => {
+    messagesToPersist.forEach((message: any) => {
       const payload = buildPersistedMessagePayload(message);
       persistingMessageIds.current.add(message.id);
 
@@ -302,8 +356,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       if (!currentConvId) {
         setIsCreatingConversation(true);
         const result = await createConversation.mutateAsync({
-          userId: user?.id,
-          clientId: !user ? clientId : undefined,
+          clientId: clientId || undefined,
           userLocation: userLocation || undefined,
         });
 
@@ -382,6 +435,25 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const showWelcome =
     messages.length === 0 && !activeConversationId && !isCreatingConversation;
 
+  const fallbackLanguage = publicAgentConfig?.fallback_language || "fr";
+  const supportedLanguagesRaw = publicAgentConfig?.supported_languages ?? [];
+  const supportedLanguages =
+    supportedLanguagesRaw.length > 0
+      ? supportedLanguagesRaw
+      : ["fr", "en", "ar"];
+  const effectiveLanguage =
+    browserLanguage && supportedLanguages.includes(browserLanguage)
+      ? browserLanguage
+      : fallbackLanguage;
+
+  const welcomeEntry =
+    publicAgentConfig?.welcome_messages?.[effectiveLanguage] ||
+    publicAgentConfig?.welcome_messages?.[fallbackLanguage];
+
+  const suggestedPrompts =
+    publicAgentConfig?.suggested_prompts?.[effectiveLanguage] ||
+    publicAgentConfig?.suggested_prompts?.[fallbackLanguage];
+
   return (
     <div className="flex flex-col h-full bg-background relative overflow-hidden">
       {/* Messages Area */}
@@ -398,6 +470,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
               <ChatWelcome
                 onSelectSuggestion={handleSuggestionClick}
                 disabled={isLoading || isCreatingConversation}
+                welcomeTitle={welcomeEntry?.title}
+                welcomeDescription={welcomeEntry?.description}
+                suggestedPrompts={suggestedPrompts}
               />
             </motion.div>
           ) : (

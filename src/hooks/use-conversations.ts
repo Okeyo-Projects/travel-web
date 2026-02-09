@@ -49,13 +49,24 @@ export function useConversations() {
 }
 
 export function useConversation(conversationId: string | null) {
+  const { clientId } = useChatContext();
+
   return useQuery({
-    queryKey: ["conversation", conversationId],
+    queryKey: ["conversation", conversationId, clientId],
     queryFn: async () => {
       if (!conversationId) return null;
 
+      const params = new URLSearchParams();
+      if (clientId) {
+        params.append("clientId", clientId);
+      }
+
+      const suffix = params.toString() ? `?${params.toString()}` : "";
+
       // Always fetch from database (API handles both authenticated and anonymous)
-      const response = await fetch(`/api/conversations/${conversationId}`);
+      const response = await fetch(
+        `/api/conversations/${conversationId}${suffix}`,
+      );
 
       if (!response.ok) throw new Error("Failed to load conversation");
 
@@ -76,7 +87,6 @@ export function useCreateConversation() {
 
   return useMutation({
     mutationFn: async (params: {
-      userId?: string;
       clientId?: string;
       userLocation?: LocationPayload;
     }) => {
@@ -98,13 +108,24 @@ export function useCreateConversation() {
 
 export function useArchiveConversation() {
   const queryClient = useQueryClient();
+  const { clientId } = useChatContext();
 
   return useMutation({
     mutationFn: async (conversationId: string) => {
+      const params = new URLSearchParams();
+      if (clientId) {
+        params.append("clientId", clientId);
+      }
+
+      const suffix = params.toString() ? `?${params.toString()}` : "";
+
       // Always use database (API handles both authenticated and anonymous)
-      const response = await fetch(`/api/conversations/${conversationId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/conversations/${conversationId}${suffix}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) throw new Error("Failed to archive conversation");
       return response.json();
@@ -117,6 +138,7 @@ export function useArchiveConversation() {
 
 export function useSaveMessage() {
   const queryClient = useQueryClient();
+  const { clientId } = useChatContext();
 
   return useMutation({
     mutationFn: async (params: {
@@ -124,10 +146,15 @@ export function useSaveMessage() {
       message: PersistedMessagePayload;
     }) => {
       const { conversationId, message } = params;
+      const query = new URLSearchParams();
+      if (clientId) {
+        query.append("clientId", clientId);
+      }
+      const suffix = query.toString() ? `?${query.toString()}` : "";
 
       // Always use database (API handles both authenticated and anonymous)
       const response = await fetch(
-        `/api/conversations/${conversationId}/messages`,
+        `/api/conversations/${conversationId}/messages${suffix}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

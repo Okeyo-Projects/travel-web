@@ -84,13 +84,14 @@ export function useCreateBooking() {
 
 export function useGetBookingQuote() {
     const supabase = createClient()
+    const supabaseAny = supabase as any
 
     return useMutation({
         mutationFn: async (input: BookingQuoteInput) => {
             // Use local session for user_id to ensure we catch the current user
             const { data: { session } } = await supabase.auth.getSession()
 
-            const { data, error } = await supabase.rpc('get_booking_quote', {
+            const { data, error } = await supabaseAny.rpc('get_booking_quote', {
                 p_experience_id: input.experienceId,
                 p_from_date: input.fromDate,
                 p_to_date: input.toDate,

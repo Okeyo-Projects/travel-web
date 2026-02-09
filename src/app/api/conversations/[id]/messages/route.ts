@@ -55,6 +55,47 @@ function createServiceRoleClientOrThrow() {
   return createServiceClient(supabaseUrl, serviceRoleKey);
 }
 
+async function resolveAuthorizedSupabase(
+  req: NextRequest,
+  conversationId: string,
+  userClient: Awaited<ReturnType<typeof createClient>>,
+  userId: string | null,
+) {
+  const userClientAny = userClient as any;
+
+  if (userId) {
+    const { data: userConversation, error: userError } = await userClientAny
+      .from("ai_conversations")
+      .select("id")
+      .eq("id", conversationId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (userError) throw userError;
+    if (userConversation) return userClient;
+  }
+
+  const { searchParams } = new URL(req.url);
+  const clientId = searchParams.get("clientId");
+  if (!clientId) return null;
+
+  const serviceClient = createServiceRoleClientOrThrow();
+  const serviceClientAny = serviceClient as any;
+  const { data: anonymousConversation, error: anonymousError } =
+    await serviceClientAny
+      .from("ai_conversations")
+      .select("id")
+      .eq("id", conversationId)
+      .eq("client_id", clientId)
+      .is("user_id", null)
+      .maybeSingle();
+
+  if (anonymousError) throw anonymousError;
+  if (!anonymousConversation) return null;
+
+  return serviceClient;
+}
+
 // POST /api/conversations/[id]/messages - Save message
 export async function POST(
   req: NextRequest,
@@ -70,8 +111,20 @@ export async function POST(
       data: { user },
     } = await userClient.auth.getUser();
 
-    // Use service role for anonymous users
-    const supabase = user ? userClient : createServiceRoleClientOrThrow();
+    const supabase = await resolveAuthorizedSupabase(
+      req,
+      conversationId,
+      userClient,
+      user?.id ?? null,
+    );
+    const supabaseAny = supabase as any;
+
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 },
+      );
+    }
 
     const sanitizedParts = sanitizeMessageParts(message.parts);
     const contentFromMessage =
@@ -79,7 +132,7 @@ export async function POST(
     const contentFromParts = extractTextFromParts(sanitizedParts);
     const content = contentFromMessage || contentFromParts || null;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAny
       .from("ai_messages")
       .insert({
         conversation_id: conversationId,
@@ -94,7 +147,7 @@ export async function POST(
     if (error) throw error;
 
     // Update conversation's updated_at timestamp
-    await supabase
+    await supabaseAny
       .from("ai_conversations")
       .update({ updated_at: new Date().toISOString() })
       .eq("id", conversationId);
