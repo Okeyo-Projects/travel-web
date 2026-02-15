@@ -10,7 +10,7 @@ interface RoomInfo {
   max_persons?: number;
 }
 
-interface ExperienceGridItem {
+export interface ExperienceGridItem {
   id: string;
   title: string;
   description?: string;
@@ -30,7 +30,7 @@ interface ExperienceGridItem {
   rooms?: RoomInfo[];
 }
 
-interface ExperienceCardsGridProps {
+export interface ExperienceCardsGridProps {
   experiences: ExperienceGridItem[];
   onSelectExperience?: (experienceId: string) => void;
   onBookExperience?: (experienceId: string) => void;

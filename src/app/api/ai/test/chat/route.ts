@@ -1,12 +1,12 @@
-import { openai } from '@ai-sdk/openai';
-import { stepCountIs, streamText } from 'ai';
+import { openai } from "@ai-sdk/openai";
+import { stepCountIs, streamText } from "ai";
 
 /** Simple message format for streamText (role + content); distinct from UIMessage which uses parts */
 type ChatMessage =
-  | { role: 'user'; content: string }
-  | { role: 'assistant'; content: string };
-import { buildSystemPrompt } from '@/lib/ai/system-prompt';
-import { loadCatalogContext } from '@/lib/ai/catalog-context';
+  | { role: "user"; content: string }
+  | { role: "assistant"; content: string };
+import { buildSystemPrompt } from "@/lib/ai/system-prompt";
+import { loadCatalogContext } from "@/lib/ai/catalog-context";
 import {
   searchExperiences,
   getExperienceDetails,
@@ -14,27 +14,37 @@ import {
   getExperiencePromos,
   validatePromoCode,
   findSimilar,
+  getExperienceOptionDetails,
   requestUserLocation,
   getLinkedExperiences,
   createBookingIntent,
-} from '@/lib/ai/tools';
+  offerQuickReplies,
+  selectRoomType,
+  suggestDateOptions,
+} from "@/lib/ai/tools";
 
 export const maxDuration = 30;
-const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5.2';
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || "gpt-5.2";
 
 // In-memory conversation storage (for testing only)
 const conversations = new Map<string, ChatMessage[]>();
+
+function supportsTemperature(model: string): boolean {
+  return !/^(gpt-5|o1|o3|o4)([-.:]|$)/i.test(model);
+}
 
 export async function POST(req: Request) {
   try {
     const { message, conversation_id, reset_context } = await req.json();
 
     if (!message) {
-      return Response.json({ error: 'Message is required' }, { status: 400 });
+      return Response.json({ error: "Message is required" }, { status: 400 });
     }
 
     // Generate or use existing conversation ID
-    const conversationId = conversation_id || `test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const conversationId =
+      conversation_id ||
+      `test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
     // Get or create conversation history
     let messages: ChatMessage[] = [];
@@ -44,12 +54,12 @@ export async function POST(req: Request) {
 
     // Add user message
     messages.push({
-      role: 'user',
+      role: "user",
       content: message,
     });
 
     // Build system prompt with today's date
-    const todayDate = new Date().toISOString().split('T')[0];
+    const todayDate = new Date().toISOString().split("T")[0];
     let systemPrompt = buildSystemPrompt(todayDate);
 
     // Load catalog context
@@ -73,26 +83,32 @@ export async function POST(req: Request) {
         requestUserLocation,
         getLinkedExperiences,
         createBookingIntent,
+        offerQuickReplies,
+        suggestDateOptions,
+        selectRoomType,
+        getExperienceOptionDetails,
       },
       stopWhen: stepCountIs(6),
-      temperature: 0.4,
+      ...(supportsTemperature(CHAT_MODEL) ? { temperature: 0.4 } : {}),
     });
 
     // Collect the full response
-    let fullText = '';
+    let fullText = "";
     const toolCalls: any[] = [];
 
     for await (const chunk of result.fullStream) {
-      if (chunk.type === 'text-delta') {
+      if (chunk.type === "text-delta") {
         fullText += chunk.text;
-      } else if (chunk.type === 'tool-call') {
+      } else if (chunk.type === "tool-call") {
         toolCalls.push({
           tool: chunk.toolName,
           arguments: chunk.input,
           toolCallId: chunk.toolCallId,
         });
-      } else if (chunk.type === 'tool-result') {
-        const toolCall = toolCalls.find(tc => tc.toolCallId === chunk.toolCallId);
+      } else if (chunk.type === "tool-result") {
+        const toolCall = toolCalls.find(
+          (tc) => tc.toolCallId === chunk.toolCallId,
+        );
         if (toolCall) {
           toolCall.result = chunk.output;
         }
@@ -107,7 +123,7 @@ export async function POST(req: Request) {
 
     // Add assistant response to conversation
     messages.push({
-      role: 'assistant',
+      role: "assistant",
       content: fullText,
     });
 
@@ -115,11 +131,13 @@ export async function POST(req: Request) {
     conversations.set(conversationId, messages);
 
     // Clean up tool calls (remove toolCallId, keep only necessary info)
-    const cleanedToolCalls = toolCalls.map(({ tool, arguments: args, result }) => ({
-      tool,
-      arguments: args,
-      result,
-    }));
+    const cleanedToolCalls = toolCalls.map(
+      ({ tool, arguments: args, result }) => ({
+        tool,
+        arguments: args,
+        result,
+      }),
+    );
 
     // Return complete response
     return Response.json({
@@ -129,21 +147,21 @@ export async function POST(req: Request) {
       metadata: {
         model: CHAT_MODEL,
         tokens_used: usage?.totalTokens || 0,
-          prompt_tokens: (usage as any)?.promptTokens || 0,
-          completion_tokens: (usage as any)?.completionTokens || 0,
+        prompt_tokens: (usage as any)?.promptTokens || 0,
+        completion_tokens: (usage as any)?.completionTokens || 0,
         response_time_ms: responseTime,
         finish_reason: finishReason,
         tool_calls_count: toolCalls.length,
       },
     });
   } catch (error) {
-    console.error('Test chat API error:', error);
+    console.error("Test chat API error:", error);
     return Response.json(
       {
-        error: 'Failed to process test chat request',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "Failed to process test chat request",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

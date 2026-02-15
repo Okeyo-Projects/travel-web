@@ -99,7 +99,7 @@ export function AuthModal() {
       password: signupPassword,
       options: {
         data: {
-          name: signupName.trim(),
+          display_name: signupName.trim(),
         },
       },
     })

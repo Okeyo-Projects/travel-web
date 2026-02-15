@@ -1,10 +1,26 @@
 import { tool } from 'ai';
 import { z } from 'zod';
+import { aiDebug } from '@/lib/ai/debug-log';
 import { createClient } from '@/lib/supabase/server';
 
-const getExperienceDetailsSchema = z.object({
-  experience_id: z.string().uuid().describe('UUID of the experience to get details for'),
-});
+const getExperienceDetailsSchema = z
+  .object({
+    experience_id: z
+      .string()
+      .uuid()
+      .optional()
+      .describe('UUID of the experience to get details for'),
+    experience_name: z
+      .string()
+      .min(2)
+      .max(160)
+      .optional()
+      .describe('Optional experience name/title hint to resolve the right ID'),
+  })
+  .refine(
+    (value) => Boolean(value.experience_id || value.experience_name),
+    'experience_id or experience_name is required',
+  );
 
 export const getExperienceDetails = tool({
   description: `Get comprehensive details about a specific experience including:
@@ -16,37 +32,117 @@ export const getExperienceDetails = tool({
 - Active promotions
 Use this when users want to know more about a specific experience.`,
   inputSchema: getExperienceDetailsSchema,
-  execute: async ({ experience_id }) => {
+  execute: async ({ experience_id, experience_name }) => {
     try {
       const supabase = await createClient();
       const db = supabase as any;
+      const requestTraceId = crypto.randomUUID().slice(0, 8);
+      const trimmedName =
+        typeof experience_name === 'string' ? experience_name.trim() : '';
 
-      // Fetch base experience with host info
-      const { data: experience, error: expError } = await db
-        .from('experiences')
-        .select(`
+      aiDebug('tool.getExperienceDetails', 'start', {
+        requestTraceId,
+        experience_id: experience_id || null,
+        experience_name: trimmedName || null,
+      });
+
+      const baseSelect = `
           *,
           host:hosts!experiences_host_id_fkey (
             id,
             name,
             bio,
-            profile_photo_url,
+            profile_photo_url:avatar_url,
             avg_rating,
             total_bookings,
-            joined_at
+            joined_at:created_at
           )
-        `)
-        .eq('id', experience_id)
-        .eq('status', 'published')
-        .is('deleted_at', null)
-        .single();
+        `;
 
-      if (expError || !experience) {
+      let experience: any = null;
+      let resolutionSource: 'experience_id' | 'experience_name' | null = null;
+
+      // Fetch base experience with host info
+      if (experience_id) {
+        const { data: byId, error: byIdError } = await db
+          .from('experiences')
+          .select(baseSelect)
+          .eq('id', experience_id)
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .single();
+
+        if (byIdError || !byId) {
+          const { data: rawExperienceById } = await db
+            .from('experiences')
+            .select('id, title, status, deleted_at, type, city, region')
+            .eq('id', experience_id)
+            .maybeSingle();
+
+          aiDebug('tool.getExperienceDetails', 'id_lookup_failed', {
+            requestTraceId,
+            experience_id,
+            dbError: byIdError?.message || null,
+            rawExperienceById,
+          });
+        } else {
+          experience = byId;
+          resolutionSource = 'experience_id';
+        }
+      }
+
+      if (!experience && trimmedName.length > 0) {
+        const { data: byName, error: byNameError } = await db
+          .from('experiences')
+          .select(baseSelect)
+          .eq('status', 'published')
+          .is('deleted_at', null)
+          .ilike('title', `%${trimmedName}%`)
+          .order('avg_rating', { ascending: false, nullsFirst: false })
+          .order('reviews_count', { ascending: false, nullsFirst: false })
+          .limit(5);
+
+        if (byNameError || !byName || byName.length === 0) {
+          aiDebug('tool.getExperienceDetails', 'name_lookup_failed', {
+            requestTraceId,
+            experience_name: trimmedName,
+            dbError: byNameError?.message || null,
+          });
+        } else {
+          experience = byName[0];
+          resolutionSource = 'experience_name';
+          aiDebug('tool.getExperienceDetails', 'name_lookup_resolved', {
+            requestTraceId,
+            experience_name: trimmedName,
+            matchedExperienceId: experience.id,
+            matchedExperienceTitle: experience.title,
+            candidates: byName.map((item: any) => ({
+              id: item.id,
+              title: item.title,
+            })),
+          });
+        }
+      }
+
+      if (!experience) {
+        aiDebug('tool.getExperienceDetails', 'not_found', {
+          requestTraceId,
+          experience_id: experience_id || null,
+          experience_name: trimmedName || null,
+        });
         return {
           success: false,
           error: 'Experience not found',
         };
       }
+
+      const resolvedExperienceId = experience.id as string;
+      aiDebug('tool.getExperienceDetails', 'resolved_experience', {
+        requestTraceId,
+        resolvedExperienceId,
+        title: experience.title,
+        resolutionSource,
+      });
 
       // Fetch amenities
       const { data: amenities } = await db
@@ -59,7 +155,7 @@ Use this when users want to know more about a specific experience.`,
             icon
           )
         `)
-        .eq('experience_id', experience_id);
+        .eq('experience_id', resolvedExperienceId);
 
       // Fetch included services
       const { data: servicesIncluded } = await db
@@ -72,7 +168,7 @@ Use this when users want to know more about a specific experience.`,
           ),
           notes
         `)
-        .eq('experience_id', experience_id);
+        .eq('experience_id', resolvedExperienceId);
 
       // Fetch excluded services
       const { data: servicesExcluded } = await db
@@ -85,7 +181,7 @@ Use this when users want to know more about a specific experience.`,
           ),
           notes
         `)
-        .eq('experience_id', experience_id);
+        .eq('experience_id', resolvedExperienceId);
 
       // Fetch type-specific details
       let typeSpecificData: any = {};
@@ -94,13 +190,13 @@ Use this when users want to know more about a specific experience.`,
         const { data: lodgingData } = await db
           .from('experiences_lodging')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .single();
 
         const { data: roomTypes } = await db
           .from('lodging_room_types')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .is('deleted_at', null)
           .order('price_cents', { ascending: true });
 
@@ -122,20 +218,20 @@ Use this when users want to know more about a specific experience.`,
         const { data: tripData } = await db
           .from('experiences_trip')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .single();
 
         const { data: itinerary } = await db
           .from('trip_itinerary')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .order('day_number', { ascending: true })
           .order('order_index', { ascending: true });
 
         const { data: departures } = await db
           .from('trip_departures')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .eq('status', 'scheduled')
           .gte('depart_at', new Date().toISOString())
           .order('depart_at', { ascending: true })
@@ -166,13 +262,13 @@ Use this when users want to know more about a specific experience.`,
         const { data: activityData } = await db
           .from('experiences_trip')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .single();
 
         const { data: sessions } = await db
           .from('activity_sessions')
           .select('*')
-          .eq('experience_id', experience_id)
+          .eq('experience_id', resolvedExperienceId)
           .eq('status', 'scheduled')
           .gte('start_at', new Date().toISOString())
           .order('start_at', { ascending: true })
@@ -208,17 +304,38 @@ Use this when users want to know more about a specific experience.`,
             profile_photo_url
           )
         `)
-        .eq('experience_id', experience_id)
+        .eq('experience_id', resolvedExperienceId)
         .eq('status', 'published')
         .order('created_at', { ascending: false })
         .limit(5);
 
       // Get active promotions
       const { data: promoInfo } = await db
-        .rpc('experience_active_promos', { exp_id: experience_id });
+        .rpc('experience_active_promos', { exp_id: resolvedExperienceId });
+
+      const roomCount = Array.isArray(typeSpecificData.room_types)
+        ? typeSpecificData.room_types.length
+        : 0;
+      const departureCount = Array.isArray(typeSpecificData.upcoming_departures)
+        ? typeSpecificData.upcoming_departures.length
+        : 0;
+      const sessionCount = Array.isArray(typeSpecificData.upcoming_sessions)
+        ? typeSpecificData.upcoming_sessions.length
+        : 0;
+
+      aiDebug('tool.getExperienceDetails', 'success', {
+        requestTraceId,
+        resolvedExperienceId,
+        experienceType: experience.type,
+        roomCount,
+        departureCount,
+        sessionCount,
+        reviewCount: Array.isArray(reviews) ? reviews.length : 0,
+      });
 
       return {
         success: true,
+        resolved_with: resolutionSource,
         experience: {
           id: experience.id,
           title: experience.title,
@@ -250,6 +367,9 @@ Use this when users want to know more about a specific experience.`,
         },
       };
     } catch (error) {
+      aiDebug('tool.getExperienceDetails', 'exception', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       console.error('Get experience details error:', error);
       return {
         success: false,

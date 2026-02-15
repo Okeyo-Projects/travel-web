@@ -482,7 +482,11 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
               animate={{ opacity: 1 }}
               className="min-h-full flex flex-col"
             >
-              <MessageList messages={messages} isLoading={isLoading} />
+              <MessageList
+                messages={messages}
+                isLoading={isLoading}
+                onQuickReply={(reply) => void sendUserMessage(reply)}
+              />
             </motion.div>
           )}
         </AnimatePresence>

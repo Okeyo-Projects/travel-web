@@ -9,7 +9,11 @@ export type AgentToolName =
   | "findSimilar"
   | "requestUserLocation"
   | "getLinkedExperiences"
-  | "createBookingIntent";
+  | "createBookingIntent"
+  | "offerQuickReplies"
+  | "suggestDateOptions"
+  | "selectRoomType"
+  | "getExperienceOptionDetails";
 
 export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
   "searchExperiences",
@@ -21,6 +25,10 @@ export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
   "requestUserLocation",
   "getLinkedExperiences",
   "createBookingIntent",
+  "offerQuickReplies",
+  "suggestDateOptions",
+  "selectRoomType",
+  "getExperienceOptionDetails",
 ];
 
 export type AgentWelcomeMessages = Record<
@@ -151,7 +159,8 @@ function sanitizeWelcomeMessages(input: unknown): AgentWelcomeMessages {
         ? value.title.trim()
         : merged[language]?.title || "";
     const description =
-      typeof value.description === "string" && value.description.trim().length > 0
+      typeof value.description === "string" &&
+      value.description.trim().length > 0
         ? value.description.trim()
         : merged[language]?.description || "";
 
@@ -310,13 +319,18 @@ export async function loadAgentRuntimeConfig({
       configId: configRow.id as string,
       versionId: typeof versionRow.id === "string" ? versionRow.id : null,
       model:
-        typeof versionRow.model === "string" && versionRow.model.trim().length > 0
+        typeof versionRow.model === "string" &&
+        versionRow.model.trim().length > 0
           ? versionRow.model
           : fallback.model,
-      temperature: sanitizeNumber(versionRow.temperature, fallback.temperature, {
-        min: 0,
-        max: 2,
-      }),
+      temperature: sanitizeNumber(
+        versionRow.temperature,
+        fallback.temperature,
+        {
+          min: 0,
+          max: 2,
+        },
+      ),
       maxSteps: sanitizeNumber(versionRow.max_steps, fallback.maxSteps, {
         min: 1,
         max: 8,

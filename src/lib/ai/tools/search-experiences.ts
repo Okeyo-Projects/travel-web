@@ -196,7 +196,7 @@ async function formatResults(results: any[], db: any) {
   if (lodgingIds.length > 0) {
     const { data: rooms } = await db
       .from('lodging_room_types')
-      .select('experience_id, name, room_type, price_cents, capacity_beds, max_persons')
+      .select('id, experience_id, name, room_type, price_cents, capacity_beds, max_persons')
       .in('experience_id', lodgingIds)
       .is('deleted_at', null)
       .order('price_cents', { ascending: true });
@@ -206,6 +206,7 @@ async function formatResults(results: any[], db: any) {
       for (const r of rooms) {
         if (!roomsByExp[r.experience_id]) roomsByExp[r.experience_id] = [];
         roomsByExp[r.experience_id].push({
+          room_type_id: r.id,
           name: r.name || r.room_type,
           type: r.room_type,
           price_mad: r.price_cents ? r.price_cents / 100 : 0,
