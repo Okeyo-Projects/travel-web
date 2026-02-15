@@ -505,6 +505,8 @@ export function MessageList({
         <MessageItem
           key={message.id}
           message={message}
+          isLastMessage={message.id === messages.at(-1)?.id}
+          isLoading={isLoading}
           onQuickReply={onQuickReply}
         />
       ))}
@@ -527,9 +529,13 @@ export function MessageList({
 
 function MessageItem({
   message,
+  isLastMessage,
+  isLoading,
   onQuickReply,
 }: {
   message: Message;
+  isLastMessage: boolean;
+  isLoading: boolean;
   onQuickReply?: (reply: string) => void;
 }) {
   const isUser = message.role === "user";
@@ -553,6 +559,42 @@ function MessageItem({
 
   const parsedContent = extractAssistantBlocks(message);
   if (parsedContent.length === 0) return null;
+  const beforeMessageComponents = new Set<string>([
+    "experience_cards",
+    "experience_details",
+    "option_details",
+  ]);
+  const afterMessageComponents = new Set<string>([
+    "quick_replies",
+    "date_options",
+    "room_type_selector",
+    "location_request",
+    "auth_required",
+  ]);
+  const textBlocks = parsedContent.filter((block) => block.type === "text");
+  const beforeMessageUIBlocks = parsedContent.filter(
+    (block) =>
+      block.type === "ui" &&
+      beforeMessageComponents.has(block.content.component),
+  );
+  const afterMessageUIBlocks = parsedContent.filter(
+    (block) =>
+      block.type === "ui" &&
+      afterMessageComponents.has(block.content.component),
+  );
+  const uncategorizedUIBlocks = parsedContent.filter(
+    (block) =>
+      block.type === "ui" &&
+      !beforeMessageComponents.has(block.content.component) &&
+      !afterMessageComponents.has(block.content.component),
+  );
+  const deferAfterMessageBlocks = isLoading && isLastMessage;
+  const orderedContent = [
+    ...beforeMessageUIBlocks,
+    ...uncategorizedUIBlocks,
+    ...textBlocks,
+    ...(deferAfterMessageBlocks ? [] : afterMessageUIBlocks),
+  ];
 
   return (
     <motion.div
@@ -565,7 +607,7 @@ function MessageItem({
       </div>
 
       <div className="flex-1 space-y-4 overflow-hidden">
-        {parsedContent.map((block) => {
+        {orderedContent.map((block) => {
           if (block.type === "text") {
             return (
               <div
@@ -903,7 +945,6 @@ function UIBlock({
       if (!isQuickRepliesData(data)) return null;
       return (
         <QuickReplies
-          question={data.question}
           options={data.options}
           allowFreeText={data.allow_free_text}
           disabled={!onQuickReply}

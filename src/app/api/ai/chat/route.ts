@@ -76,6 +76,17 @@ function supportsTemperature(model: string): boolean {
   return !/^(gpt-5|o1|o3|o4)([-.:]|$)/i.test(model);
 }
 
+function isTruthyEnvVar(value: string | undefined): boolean {
+  if (!value) return false;
+  const normalized = value.toLowerCase().trim();
+  return (
+    normalized === "1" ||
+    normalized === "true" ||
+    normalized === "yes" ||
+    normalized === "on"
+  );
+}
+
 function extractRecentEntityContext(rawMessages: unknown[]): {
   promptBlock: string;
   roomHintsCount: number;
@@ -409,7 +420,31 @@ export async function POST(req: Request) {
       });
     }
 
-    // Runtime safety override for specific option detail requests.
+    const includeUnsureGreetingOption = isTruthyEnvVar(
+      process.env.AI_GREETING_INCLUDE_UNSURE_OPTION,
+    );
+    const greetingOptions = includeUnsureGreetingOption
+      ? ["Montagne", "Plage", "Désert", "Je ne sais pas encore"]
+      : ["Montagne", "Plage", "Désert"];
+    aiDebug("chat.route", "greeting_quick_replies_config", {
+      requestId,
+      includeUnsureGreetingOption,
+      greetingOptions,
+    });
+
+    const frenchGreetingTemplate = [
+      "Salut ! Bienvenue sur OKEYO Travel.",
+      "Je suis là pour t'aider à t'évader autrement au Maroc : des auberges pleines de charme, des expériences locales, et des endroits calmes loin de la foule.",
+      "Pour le moment, on te fait découvrir : Chefchaouen, Imlil, Ouirgane, Lalla Takerkoust, Agafay et Essaouira.",
+      "Et si tu ne sais pas encore où aller, aucun souci.",
+      "Dis-moi simplement ce qui t'attire le plus.",
+      "Choisis ce qui te parle le plus :",
+    ].join("\\n");
+
+    // Runtime safety overrides.
+    systemPrompt += `\n\n## CRITICAL GREETING QUICK REPLIES RULE\nWhen user sends a greeting (hello/bonjour/salut/marhba/hi/hey), do not call searchExperiences.\nCall offerQuickReplies with exactly these options: ${greetingOptions
+      .map((option) => `"${option}"`)
+      .join(", ")}.\nIf greeting is in French, use exactly this welcome text before the quick replies:\n${frenchGreetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
     systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room, departure, or session, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room/session/departure details without attempting the relevant tool call first.`;
     systemPrompt += `\n\n## CRITICAL EXPERIENCE DETAIL RULE\nWhen the user asks details about a specific experience by name, resolve the exact experience_id from recent tool outputs.\nIf no reliable ID is available, call searchExperiences(query=user wording, limit=4) first, then call getExperienceDetails with the returned ID.\nNever claim "experience not found" without trying that fallback path.`;
 
