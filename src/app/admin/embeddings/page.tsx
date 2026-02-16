@@ -1,12 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { CheckCircle, Loader2, Play, RefreshCw, XCircle } from 'lucide-react';
-import type { PostgrestError } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/client';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { PostgrestError } from "@supabase/supabase-js";
+import { CheckCircle, Loader2, Play, RefreshCw, XCircle } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
 
 interface EmbeddingStats {
   total_experiences: number;
@@ -45,14 +51,14 @@ export default function EmbeddingsAdminPage() {
       const supabase = createClient();
       const rpc = supabase.rpc as unknown as (
         fn: string,
-        args?: Record<string, unknown>
+        args?: Record<string, unknown>,
       ) => Promise<{ data: unknown; error: PostgrestError | null }>;
-      const { data, error } = await rpc('get_embedding_stats');
-      
+      const { data, error } = await rpc("get_embedding_stats");
+
       if (error) throw error;
       setStats(data as EmbeddingStats);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error("Error fetching stats:", error);
     } finally {
       setIsLoadingStats(false);
     }
@@ -61,33 +67,35 @@ export default function EmbeddingsAdminPage() {
   const generateEmbeddings = async (options: EmbeddingGenerateOptions = {}) => {
     setIsGenerating(true);
     setLastResult(null);
-    
+
     try {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-embeddings`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(options),
-        }
+        },
       );
 
       const result = (await response.json()) as EmbeddingRunResult;
       setLastResult(result);
-      
+
       // Refresh stats after generation
       await fetchStats();
     } catch (error) {
-      console.error('Error generating embeddings:', error);
+      console.error("Error generating embeddings:", error);
       setLastResult({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       });
     } finally {
       setIsGenerating(false);
@@ -110,7 +118,9 @@ export default function EmbeddingsAdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Embedding Statistics</CardTitle>
-                <CardDescription>Current status of experience embeddings</CardDescription>
+                <CardDescription>
+                  Current status of experience embeddings
+                </CardDescription>
               </div>
               <Button
                 variant="outline"
@@ -130,24 +140,34 @@ export default function EmbeddingsAdminPage() {
             {stats ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Total Experiences</p>
-                  <p className="text-2xl font-bold">{stats.total_experiences}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Experiences
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {stats.total_experiences}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">With Embeddings</p>
+                  <p className="text-sm text-muted-foreground">
+                    With Embeddings
+                  </p>
                   <p className="text-2xl font-bold text-green-600">
                     {stats.with_embeddings}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Without Embeddings</p>
+                  <p className="text-sm text-muted-foreground">
+                    Without Embeddings
+                  </p>
                   <p className="text-2xl font-bold text-orange-600">
                     {stats.without_embeddings}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Completion</p>
-                  <p className="text-2xl font-bold">{stats.percentage_complete}%</p>
+                  <p className="text-2xl font-bold">
+                    {stats.percentage_complete}%
+                  </p>
                 </div>
               </div>
             ) : (
@@ -159,7 +179,7 @@ export default function EmbeddingsAdminPage() {
                       Loading...
                     </>
                   ) : (
-                    <>Load Statistics</>
+                    "Load Statistics"
                   )}
                 </Button>
               </div>
@@ -189,7 +209,7 @@ export default function EmbeddingsAdminPage() {
                 )}
                 Generate 10
               </Button>
-              
+
               <Button
                 onClick={() => generateEmbeddings({ maxExperiences: 50 })}
                 disabled={isGenerating}
@@ -203,7 +223,7 @@ export default function EmbeddingsAdminPage() {
                 )}
                 Generate 50
               </Button>
-              
+
               <Button
                 onClick={() => generateEmbeddings({})}
                 disabled={isGenerating}
@@ -223,7 +243,9 @@ export default function EmbeddingsAdminPage() {
               <div className="bg-muted p-4 rounded-lg">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Generating embeddings... This may take a few minutes.</span>
+                  <span>
+                    Generating embeddings... This may take a few minutes.
+                  </span>
                 </div>
               </div>
             )}
@@ -255,10 +277,14 @@ export default function EmbeddingsAdminPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Processed</p>
-                      <p className="text-xl font-semibold">{lastResult.processed}</p>
+                      <p className="text-xl font-semibold">
+                        {lastResult.processed}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Successful</p>
+                      <p className="text-sm text-muted-foreground">
+                        Successful
+                      </p>
                       <p className="text-xl font-semibold text-green-600">
                         {lastResult.successful}
                       </p>
@@ -275,12 +301,14 @@ export default function EmbeddingsAdminPage() {
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Details:</p>
                       <div className="max-h-60 overflow-y-auto space-y-1">
-                        {lastResult.results.map((result, index) => (
+                        {lastResult.results.map((result) => (
                           <div
-                            key={index}
+                            key={`${result.title}-${result.success}`}
                             className="flex items-center justify-between p-2 bg-muted rounded text-sm"
                           >
-                            <span className="truncate flex-1">{result.title}</span>
+                            <span className="truncate flex-1">
+                              {result.title}
+                            </span>
                             {result.success ? (
                               <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
                             ) : (
@@ -309,14 +337,20 @@ export default function EmbeddingsAdminPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              Vector embeddings enable semantic search, allowing the AI to understand
-              the meaning of experiences rather than just matching keywords.
+              Vector embeddings enable semantic search, allowing the AI to
+              understand the meaning of experiences rather than just matching
+              keywords.
             </p>
             <ul className="list-disc list-inside space-y-1 mt-2">
-              <li>Embeddings are generated using OpenAI's text-embedding-3-small model</li>
+              <li>
+                Embeddings are generated using OpenAI's text-embedding-3-small
+                model
+              </li>
               <li>Each embedding is a 1536-dimensional vector</li>
               <li>Automatic cron job runs daily at 2 AM UTC</li>
-              <li>Embeddings are regenerated when experience content changes</li>
+              <li>
+                Embeddings are regenerated when experience content changes
+              </li>
             </ul>
           </CardContent>
         </Card>

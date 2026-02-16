@@ -2,8 +2,10 @@
 
 import { MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
+import { UserMenu } from "@/components/site/UserMenu";
 import { Button } from "@/components/ui/button";
 import {
   SidebarInset,
@@ -12,9 +14,11 @@ import {
 } from "@/components/ui/sidebar";
 import { ChatProvider } from "@/contexts/ChatContext";
 import { useAuth } from "@/hooks/use-auth";
+import { localizeHref } from "@/lib/routing/locale-path";
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
-  const { user, loading, openAuthModal, signOut } = useAuth();
+  const { user, loading, openAuthModal } = useAuth();
+  const pathname = usePathname();
 
   return (
     <ChatProvider>
@@ -30,19 +34,19 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-2">
               <div className="hidden items-center gap-2 md:flex">
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/collections">Collections</Link>
+                  <Link href={localizeHref("/collections", pathname)}>
+                    Collections
+                  </Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/explore">Explore</Link>
+                  <Link href={localizeHref("/explore", pathname)}>Explore</Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
-                  <Link href="/offers">Offres</Link>
+                  <Link href={localizeHref("/offers", pathname)}>Offres</Link>
                 </Button>
               </div>
               {user ? (
-                <Button variant="outline" size="sm" onClick={() => signOut()}>
-                  Logout
-                </Button>
+                <UserMenu variant="light" />
               ) : (
                 <Button
                   variant="default"

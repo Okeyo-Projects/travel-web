@@ -10,14 +10,14 @@ import {
   checkAvailability,
   createBookingIntent,
   findSimilar,
-  getExperienceOptionDetails,
   getExperienceDetails,
+  getExperienceOptionDetails,
   getExperiencePromos,
   getLinkedExperiences,
   offerQuickReplies,
-  selectRoomType,
   requestUserLocation,
   searchExperiences,
+  selectRoomType,
   suggestDateOptions,
   validatePromoCode,
 } from "@/lib/ai/tools";
@@ -114,11 +114,14 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
       const rawPart = message.parts[j];
       if (!isRecord(rawPart)) continue;
       if (rawPart.state !== "output-available") continue;
-      if (!isRecord(rawPart.output) || rawPart.output.success !== true) continue;
+      if (!isRecord(rawPart.output) || rawPart.output.success !== true)
+        continue;
 
       if (rawPart.type === "tool-selectRoomType") {
         const output = rawPart.output;
-        const experience = isRecord(output.experience) ? output.experience : null;
+        const experience = isRecord(output.experience)
+          ? output.experience
+          : null;
         const experienceId =
           experience && typeof experience.id === "string" ? experience.id : "";
         const experienceTitle =
@@ -165,7 +168,9 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
 
       if (rawPart.type === "tool-getExperienceDetails") {
         const output = rawPart.output;
-        const experience = isRecord(output.experience) ? output.experience : null;
+        const experience = isRecord(output.experience)
+          ? output.experience
+          : null;
         const experienceId =
           experience && typeof experience.id === "string" ? experience.id : "";
         const experienceTitle =
@@ -238,7 +243,9 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
             roomHints.push({
               experienceId: result.id,
               experienceTitle:
-                typeof result.title === "string" ? result.title : "Unknown lodging",
+                typeof result.title === "string"
+                  ? result.title
+                  : "Unknown lodging",
               roomTypeId: room.room_type_id,
               roomName: room.name,
             });
@@ -276,11 +283,7 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
     };
   }
 
-  const lines = [
-    "",
-    "",
-    "## RECENT ENTITY CONTEXT",
-  ];
+  const lines = ["", "", "## RECENT ENTITY CONTEXT"];
 
   if (dedupedExperiences.length > 0) {
     lines.push(
@@ -333,7 +336,8 @@ export async function POST(req: Request) {
     aiDebug("chat.route", "request_received", {
       requestId,
       sessionId: typeof sessionId === "string" ? sessionId : null,
-      configVersionId: typeof configVersionId === "string" ? configVersionId : null,
+      configVersionId:
+        typeof configVersionId === "string" ? configVersionId : null,
       rawMessagesCount: Array.isArray(messages) ? messages.length : 0,
       dedupedMessagesCount: safeMessages.length,
     });
@@ -420,11 +424,14 @@ export async function POST(req: Request) {
       });
     }
 
-    const includeUnsureGreetingOption = isTruthyEnvVar(
-      process.env.AI_GREETING_INCLUDE_UNSURE_OPTION,
-    );
+    const configuredGreetingUnsureOption =
+      process.env.AI_GREETING_INCLUDE_UNSURE_OPTION;
+    const includeUnsureGreetingOption =
+      typeof configuredGreetingUnsureOption === "string"
+        ? isTruthyEnvVar(configuredGreetingUnsureOption)
+        : true;
     const greetingOptions = includeUnsureGreetingOption
-      ? ["Montagne", "Plage", "Désert", "Je ne sais pas encore"]
+      ? ["Montagne", "Plage", "Désert", "Je ne sais pas"]
       : ["Montagne", "Plage", "Désert"];
     aiDebug("chat.route", "greeting_quick_replies_config", {
       requestId,
@@ -444,7 +451,10 @@ export async function POST(req: Request) {
     // Runtime safety overrides.
     systemPrompt += `\n\n## CRITICAL GREETING QUICK REPLIES RULE\nWhen user sends a greeting (hello/bonjour/salut/marhba/hi/hey), do not call searchExperiences.\nCall offerQuickReplies with exactly these options: ${greetingOptions
       .map((option) => `"${option}"`)
-      .join(", ")}.\nIf greeting is in French, use exactly this welcome text before the quick replies:\n${frenchGreetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
+      .join(
+        ", ",
+      )}.\nIf greeting is in French, use exactly this welcome text before the quick replies:\n${frenchGreetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
+    systemPrompt += `\n\n## CRITICAL DESTINATION CLARIFICATION RULE\nWhen user asks for a type or vibe without city/region (examples: "je veux une auberge", "je veux un endroit calme"), do NOT call searchExperiences yet unless the user explicitly asks for cross-region suggestions.\nFirst call offerQuickReplies to clarify destination or ambiance with concise options such as: "Marrakech", "Chefchaouen", "Atlas (Imlil/Ouirgane)", "Essaouira (Plage)", "Agafay (Désert)", "Je ne sais pas".\nAfter user chooses, call searchExperiences with the chosen context.`;
     systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room, departure, or session, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room/session/departure details without attempting the relevant tool call first.`;
     systemPrompt += `\n\n## CRITICAL EXPERIENCE DETAIL RULE\nWhen the user asks details about a specific experience by name, resolve the exact experience_id from recent tool outputs.\nIf no reliable ID is available, call searchExperiences(query=user wording, limit=4) first, then call getExperienceDetails with the returned ID.\nNever claim "experience not found" without trying that fallback path.`;
 
@@ -471,7 +481,9 @@ export async function POST(req: Request) {
     const result = streamText({
       model: openai(agentConfig.model),
       system: systemPrompt,
-      messages: await convertToModelMessages(safeMessages as any),
+      messages: await convertToModelMessages(
+        safeMessages as Parameters<typeof convertToModelMessages>[0],
+      ),
       tools: effectiveTools,
       stopWhen: stepCountIs(agentConfig.maxSteps),
       ...(canSetTemperature ? { temperature: agentConfig.temperature } : {}),
@@ -490,8 +502,15 @@ export async function POST(req: Request) {
           requestId,
           finishReason,
           totalTokens: usage?.totalTokens ?? null,
-          promptTokens: (usage as any)?.promptTokens ?? null,
-          completionTokens: (usage as any)?.completionTokens ?? null,
+          promptTokens:
+            (usage as (typeof usage & { promptTokens?: number }) | undefined)
+              ?.promptTokens ?? null,
+          completionTokens:
+            (
+              usage as
+                | (typeof usage & { completionTokens?: number })
+                | undefined
+            )?.completionTokens ?? null,
         });
       },
     });

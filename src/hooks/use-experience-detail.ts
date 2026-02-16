@@ -1,22 +1,22 @@
-import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
-import { resolveStorageUrl } from '@/utils/functions';
-import type { Database } from '@/types/supabase';
+import { useQuery } from "@tanstack/react-query";
+import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { createClient } from "@/lib/supabase/client";
 import type {
-  ExperienceDetail,
-  SupabaseExperienceRecord,
-  ExperienceMedia,
-  ExperienceHost,
   ExperienceAmenity,
-  ExperienceService,
-  ExperienceLodging,
-  ExperienceTrip,
-  ExperienceRoom,
-  ExperienceMediaRecord,
   ExperienceAmenityRecord,
-  ExperienceServiceRecord,
+  ExperienceDetail,
+  ExperienceHost,
+  ExperienceLodging,
   ExperienceLodgingRecord,
-} from '@/types/experience-detail';
+  ExperienceMedia,
+  ExperienceMediaRecord,
+  ExperienceRoom,
+  ExperienceService,
+  ExperienceServiceRecord,
+  ExperienceTrip,
+  SupabaseExperienceRecord,
+} from "@/types/experience-detail";
+import { resolveStorageUrl } from "@/utils/functions";
 
 const SELECT_EXPERIENCE_DETAIL = `
   id,
@@ -173,21 +173,25 @@ const SELECT_EXPERIENCE_DETAIL = `
 
 // Helper functions for parsing
 function extractThumbnailFromMetadata(metadata: any): string | null {
-  if (!metadata || typeof metadata !== 'object') {
+  if (!metadata || typeof metadata !== "object") {
     return null;
   }
 
   const record = metadata as Record<string, unknown>;
   const candidate =
-    (typeof record['thumbnail_path'] === 'string' && (record['thumbnail_path'] as string)) ||
-    (typeof record['thumbnailUrl'] === 'string' && (record['thumbnailUrl'] as string)) ||
-    (typeof record['thumbnail'] === 'string' && (record['thumbnail'] as string)) ||
+    (typeof record.thumbnail_path === "string" &&
+      (record.thumbnail_path as string)) ||
+    (typeof record.thumbnailUrl === "string" &&
+      (record.thumbnailUrl as string)) ||
+    (typeof record.thumbnail === "string" && (record.thumbnail as string)) ||
     null;
 
   return candidate;
 }
 
-function parseMedia(record: ExperienceMediaRecord[] | null | undefined): ExperienceMedia[] {
+function parseMedia(
+  record: ExperienceMediaRecord[] | null | undefined,
+): ExperienceMedia[] {
   if (!record?.length) {
     return [];
   }
@@ -201,7 +205,7 @@ function parseMedia(record: ExperienceMediaRecord[] | null | undefined): Experie
       const hlsUrl = asset?.hls_playlist_url
         ? resolveStorageUrl(asset.hls_playlist_url)
         : null;
-      const kind = asset?.kind ?? 'photo';
+      const kind = asset?.kind ?? "photo";
       const durationSeconds = asset?.duration_seconds ?? null;
 
       return {
@@ -240,7 +244,9 @@ function parseHost(host: any | null | undefined): ExperienceHost | null {
   };
 }
 
-function parseAmenities(records: ExperienceAmenityRecord[] | null | undefined): ExperienceAmenity[] {
+function parseAmenities(
+  records: ExperienceAmenityRecord[] | null | undefined,
+): ExperienceAmenity[] {
   if (!records?.length) {
     return [];
   }
@@ -262,7 +268,10 @@ function parseAmenities(records: ExperienceAmenityRecord[] | null | undefined): 
     .filter(Boolean) as ExperienceAmenity[];
 }
 
-function parseServices(records: ExperienceServiceRecord[] | null | undefined, type: 'included' | 'excluded'): ExperienceService[] {
+function parseServices(
+  records: ExperienceServiceRecord[] | null | undefined,
+  type: "included" | "excluded",
+): ExperienceService[] {
   if (!records?.length) {
     return [];
   }
@@ -290,7 +299,7 @@ function normalizeSingle<T>(value: T | T[] | null | undefined): T | null {
   if (!value) {
     return null;
   }
-  return Array.isArray(value) ? value[0] ?? null : value;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 function normalizeArray<T>(value: T | T[] | null | undefined): T[] {
@@ -301,8 +310,12 @@ function normalizeArray<T>(value: T | T[] | null | undefined): T[] {
 }
 
 function parseLodging(
-  lodgingRecords: ExperienceLodgingRecord | ExperienceLodgingRecord[] | null | undefined,
-  roomRecords: any[] | null | undefined
+  lodgingRecords:
+    | ExperienceLodgingRecord
+    | ExperienceLodgingRecord[]
+    | null
+    | undefined,
+  roomRecords: any[] | null | undefined,
 ): ExperienceLodging | null {
   const lodging = normalizeSingle(lodgingRecords);
   if (!lodging) {
@@ -314,10 +327,15 @@ function parseLodging(
       Array.isArray(room.photos) && room.photos.length
         ? room.photos
             .map((path: string) => resolveStorageUrl(path))
-            .filter((url: string | null): url is string => typeof url === 'string' && url.length > 0)
+            .filter(
+              (url: string | null): url is string =>
+                typeof url === "string" && url.length > 0,
+            )
         : [];
 
-    const itemKeys = Array.isArray(room.equipments) ? room.equipments.filter(Boolean) : [];
+    const itemKeys = Array.isArray(room.equipments)
+      ? room.equipments.filter(Boolean)
+      : [];
 
     return {
       ...room,
@@ -335,19 +353,20 @@ function parseLodging(
 function parseTrip(
   tripRecords: any | any[] | null | undefined,
   itineraryRecords: any | any[] | null | undefined,
-  departureRecords: any | any[] | null | undefined
+  departureRecords: any | any[] | null | undefined,
 ): ExperienceTrip | null {
   const trip = normalizeSingle(tripRecords);
   if (!trip) {
     return null;
   }
 
-  const priceCents = typeof trip.price_cents === 'number' ? trip.price_cents : null;
+  const priceCents =
+    typeof trip.price_cents === "number" ? trip.price_cents : null;
   const sortedItinerary = normalizeArray(itineraryRecords).sort(
-    (a, b) => (a.order_index || 0) - (b.order_index || 0)
+    (a, b) => (a.order_index || 0) - (b.order_index || 0),
   );
   const sortedDepartures = normalizeArray(departureRecords).sort(
-    (a, b) => new Date(a.depart_at).getTime() - new Date(b.depart_at).getTime()
+    (a, b) => new Date(a.depart_at).getTime() - new Date(b.depart_at).getTime(),
   );
 
   return {
@@ -355,7 +374,7 @@ function parseTrip(
     itinerary: sortedItinerary,
     departures: sortedDepartures,
     price_per_person: priceCents != null ? priceCents / 100 : 0,
-    price_currency: trip.currency ?? 'USD',
+    price_currency: trip.currency ?? "USD",
   };
 }
 
@@ -365,7 +384,7 @@ function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
     ? {
         id: record.video.id,
         role: null,
-        kind: record.video.kind ?? 'video',
+        kind: record.video.kind ?? "video",
         caption: null,
         url: resolveStorageUrl(record.video.path),
         thumbnailUrl: (() => {
@@ -386,7 +405,9 @@ function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
 
   const address = (record.address as Record<string, unknown> | null) ?? null;
   const fallbackCountry =
-    address && typeof address['country'] === 'string' ? (address['country'] as string) : null;
+    address && typeof address.country === "string"
+      ? (address.country as string)
+      : null;
   const country = record.country ?? fallbackCountry;
 
   return {
@@ -416,27 +437,100 @@ function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
     lodging: parseLodging(record.lodging, record.rooms),
     trip: parseTrip(record.trip, record.itinerary, record.departures),
     amenities: parseAmenities(record.amenities),
-    servicesIncluded: parseServices(record.servicesIncluded, 'included'),
-    servicesExcluded: parseServices(record.servicesExcluded, 'excluded'),
+    servicesIncluded: parseServices(record.servicesIncluded, "included"),
+    servicesExcluded: parseServices(record.servicesExcluded, "excluded"),
     metadata: (record.metadata as Record<string, unknown> | null) ?? null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
 }
 
-export type ExperienceDetailResponse =
-  | {
-      transformed: ExperienceDetail;
-      raw: SupabaseExperienceRecord;
-    }
-  | null;
+export type ExperienceDetailResponse = {
+  transformed: ExperienceDetail;
+  raw: SupabaseExperienceRecord;
+} | null;
 
-async function fetchExperienceDetail(experienceId: string): Promise<ExperienceDetailResponse> {
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeIdentifier(value: string): string {
+  return decodeURIComponent(value).trim().toLowerCase();
+}
+
+async function resolveExperienceId(
+  supabase: ReturnType<typeof createClient>,
+  identifier: string,
+): Promise<string | null> {
+  const normalizedIdentifier = normalizeIdentifier(identifier);
+  if (!normalizedIdentifier) {
+    return null;
+  }
+
+  if (UUID_REGEX.test(normalizedIdentifier)) {
+    return normalizedIdentifier;
+  }
+
+  const { data: directSlugMatch, error: directSlugError } = await supabase
+    .from("experiences")
+    .select("id")
+    .eq("slug", normalizedIdentifier)
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .maybeSingle<{ id: string }>();
+
+  if (directSlugError) {
+    throw directSlugError;
+  }
+
+  if (directSlugMatch?.id) {
+    return directSlugMatch.id;
+  }
+
+  const { data: candidates, error: candidateError } = await supabase
+    .from("experiences")
+    .select("id,title,slug")
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .limit(500);
+
+  if (candidateError) {
+    throw candidateError;
+  }
+
+  const match = (candidates || []).find((candidate: any) => {
+    const storedSlug =
+      typeof candidate.slug === "string"
+        ? candidate.slug.trim().toLowerCase()
+        : null;
+    if (storedSlug && storedSlug === normalizedIdentifier) {
+      return true;
+    }
+
+    return (
+      typeof candidate.title === "string" &&
+      typeof candidate.id === "string" &&
+      buildExperienceSlug({ title: candidate.title, id: candidate.id }) ===
+        normalizedIdentifier
+    );
+  });
+
+  return match?.id ?? null;
+}
+
+async function fetchExperienceDetail(
+  identifier: string,
+): Promise<ExperienceDetailResponse> {
   const supabase = createClient();
+  const experienceId = await resolveExperienceId(supabase, identifier);
+
+  if (!experienceId) {
+    return null;
+  }
+
   const { data, error } = await supabase
-    .from('experiences')
+    .from("experiences")
     .select(SELECT_EXPERIENCE_DETAIL)
-    .eq('id', experienceId)
+    .eq("id", experienceId)
     .maybeSingle<SupabaseExperienceRecord>();
   if (error) {
     throw error;
@@ -454,7 +548,7 @@ async function fetchExperienceDetail(experienceId: string): Promise<ExperienceDe
 
 export function useExperienceDetail(experienceId: string | null | undefined) {
   return useQuery<ExperienceDetailResponse>({
-    queryKey: ['experience-detail', experienceId],
+    queryKey: ["experience-detail", experienceId],
     queryFn: async () => {
       if (!experienceId) {
         return null;

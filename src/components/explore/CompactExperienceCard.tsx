@@ -1,32 +1,43 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { cn } from "@/lib/utils"
-import type { ExperienceListItem } from "@/types/experience"
-import { getImageUrl } from "@/utils/functions"
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { cn } from "@/lib/utils";
+import type { ExperienceListItem } from "@/types/experience";
+import { getImageUrl } from "@/utils/functions";
 
 interface CompactExperienceCardProps {
-  experience: ExperienceListItem
-  className?: string
+  experience: ExperienceListItem;
+  className?: string;
 }
 
 export function CompactExperienceCard({
   experience,
   className,
 }: CompactExperienceCardProps) {
+  const pathname = usePathname();
   const price = experience.trip?.price_cents
     ? Math.round(experience.trip.price_cents / 100)
     : experience.lodging?.price_cents
-    ? Math.round(experience.lodging.price_cents / 100)
-    : null
+      ? Math.round(experience.lodging.price_cents / 100)
+      : null;
+  const href = localizeHref(
+    `/experience/${buildExperienceSlug({
+      title: experience.title,
+      id: experience.id,
+    })}`,
+    pathname,
+  );
 
   return (
-    <Link href={`/experience/${experience.id}`}>
+    <Link href={href}>
       <div
         className={cn(
           "group relative flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer",
-          className
+          className,
         )}
       >
         {/* Image Container */}
@@ -75,5 +86,5 @@ export function CompactExperienceCard({
         </div>
       </div>
     </Link>
-  )
+  );
 }

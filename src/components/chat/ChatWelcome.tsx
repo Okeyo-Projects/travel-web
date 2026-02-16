@@ -63,8 +63,7 @@ export function ChatWelcome({
         }))
       : defaultSuggestions;
 
-  const title =
-    welcomeTitle || "Bonjour, je suis votre Assistant Voyage";
+  const title = welcomeTitle || "Bonjour, je suis votre Assistant Voyage";
   const description =
     welcomeDescription ||
     "Je peux vous aider à planifier votre séjour au Maroc, trouver des hébergements uniques et réserver des expériences inoubliables.";

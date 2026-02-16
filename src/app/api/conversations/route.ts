@@ -2,6 +2,30 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+type LooseQueryResult<T = unknown> = Promise<{ data: T; error: unknown }>;
+type LooseQueryPayload = { data: unknown; error: unknown };
+
+type LooseQueryBuilder = PromiseLike<LooseQueryPayload> & {
+  update(values: Record<string, unknown>): LooseQueryBuilder;
+  insert(
+    values: Record<string, unknown> | Record<string, unknown>[],
+  ): LooseQueryBuilder;
+  select(columns?: string): LooseQueryBuilder;
+  eq(column: string, value: unknown): LooseQueryBuilder;
+  is(column: string, value: unknown): LooseQueryBuilder;
+  order(column: string, options?: { ascending?: boolean }): LooseQueryBuilder;
+  limit(count: number): LooseQueryBuilder;
+  single(): LooseQueryResult<unknown>;
+};
+
+type LooseSupabaseClient = {
+  from(table: string): LooseQueryBuilder;
+};
+
+function asLooseSupabaseClient(client: unknown): LooseSupabaseClient {
+  return client as LooseSupabaseClient;
+}
+
 function createServiceRoleClientOrThrow() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -13,17 +37,39 @@ function createServiceRoleClientOrThrow() {
   return createServiceClient(supabaseUrl, serviceRoleKey);
 }
 
+async function claimAnonymousConversationsForUser(
+  userId: string,
+  clientId: string,
+) {
+  const serviceClient = createServiceRoleClientOrThrow();
+  const serviceClientAny = asLooseSupabaseClient(serviceClient);
+
+  const { error } = await serviceClientAny
+    .from("ai_conversations")
+    .update({
+      user_id: userId,
+    })
+    .eq("client_id", clientId)
+    .is("user_id", null);
+
+  if (error) throw error;
+}
+
 // POST /api/conversations - Create new conversation
 export async function POST(req: NextRequest) {
   try {
     const { clientId, userLocation } = await req.json();
     const userClient = await createClient();
-    const userClientAny = userClient as any;
+    const userClientAny = asLooseSupabaseClient(userClient);
     const {
       data: { user },
     } = await userClient.auth.getUser();
 
     if (user) {
+      if (typeof clientId === "string" && clientId.trim().length > 0) {
+        await claimAnonymousConversationsForUser(user.id, clientId);
+      }
+
       const { data, error } = await userClientAny
         .from("ai_conversations")
         .insert({
@@ -46,7 +92,7 @@ export async function POST(req: NextRequest) {
     }
 
     const serviceClient = createServiceRoleClientOrThrow();
-    const serviceClientAny = serviceClient as any;
+    const serviceClientAny = asLooseSupabaseClient(serviceClient);
 
     const { data, error } = await serviceClientAny
       .from("ai_conversations")
@@ -74,7 +120,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const supabase = await createClient();
-    const supabaseAny = supabase as any;
+    const supabaseAny = asLooseSupabaseClient(supabase);
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -85,6 +131,10 @@ export async function GET(req: NextRequest) {
 
     // For authenticated users, query by user_id
     if (user) {
+      if (clientId && clientId.trim().length > 0) {
+        await claimAnonymousConversationsForUser(user.id, clientId);
+      }
+
       const { data, error } = await supabaseAny
         .from("ai_conversations")
         .select("id, title, first_message, created_at, updated_at")
@@ -100,7 +150,7 @@ export async function GET(req: NextRequest) {
     // For anonymous users, use service role and query by client_id
     if (clientId) {
       const serviceClient = createServiceRoleClientOrThrow();
-      const serviceClientAny = serviceClient as any;
+      const serviceClientAny = asLooseSupabaseClient(serviceClient);
 
       const { data, error } = await serviceClientAny
         .from("ai_conversations")

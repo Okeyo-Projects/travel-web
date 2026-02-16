@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // =====================================================
 // EMAIL TYPES AND SCHEMAS
@@ -6,31 +6,31 @@ import { z } from 'zod';
 
 // Email template identifiers
 export const EmailTemplate = z.enum([
-  'booking_confirmation',
-  'booking_cancelled',
-  'booking_request_host',
-  'booking_approved',
-  'booking_declined',
-  'payment_receipt',
-  'review_request',
-  'review_response',
-  'welcome',
-  'booking_reminder',
-  'password_reset',
+  "booking_confirmation",
+  "booking_cancelled",
+  "booking_request_host",
+  "booking_approved",
+  "booking_declined",
+  "payment_receipt",
+  "review_request",
+  "review_response",
+  "welcome",
+  "booking_reminder",
+  "password_reset",
 ]);
 
 export type EmailTemplate = z.infer<typeof EmailTemplate>;
 
 // Resend email status
 export const ResendStatus = z.enum([
-  'queued',
-  'sent',
-  'delivered',
-  'delivery_delayed',
-  'bounced',
-  'complained',
-  'clicked',
-  'opened',
+  "queued",
+  "sent",
+  "delivered",
+  "delivery_delayed",
+  "bounced",
+  "complained",
+  "clicked",
+  "opened",
 ]);
 
 export type ResendStatus = z.infer<typeof ResendStatus>;
@@ -88,7 +88,7 @@ export const BookingCancelledData = z.object({
   booking_id: z.string(),
   cancellation_reason: z.string().optional(),
   refund_amount: z.string().optional(),
-  cancelled_by: z.enum(['guest', 'host', 'system']),
+  cancelled_by: z.enum(["guest", "host", "system"]),
 });
 
 export type BookingCancelledData = z.infer<typeof BookingCancelledData>;

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Loader2, X } from 'lucide-react';
-import { useChatContext } from '@/contexts/ChatContext';
+import { Loader2, MapPin, X } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useChatContext } from "@/contexts/ChatContext";
 
 interface LocationRequestProps {
   reason: string;
@@ -12,7 +12,11 @@ interface LocationRequestProps {
   onDeclined?: () => void;
 }
 
-export function LocationRequest({ reason, onLocationReceived, onDeclined }: LocationRequestProps) {
+export function LocationRequest({
+  reason,
+  onLocationReceived,
+  onDeclined,
+}: LocationRequestProps) {
   const { setUserLocation } = useChatContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +26,7 @@ export function LocationRequest({ reason, onLocationReceived, onDeclined }: Loca
     setError(null);
 
     if (!navigator.geolocation) {
-      setError('La géolocalisation n\'est pas supportée par votre navigateur');
+      setError("La géolocalisation n'est pas supportée par votre navigateur");
       setIsLoading(false);
       return;
     }
@@ -30,7 +34,7 @@ export function LocationRequest({ reason, onLocationReceived, onDeclined }: Loca
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         // Save location to context
         setUserLocation({
           lat: latitude,
@@ -40,24 +44,24 @@ export function LocationRequest({ reason, onLocationReceived, onDeclined }: Loca
 
         // Notify parent
         onLocationReceived?.(latitude, longitude);
-        
+
         setIsLoading(false);
       },
       (error) => {
-        let errorMessage = 'Impossible d\'obtenir votre position';
-        
+        let errorMessage = "Impossible d'obtenir votre position";
+
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Permission de géolocalisation refusée';
+            errorMessage = "Permission de géolocalisation refusée";
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Position non disponible';
+            errorMessage = "Position non disponible";
             break;
           case error.TIMEOUT:
-            errorMessage = 'La demande de position a expiré';
+            errorMessage = "La demande de position a expiré";
             break;
         }
-        
+
         setError(errorMessage);
         setIsLoading(false);
       },
@@ -65,7 +69,7 @@ export function LocationRequest({ reason, onLocationReceived, onDeclined }: Loca
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 300000, // 5 minutes
-      }
+      },
     );
   };
 
@@ -108,7 +112,7 @@ export function LocationRequest({ reason, onLocationReceived, onDeclined }: Loca
               </>
             )}
           </Button>
-          
+
           <Button
             variant="outline"
             onClick={handleDecline}

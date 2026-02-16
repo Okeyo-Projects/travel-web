@@ -1,104 +1,129 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useBookingContext } from "@/components/booking/booking-context"
-import { Button } from "@/components/ui/button"
-import { Minus, Plus } from "lucide-react"
+import { Minus, Plus } from "lucide-react";
+import * as React from "react";
+import { useBookingContext } from "@/components/booking/booking-context";
+import { Button } from "@/components/ui/button";
 
 export function StepGuests() {
-    const { adults, children, infants, setGuests } = useBookingContext()
+  const { adults, children, infants, setGuests, experience, departureId } =
+    useBookingContext();
 
-    const maxGuests = 10 // Hardcoded limit for now, ideally from experience config
-
-    const update = (type: "adults" | "children" | "infants", delta: number) => {
-        const current = type === "adults" ? adults : type === "children" ? children : infants
-        const min = type === "adults" ? 1 : 0
-        // Simple total check: adults + children < maxGuests?
-        // Let's just limit individual counters for simplicity, validation is in context
-
-        // Check global max?
-        if (delta > 0 && (adults + children + infants >= maxGuests)) return
-
-        const next = Math.max(min, current + delta)
-        setGuests(type, next)
+  const maxGuests = React.useMemo(() => {
+    if (!experience) return 10;
+    if (experience.type === "trip") {
+      if (departureId) {
+        const dep = experience.trip?.departures.find(
+          (d) => d.id === departureId,
+        );
+        return dep?.seats_available ?? experience.trip?.group_size_max ?? 10;
+      }
+      return experience.trip?.group_size_max ?? 10;
     }
+    return 20; // lodging: no strict cap at guest step (capacity validated at options)
+  }, [experience, departureId]);
 
-    return (
-        <div className="space-y-6">
-            <div className="text-center space-y-1">
-                <h3 className="font-medium">Qui participe au voyage ?</h3>
-                <p className="text-sm text-muted-foreground">Indiquez le nombre de voyageurs.</p>
-            </div>
+  const totalGuests = adults + children + infants;
 
-            <div className="space-y-4">
-                <GuestCounter
-                    label="Adultes"
-                    description="13 ans et plus"
-                    value={adults}
-                    onIncrement={() => update("adults", 1)}
-                    onDecrement={() => update("adults", -1)}
-                    min={1}
-                />
-                <GuestCounter
-                    label="Enfants"
-                    description="De 2 à 12 ans"
-                    value={children}
-                    onIncrement={() => update("children", 1)}
-                    onDecrement={() => update("children", -1)}
-                />
-                <GuestCounter
-                    label="Bébés"
-                    description="Moins de 2 ans"
-                    value={infants}
-                    onIncrement={() => update("infants", 1)}
-                    onDecrement={() => update("infants", -1)}
-                />
-            </div>
-        </div>
-    )
+  const update = (type: "adults" | "children" | "infants", delta: number) => {
+    const current =
+      type === "adults" ? adults : type === "children" ? children : infants;
+    const min = type === "adults" ? 1 : 0;
+    if (delta > 0 && totalGuests >= maxGuests) return;
+    setGuests(type, Math.max(min, current + delta));
+  };
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">
+        {maxGuests < 20
+          ? `Up to ${maxGuests} guest${maxGuests !== 1 ? "s" : ""} for this experience.`
+          : "How many people are joining?"}
+      </p>
+
+      <div className="divide-y rounded-xl border">
+        <GuestCounter
+          label="Adults"
+          description="Ages 13+"
+          value={adults}
+          onIncrement={() => update("adults", 1)}
+          onDecrement={() => update("adults", -1)}
+          min={1}
+          maxReached={totalGuests >= maxGuests}
+        />
+        <GuestCounter
+          label="Children"
+          description="Ages 2–12"
+          value={children}
+          onIncrement={() => update("children", 1)}
+          onDecrement={() => update("children", -1)}
+          maxReached={totalGuests >= maxGuests}
+        />
+        <GuestCounter
+          label="Infants"
+          description="Under 2"
+          value={infants}
+          onIncrement={() => update("infants", 1)}
+          onDecrement={() => update("infants", -1)}
+          maxReached={totalGuests >= maxGuests}
+        />
+      </div>
+
+      {totalGuests >= maxGuests && (
+        <p className="text-xs text-amber-600 text-center">
+          Maximum of {maxGuests} guest{maxGuests !== 1 ? "s" : ""} reached.
+        </p>
+      )}
+    </div>
+  );
 }
 
 function GuestCounter({
-    label,
-    description,
-    value,
-    onIncrement,
-    onDecrement,
-    min = 0
+  label,
+  description,
+  value,
+  onIncrement,
+  onDecrement,
+  min = 0,
+  maxReached,
 }: {
-    label: string
-    description: string
-    value: number
-    onIncrement: () => void
-    onDecrement: () => void
-    min?: number
+  label: string;
+  description: string;
+  value: number;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  min?: number;
+  maxReached?: boolean;
 }) {
-    return (
-        <div className="flex items-center justify-between py-2">
-            <div>
-                <div className="font-medium">{label}</div>
-                <div className="text-sm text-muted-foreground">{description}</div>
-            </div>
-            <div className="flex items-center gap-3">
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={onDecrement}
-                    disabled={value <= min}
-                >
-                    <Minus className="h-4 w-4" />
-                </Button>
-                <span className="w-4 text-center tabular-nums">{value}</span>
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-full"
-                    onClick={onIncrement}
-                >
-                    <Plus className="h-4 w-4" />
-                </Button>
-            </div>
-        </div>
-    )
+  return (
+    <div className="flex items-center justify-between px-4 py-4">
+      <div>
+        <p className="font-medium text-sm">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={onDecrement}
+          disabled={value <= min}
+        >
+          <Minus className="h-3.5 w-3.5" />
+        </Button>
+        <span className="w-5 text-center text-sm font-semibold tabular-nums">
+          {value}
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 rounded-full"
+          onClick={onIncrement}
+          disabled={!!maxReached}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
 }

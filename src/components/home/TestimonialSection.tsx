@@ -1,4 +1,4 @@
-import { Star } from "lucide-react"
+import { Star } from "lucide-react";
 
 const TESTIMONIALS = [
   {
@@ -25,18 +25,23 @@ const TESTIMONIALS = [
     avatar:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80",
   },
-]
+];
 
 export function TestimonialSection() {
   return (
     <section className="relative overflow-hidden bg-white px-4 py-16 sm:px-6 sm:py-24">
       <div
         className="pointer-events-none absolute inset-0 opacity-40"
-        style={{ backgroundImage: "url('/testimonial-pattern.svg')", backgroundSize: "cover" }}
+        style={{
+          backgroundImage: "url('/testimonial-pattern.svg')",
+          backgroundSize: "cover",
+        }}
       />
 
       <div className="relative z-10 mx-auto max-w-[1380px]">
-        <p className="text-center text-2xl text-primary">Clients Testimonials</p>
+        <p className="text-center text-2xl text-primary">
+          Clients Testimonials
+        </p>
         <h2 className="mt-3 text-center text-4xl font-black leading-tight text-black sm:text-5xl">
           What Our Travelers Say
         </h2>
@@ -44,7 +49,9 @@ export function TestimonialSection() {
         <div className="mt-14 grid gap-10 md:grid-cols-2 xl:grid-cols-3">
           {TESTIMONIALS.map((item) => (
             <article key={item.id} className="space-y-6">
-              <p className="text-lg leading-relaxed text-[#03233a]">{item.quote}</p>
+              <p className="text-lg leading-relaxed text-[#03233a]">
+                {item.quote}
+              </p>
 
               <div className="flex items-center gap-3">
                 {Array.from({ length: 5 }).map((_, index) => (
@@ -70,5 +77,5 @@ export function TestimonialSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -30,9 +30,10 @@ export function useConversations() {
   return useQuery({
     queryKey: ["conversations", user?.id, clientId],
     queryFn: async () => {
-      // Build query params for anonymous users
+      // Always send clientId when available so API can claim anonymous
+      // conversations after authentication.
       const params = new URLSearchParams();
-      if (!user && clientId) {
+      if (clientId) {
         params.append("clientId", clientId);
       }
 

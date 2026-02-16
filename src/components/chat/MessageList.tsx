@@ -6,22 +6,22 @@ import { Compass } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { AuthRequiredCard } from "./AuthRequiredCard";
-import { DateOptionsPicker, type DateOptionItem } from "./DateOptionsPicker";
-import {
-  ExperienceDetailsPanel,
-  type ExperienceDetailsData,
-} from "./ExperienceDetailsPanel";
-import {
-  ExperienceOptionDetailsPanel,
-  type ExperienceOptionDetailsData,
-} from "./ExperienceOptionDetailsPanel";
+import { type DateOptionItem, DateOptionsPicker } from "./DateOptionsPicker";
 import {
   ExperienceCardsGrid,
   type ExperienceGridItem,
 } from "./ExperienceCardsGrid";
+import {
+  type ExperienceDetailsData,
+  ExperienceDetailsPanel,
+} from "./ExperienceDetailsPanel";
+import {
+  type ExperienceOptionDetailsData,
+  ExperienceOptionDetailsPanel,
+} from "./ExperienceOptionDetailsPanel";
 import { LocationRequest } from "./LocationRequest";
 import { QuickReplies } from "./QuickReplies";
-import { RoomTypeSelector, type RoomTypeOptionItem } from "./RoomTypeSelector";
+import { type RoomTypeOptionItem, RoomTypeSelector } from "./RoomTypeSelector";
 
 type Message = UIMessage & { content?: string };
 type ExperienceResult = Record<string, unknown>;
@@ -42,16 +42,25 @@ type ToolPart = { type?: string; state?: string; output?: unknown };
 
 function renderInlineMarkdown(text: string): ReactNode[] {
   const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).filter(Boolean);
+  const keyCounts = new Map<string, number>();
+  const getKey = (prefix: string, value: string) => {
+    const baseKey = `${prefix}-${value}`;
+    const count = keyCounts.get(baseKey) ?? 0;
+    keyCounts.set(baseKey, count + 1);
+    return `${baseKey}-${count}`;
+  };
 
-  return tokens.map((token, index) => {
+  return tokens.map((token) => {
     if (token.startsWith("**") && token.endsWith("**") && token.length > 4) {
-      return <strong key={`strong-${index}`}>{token.slice(2, -2)}</strong>;
+      return (
+        <strong key={getKey("strong", token)}>{token.slice(2, -2)}</strong>
+      );
     }
 
     if (token.startsWith("`") && token.endsWith("`") && token.length > 2) {
       return (
         <code
-          key={`code-${index}`}
+          key={getKey("code", token)}
           className="rounded bg-muted px-1 py-0.5 text-[0.9em] font-mono"
         >
           {token.slice(1, -1)}
@@ -59,7 +68,7 @@ function renderInlineMarkdown(text: string): ReactNode[] {
       );
     }
 
-    return <Fragment key={`text-${index}`}>{token}</Fragment>;
+    return <Fragment key={getKey("text", token)}>{token}</Fragment>;
   });
 }
 
@@ -126,11 +135,18 @@ function renderAssistantText(text: string): ReactNode {
 
       renderedBlocks.push(
         <ul key={`ul-${blockIndex}`} className="list-disc space-y-1 pl-6">
-          {items.map((item, itemIndex) => (
-            <li key={`li-${blockIndex}-${itemIndex}`}>
-              {renderInlineMarkdown(item)}
-            </li>
-          ))}
+          {(() => {
+            const listItemCounts = new Map<string, number>();
+            return items.map((item) => {
+              const count = listItemCounts.get(item) ?? 0;
+              listItemCounts.set(item, count + 1);
+              return (
+                <li key={`li-${blockIndex}-${item}-${count}`}>
+                  {renderInlineMarkdown(item)}
+                </li>
+              );
+            });
+          })()}
         </ul>,
       );
       blockIndex += 1;
@@ -146,11 +162,18 @@ function renderAssistantText(text: string): ReactNode {
 
       renderedBlocks.push(
         <ol key={`ol-${blockIndex}`} className="list-decimal space-y-1 pl-6">
-          {items.map((item, itemIndex) => (
-            <li key={`oli-${blockIndex}-${itemIndex}`}>
-              {renderInlineMarkdown(item)}
-            </li>
-          ))}
+          {(() => {
+            const orderedItemCounts = new Map<string, number>();
+            return items.map((item) => {
+              const count = orderedItemCounts.get(item) ?? 0;
+              orderedItemCounts.set(item, count + 1);
+              return (
+                <li key={`oli-${blockIndex}-${item}-${count}`}>
+                  {renderInlineMarkdown(item)}
+                </li>
+              );
+            });
+          })()}
         </ol>,
       );
       blockIndex += 1;
@@ -163,7 +186,8 @@ function renderAssistantText(text: string): ReactNode {
     while (index < lines.length) {
       const next = lines[index].trim();
       if (!next) break;
-      if (isHeadingLine(next) || isBulletLine(next) || isOrderedLine(next)) break;
+      if (isHeadingLine(next) || isBulletLine(next) || isOrderedLine(next))
+        break;
       paragraphLines.push(next);
       index += 1;
     }

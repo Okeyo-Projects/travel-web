@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { Language, ProfileStatus } from './common';
+import { z } from "zod";
+import { Language, ProfileStatus } from "./common";
 
 /**
  * Profile and Host types
@@ -32,8 +32,8 @@ export const ProfileSchema = z.object({
   bio: z.string().max(500).optional(),
   isHost: z.boolean().default(false),
   status: ProfileStatus,
-  preferredLanguage: Language.default('fr'),
-  currency: z.string().length(3).default('MAD'),
+  preferredLanguage: Language.default("fr"),
+  currency: z.string().length(3).default("MAD"),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -54,7 +54,7 @@ export const HostSchema = z.object({
   country: z.string(),
   city: z.string().optional(),
   verified: z.boolean().default(false),
-  languages: z.array(z.string()).default(['fr']),
+  languages: z.array(z.string()).default(["fr"]),
   specialtyIds: z.array(z.string().uuid()).optional(),
   avgRating: z.number().min(0).max(5).optional(),
   totalExperiences: z.number().int().default(0),
@@ -85,10 +85,9 @@ export const CreateHostSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
   website: z.string().url().optional(),
-  languages: z.array(z.string()).default(['fr']),
+  languages: z.array(z.string()).default(["fr"]),
 });
 export type CreateHost = z.infer<typeof CreateHostSchema>;
 
 export const UpdateHostSchema = CreateHostSchema.partial();
 export type UpdateHost = z.infer<typeof UpdateHostSchema>;
-

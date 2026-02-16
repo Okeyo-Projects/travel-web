@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useRef } from "react"
-import Image from "next/image"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { CompactExperienceCard } from "./CompactExperienceCard"
-import type { ExperienceListItem } from "@/types/experience"
-import { getImageUrl } from "@/utils/functions"
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { useRef } from "react";
+import { cn } from "@/lib/utils";
+import type { ExperienceListItem } from "@/types/experience";
+import { getImageUrl } from "@/utils/functions";
+import { CompactExperienceCard } from "./CompactExperienceCard";
 
 interface ExperienceGroupProps {
-  title: string
-  subtitle?: string
-  imageUrl?: string | null
-  experiences: ExperienceListItem[]
-  className?: string
-  onMoreClick?: () => void
+  title: string;
+  subtitle?: string;
+  imageUrl?: string | null;
+  experiences: ExperienceListItem[];
+  className?: string;
+  onMoreClick?: () => void;
 }
 
 export function ExperienceGroup({
@@ -25,21 +25,21 @@ export function ExperienceGroup({
   className,
   onMoreClick,
 }: ExperienceGroupProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: "left" | "right") => {
-    if (!scrollContainerRef.current) return
-    const scrollAmount = 340 // card width + gap
+    if (!scrollContainerRef.current) return;
+    const scrollAmount = 340; // card width + gap
     const newScrollLeft =
       direction === "left"
         ? scrollContainerRef.current.scrollLeft - scrollAmount
-        : scrollContainerRef.current.scrollLeft + scrollAmount
+        : scrollContainerRef.current.scrollLeft + scrollAmount;
 
     scrollContainerRef.current.scrollTo({
       left: newScrollLeft,
       behavior: "smooth",
-    })
-  }
+    });
+  };
 
   return (
     <div className={cn("py-6", className)}>
@@ -59,18 +59,18 @@ export function ExperienceGroup({
           )}
           <div>
             <h2 className="text-gray-900 font-semibold text-lg">{title}</h2>
-            {subtitle && (
-              <p className="text-gray-500 text-sm">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-gray-500 text-sm">{subtitle}</p>}
           </div>
         </div>
 
         {/* More Button */}
         <button
+          type="button"
           onClick={onMoreClick}
-          className="text-[#ff2566] text-sm font-medium hover:text-[#e0205a] transition-colors"
+          disabled={!onMoreClick}
+          className="text-[#ff2566] text-sm font-medium hover:text-[#e0205a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          more
+          Voir tout
         </button>
       </div>
 
@@ -78,6 +78,7 @@ export function ExperienceGroup({
       <div className="relative group">
         {/* Navigation Arrows */}
         <button
+          type="button"
           onClick={() => scroll("left")}
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-white shadow-lg hover:bg-gray-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex border border-gray-100"
         >
@@ -85,6 +86,7 @@ export function ExperienceGroup({
         </button>
 
         <button
+          type="button"
           onClick={() => scroll("right")}
           className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-white shadow-lg hover:bg-gray-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex border border-gray-100"
         >
@@ -109,5 +111,5 @@ export function ExperienceGroup({
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Common enums and types used across the platform
  */
 
 // Languages
-export const Language = z.enum(['fr', 'ar', 'en']);
+export const Language = z.enum(["fr", "ar", "en"]);
 export type Language = z.infer<typeof Language>;
 
 // Translatable content (for database fields)
@@ -17,26 +17,32 @@ export const TranslatableTextSchema = z.object({
 export type TranslatableText = z.infer<typeof TranslatableTextSchema>;
 
 // Currency
-export const Currency = z.enum(['MAD', 'EUR', 'USD']);
+export const Currency = z.enum(["MAD", "EUR", "USD"]);
 export type Currency = z.infer<typeof Currency>;
 
 // Status types
-export const ProfileStatus = z.enum(['active', 'suspended']);
+export const ProfileStatus = z.enum(["active", "suspended"]);
 export type ProfileStatus = z.infer<typeof ProfileStatus>;
 
-export const HostStatus = z.enum(['active', 'paused', 'suspended']);
+export const HostStatus = z.enum(["active", "paused", "suspended"]);
 export type HostStatus = z.infer<typeof HostStatus>;
 
-export const ExperienceStatus = z.enum(['draft', 'review', 'published', 'paused', 'rejected']);
+export const ExperienceStatus = z.enum([
+  "draft",
+  "review",
+  "published",
+  "paused",
+  "rejected",
+]);
 export type ExperienceStatus = z.infer<typeof ExperienceStatus>;
 
 // Cancellation Policy
 export const CancellationPolicy = z.enum([
-  'free',
-  'flexible',
-  'moderate',
-  'strict',
-  'non_refundable',
+  "free",
+  "flexible",
+  "moderate",
+  "strict",
+  "non_refundable",
 ]);
 export type CancellationPolicy = z.infer<typeof CancellationPolicy>;
 
@@ -47,7 +53,9 @@ export const PaginationSchema = z.object({
 });
 export type Pagination = z.infer<typeof PaginationSchema>;
 
-export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(
+  dataSchema: T,
+) =>
   z.object({
     data: z.array(dataSchema),
     meta: z.object({
@@ -90,4 +98,3 @@ export const ErrorResponseSchema = z.object({
   path: z.string().optional(),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
-

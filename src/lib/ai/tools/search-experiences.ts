@@ -1,37 +1,84 @@
-import { tool } from 'ai';
-import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
-import { embedQuery } from '@/lib/embeddings';
+import { tool } from "ai";
+import { z } from "zod";
+import { embedQuery } from "@/lib/embeddings";
+import { createClient } from "@/lib/supabase/server";
 
 const searchExperiencesSchema = z.object({
-  query: z.string().describe('Search query from user in natural language'),
-  type: z.enum(['lodging', 'trip', 'activity']).optional().describe('Type of experience to search for'),
-  city: z.string().optional().describe('Filter by city name (e.g., "Marrakech", "Chefchaouen")'),
-  region: z.string().optional().describe('Filter by region/area name (e.g., "Imlil", "Ouirgane", "Lala Takerkousst")'),
-  max_price_mad: z.number().optional().describe('Maximum price in MAD (Moroccan Dirham)'),
-  min_rating: z.number().min(0).max(5).optional().describe('Minimum average rating (0-5)'),
-  guests: z.number().optional().describe('Number of guests/participants'),
-  date_from: z.string().optional().describe('Check-in date or activity date (YYYY-MM-DD format)'),
-  date_to: z.string().optional().describe('Check-out date (YYYY-MM-DD format, for lodging)'),
-  user_lat: z.number().optional().describe('User latitude for distance-based search'),
-  user_lng: z.number().optional().describe('User longitude for distance-based search'),
-  max_distance_km: z.number().optional().describe('Maximum distance in kilometers from user location'),
-  sort_by_distance: z.boolean().optional().describe('Sort results by distance from user'),
-  only_with_promo: z.boolean().optional().describe('Only show experiences with active promotions'),
-  only_auto_apply: z.boolean().optional().describe('Only show experiences with auto-apply promotions'),
-  limit: z.number().optional().default(10).describe('Maximum number of results to return'),
+  query: z.string().describe("Search query from user in natural language"),
+  type: z
+    .enum(["lodging", "trip", "activity"])
+    .optional()
+    .describe("Type of experience to search for"),
+  city: z
+    .string()
+    .optional()
+    .describe('Filter by city name (e.g., "Marrakech", "Chefchaouen")'),
+  region: z
+    .string()
+    .optional()
+    .describe(
+      'Filter by region/area name (e.g., "Imlil", "Ouirgane", "Lala Takerkousst")',
+    ),
+  max_price_mad: z
+    .number()
+    .optional()
+    .describe("Maximum price in MAD (Moroccan Dirham)"),
+  min_rating: z
+    .number()
+    .min(0)
+    .max(5)
+    .optional()
+    .describe("Minimum average rating (0-5)"),
+  guests: z.number().optional().describe("Number of guests/participants"),
+  date_from: z
+    .string()
+    .optional()
+    .describe("Check-in date or activity date (YYYY-MM-DD format)"),
+  date_to: z
+    .string()
+    .optional()
+    .describe("Check-out date (YYYY-MM-DD format, for lodging)"),
+  user_lat: z
+    .number()
+    .optional()
+    .describe("User latitude for distance-based search"),
+  user_lng: z
+    .number()
+    .optional()
+    .describe("User longitude for distance-based search"),
+  max_distance_km: z
+    .number()
+    .optional()
+    .describe("Maximum distance in kilometers from user location"),
+  sort_by_distance: z
+    .boolean()
+    .optional()
+    .describe("Sort results by distance from user"),
+  only_with_promo: z
+    .boolean()
+    .optional()
+    .describe("Only show experiences with active promotions"),
+  only_auto_apply: z
+    .boolean()
+    .optional()
+    .describe("Only show experiences with auto-apply promotions"),
+  limit: z
+    .number()
+    .optional()
+    .default(10)
+    .describe("Maximum number of results to return"),
 });
 
 // Common city name variants to handle typos in database
 const CITY_VARIANTS: Record<string, string[]> = {
-  'marrakech': ['marrakech', 'marakech', 'marrekch', 'marrakesh', 'marrakeche'],
-  'casablanca': ['casablanca', 'casa'],
-  'chefchaouen': ['chefchaouen', 'chefchaoun', 'chaouen'],
-  'fès': ['fès', 'fes', 'fez'],
-  'tangier': ['tangier', 'tanger', 'tanja'],
-  'rabat': ['rabat'],
-  'agadir': ['agadir'],
-  'essaouira': ['essaouira', 'souira'],
+  marrakech: ["marrakech", "marakech", "marrekch", "marrakesh", "marrakeche"],
+  casablanca: ["casablanca", "casa"],
+  chefchaouen: ["chefchaouen", "chefchaoun", "chaouen"],
+  fès: ["fès", "fes", "fez"],
+  tangier: ["tangier", "tanger", "tanja"],
+  rabat: ["rabat"],
+  agadir: ["agadir"],
+  essaouira: ["essaouira", "souira"],
 };
 
 /**
@@ -81,13 +128,13 @@ function uniqueStrings(values: Array<string | null | undefined>): string[] {
 
 function toCitySlug(value: string): string {
   return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim()
-    .replace(/[’']/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 async function executeSearch(
@@ -102,13 +149,15 @@ async function executeSearch(
     date_to?: string | null;
   } = {},
 ) {
-  const maxPriceCents = params.max_price_mad ? params.max_price_mad * 100 : null;
+  const maxPriceCents = params.max_price_mad
+    ? params.max_price_mad * 100
+    : null;
 
-  let sortBy = 'relevance';
+  let sortBy = "relevance";
   if (params.sort_by_distance && params.user_lat && params.user_lng) {
-    sortBy = 'distance';
+    sortBy = "distance";
   } else if (params.only_with_promo || params.only_auto_apply) {
-    sortBy = 'promo_priority';
+    sortBy = "promo_priority";
   }
 
   const thresholds =
@@ -122,31 +171,46 @@ async function executeSearch(
   let lastThreshold = thresholds[0] ?? 0.3;
 
   for (const threshold of thresholds) {
-    const { data: results, error } = await db.rpc('search_experiences_enhanced', {
-      query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
-      semantic_threshold: threshold,
-      text_query: params.query,
-      exp_type: params.type || null,
-      city_filter: overrides.city_filter !== undefined ? overrides.city_filter : (params.city || null),
-      region_filter: overrides.region_filter !== undefined ? overrides.region_filter : (params.region || null),
-      price_min_cents: null,
-      price_max_cents: maxPriceCents,
-      min_rating: params.min_rating || null,
-      min_guests: params.guests || null,
-      date_from: overrides.date_from !== undefined ? overrides.date_from : (params.date_from || null),
-      date_to: overrides.date_to !== undefined ? overrides.date_to : (params.date_to || null),
-      // Never filter by availability in search — lodging_availability table is deprecated.
-      // Real availability is calculated on-demand from bookings via checkAvailability tool.
-      check_availability: false,
-      user_lat: params.user_lat || null,
-      user_lng: params.user_lng || null,
-      max_distance_km: params.max_distance_km || null,
-      only_with_promo: params.only_with_promo || false,
-      only_auto_apply: params.only_auto_apply || false,
-      sort_by: sortBy,
-      result_limit: params.limit || 10,
-      result_offset: 0,
-    });
+    const { data: results, error } = await db.rpc(
+      "search_experiences_enhanced",
+      {
+        query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
+        semantic_threshold: threshold,
+        text_query: params.query,
+        exp_type: params.type || null,
+        city_filter:
+          overrides.city_filter !== undefined
+            ? overrides.city_filter
+            : params.city || null,
+        region_filter:
+          overrides.region_filter !== undefined
+            ? overrides.region_filter
+            : params.region || null,
+        price_min_cents: null,
+        price_max_cents: maxPriceCents,
+        min_rating: params.min_rating || null,
+        min_guests: params.guests || null,
+        date_from:
+          overrides.date_from !== undefined
+            ? overrides.date_from
+            : params.date_from || null,
+        date_to:
+          overrides.date_to !== undefined
+            ? overrides.date_to
+            : params.date_to || null,
+        // Never filter by availability in search — lodging_availability table is deprecated.
+        // Real availability is calculated on-demand from bookings via checkAvailability tool.
+        check_availability: false,
+        user_lat: params.user_lat || null,
+        user_lng: params.user_lng || null,
+        max_distance_km: params.max_distance_km || null,
+        only_with_promo: params.only_with_promo || false,
+        only_auto_apply: params.only_auto_apply || false,
+        sort_by: sortBy,
+        result_limit: params.limit || 10,
+        result_offset: 0,
+      },
+    );
 
     if (error) {
       return { results, error, used_threshold: threshold };
@@ -190,16 +254,18 @@ async function formatResults(results: any[], db: any) {
 
   // Fetch room types for lodging experiences
   const lodgingIds = formatted
-    .filter((e) => e.type === 'lodging')
+    .filter((e) => e.type === "lodging")
     .map((e) => e.id);
 
   if (lodgingIds.length > 0) {
     const { data: rooms } = await db
-      .from('lodging_room_types')
-      .select('id, experience_id, name, room_type, price_cents, capacity_beds, max_persons')
-      .in('experience_id', lodgingIds)
-      .is('deleted_at', null)
-      .order('price_cents', { ascending: true });
+      .from("lodging_room_types")
+      .select(
+        "id, experience_id, name, room_type, price_cents, capacity_beds, max_persons",
+      )
+      .in("experience_id", lodgingIds)
+      .is("deleted_at", null)
+      .order("price_cents", { ascending: true });
 
     if (rooms) {
       const roomsByExp: Record<string, any[]> = {};
@@ -241,7 +307,10 @@ The tool automatically handles city name variants and does progressive fallback 
       try {
         queryEmbedding = await embedQuery(params.query);
       } catch (embError) {
-        console.warn('Embedding generation failed, falling back to text search:', embError);
+        console.warn(
+          "Embedding generation failed, falling back to text search:",
+          embError,
+        );
       }
 
       // === STRATEGY: Progressive search with automatic fallback ===
@@ -258,7 +327,7 @@ The tool automatically handles city name variants and does progressive fallback 
       let { results, error } = await executeSearch(db, queryEmbedding, params);
 
       if (error) {
-        console.error('Search error:', error);
+        console.error("Search error:", error);
         return { success: false, error: error.message, results: [] };
       }
 
@@ -321,19 +390,25 @@ The tool automatically handles city name variants and does progressive fallback 
       }
 
       // --- Attempt 4: Resolve by city_slug, then retry with canonical city/region ---
-      const slugCandidates = uniqueStrings(locationCandidates.map((location) => toCitySlug(location))).slice(0, 12);
+      const slugCandidates = uniqueStrings(
+        locationCandidates.map((location) => toCitySlug(location)),
+      ).slice(0, 12);
 
       if ((!results || results.length === 0) && slugCandidates.length > 0) {
         const { data: slugMatches, error: slugError } = await db
-          .from('experiences')
-          .select('city, region, city_slug')
-          .eq('status', 'published')
-          .is('deleted_at', null)
-          .in('city_slug', slugCandidates);
+          .from("experiences")
+          .select("city, region, city_slug")
+          .eq("status", "published")
+          .is("deleted_at", null)
+          .in("city_slug", slugCandidates);
 
         if (!slugError && slugMatches && slugMatches.length > 0) {
-          const matchedCities = uniqueStrings(slugMatches.map((match: any) => match.city));
-          const matchedRegions = uniqueStrings(slugMatches.map((match: any) => match.region));
+          const matchedCities = uniqueStrings(
+            slugMatches.map((match: any) => match.city),
+          );
+          const matchedRegions = uniqueStrings(
+            slugMatches.map((match: any) => match.region),
+          );
 
           for (const matchedCity of matchedCities) {
             const attempt = await executeSearch(db, queryEmbedding, params, {
@@ -402,13 +477,13 @@ The tool automatically handles city name variants and does progressive fallback 
         count: 0,
         results: [],
         has_more: false,
-        note: 'Aucune expérience ne correspond à votre recherche. Essayez avec des critères différents.',
+        note: "Aucune expérience ne correspond à votre recherche. Essayez avec des critères différents.",
       };
     } catch (error) {
-      console.error('Search experiences error:', error);
+      console.error("Search experiences error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
         results: [],
       };
     }

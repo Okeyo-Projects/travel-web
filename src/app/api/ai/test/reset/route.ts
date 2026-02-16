@@ -4,8 +4,8 @@ export async function POST(req: Request) {
 
     if (!conversation_id) {
       return Response.json(
-        { error: 'conversation_id is required' },
-        { status: 400 }
+        { error: "conversation_id is required" },
+        { status: 400 },
       );
     }
 
@@ -17,13 +17,13 @@ export async function POST(req: Request) {
       message: `Conversation ${conversation_id} reset. Next message will start fresh.`,
     });
   } catch (error) {
-    console.error('Test reset API error:', error);
+    console.error("Test reset API error:", error);
     return Response.json(
       {
-        error: 'Failed to reset conversation',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "Failed to reset conversation",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

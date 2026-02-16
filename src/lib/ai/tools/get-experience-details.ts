@@ -1,7 +1,7 @@
-import { tool } from 'ai';
-import { z } from 'zod';
-import { aiDebug } from '@/lib/ai/debug-log';
-import { createClient } from '@/lib/supabase/server';
+import { tool } from "ai";
+import { z } from "zod";
+import { aiDebug } from "@/lib/ai/debug-log";
+import { createClient } from "@/lib/supabase/server";
 
 const getExperienceDetailsSchema = z
   .object({
@@ -9,17 +9,17 @@ const getExperienceDetailsSchema = z
       .string()
       .uuid()
       .optional()
-      .describe('UUID of the experience to get details for'),
+      .describe("UUID of the experience to get details for"),
     experience_name: z
       .string()
       .min(2)
       .max(160)
       .optional()
-      .describe('Optional experience name/title hint to resolve the right ID'),
+      .describe("Optional experience name/title hint to resolve the right ID"),
   })
   .refine(
     (value) => Boolean(value.experience_id || value.experience_name),
-    'experience_id or experience_name is required',
+    "experience_id or experience_name is required",
   );
 
 export const getExperienceDetails = tool({
@@ -38,9 +38,9 @@ Use this when users want to know more about a specific experience.`,
       const db = supabase as any;
       const requestTraceId = crypto.randomUUID().slice(0, 8);
       const trimmedName =
-        typeof experience_name === 'string' ? experience_name.trim() : '';
+        typeof experience_name === "string" ? experience_name.trim() : "";
 
-      aiDebug('tool.getExperienceDetails', 'start', {
+      aiDebug("tool.getExperienceDetails", "start", {
         requestTraceId,
         experience_id: experience_id || null,
         experience_name: trimmedName || null,
@@ -60,26 +60,26 @@ Use this when users want to know more about a specific experience.`,
         `;
 
       let experience: any = null;
-      let resolutionSource: 'experience_id' | 'experience_name' | null = null;
+      let resolutionSource: "experience_id" | "experience_name" | null = null;
 
       // Fetch base experience with host info
       if (experience_id) {
         const { data: byId, error: byIdError } = await db
-          .from('experiences')
+          .from("experiences")
           .select(baseSelect)
-          .eq('id', experience_id)
-          .eq('status', 'published')
-          .is('deleted_at', null)
+          .eq("id", experience_id)
+          .eq("status", "published")
+          .is("deleted_at", null)
           .single();
 
         if (byIdError || !byId) {
           const { data: rawExperienceById } = await db
-            .from('experiences')
-            .select('id, title, status, deleted_at, type, city, region')
-            .eq('id', experience_id)
+            .from("experiences")
+            .select("id, title, status, deleted_at, type, city, region")
+            .eq("id", experience_id)
             .maybeSingle();
 
-          aiDebug('tool.getExperienceDetails', 'id_lookup_failed', {
+          aiDebug("tool.getExperienceDetails", "id_lookup_failed", {
             requestTraceId,
             experience_id,
             dbError: byIdError?.message || null,
@@ -87,31 +87,31 @@ Use this when users want to know more about a specific experience.`,
           });
         } else {
           experience = byId;
-          resolutionSource = 'experience_id';
+          resolutionSource = "experience_id";
         }
       }
 
       if (!experience && trimmedName.length > 0) {
         const { data: byName, error: byNameError } = await db
-          .from('experiences')
+          .from("experiences")
           .select(baseSelect)
-          .eq('status', 'published')
-          .is('deleted_at', null)
-          .ilike('title', `%${trimmedName}%`)
-          .order('avg_rating', { ascending: false, nullsFirst: false })
-          .order('reviews_count', { ascending: false, nullsFirst: false })
+          .eq("status", "published")
+          .is("deleted_at", null)
+          .ilike("title", `%${trimmedName}%`)
+          .order("avg_rating", { ascending: false, nullsFirst: false })
+          .order("reviews_count", { ascending: false, nullsFirst: false })
           .limit(5);
 
         if (byNameError || !byName || byName.length === 0) {
-          aiDebug('tool.getExperienceDetails', 'name_lookup_failed', {
+          aiDebug("tool.getExperienceDetails", "name_lookup_failed", {
             requestTraceId,
             experience_name: trimmedName,
             dbError: byNameError?.message || null,
           });
         } else {
           experience = byName[0];
-          resolutionSource = 'experience_name';
-          aiDebug('tool.getExperienceDetails', 'name_lookup_resolved', {
+          resolutionSource = "experience_name";
+          aiDebug("tool.getExperienceDetails", "name_lookup_resolved", {
             requestTraceId,
             experience_name: trimmedName,
             matchedExperienceId: experience.id,
@@ -125,19 +125,19 @@ Use this when users want to know more about a specific experience.`,
       }
 
       if (!experience) {
-        aiDebug('tool.getExperienceDetails', 'not_found', {
+        aiDebug("tool.getExperienceDetails", "not_found", {
           requestTraceId,
           experience_id: experience_id || null,
           experience_name: trimmedName || null,
         });
         return {
           success: false,
-          error: 'Experience not found',
+          error: "Experience not found",
         };
       }
 
       const resolvedExperienceId = experience.id as string;
-      aiDebug('tool.getExperienceDetails', 'resolved_experience', {
+      aiDebug("tool.getExperienceDetails", "resolved_experience", {
         requestTraceId,
         resolvedExperienceId,
         title: experience.title,
@@ -146,7 +146,7 @@ Use this when users want to know more about a specific experience.`,
 
       // Fetch amenities
       const { data: amenities } = await db
-        .from('experience_amenities')
+        .from("experience_amenities")
         .select(`
           amenity:amenities!experience_amenities_amenity_key_fkey (
             key,
@@ -155,11 +155,11 @@ Use this when users want to know more about a specific experience.`,
             icon
           )
         `)
-        .eq('experience_id', resolvedExperienceId);
+        .eq("experience_id", resolvedExperienceId);
 
       // Fetch included services
       const { data: servicesIncluded } = await db
-        .from('experience_services_included')
+        .from("experience_services_included")
         .select(`
           service:services!experience_services_included_service_key_fkey (
             key,
@@ -168,11 +168,11 @@ Use this when users want to know more about a specific experience.`,
           ),
           notes
         `)
-        .eq('experience_id', resolvedExperienceId);
+        .eq("experience_id", resolvedExperienceId);
 
       // Fetch excluded services
       const { data: servicesExcluded } = await db
-        .from('experience_services_excluded')
+        .from("experience_services_excluded")
         .select(`
           service:services!experience_services_excluded_service_key_fkey (
             key,
@@ -181,24 +181,24 @@ Use this when users want to know more about a specific experience.`,
           ),
           notes
         `)
-        .eq('experience_id', resolvedExperienceId);
+        .eq("experience_id", resolvedExperienceId);
 
       // Fetch type-specific details
       let typeSpecificData: any = {};
 
-      if (experience.type === 'lodging') {
+      if (experience.type === "lodging") {
         const { data: lodgingData } = await db
-          .from('experiences_lodging')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
+          .from("experiences_lodging")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
           .single();
 
         const { data: roomTypes } = await db
-          .from('lodging_room_types')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
-          .is('deleted_at', null)
-          .order('price_cents', { ascending: true });
+          .from("lodging_room_types")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
+          .is("deleted_at", null)
+          .order("price_cents", { ascending: true });
 
         typeSpecificData = {
           lodging: lodgingData,
@@ -214,33 +214,35 @@ Use this when users want to know more about a specific experience.`,
             photos: rt.photos,
           })),
         };
-      } else if (experience.type === 'trip') {
+      } else if (experience.type === "trip") {
         const { data: tripData } = await db
-          .from('experiences_trip')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
+          .from("experiences_trip")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
           .single();
 
         const { data: itinerary } = await db
-          .from('trip_itinerary')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
-          .order('day_number', { ascending: true })
-          .order('order_index', { ascending: true });
+          .from("trip_itinerary")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
+          .order("day_number", { ascending: true })
+          .order("order_index", { ascending: true });
 
         const { data: departures } = await db
-          .from('trip_departures')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
-          .eq('status', 'scheduled')
-          .gte('depart_at', new Date().toISOString())
-          .order('depart_at', { ascending: true })
+          .from("trip_departures")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
+          .eq("status", "scheduled")
+          .gte("depart_at", new Date().toISOString())
+          .order("depart_at", { ascending: true })
           .limit(10);
 
         typeSpecificData = {
           trip: {
             ...tripData,
-            price_mad: tripData?.price_cents ? tripData.price_cents / 100 : null,
+            price_mad: tripData?.price_cents
+              ? tripData.price_cents / 100
+              : null,
           },
           itinerary: itinerary?.map((item: any) => ({
             day_number: item.day_number,
@@ -255,29 +257,33 @@ Use this when users want to know more about a specific experience.`,
             return_at: dep.return_at,
             seats_available: dep.seats_available,
             seats_total: dep.seats_total,
-            price_override_mad: dep.price_override_cents ? dep.price_override_cents / 100 : null,
+            price_override_mad: dep.price_override_cents
+              ? dep.price_override_cents / 100
+              : null,
           })),
         };
-      } else if (experience.type === 'activity') {
+      } else if (experience.type === "activity") {
         const { data: activityData } = await db
-          .from('experiences_trip')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
+          .from("experiences_trip")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
           .single();
 
         const { data: sessions } = await db
-          .from('activity_sessions')
-          .select('*')
-          .eq('experience_id', resolvedExperienceId)
-          .eq('status', 'scheduled')
-          .gte('start_at', new Date().toISOString())
-          .order('start_at', { ascending: true })
+          .from("activity_sessions")
+          .select("*")
+          .eq("experience_id", resolvedExperienceId)
+          .eq("status", "scheduled")
+          .gte("start_at", new Date().toISOString())
+          .order("start_at", { ascending: true })
           .limit(10);
 
         typeSpecificData = {
           activity: {
             ...activityData,
-            price_mad: activityData?.price_cents ? activityData.price_cents / 100 : null,
+            price_mad: activityData?.price_cents
+              ? activityData.price_cents / 100
+              : null,
           },
           upcoming_sessions: sessions?.map((session: any) => ({
             id: session.id,
@@ -285,14 +291,16 @@ Use this when users want to know more about a specific experience.`,
             end_at: session.end_at,
             capacity_available: session.capacity_available,
             capacity_total: session.capacity_total,
-            price_override_mad: session.price_override_cents ? session.price_override_cents / 100 : null,
+            price_override_mad: session.price_override_cents
+              ? session.price_override_cents / 100
+              : null,
           })),
         };
       }
 
       // Fetch recent reviews (limit to 5 most recent)
       const { data: reviews } = await db
-        .from('reviews')
+        .from("reviews")
         .select(`
           id,
           rating,
@@ -304,14 +312,15 @@ Use this when users want to know more about a specific experience.`,
             profile_photo_url
           )
         `)
-        .eq('experience_id', resolvedExperienceId)
-        .eq('status', 'published')
-        .order('created_at', { ascending: false })
+        .eq("experience_id", resolvedExperienceId)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
         .limit(5);
 
       // Get active promotions
-      const { data: promoInfo } = await db
-        .rpc('experience_active_promos', { exp_id: resolvedExperienceId });
+      const { data: promoInfo } = await db.rpc("experience_active_promos", {
+        exp_id: resolvedExperienceId,
+      });
 
       const roomCount = Array.isArray(typeSpecificData.room_types)
         ? typeSpecificData.room_types.length
@@ -323,7 +332,7 @@ Use this when users want to know more about a specific experience.`,
         ? typeSpecificData.upcoming_sessions.length
         : 0;
 
-      aiDebug('tool.getExperienceDetails', 'success', {
+      aiDebug("tool.getExperienceDetails", "success", {
         requestTraceId,
         resolvedExperienceId,
         experienceType: experience.type,
@@ -356,8 +365,16 @@ Use this when users want to know more about a specific experience.`,
         },
         host: experience.host,
         amenities: amenities?.map((a: any) => a.amenity) || [],
-        services_included: servicesIncluded?.map((s: any) => ({ ...s.service, notes: s.notes })) || [],
-        services_excluded: servicesExcluded?.map((s: any) => ({ ...s.service, notes: s.notes })) || [],
+        services_included:
+          servicesIncluded?.map((s: any) => ({
+            ...s.service,
+            notes: s.notes,
+          })) || [],
+        services_excluded:
+          servicesExcluded?.map((s: any) => ({
+            ...s.service,
+            notes: s.notes,
+          })) || [],
         ...typeSpecificData,
         recent_reviews: reviews || [],
         promotion_info: promoInfo?.[0] || {
@@ -367,13 +384,13 @@ Use this when users want to know more about a specific experience.`,
         },
       };
     } catch (error) {
-      aiDebug('tool.getExperienceDetails', 'exception', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      aiDebug("tool.getExperienceDetails", "exception", {
+        error: error instanceof Error ? error.message : "Unknown error",
       });
-      console.error('Get experience details error:', error);
+      console.error("Get experience details error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   },

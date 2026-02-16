@@ -1,28 +1,59 @@
-import { tool } from 'ai';
-import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { tool } from "ai";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 const RoomSelectionSchema = z.object({
-  room_type_id: z.string().uuid().describe('Room type ID'),
-  quantity: z.number().int().positive().describe('Number of rooms of this type'),
+  room_type_id: z.string().uuid().describe("Room type ID"),
+  quantity: z
+    .number()
+    .int()
+    .positive()
+    .describe("Number of rooms of this type"),
 });
 
 const BookingItemSchema = z.object({
-  experience_id: z.string().uuid().describe('Experience UUID'),
-  from_date: z.string().describe('Check-in/start date (YYYY-MM-DD)'),
-  to_date: z.string().describe('Check-out/end date (YYYY-MM-DD)'),
-  adults: z.number().int().positive().describe('Number of adults'),
-  children: z.number().int().nonnegative().default(0).describe('Number of children'),
-  infants: z.number().int().nonnegative().default(0).describe('Number of infants'),
-  rooms: z.array(RoomSelectionSchema).optional().describe('Room selections for lodging'),
-  departure_id: z.string().uuid().optional().describe('Specific departure ID for trips'),
-  session_id: z.string().uuid().optional().describe('Specific session ID for activities'),
-  guest_notes: z.string().optional().describe('Special requests or notes'),
+  experience_id: z.string().uuid().describe("Experience UUID"),
+  from_date: z.string().describe("Check-in/start date (YYYY-MM-DD)"),
+  to_date: z.string().describe("Check-out/end date (YYYY-MM-DD)"),
+  adults: z.number().int().positive().describe("Number of adults"),
+  children: z
+    .number()
+    .int()
+    .nonnegative()
+    .default(0)
+    .describe("Number of children"),
+  infants: z
+    .number()
+    .int()
+    .nonnegative()
+    .default(0)
+    .describe("Number of infants"),
+  rooms: z
+    .array(RoomSelectionSchema)
+    .optional()
+    .describe("Room selections for lodging"),
+  departure_id: z
+    .string()
+    .uuid()
+    .optional()
+    .describe("Specific departure ID for trips"),
+  session_id: z
+    .string()
+    .uuid()
+    .optional()
+    .describe("Specific session ID for activities"),
+  guest_notes: z.string().optional().describe("Special requests or notes"),
 });
 
 const createBookingIntentSchema = z.object({
-  items: z.array(BookingItemSchema).min(1).describe('Booking items (main experience + linked experiences)'),
-  promotion_code: z.string().optional().describe('Promotion/discount code if user provided one'),
+  items: z
+    .array(BookingItemSchema)
+    .min(1)
+    .describe("Booking items (main experience + linked experiences)"),
+  promotion_code: z
+    .string()
+    .optional()
+    .describe("Promotion/discount code if user provided one"),
 });
 
 export const createBookingIntent = tool({
@@ -48,11 +79,14 @@ The tool will:
       const db = supabase as any;
 
       // Get current user
-      const { data: { user }, error: authError } = await db.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await db.auth.getUser();
       if (authError || !user) {
         return {
           success: false,
-          error: 'User not authenticated. Please sign in to book.',
+          error: "User not authenticated. Please sign in to book.",
           requires_auth: true,
         };
       }
@@ -64,9 +98,9 @@ The tool will:
       for (const item of items) {
         // Get experience details
         const { data: experience, error: expError } = await db
-          .from('experiences')
-          .select('id, title, type, host_id, published')
-          .eq('id', item.experience_id)
+          .from("experiences")
+          .select("id, title, type, host_id, published")
+          .eq("id", item.experience_id)
           .single();
 
         if (expError || !experience) {
@@ -87,18 +121,21 @@ The tool will:
         // Real availability is checked when converting draft to confirmed booking
 
         // Get pricing quote
-        const { data: quote, error: quoteError } = await db.rpc('get_booking_quote', {
-          p_experience_id: item.experience_id,
-          p_from_date: item.from_date,
-          p_to_date: item.to_date,
-          p_adults: item.adults,
-          p_children: item.children,
-          p_infants: item.infants,
-          p_rooms: item.rooms ? JSON.stringify(item.rooms) : null,
-          p_departure_id: item.departure_id || null,
-          p_promotion_code: promotion_code || null,
-          p_user_id: user.id,
-        });
+        const { data: quote, error: quoteError } = await db.rpc(
+          "get_booking_quote",
+          {
+            p_experience_id: item.experience_id,
+            p_from_date: item.from_date,
+            p_to_date: item.to_date,
+            p_adults: item.adults,
+            p_children: item.children,
+            p_infants: item.infants,
+            p_rooms: item.rooms ? JSON.stringify(item.rooms) : null,
+            p_departure_id: item.departure_id || null,
+            p_promotion_code: promotion_code || null,
+            p_user_id: user.id,
+          },
+        );
 
         const quoteResult = Array.isArray(quote) ? quote[0] : quote;
 
@@ -135,7 +172,7 @@ The tool will:
       const mainItem = itemsWithQuotes[0];
 
       const { data: booking, error: bookingError } = await db
-        .from('bookings')
+        .from("bookings")
         .insert({
           guest_id: user.id,
           experience_id: mainItem.experience_id,
@@ -151,8 +188,8 @@ The tool will:
           price_fees_cents: mainItem.quote.fees_cents,
           price_taxes_cents: mainItem.quote.taxes_cents,
           price_total_cents: mainItem.quote.total_cents,
-          currency: mainItem.quote.currency || 'MAD',
-          status: 'draft',
+          currency: mainItem.quote.currency || "MAD",
+          status: "draft",
           guest_notes: mainItem.guest_notes,
           metadata: {
             promotion_code,
@@ -186,19 +223,19 @@ The tool will:
         price_fees_cents: item.quote.fees_cents,
         price_taxes_cents: item.quote.taxes_cents,
         price_total_cents: item.quote.total_cents,
-        currency: item.quote.currency || 'MAD',
-        status: 'draft',
+        currency: item.quote.currency || "MAD",
+        status: "draft",
         guest_notes: item.guest_notes,
         order_index: index,
       }));
 
       const { error: itemsError } = await db
-        .from('booking_items')
+        .from("booking_items")
         .insert(bookingItemsData);
 
       if (itemsError) {
         // Rollback main booking if items creation fails
-        await db.from('bookings').delete().eq('id', booking.id);
+        await db.from("bookings").delete().eq("id", booking.id);
         return {
           success: false,
           error: `Failed to create booking items: ${itemsError.message}`,
@@ -210,8 +247,8 @@ The tool will:
         booking_id: booking.id,
         checkout_url: `/checkout/${booking.id}`,
         total_cents: totalCents,
-        currency: 'MAD',
-        items: itemsWithQuotes.map(item => ({
+        currency: "MAD",
+        items: itemsWithQuotes.map((item) => ({
           experience_title: item.experience_title,
           experience_type: item.experience_type,
           from_date: item.from_date,
@@ -228,16 +265,16 @@ The tool will:
 
       return {
         success: true,
-        message: 'Booking intent created successfully',
+        message: "Booking intent created successfully",
         booking_id: booking.id,
         checkout_url: summary.checkout_url,
         summary,
       };
     } catch (error) {
-      console.error('Create booking intent error:', error);
+      console.error("Create booking intent error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   },

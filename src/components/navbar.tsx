@@ -1,15 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm">
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-start gap-1">
+        <Link
+          href={localizeHref("/", pathname)}
+          className="flex items-start gap-1"
+        >
           <div className="flex flex-col items-center">
             <span className="font-bold text-3xl tracking-tight leading-none">
               okeyo
@@ -23,17 +30,17 @@ export function Navbar() {
 
         {/* Desktop Nav - Only the two requested buttons */}
         <nav className="flex items-center gap-4">
-          <Link href="/collections">
+          <Link href={localizeHref("/collections", pathname)}>
             <Button variant="ghost" className="font-medium">
               Nos collections
             </Button>
           </Link>
-          <Link href="/chat">
+          <Link href={localizeHref("/chat", pathname)}>
             <Button variant="ghost" className="font-medium">
               Assistant IA
             </Button>
           </Link>
-          <Link href="/explore">
+          <Link href={localizeHref("/explore", pathname)}>
             <Button
               className={cn(
                 "rounded-lg px-6 font-medium transition-colors",
@@ -43,7 +50,7 @@ export function Navbar() {
               Explorer nos trésors
             </Button>
           </Link>
-          <Link href="/offers">
+          <Link href={localizeHref("/offers", pathname)}>
             <Button
               variant="outline"
               className={cn(

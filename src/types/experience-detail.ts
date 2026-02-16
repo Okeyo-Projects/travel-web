@@ -1,16 +1,16 @@
-import type { Database } from '@/types/supabase';
+import type { Database } from "@/types/supabase";
 
-type ExperienceRow = Database['public']['Tables']['experiences']['Row'];
-type HostRow = Database['public']['Tables']['hosts']['Row'];
-type MediaAssetRow = Database['public']['Tables']['media_assets']['Row'];
-type LodgingRoomRow = Database['public']['Tables']['lodging_room_types']['Row'];
-type TripRow = Database['public']['Tables']['experiences_trip']['Row'];
-type TripItineraryRow = Database['public']['Tables']['trip_itinerary']['Row'];
-type TripDepartureRow = Database['public']['Tables']['trip_departures']['Row'];
+type ExperienceRow = Database["public"]["Tables"]["experiences"]["Row"];
+type HostRow = Database["public"]["Tables"]["hosts"]["Row"];
+type MediaAssetRow = Database["public"]["Tables"]["media_assets"]["Row"];
+type LodgingRoomRow = Database["public"]["Tables"]["lodging_room_types"]["Row"];
+type TripRow = Database["public"]["Tables"]["experiences_trip"]["Row"];
+type TripItineraryRow = Database["public"]["Tables"]["trip_itinerary"]["Row"];
+type TripDepartureRow = Database["public"]["Tables"]["trip_departures"]["Row"];
 
 export type ExperienceMediaRecord = {
   id: string;
-  role: Database['public']['Enums']['media_role'];
+  role: Database["public"]["Enums"]["media_role"];
   caption: string | null;
   order_index: number | null;
   asset: MediaAssetRow | null;
@@ -18,33 +18,29 @@ export type ExperienceMediaRecord = {
 
 export type ExperienceAmenityRecord = {
   amenity_key: string;
-  amenity:
-    | {
-        key: string;
-        label_en: string | null;
-        label_fr: string | null;
-        icon: string | null;
-        category: string;
-      }
-    | null;
+  amenity: {
+    key: string;
+    label_en: string | null;
+    label_fr: string | null;
+    icon: string | null;
+    category: string;
+  } | null;
 };
 
 export type ExperienceServiceRecord = {
   service_key: string;
   notes: string | null;
-  service:
-    | {
-        key: string;
-        label_en: string | null;
-        label_fr: string | null;
-        icon: string | null;
-        category: string;
-      }
-    | null;
+  service: {
+    key: string;
+    label_en: string | null;
+    label_fr: string | null;
+    icon: string | null;
+    category: string;
+  } | null;
 };
 
 export type ExperienceLodgingRecord = {
-  lodging_type: Database['public']['Enums']['lodging_type'];
+  lodging_type: Database["public"]["Enums"]["lodging_type"];
   non_fumeur: boolean | null;
   animaux_acceptes: boolean | null;
   check_in_time: string | null;
@@ -70,8 +66,8 @@ export type SupabaseExperienceRecord = ExperienceRow & {
 
 export type ExperienceMedia = {
   id: string;
-  role: Database['public']['Enums']['media_role'] | null;
-  kind: Database['public']['Enums']['media_kind'];
+  role: Database["public"]["Enums"]["media_role"] | null;
+  kind: Database["public"]["Enums"]["media_kind"];
   caption: string | null;
   url: string | null;
   thumbnailUrl: string | null;
@@ -117,7 +113,7 @@ export type ExperienceService = {
   icon: string | null;
   category: string;
   notes: string | null;
-  type: 'included' | 'excluded'; // Added to distinguish in unified lists
+  type: "included" | "excluded"; // Added to distinguish in unified lists
 };
 
 export type ExperienceAmenity = {
@@ -136,10 +132,10 @@ export type ExperienceDetail = {
   region: string | null;
   country: string | null;
   address: Record<string, unknown> | null;
-  type: Database['public']['Enums']['experience_type'];
+  type: Database["public"]["Enums"]["experience_type"];
   tags: string[];
   languages: string[];
-  cancellationPolicy: Database['public']['Enums']['cancellation_policy'];
+  cancellationPolicy: Database["public"]["Enums"]["cancellation_policy"];
   thumbnailUrl: string | null;
   video: ExperienceMedia | null;
   gallery: ExperienceMedia[];

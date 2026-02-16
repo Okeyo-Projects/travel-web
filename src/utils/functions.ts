@@ -8,10 +8,10 @@ export function formatCount(value: number): string {
   return value.toString();
 }
 
-function formatPrice(amount: number, currency: string): string {
+function _formatPrice(amount: number, currency: string): string {
   try {
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
+    const formatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
       currency,
       minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
       maximumFractionDigits: 2,
@@ -22,14 +22,20 @@ function formatPrice(amount: number, currency: string): string {
   }
 }
 
-const DEFAULT_STORAGE_BUCKET = 'experiences';
-const KNOWN_STORAGE_BUCKETS = ['experiences', 'hosts', 'profiles', 'media', 'assets'] as const;
-const STORAGE_PUBLIC_PREFIX = 'storage/v1/object/public/';
+const DEFAULT_STORAGE_BUCKET = "experiences";
+const KNOWN_STORAGE_BUCKETS = [
+  "experiences",
+  "hosts",
+  "profiles",
+  "media",
+  "assets",
+] as const;
+const STORAGE_PUBLIC_PREFIX = "storage/v1/object/public/";
 
-const normalizeStoragePath = (value: string) => value.replace(/^\/+/, '');
+const normalizeStoragePath = (value: string) => value.replace(/^\/+/, "");
 const encodeStoragePath = (value: string) =>
   value
-    .split('/')
+    .split("/")
     .map((segment) => {
       if (!segment) {
         return segment;
@@ -40,12 +46,15 @@ const encodeStoragePath = (value: string) =>
         return encodeURIComponent(segment);
       }
     })
-    .join('/');
+    .join("/");
 
 const hasKnownBucketPrefix = (value: string) =>
   KNOWN_STORAGE_BUCKETS.some((bucket) => value.startsWith(`${bucket}/`));
 
-export function resolveStorageUrl(path: string | null, bucket: string = DEFAULT_STORAGE_BUCKET): string | null {
+export function resolveStorageUrl(
+  path: string | null,
+  bucket: string = DEFAULT_STORAGE_BUCKET,
+): string | null {
   if (!path) {
     return null;
   }
@@ -65,12 +74,14 @@ export function resolveStorageUrl(path: string | null, bucket: string = DEFAULT_
     return `${baseUrl}/${normalized}`;
   }
 
-  const hasBucketPrefix = Boolean(bucket) && normalized.startsWith(`${bucket}/`);
-  const finalPath = hasBucketPrefix || hasKnownBucketPrefix(normalized)
-    ? normalized
-    : bucket
-      ? `${bucket}/${normalized}`
-      : normalized;
+  const hasBucketPrefix =
+    Boolean(bucket) && normalized.startsWith(`${bucket}/`);
+  const finalPath =
+    hasBucketPrefix || hasKnownBucketPrefix(normalized)
+      ? normalized
+      : bucket
+        ? `${bucket}/${normalized}`
+        : normalized;
 
   return `${baseUrl}/${STORAGE_PUBLIC_PREFIX}${finalPath}`;
 }

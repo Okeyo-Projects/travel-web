@@ -1,25 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { MapPin, Bike, Calendar, Users, Search, ChevronDown } from "lucide-react"
-import { cn } from "@/lib/utils"
+import {
+  Bike,
+  Calendar,
+  ChevronDown,
+  MapPin,
+  Search,
+  Users,
+} from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface SearchFilterBarProps {
-  className?: string
+  className?: string;
   onSearch?: (filters: {
-    location: string
-    activity: string
-    date: string
-    guests: number
-  }) => void
+    location: string;
+    activity: string;
+    date: string;
+    guests: number;
+  }) => void;
 }
 
 export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
-  const [location, setLocation] = useState("")
-  const [activity, setActivity] = useState("")
-  const [date, setDate] = useState("")
-  const [guests, setGuests] = useState(1)
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [location, _setLocation] = useState("");
+  const [activity, _setActivity] = useState("");
+  const [date, _setDate] = useState("");
+  const [guests, _setGuests] = useState(1);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSearch = () => {
     onSearch?.({
@@ -27,21 +34,22 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
       activity,
       date,
       guests,
-    })
-  }
+    });
+  };
 
   return (
     <div
       className={cn(
         "bg-[#1a1a1a] rounded-full p-2 transition-all duration-300",
         isExpanded ? "rounded-3xl" : "rounded-full",
-        className
+        className,
       )}
     >
       {/* Desktop / Collapsed Mobile View */}
       <div className="flex items-center gap-1">
         {/* Location */}
         <button
+          type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 min-w-0"
         >
@@ -59,15 +67,14 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
 
         {/* Activity - Desktop only */}
         <button
+          type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           className="hidden md:flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors"
         >
           <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
           <div className="text-left">
             <p className="text-xs text-gray-400">Activity</p>
-            <p className="text-sm text-white">
-              {activity || "All Activity"}
-            </p>
+            <p className="text-sm text-white">{activity || "All Activity"}</p>
           </div>
         </button>
 
@@ -76,15 +83,14 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
 
         {/* When - Desktop only */}
         <button
+          type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           className="hidden lg:flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors"
         >
           <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
           <div className="text-left">
             <p className="text-xs text-gray-400">When</p>
-            <p className="text-sm text-white">
-              {date || "Choose a Date"}
-            </p>
+            <p className="text-sm text-white">{date || "Choose a Date"}</p>
           </div>
         </button>
 
@@ -93,6 +99,7 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
 
         {/* Guests - Desktop only */}
         <button
+          type="button"
           onClick={() => setIsExpanded(!isExpanded)}
           className="hidden xl:flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors"
         >
@@ -105,6 +112,7 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
 
         {/* Search Button */}
         <button
+          type="button"
           onClick={handleSearch}
           className="w-12 h-12 bg-[#ff2566] hover:bg-[#e0205a] rounded-full flex items-center justify-center transition-colors shrink-0"
         >
@@ -142,5 +150,5 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

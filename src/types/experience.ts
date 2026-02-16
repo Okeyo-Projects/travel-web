@@ -1,4 +1,4 @@
-export type ExperienceType = 'trip' | 'lodging' | 'activity';
+export type ExperienceType = "trip" | "lodging" | "activity";
 
 export interface ExperienceListItem {
   id: string;
@@ -33,8 +33,8 @@ export interface ExperienceListItem {
 }
 
 export type ExperienceSort =
-  | 'newest'
-  | 'popular'
-  | 'rating'
-  | 'price_high'
-  | 'price_low';
+  | "newest"
+  | "popular"
+  | "rating"
+  | "price_high"
+  | "price_low";

@@ -1,26 +1,82 @@
 "use client";
 
-import { Bike, Calendar, Loader2, MapPin, Search, Users } from "lucide-react";
+import { addDays, format } from "date-fns";
+import {
+  Bike,
+  Calendar,
+  Loader2,
+  MapPin,
+  Minus,
+  Plus,
+  Search,
+  Users,
+} from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { DateRange } from "react-day-picker";
 import { ExperienceCard } from "@/components/experience-card";
 import { ExperienceGroup } from "@/components/explore";
 import { FooterSection } from "@/components/home/FooterSection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Button } from "@/components/ui/button";
+import { Calendar as DatePickerCalendar } from "@/components/ui/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useCategories } from "@/hooks/use-categories";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useInfiniteExperiences } from "@/hooks/use-experiences";
 import { useAllCategoryGroups } from "@/hooks/use-experiences-by-category";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { buildCategorySlug } from "@/lib/routing/slugs";
 import type { ExperienceSort, ExperienceType } from "@/types/experience";
 
 export default function ExplorePage() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const categoryQuery = searchParams.get("category");
+  const { data: categories } = useCategories();
   const [searchQuery, setSearchQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
 
   const [activeType, setActiveType] = useState<ExperienceType | "all">("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [guestsCount, setGuestsCount] = useState(1);
   const [activeSort] = useState<ExperienceSort>("newest");
+
+  const dateFrom = dateRange?.from
+    ? format(dateRange.from, "yyyy-MM-dd")
+    : undefined;
+  const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
+  const dateLabel = dateRange?.from
+    ? dateRange.to
+      ? `${format(dateRange.from, "dd MMM")} - ${format(dateRange.to, "dd MMM")}`
+      : format(dateRange.from, "dd MMM")
+    : "Choose a Date";
+  const activityLabel =
+    activeType === "all"
+      ? "All Activity"
+      : activeType === "lodging"
+        ? "Stays"
+        : activeType === "trip"
+          ? "Trips"
+          : "Activities";
+  const guestsLabel = `${guestsCount} guest${guestsCount > 1 ? "s" : ""}`;
+  const hasSearchText = debouncedSearch.length > 0 || locationQuery.length > 0;
+  const hasActiveFilters =
+    activeType !== "all" || Boolean(dateFrom) || guestsCount > 1;
 
   // Fetch category groups for the browse view (when not searching)
   const { data: categoryGroups, isLoading: isLoadingGroups } =
@@ -36,25 +92,45 @@ export default function ExplorePage() {
     isError: isSearchError,
   } = useInfiniteExperiences(
     {
-      search: debouncedSearch || locationQuery,
+      search: debouncedSearch || locationQuery || undefined,
       type: activeType === "all" ? undefined : activeType,
+      guests: guestsCount > 1 ? guestsCount : undefined,
+      dateFrom,
+      dateTo,
       sort: activeSort,
       pageSize: 12,
     },
-    // Only enable search when user has entered a query
-    !!(debouncedSearch || locationQuery),
+    // Enable search with either query text or active filters
+    hasSearchText || hasActiveFilters,
   );
 
   const searchResults = searchData?.pages.flatMap((page) => page.items) || [];
 
   const handleSearch = () => {
-    if (locationQuery) {
-      setSearchQuery(locationQuery);
-    }
+    setSearchQuery(locationQuery.trim());
   };
 
-  const showSearchResults =
-    debouncedSearch.length > 0 || locationQuery.length > 0;
+  const showSearchResults = hasSearchText || hasActiveFilters;
+
+  useEffect(() => {
+    if (!categoryQuery || !categories || categories.length === 0) {
+      return;
+    }
+
+    const category = categories.find((item) => item.id === categoryQuery);
+    if (!category) {
+      return;
+    }
+
+    router.replace(
+      localizeHref(
+        `/explore/category/${buildCategorySlug({
+          title: category.title,
+        })}`,
+        pathname,
+      ),
+    );
+  }, [categoryQuery, categories, pathname, router]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -112,46 +188,128 @@ export default function ExplorePage() {
             <div className="w-px h-8 bg-white/10" />
 
             {/* Activity */}
-            <button
-              type="button"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
-            >
-              <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
-              <div className="text-left min-w-0 hidden sm:block">
-                <p className="text-xs text-gray-400">Activity</p>
-                <p className="text-sm text-white">All Activity</p>
-              </div>
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
+                >
+                  <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
+                  <div className="text-left min-w-0 hidden sm:block">
+                    <p className="text-xs text-gray-400">Activity</p>
+                    <p className="text-sm text-white">{activityLabel}</p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-44">
+                <DropdownMenuItem onClick={() => setActiveType("all")}>
+                  All Activity
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveType("lodging")}>
+                  Stays
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveType("trip")}>
+                  Trips
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveType("activity")}>
+                  Activities
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Divider */}
             <div className="w-px h-8 bg-white/10" />
 
             {/* When */}
-            <button
-              type="button"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
-            >
-              <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
-              <div className="text-left min-w-0 hidden sm:block">
-                <p className="text-xs text-gray-400">When</p>
-                <p className="text-sm text-white">Choose a Date</p>
-              </div>
-            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
+                >
+                  <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
+                  <div className="text-left min-w-0 hidden sm:block">
+                    <p className="text-xs text-gray-400">When</p>
+                    <p className="text-sm text-white">{dateLabel}</p>
+                  </div>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-3">
+                <DatePickerCalendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  disabled={(date) => date < addDays(new Date(), -1)}
+                  numberOfMonths={1}
+                />
+                {dateRange?.from && (
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDateRange(undefined)}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
 
             {/* Divider */}
             <div className="w-px h-8 bg-white/10" />
 
             {/* Guests */}
-            <button
-              type="button"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
-            >
-              <Users className="w-5 h-5 text-[#ff2566] shrink-0" />
-              <div className="text-left min-w-0 hidden sm:block">
-                <p className="text-xs text-gray-400">Guests</p>
-                <p className="text-sm text-white">1 guest</p>
-              </div>
-            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
+                >
+                  <Users className="w-5 h-5 text-[#ff2566] shrink-0" />
+                  <div className="text-left min-w-0 hidden sm:block">
+                    <p className="text-xs text-gray-400">Guests</p>
+                    <p className="text-sm text-white">{guestsLabel}</p>
+                  </div>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-56">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Guests</p>
+                    <p className="text-xs text-gray-500">
+                      Used for capacity filtering
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() =>
+                        setGuestsCount((value) => Math.max(1, value - 1))
+                      }
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-6 text-center text-sm font-medium">
+                      {guestsCount}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setGuestsCount((value) => value + 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {/* Divider */}
             <div className="w-px h-8 bg-white/10 hidden sm:block" />
@@ -175,13 +333,18 @@ export default function ExplorePage() {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                Résultats pour &quot;{debouncedSearch || locationQuery}&quot;
+                {debouncedSearch || locationQuery
+                  ? `Résultats pour "${debouncedSearch || locationQuery}"`
+                  : "Résultats filtrés"}
               </h2>
               <Button
                 variant="ghost"
                 onClick={() => {
                   setSearchQuery("");
                   setLocationQuery("");
+                  setActiveType("all");
+                  setDateRange(undefined);
+                  setGuestsCount(1);
                 }}
                 className="text-gray-600 hover:text-gray-900"
               >
@@ -220,6 +383,8 @@ export default function ExplorePage() {
                         setSearchQuery("");
                         setLocationQuery("");
                         setActiveType("all");
+                        setDateRange(undefined);
+                        setGuestsCount(1);
                       }}
                       className="mt-2 text-[#ff2566]"
                     >
@@ -265,8 +430,14 @@ export default function ExplorePage() {
                   imageUrl={group.categoryAsset}
                   experiences={group.experiences}
                   onMoreClick={() => {
-                    // Could navigate to a category-specific page
-                    console.log("More clicked for", group.categoryTitle);
+                    router.push(
+                      localizeHref(
+                        `/explore/category/${buildCategorySlug({
+                          title: group.categoryTitle,
+                        })}`,
+                        pathname,
+                      ),
+                    );
                   }}
                 />
               ))

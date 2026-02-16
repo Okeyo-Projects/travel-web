@@ -1,18 +1,30 @@
-import Image from "next/image"
-import Link from "next/link"
-import { cn } from "@/lib/utils"
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface CollectionCardProps {
-  title: string
-  description?: string
-  imageUrl?: string | null
-  href: string
-  className?: string
+  title: string;
+  description?: string;
+  imageUrl?: string | null;
+  href: string;
+  className?: string;
 }
 
-export function CollectionCard({ title, description, imageUrl, href, className }: CollectionCardProps) {
+export function CollectionCard({
+  title,
+  description,
+  imageUrl,
+  href,
+  className,
+}: CollectionCardProps) {
   return (
-    <Link href={href} className={cn("block group relative overflow-hidden rounded-xl", className)}>
+    <Link
+      href={href}
+      className={cn(
+        "block group relative overflow-hidden rounded-xl",
+        className,
+      )}
+    >
       <div className="aspect-[3/4] w-full relative">
         {imageUrl ? (
           <Image
@@ -25,7 +37,7 @@ export function CollectionCard({ title, description, imageUrl, href, className }
           <div className="w-full h-full bg-muted" />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/80" />
-        
+
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform transition-transform duration-300 group-hover:-translate-y-2">
           <h3 className="font-bold text-xl mb-1">{title}</h3>
           {description && (
@@ -36,5 +48,5 @@ export function CollectionCard({ title, description, imageUrl, href, className }
         </div>
       </div>
     </Link>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Common types
@@ -13,12 +13,15 @@ export type RoomSelection = {
  */
 
 export const BookingStatus = z.enum([
-  'draft',
-  'pending_payment',
-  'confirmed',
-  'cancelled',
-  'completed',
-  'refunded',
+  "draft",
+  "pending_host",
+  "approved",
+  "declined",
+  "pending_payment",
+  "confirmed",
+  "cancelled",
+  "completed",
+  "refunded",
 ]);
 export type BookingStatus = z.infer<typeof BookingStatus>;
 
@@ -33,10 +36,14 @@ export const BookingSchema = z.object({
   children: z.number().int().nonnegative().default(0),
   infants: z.number().int().nonnegative().default(0),
   departureId: z.string().uuid().optional(), // For trips
-  rooms: z.array(z.object({
-    roomTypeId: z.string().uuid(),
-    quantity: z.number().int().positive(),
-  })).optional(), // For lodging
+  rooms: z
+    .array(
+      z.object({
+        roomTypeId: z.string().uuid(),
+        quantity: z.number().int().positive(),
+      }),
+    )
+    .optional(), // For lodging
   priceSubtotalCents: z.number().int().nonnegative(),
   priceFeesCents: z.number().int().nonnegative().default(0),
   priceTaxesCents: z.number().int().nonnegative().default(0),
@@ -58,10 +65,14 @@ export const CreateBookingSchema = z.object({
   children: z.number().int().nonnegative().default(0),
   infants: z.number().int().nonnegative().default(0),
   departureId: z.string().uuid().optional(),
-  rooms: z.array(z.object({
-    roomTypeId: z.string().uuid(),
-    quantity: z.number().int().positive(),
-  })).optional(),
+  rooms: z
+    .array(
+      z.object({
+        roomTypeId: z.string().uuid(),
+        quantity: z.number().int().positive(),
+      }),
+    )
+    .optional(),
   guestNotes: z.string().optional(),
 });
 export type CreateBooking = z.infer<typeof CreateBookingSchema>;

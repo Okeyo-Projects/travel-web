@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/client';
-import type { ExperienceListItem } from '@/types/experience';
-import { resolveStorageUrl } from '@/utils/functions';
+import { useQuery } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
+import type { ExperienceListItem } from "@/types/experience";
+import { resolveStorageUrl } from "@/utils/functions";
 
 interface ExperiencesByCategory {
   categoryId: string;
@@ -12,16 +12,22 @@ interface ExperiencesByCategory {
 
 function transformExperience(exp: any): ExperienceListItem {
   // Extract lodging data and calculate minimum room price
-  const lodgingData = Array.isArray(exp.lodging) ? exp.lodging[0] || null : exp.lodging;
+  const lodgingData = Array.isArray(exp.lodging)
+    ? exp.lodging[0] || null
+    : exp.lodging;
   const rooms = exp.rooms || [];
-  const minRoomPrice = rooms.length > 0
-    ? rooms.reduce((min: any, room: any) => {
-        if (!min || (room.price_cents && room.price_cents < min.price_cents)) {
-          return room;
-        }
-        return min;
-      }, null)
-    : null;
+  const minRoomPrice =
+    rooms.length > 0
+      ? rooms.reduce((min: any, room: any) => {
+          if (
+            !min ||
+            (room.price_cents && room.price_cents < min.price_cents)
+          ) {
+            return room;
+          }
+          return min;
+        }, null)
+      : null;
 
   const tripData = Array.isArray(exp.trip) ? exp.trip[0] || null : exp.trip;
 
@@ -52,16 +58,19 @@ function transformExperience(exp: any): ExperienceListItem {
   };
 }
 
-export function useExperiencesByCategory(categoryId: string | null, limit = 10) {
+export function useExperiencesByCategory(
+  categoryId: string | null,
+  limit?: number,
+) {
   return useQuery<ExperienceListItem[]>({
-    queryKey: ['experiences-by-category', categoryId, limit],
+    queryKey: ["experiences-by-category", categoryId, limit ?? "all"],
     queryFn: async () => {
       if (!categoryId) return [];
-      
+
       const supabase = createClient();
-      
-      const { data, error } = await (supabase as any)
-        .from('experience_categories')
+
+      let query = (supabase as any)
+        .from("experience_categories")
         .select(`
           experience:experiences!inner(
             id,
@@ -94,18 +103,25 @@ export function useExperiencesByCategory(categoryId: string | null, limit = 10) 
             )
           )
         `)
-        .eq('category_id', categoryId)
-        .eq('experience.status', 'published')
-        .is('experience.deleted_at', null)
-        .limit(limit);
+        .eq("category_id", categoryId)
+        .eq("experience.status", "published")
+        .is("experience.deleted_at", null);
+
+      if (typeof limit === "number" && limit > 0) {
+        query = query.limit(limit);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
-        console.error('[useExperiencesByCategory] Error:', error);
+        console.error("[useExperiencesByCategory] Error:", error);
         throw error;
       }
 
       // Transform the data
-      return (data || []).map((item: any) => transformExperience(item.experience));
+      return (data || []).map((item: any) =>
+        transformExperience(item.experience),
+      );
     },
     enabled: !!categoryId,
     staleTime: 1000 * 60 * 5,
@@ -114,13 +130,15 @@ export function useExperiencesByCategory(categoryId: string | null, limit = 10) 
 
 export function useAllCategoryGroups(limitPerCategory = 10) {
   return useQuery<ExperiencesByCategory[]>({
-    queryKey: ['all-category-groups', limitPerCategory],
+    queryKey: ["all-category-groups", limitPerCategory],
     queryFn: async () => {
       const supabase = createClient();
-      
+
       // First get all active categories that have experiences
-      const { data: categories, error: categoriesError } = await (supabase as any)
-        .from('categories')
+      const { data: categories, error: categoriesError } = await (
+        supabase as any
+      )
+        .from("categories")
         .select(`
           id,
           title,
@@ -129,21 +147,24 @@ export function useAllCategoryGroups(limitPerCategory = 10) {
             experience:experiences!inner(id)
           )
         `)
-        .eq('is_active', true)
-        .eq('experience_categories.experiences.status', 'published')
+        .eq("is_active", true)
+        .eq("experience_categories.experiences.status", "published")
         .limit(6);
 
       if (categoriesError) {
-        console.error('[useAllCategoryGroups] Categories error:', categoriesError);
+        console.error(
+          "[useAllCategoryGroups] Categories error:",
+          categoriesError,
+        );
         throw categoriesError;
       }
 
       // For each category, fetch its experiences
       const results: ExperiencesByCategory[] = [];
-      
-      for (const category of (categories || [])) {
+
+      for (const category of categories || []) {
         const { data: expData, error: expError } = await (supabase as any)
-          .from('experience_categories')
+          .from("experience_categories")
           .select(`
             experience:experiences!inner(
               id,
@@ -176,24 +197,28 @@ export function useAllCategoryGroups(limitPerCategory = 10) {
               )
             )
           `)
-          .eq('category_id', category.id)
-          .eq('experience.status', 'published')
-          .is('experience.deleted_at', null)
+          .eq("category_id", category.id)
+          .eq("experience.status", "published")
+          .is("experience.deleted_at", null)
           .limit(limitPerCategory);
 
         if (expError) {
-          console.error(`[useAllCategoryGroups] Error fetching experiences for ${category.id}:`, expError);
+          console.error(
+            `[useAllCategoryGroups] Error fetching experiences for ${category.id}:`,
+            expError,
+          );
           continue;
         }
 
-        const experiences: ExperienceListItem[] = (expData || []).map((item: any) => 
-          transformExperience(item.experience)
+        const experiences: ExperienceListItem[] = (expData || []).map(
+          (item: any) => transformExperience(item.experience),
         );
 
         if (experiences.length > 0) {
           results.push({
             categoryId: category.id,
-            categoryTitle: category.title?.fr || category.title?.en || 'Category',
+            categoryTitle:
+              category.title?.fr || category.title?.en || "Category",
             categoryAsset: category.asset,
             experiences,
           });

@@ -1,8 +1,12 @@
-import { tool } from 'ai';
-import { z } from 'zod';
+import { tool } from "ai";
+import { z } from "zod";
 
 const requestLocationSchema = z.object({
-  reason: z.string().describe('Explanation of why location is needed (e.g., "to find experiences near you", "to calculate distances")'),
+  reason: z
+    .string()
+    .describe(
+      'Explanation of why location is needed (e.g., "to find experiences near you", "to calculate distances")',
+    ),
 });
 
 export const requestUserLocation = tool({
@@ -14,7 +18,7 @@ This returns a special marker that the frontend will interpret to show a locatio
     // This tool returns a special marker that the frontend will interpret
     // The frontend will show a location permission dialog and send the coordinates back
     return {
-      type: 'location_request',
+      type: "location_request",
       reason,
       message: `I'd like to access your location ${reason}. This will help me show you the most relevant experiences based on your location.`,
     };

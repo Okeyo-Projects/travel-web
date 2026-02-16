@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import FacebookPixel from "@/components/FacebookPixel";
+import { FloatingChatButton } from "@/components/site/FloatingChatButton";
+import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,13 +37,19 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthProvider } from "@/providers/auth-provider";
 import QueryProvider from "@/providers/query-provider";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const headerLocale = requestHeaders.get("x-locale");
+  const locale = isSupportedLocale(headerLocale)
+    ? headerLocale
+    : DEFAULT_LOCALE;
+
   return (
-    <html lang="fr">
+    <html lang={locale}>
       <FacebookPixel />
       <head>
         <link
@@ -54,10 +63,12 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <main className="flex-1">{children}</main>
+            <FloatingChatButton />
             <AuthModal />
           </AuthProvider>
         </QueryProvider>
         <noscript>
+          {/* biome-ignore lint/performance/noImgElement: Noscript fallback pixel must be a plain img tag. */}
           <img
             height="1"
             width="1"

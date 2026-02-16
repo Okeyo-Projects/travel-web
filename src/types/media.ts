@@ -1,13 +1,18 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Media and Reel types
  */
 
-export const MediaKind = z.enum(['video', 'photo']);
+export const MediaKind = z.enum(["video", "photo"]);
 export type MediaKind = z.infer<typeof MediaKind>;
 
-export const ProcessingStatus = z.enum(['pending', 'processing', 'completed', 'failed']);
+export const ProcessingStatus = z.enum([
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+]);
 export type ProcessingStatus = z.infer<typeof ProcessingStatus>;
 
 export const MediaAssetSchema = z.object({
@@ -15,7 +20,7 @@ export const MediaAssetSchema = z.object({
   ownerId: z.string().uuid(),
   kind: MediaKind,
   path: z.string(),
-  bucket: z.string().default('media'),
+  bucket: z.string().default("media"),
   filename: z.string().optional(),
   mimeType: z.string().optional(),
   sizeBytes: z.number().int().optional(),
@@ -43,10 +48,12 @@ export const MediaUploadUrlResponseSchema = z.object({
   path: z.string(),
   expiresAt: z.string().datetime(),
 });
-export type MediaUploadUrlResponse = z.infer<typeof MediaUploadUrlResponseSchema>;
+export type MediaUploadUrlResponse = z.infer<
+  typeof MediaUploadUrlResponseSchema
+>;
 
 // Reels
-export const ReelVisibility = z.enum(['public', 'unlisted', 'private']);
+export const ReelVisibility = z.enum(["public", "unlisted", "private"]);
 export type ReelVisibility = z.infer<typeof ReelVisibility>;
 
 export const ReelSchema = z.object({
@@ -71,8 +78,7 @@ export const CreateReelSchema = z.object({
   caption: z.string().max(2200).optional(),
   videoId: z.string().uuid(),
   experienceId: z.string().uuid().optional(),
-  visibility: ReelVisibility.default('public'),
+  visibility: ReelVisibility.default("public"),
   hashtags: z.array(z.string()).optional(),
 });
 export type CreateReel = z.infer<typeof CreateReelSchema>;
-

@@ -1,7 +1,7 @@
-import Image from "next/image"
-import { Facebook, Instagram, Send, Twitter } from "lucide-react"
+import { Facebook, Instagram, Send, Twitter } from "lucide-react";
+import Image from "next/image";
 
-const COMPANY_LINKS = ["Traveling", "About Locate", "Success", "Information"]
+const COMPANY_LINKS = ["Traveling", "About Locate", "Success", "Information"];
 
 export function FooterSection() {
   return (
@@ -23,7 +23,9 @@ export function FooterSection() {
               height={80}
               className="h-auto w-[130px] sm:w-[200px]"
             />
-            <p className="mt-4 max-w-[230px] text-xl leading-relaxed text-white/90">Enjoy the touring with Saly</p>
+            <p className="mt-4 max-w-[230px] text-xl leading-relaxed text-white/90">
+              Enjoy the touring with Saly
+            </p>
 
             <div className="mt-6 flex items-center gap-3">
               <button
@@ -55,7 +57,7 @@ export function FooterSection() {
             <ul className="mt-5 space-y-3 text-xl text-white/90">
               {COMPANY_LINKS.map((item) => (
                 <li key={item}>
-                  <a href="#" className="transition-colors hover:text-white">
+                  <a href="/" className="transition-colors hover:text-white">
                     {item}
                   </a>
                 </li>
@@ -87,5 +89,5 @@ export function FooterSection() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

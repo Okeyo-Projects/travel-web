@@ -48,17 +48,17 @@ function replaceTemplateVariables(
 ): string {
   return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (match, key) => {
     const normalized = String(key);
-    if (Object.prototype.hasOwnProperty.call(variables, normalized)) {
+    if (Object.hasOwn(variables, normalized)) {
       return variables[normalized];
     }
 
     const lower = normalized.toLowerCase();
-    if (Object.prototype.hasOwnProperty.call(variables, lower)) {
+    if (Object.hasOwn(variables, lower)) {
       return variables[lower];
     }
 
     const upper = normalized.toUpperCase();
-    if (Object.prototype.hasOwnProperty.call(variables, upper)) {
+    if (Object.hasOwn(variables, upper)) {
       return variables[upper];
     }
 

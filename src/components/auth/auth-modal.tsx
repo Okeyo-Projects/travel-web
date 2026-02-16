@@ -1,16 +1,14 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { useAuth } from "@/hooks/use-auth"
-import { Button } from "@/components/ui/button"
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Drawer,
   DrawerClose,
@@ -18,80 +16,77 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
-} from "@/components/ui/drawer"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 type MessageState = {
-  type: "error" | "success"
-  text: string
-}
+  type: "error" | "success";
+  text: string;
+};
 
 export function AuthModal() {
-  const isMobile = useIsMobile()
-  const {
-    authModalOpen,
-    authMode,
-    closeAuthModal,
-    setAuthMode,
-    supabase,
-  } = useAuth()
+  const isMobile = useIsMobile();
+  const { authModalOpen, authMode, closeAuthModal, setAuthMode, supabase } =
+    useAuth();
 
-  const [loginEmail, setLoginEmail] = useState("")
-  const [loginPassword, setLoginPassword] = useState("")
-  const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState("")
-  const [signupPassword, setSignupPassword] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [message, setMessage] = useState<MessageState | null>(null)
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<MessageState | null>(null);
 
   useEffect(() => {
     if (!authModalOpen) {
-      setLoginEmail("")
-      setLoginPassword("")
-      setSignupName("")
-      setSignupEmail("")
-      setSignupPassword("")
-      setMessage(null)
+      setLoginEmail("");
+      setLoginPassword("");
+      setSignupName("");
+      setSignupEmail("");
+      setSignupPassword("");
+      setMessage(null);
     }
-  }, [authModalOpen])
+  }, [authModalOpen]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      closeAuthModal()
+      closeAuthModal();
     }
-  }
+  };
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setIsSubmitting(true)
-    setMessage(null)
+    event.preventDefault();
+    setIsSubmitting(true);
+    setMessage(null);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail.trim(),
       password: loginPassword,
-    })
+    });
 
     if (error) {
-      setMessage({ type: "error", text: error.message })
-      setIsSubmitting(false)
-      return
+      setMessage({ type: "error", text: error.message });
+      setIsSubmitting(false);
+      return;
     }
 
-    setIsSubmitting(false)
-  }
+    setIsSubmitting(false);
+  };
 
   const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setIsSubmitting(true)
-    setMessage(null)
+    event.preventDefault();
+    setIsSubmitting(true);
+    setMessage(null);
 
     if (!signupName.trim()) {
-      setMessage({ type: "error", text: "Please enter your name." })
-      setIsSubmitting(false)
-      return
+      setMessage({ type: "error", text: "Please enter your name." });
+      setIsSubmitting(false);
+      return;
     }
 
     const { data, error } = await supabase.auth.signUp({
@@ -102,42 +97,42 @@ export function AuthModal() {
           display_name: signupName.trim(),
         },
       },
-    })
+    });
 
     if (error) {
-      setMessage({ type: "error", text: error.message })
-      setIsSubmitting(false)
-      return
+      setMessage({ type: "error", text: error.message });
+      setIsSubmitting(false);
+      return;
     }
 
     if (!data.session) {
       setMessage({
         type: "success",
         text: "Check your email to confirm your account.",
-      })
-      setIsSubmitting(false)
-      return
+      });
+      setIsSubmitting(false);
+      return;
     }
 
-    setIsSubmitting(false)
-  }
+    setIsSubmitting(false);
+  };
 
   const handleGoogle = async () => {
-    setIsSubmitting(true)
-    setMessage(null)
+    setIsSubmitting(true);
+    setMessage(null);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: window.location.origin,
       },
-    })
+    });
 
     if (error) {
-      setMessage({ type: "error", text: error.message })
-      setIsSubmitting(false)
+      setMessage({ type: "error", text: error.message });
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const headerCopy = useMemo(() => {
     return authMode === "login"
@@ -148,14 +143,14 @@ export function AuthModal() {
       : {
           title: "Create your account",
           description: "Join Okeyo Travel in a few steps.",
-        }
-  }, [authMode])
+        };
+  }, [authMode]);
 
   const content = (
     <div
       className={cn(
         "flex flex-col gap-6 bg-white px-6 pb-8 pt-6 text-foreground",
-        isMobile ? "rounded-t-[32px]" : "rounded-[32px]"
+        isMobile ? "rounded-t-[32px]" : "rounded-[32px]",
       )}
     >
       <div className="flex items-start justify-between gap-4">
@@ -213,7 +208,7 @@ export function AuthModal() {
                 "rounded-lg px-3 py-2 text-sm",
                 message.type === "error"
                   ? "bg-destructive/10 text-destructive"
-                  : "bg-emerald-50 text-emerald-700"
+                  : "bg-emerald-50 text-emerald-700",
               )}
             >
               {message.text}
@@ -273,7 +268,7 @@ export function AuthModal() {
                 "rounded-lg px-3 py-2 text-sm",
                 message.type === "error"
                   ? "bg-destructive/10 text-destructive"
-                  : "bg-emerald-50 text-emerald-700"
+                  : "bg-emerald-50 text-emerald-700",
               )}
             >
               {message.text}
@@ -290,7 +285,9 @@ export function AuthModal() {
       )}
 
       <p className="text-center text-sm text-muted-foreground">
-        {authMode === "login" ? "Don’t have an account?" : "Already have an account?"}{" "}
+        {authMode === "login"
+          ? "Don’t have an account?"
+          : "Already have an account?"}{" "}
         <button
           type="button"
           onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
@@ -316,7 +313,7 @@ export function AuthModal() {
         Continue with Google
       </Button>
     </div>
-  )
+  );
 
   if (isMobile) {
     return (
@@ -329,7 +326,7 @@ export function AuthModal() {
           {content}
         </DrawerContent>
       </Drawer>
-    )
+    );
   }
 
   return (
@@ -342,5 +339,5 @@ export function AuthModal() {
         {content}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

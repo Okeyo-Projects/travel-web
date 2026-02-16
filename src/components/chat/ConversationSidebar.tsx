@@ -22,6 +22,7 @@ import {
   useArchiveConversation,
   useConversations,
 } from "@/hooks/use-conversations";
+import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 
 export function ConversationSidebar() {
   const { data: conversations = [], isLoading } = useConversations();
@@ -32,7 +33,7 @@ export function ConversationSidebar() {
 
   const handleNewConversation = () => {
     startNewConversation();
-    router.push("/chat");
+    router.push(localizeHref("/chat", pathname));
   };
 
   const handleArchive = async (
@@ -43,13 +44,14 @@ export function ConversationSidebar() {
     e.stopPropagation();
     await archiveConversation.mutateAsync(targetConversationId);
 
-    const activeConversationId = pathname.startsWith("/chat/")
-      ? pathname.split("/")[2] || null
+    const normalizedPathname = stripLocalePrefix(pathname);
+    const activeConversationId = normalizedPathname.startsWith("/chat/")
+      ? normalizedPathname.split("/")[2] || null
       : conversationId;
 
     if (targetConversationId === activeConversationId) {
       startNewConversation();
-      router.push("/chat");
+      router.push(localizeHref("/chat", pathname));
     }
   };
 
@@ -57,7 +59,7 @@ export function ConversationSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b p-4 gap-3">
         <Link
-          href="/"
+          href={localizeHref("/", pathname)}
           aria-label="Go to home page"
           className="inline-flex w-fit rounded-md px-1 py-1 hover:bg-muted"
         >
@@ -74,6 +76,7 @@ export function ConversationSidebar() {
           className="w-full justify-start gap-2"
           onClick={handleNewConversation}
           size="lg"
+          variant="outline"
         >
           <Plus className="w-5 h-5" />
           <span className="font-semibold">Nouvelle conversation</span>
@@ -94,8 +97,9 @@ export function ConversationSidebar() {
                 </div>
               ) : (
                 conversations.map((conv: any) => {
+                  const normalizedPathname = stripLocalePrefix(pathname);
                   const isActive =
-                    pathname === `/chat/${conv.id}` ||
+                    normalizedPathname === `/chat/${conv.id}` ||
                     conversationId === conv.id;
                   const title = conv.title || "Nouvelle conversation";
                   const preview = conv.first_message || "";
@@ -114,7 +118,7 @@ export function ConversationSidebar() {
                         isActive={isActive}
                         className="h-auto py-3"
                       >
-                        <Link href={`/chat/${conv.id}`}>
+                        <Link href={localizeHref(`/chat/${conv.id}`, pathname)}>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 pr-5">
                               <p className="text-sm font-medium truncate">

@@ -23,7 +23,7 @@ const EXPLORE_CARDS = [
     image:
       "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
   },
-]
+];
 
 export function ExploreSection() {
   return (
@@ -57,7 +57,10 @@ export function ExploreSection() {
         <div>
           <div className="flex gap-5 overflow-x-auto pb-4">
             {EXPLORE_CARDS.map((card) => (
-              <article key={card.id} className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px]">
+              <article
+                key={card.id}
+                className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px]"
+              >
                 <div className="relative overflow-hidden rounded-[26px]">
                   <img
                     src={card.image}
@@ -68,7 +71,9 @@ export function ExploreSection() {
                     {card.label}
                   </span>
                 </div>
-                <h3 className="mt-4 text-3xl font-black text-black">{card.title}</h3>
+                <h3 className="mt-4 text-3xl font-black text-black">
+                  {card.title}
+                </h3>
                 <p className="mt-2 text-xl text-[#2b2b2f]">{card.subtitle}</p>
               </article>
             ))}
@@ -93,5 +98,5 @@ export function ExploreSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

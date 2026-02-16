@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useRef, useState } from "react"
-import { Play, Plus, Send } from "lucide-react"
+import { Play, Plus, Send } from "lucide-react";
+import { useRef, useState } from "react";
 
 export function AISection() {
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const handlePlay = () => {
-    if (!videoRef.current) return
-    videoRef.current.play()
-  }
+    if (!videoRef.current) return;
+    videoRef.current.play();
+  };
 
   return (
     <section className="bg-[#08090d] px-4 pb-16 pt-2 sm:px-6 sm:pb-24">
@@ -24,7 +24,8 @@ export function AISection() {
 
         <div className="relative z-10 px-4 pb-10 pt-10 sm:px-8 sm:pb-14 sm:pt-14 lg:px-20 lg:pb-16 lg:pt-16 xl:px-24">
           <h2 className="mx-auto max-w-[780px] text-center text-3xl font-black leading-[1.1] text-white sm:text-4xl lg:text-5xl">
-            Décrivez votre voyage, l&apos;IA s&apos;occupe du reste. En Headline.
+            Décrivez votre voyage, l&apos;IA s&apos;occupe du reste. En
+            Headline.
           </h2>
 
           <div className="mx-auto mt-8 max-w-[1020px] rounded-[26px] border border-white/10 bg-gradient-to-br from-black/80 to-[#1a1318]/90 p-4 shadow-[0_16px_45px_rgba(0,0,0,0.5)] sm:p-6">
@@ -54,7 +55,9 @@ export function AISection() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-xl font-medium text-primary sm:text-2xl">How It Works</p>
+            <p className="text-xl font-medium text-primary sm:text-2xl">
+              How It Works
+            </p>
             <h3 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
               Let the AI Build Your Journey
             </h3>
@@ -91,5 +94,5 @@ export function AISection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

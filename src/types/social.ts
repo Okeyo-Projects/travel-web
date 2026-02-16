@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Social engagement types (likes, shares, saves, follows)
  */
 
 // Likes
-export const LikeTargetType = z.enum(['experience', 'review']);
+export const LikeTargetType = z.enum(["experience", "review"]);
 export type LikeTargetType = z.infer<typeof LikeTargetType>;
 
 export const LikeSchema = z.object({
@@ -24,7 +24,13 @@ export const CreateLikeSchema = z.object({
 export type CreateLike = z.infer<typeof CreateLikeSchema>;
 
 // Shares
-export const SharePlatform = z.enum(['whatsapp', 'facebook', 'twitter', 'link', 'other']);
+export const SharePlatform = z.enum([
+  "whatsapp",
+  "facebook",
+  "twitter",
+  "link",
+  "other",
+]);
 export type SharePlatform = z.infer<typeof SharePlatform>;
 
 export const ShareSchema = z.object({
@@ -59,7 +65,7 @@ export const CreateSaveSchema = z.object({
 export type CreateSave = z.infer<typeof CreateSaveSchema>;
 
 // Follows
-export const FollowingType = z.enum(['user', 'host']);
+export const FollowingType = z.enum(["user", "host"]);
 export type FollowingType = z.infer<typeof FollowingType>;
 
 export const FollowSchema = z.object({
@@ -113,4 +119,3 @@ export const CreateReviewSchema = z.object({
   photos: z.array(z.string().url()).optional(),
 });
 export type CreateReview = z.infer<typeof CreateReviewSchema>;
-

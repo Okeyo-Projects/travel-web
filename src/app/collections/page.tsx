@@ -1,12 +1,16 @@
-"use client"
+"use client";
 
-import { Loader2 } from "lucide-react"
-import { CollectionCard } from "@/components/collection-card"
-import { useCategories } from "@/hooks/use-categories"
-import { resolveStorageUrl } from "@/utils/functions"
+import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { CollectionCard } from "@/components/collection-card";
+import { useCategories } from "@/hooks/use-categories";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { buildCategorySlug } from "@/lib/routing/slugs";
+import { resolveStorageUrl } from "@/utils/functions";
 
 export default function CollectionsPage() {
-  const { data: categories, isLoading, isError } = useCategories()
+  const pathname = usePathname();
+  const { data: categories, isLoading, isError } = useCategories();
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -33,11 +37,16 @@ export default function CollectionsPage() {
               title={category.title.fr || category.title.en}
               description={category.description || undefined}
               imageUrl={resolveStorageUrl(category.asset)}
-              href={`/explore?category=${category.id}`} // We need to handle this query param in Explore page
+              href={localizeHref(
+                `/explore/category/${buildCategorySlug({
+                  title: category.title,
+                })}`,
+                pathname,
+              )}
             />
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }

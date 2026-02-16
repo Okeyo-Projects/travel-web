@@ -1,172 +1,261 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useBookingContext } from "@/components/booking/booking-context"
-import { Card } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Minus, Plus, Users } from "lucide-react"
-import { getImageUrl } from "@/utils/functions" // Assuming this utility exists based on user's code
-import Image from "next/image"
+import { Check, Users } from "lucide-react";
+import Image from "next/image";
+import { useBookingContext } from "@/components/booking/booking-context";
+import { cn } from "@/lib/utils";
+import { getImageUrl } from "@/utils/functions";
 
 export function StepOptions() {
-    const { experience } = useBookingContext()
+  const { experience } = useBookingContext();
 
-    if (experience?.type === "trip") {
-        return <TripOptions />
-    }
+  if (experience?.type === "trip") return <TripOptions />;
+  if (experience?.type === "lodging") return <LodgingOptions />;
 
-    if (experience?.type === "lodging") {
-        return <LodgingOptions />
-    }
-
-    return (
-        <div className="text-center text-muted-foreground py-8">
-            Aucune option disponible pour ce type d'expérience.
-        </div>
-    )
+  return (
+    <p className="text-center text-sm text-muted-foreground py-8">
+      No options available for this experience type.
+    </p>
+  );
 }
+
+/* ─── Trip: departure selection ─────────────────────────────────── */
 
 function TripOptions() {
-    const { experience, departureId, setDepartureId } = useBookingContext()
-    const departures = experience?.trip?.departures || []
+  const { experience, departureId, setDepartureId } = useBookingContext();
+  const departures = experience?.trip?.departures ?? [];
 
-    if (departures.length === 0) {
-        return (
-            <div className="text-center py-8">
-                <p className="text-muted-foreground">Aucun départ prévu pour le moment.</p>
-            </div>
-        )
-    }
-
+  if (departures.length === 0) {
     return (
-        <div className="space-y-4">
-            <div className="text-center space-y-1 mb-4">
-                <h3 className="font-medium">Choisissez un départ</h3>
-                <p className="text-sm text-muted-foreground">Sélectionnez la date qui vous convient.</p>
+      <p className="text-center text-sm text-muted-foreground py-8">
+        No departures available at the moment.
+      </p>
+    );
+  }
+
+  const currency = experience?.trip?.price_currency ?? "MAD";
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        Select the departure that works for you.
+      </p>
+      {departures.map((dep) => {
+        const selected = departureId === dep.id;
+        const departDate = new Date(dep.depart_at);
+        const returnDate = dep.return_at ? new Date(dep.return_at) : null;
+        const soldOut = dep.seats_available === 0;
+
+        return (
+          <button
+            key={dep.id}
+            type="button"
+            onClick={() => !soldOut && setDepartureId(dep.id)}
+            disabled={soldOut}
+            className={cn(
+              "w-full rounded-xl border p-4 text-left transition-all",
+              selected
+                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                : "hover:border-foreground/30 hover:bg-muted/40",
+              soldOut && "opacity-50 cursor-not-allowed",
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 space-y-1">
+                <p className="font-semibold text-sm capitalize">
+                  {departDate.toLocaleDateString("en-GB", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+                {returnDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Returns:{" "}
+                    {returnDate.toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
+                <div className="flex items-center gap-3 pt-1">
+                  <span
+                    className={cn(
+                      "text-xs font-medium",
+                      dep.seats_available <= 3
+                        ? "text-amber-600"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {soldOut
+                      ? "Sold out"
+                      : `${dep.seats_available} seat${dep.seats_available !== 1 ? "s" : ""} left`}
+                  </span>
+                  {dep.price_override_cents ? (
+                    <span className="text-sm font-bold">
+                      {new Intl.NumberFormat("fr-FR", {
+                        style: "currency",
+                        currency,
+                        maximumFractionDigits: 0,
+                      }).format(dep.price_override_cents / 100)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      Standard price
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                  selected
+                    ? "border-primary bg-primary"
+                    : "border-muted-foreground/30",
+                )}
+              >
+                {selected && <Check className="h-3 w-3 text-white" />}
+              </div>
             </div>
-
-            <RadioGroup value={departureId ?? ""} onValueChange={setDepartureId} className="space-y-3">
-                {departures.map((dep) => {
-                    const date = new Date(dep.depart_at)
-                    const formatter = new Intl.DateTimeFormat("fr-FR", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        hour: "numeric",
-                        minute: "numeric",
-                    })
-                    const dateStr = formatter.format(date)
-
-                    return (
-                        <div key={dep.id} className="flex items-start space-x-2 border rounded-lg p-3 hover:bg-muted/50 cursor-pointer" onClick={() => setDepartureId(dep.id)}>
-                            <RadioGroupItem value={dep.id} id={dep.id} className="mt-1" />
-                            <div className="grid gap-1.5 leading-none w-full">
-                                <Label htmlFor={dep.id} className="font-medium cursor-pointer capitalize">
-                                    {dateStr}
-                                </Label>
-                                <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>
-                                        {dep.seats_available}/{dep.seats_total} places
-                                    </span>
-                                    {dep.price_override_cents ? (
-                                        <span className="font-semibold text-primary">
-                                            {new Intl.NumberFormat("fr-FR", { style: "currency", currency: experience?.trip?.price_currency }).format(dep.price_override_cents / 100)}
-                                        </span>
-                                    ) : (
-                                        <span>Prix standard</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </RadioGroup>
-        </div>
-    )
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
-function LodgingOptions() {
-    const { experience, roomSelections, setRoomSelection } = useBookingContext()
-    const rooms = experience?.lodging?.rooms || []
+/* ─── Lodging: room selection (single-select mode like mobile) ───── */
 
-    if (rooms.length === 0) {
-        return (
-            <div className="text-center py-8">
-                <p className="text-muted-foreground">Aucune chambre disponible.</p>
-            </div>
-        )
+function LodgingOptions() {
+  const {
+    experience,
+    roomSelections,
+    setRoomSelection,
+    adults,
+    children,
+    infants,
+  } = useBookingContext();
+  const rooms = experience?.lodging?.rooms ?? [];
+
+  if (rooms.length === 0) {
+    return (
+      <p className="text-center text-sm text-muted-foreground py-8">
+        No rooms available.
+      </p>
+    );
+  }
+
+  const selectedRoomId = roomSelections[0]?.roomId ?? null;
+
+  const handleSelect = (roomId: string) => {
+    if (selectedRoomId === roomId) {
+      // Deselect
+      setRoomSelection(roomId, 0);
+      return;
     }
 
-    return (
-        <div className="space-y-6">
-            <div className="text-center space-y-1 mb-4">
-                <h3 className="font-medium">Choisissez vos chambres</h3>
-                <p className="text-sm text-muted-foreground">Sélectionnez le nombre de chambres souhaité.</p>
+    // Calculate required quantity (matching mobile logic)
+    const room = rooms.find((r) => r.id === roomId);
+    if (!room) return;
+
+    const roomsForInfants = infants;
+    const roomsForCapacity = Math.ceil(
+      (adults + children) / (room.max_persons || 2),
+    );
+    const required = Math.max(roomsForInfants, roomsForCapacity, 1);
+
+    // Clear previous selection and set new one (single-select)
+    if (selectedRoomId) setRoomSelection(selectedRoomId, 0);
+    setRoomSelection(roomId, required);
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        Select the room type for your stay.
+        {adults + children > 0 && (
+          <span className="ml-1">
+            ({adults + children} guest{adults + children !== 1 ? "s" : ""})
+          </span>
+        )}
+      </p>
+
+      {rooms.map((room) => {
+        const selected = selectedRoomId === room.id;
+        const selection = roomSelections.find((r) => r.roomId === room.id);
+        const qty = selection?.quantity ?? 0;
+        const roomImageUrl = room.photoUrls?.[0]
+          ? getImageUrl(room.photoUrls[0])
+          : null;
+
+        return (
+          <button
+            key={room.id}
+            type="button"
+            onClick={() => handleSelect(room.id)}
+            className={cn(
+              "w-full rounded-xl border text-left transition-all overflow-hidden",
+              selected
+                ? "border-primary ring-1 ring-primary"
+                : "hover:border-foreground/30",
+            )}
+          >
+            {roomImageUrl && (
+              <div className="relative h-36 w-full bg-muted">
+                <Image
+                  src={roomImageUrl}
+                  alt={room.name ?? "Room"}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+
+            <div className="p-4 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="font-semibold text-sm">{room.name}</p>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <Users className="h-3 w-3" />
+                    <span>Up to {room.max_persons} guests</span>
+                  </div>
+                </div>
+                <div
+                  className={cn(
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                    selected
+                      ? "border-primary bg-primary"
+                      : "border-muted-foreground/30",
+                  )}
+                >
+                  {selected && <Check className="h-3 w-3 text-white" />}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-base font-bold">
+                  {new Intl.NumberFormat("fr-FR", {
+                    style: "currency",
+                    currency: room.currency,
+                    maximumFractionDigits: 0,
+                  }).format(room.price_cents / 100)}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {" "}
+                    / night
+                  </span>
+                </span>
+                {selected && qty > 1 && (
+                  <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
+                    {qty} room{qty !== 1 ? "s" : ""} needed
+                  </span>
+                )}
+              </div>
             </div>
-
-            <div className="space-y-4">
-                {rooms.map(room => {
-                    const selection = roomSelections.find(r => r.roomId === room.id)
-                    const quantity = selection?.quantity || 0
-
-                    return (
-                        <Card key={room.id} className="overflow-hidden">
-                            {room.photoUrls[0] && (
-                                <div className="relative h-32 w-full bg-muted">
-                                    <Image
-                                        src={getImageUrl(room.photoUrls[0])!}
-                                        alt={room.name || "Room"}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                            )}
-                            <div className="p-4 space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className="font-semibold">{room.name}</h4>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                            <Users className="h-3 w-3" />
-                                            <span>{room.max_persons} pers. max</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="font-bold text-lg">
-                                        {new Intl.NumberFormat("fr-FR", { style: "currency", currency: room.currency }).format(room.price_cents / 100)}
-                                        <span className="text-sm font-normal text-muted-foreground"> / nuit</span>
-                                    </div>
-
-                                    <div className="flex items-center gap-3">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8 rounded-full"
-                                            onClick={() => setRoomSelection(room.id, Math.max(0, quantity - 1))}
-                                            disabled={quantity === 0}
-                                        >
-                                            <Minus className="h-4 w-4" />
-                                        </Button>
-                                        <span className="w-4 text-center tabular-nums">{quantity}</span>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8 rounded-full"
-                                            onClick={() => setRoomSelection(room.id, quantity + 1)}
-                                            disabled={quantity >= (room.total_rooms || 10)}
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                    )
-                })}
-            </div>
-        </div>
-    )
+          </button>
+        );
+      })}
+    </div>
+  );
 }

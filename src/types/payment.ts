@@ -1,17 +1,17 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Payment types
  */
 
 export const PaymentStatus = z.enum([
-  'pending',
-  'requires_action',
-  'processing',
-  'succeeded',
-  'failed',
-  'cancelled',
-  'refunded',
+  "pending",
+  "requires_action",
+  "processing",
+  "succeeded",
+  "failed",
+  "cancelled",
+  "refunded",
 ]);
 export type PaymentStatus = z.infer<typeof PaymentStatus>;
 
@@ -45,4 +45,3 @@ export const PaymentIntentResponseSchema = z.object({
   currency: z.string(),
 });
 export type PaymentIntentResponse = z.infer<typeof PaymentIntentResponseSchema>;
-

@@ -316,11 +316,14 @@ export function ExperienceDetailsPanel({
         {Array.isArray(details.amenities) && details.amenities.length > 0 ? (
           <Section title="Équipements">
             <div className="flex flex-wrap gap-1">
-              {details.amenities.map((amenity, index) => {
+              {details.amenities.map((amenity) => {
                 const label = amenity.label_fr || amenity.key;
                 if (!label) return null;
                 return (
-                  <Badge key={`${label}-${index}`} variant="outline">
+                  <Badge
+                    key={`${amenity.key ?? label}-${amenity.label_fr ?? ""}`}
+                    variant="outline"
+                  >
                     {label}
                   </Badge>
                 );
@@ -333,9 +336,9 @@ export function ExperienceDetailsPanel({
         details.services_included.length > 0 ? (
           <Section title="Services inclus">
             <div className="space-y-1">
-              {details.services_included.map((service, index) => (
+              {details.services_included.map((service) => (
                 <p
-                  key={`${service.key || service.label_fr}-${index}`}
+                  key={`${service.key ?? service.label_fr ?? service.notes ?? "service"}`}
                   className="text-sm"
                 >
                   • {service.label_fr || service.key}
@@ -350,9 +353,9 @@ export function ExperienceDetailsPanel({
         details.services_excluded.length > 0 ? (
           <Section title="Services exclus">
             <div className="space-y-1">
-              {details.services_excluded.map((service, index) => (
+              {details.services_excluded.map((service) => (
                 <p
-                  key={`${service.key || service.label_fr}-${index}`}
+                  key={`${service.key ?? service.label_fr ?? service.notes ?? "service"}`}
                   className="text-sm"
                 >
                   • {service.label_fr || service.key}
@@ -429,9 +432,9 @@ export function ExperienceDetailsPanel({
             details.itinerary.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-sm font-medium">Itinéraire</p>
-                {details.itinerary.map((item, index) => (
+                {details.itinerary.map((item) => (
                   <div
-                    key={`${item.day_number || index}-${item.title || index}`}
+                    key={`${item.day_number ?? "day"}-${item.title ?? "step"}-${item.location_name ?? ""}`}
                     className="rounded-md border bg-background/60 px-3 py-2"
                   >
                     <p className="text-sm font-medium">

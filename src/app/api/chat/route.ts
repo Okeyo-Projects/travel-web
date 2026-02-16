@@ -1,4 +1,3 @@
-import { streamText } from 'ai';
 // import { openai } from '@ai-sdk/openai'; // Assuming openai is installed or I can mock it.
 // Since I don't have an API key, I'll use a mock stream or a simple response.
 
@@ -18,9 +17,9 @@ Par exemple : "Je cherche un séjour romantique à Bali" ou "Quelles sont les ac
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const words = mockResponse.split(' ');
+      const words = mockResponse.split(" ");
       for (const word of words) {
-        controller.enqueue(encoder.encode(word + ' '));
+        controller.enqueue(encoder.encode(`${word} `));
         await new Promise((resolve) => setTimeout(resolve, 50)); // Simulate typing delay
       }
       controller.close();
@@ -28,6 +27,6 @@ Par exemple : "Je cherche un séjour romantique à Bali" ou "Quelles sont les ac
   });
 
   return new Response(stream, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }

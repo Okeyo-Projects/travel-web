@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { MapPin, Star, Users, BedDouble, DoorOpen, Play } from 'lucide-react';
-import Image from 'next/image';
-import { getImageUrl } from '@/utils/functions';
+import { BedDouble, DoorOpen, MapPin, Play, Star, Users } from "lucide-react";
+import Image from "next/image";
+import { useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getImageUrl } from "@/utils/functions";
 
 interface RoomInfo {
   name: string;
@@ -19,7 +19,7 @@ interface ExperienceCardProps {
     id: string;
     title: string;
     description?: string;
-    type: 'lodging' | 'trip' | 'activity';
+    type: "lodging" | "trip" | "activity";
     city: string;
     region?: string;
     price_mad: number;
@@ -39,12 +39,16 @@ interface ExperienceCardProps {
 }
 
 const typeLabels = {
-  lodging: 'Hébergement',
-  trip: 'Voyage',
-  activity: 'Activité',
+  lodging: "Hébergement",
+  trip: "Voyage",
+  activity: "Activité",
 };
 
-export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardProps) {
+export function ExperienceCard({
+  experience,
+  onSelect,
+  onBook,
+}: ExperienceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -67,7 +71,9 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
             controls
             autoPlay
             playsInline
-          />
+          >
+            <track kind="captions" srcLang="fr" label="French captions" />
+          </video>
         ) : (
           <>
             {experience.thumbnail_url ? (
@@ -86,6 +92,7 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
             {experience.video_url && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-all">
                 <button
+                  type="button"
                   onClick={handlePlay}
                   className="w-12 h-12 rounded-full flex items-center justify-center bg-background/30 backdrop-blur-md border border-white/30 text-white hover:scale-110 transition-transform duration-300 hover:bg-background/40"
                 >
@@ -109,7 +116,9 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
 
       <CardContent className="p-4 space-y-3">
         <div>
-          <h3 className="font-semibold text-lg line-clamp-2">{experience.title}</h3>
+          <h3 className="font-semibold text-lg line-clamp-2">
+            {experience.title}
+          </h3>
           {experience.description && (
             <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
               {experience.description}
@@ -133,42 +142,55 @@ export function ExperienceCard({ experience, onSelect, onBook }: ExperienceCardP
             </div>
           )}
 
-          {experience.distance_km !== null && experience.distance_km !== undefined && (
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              <span>{experience.distance_km.toFixed(1)} km</span>
-            </div>
-          )}
+          {experience.distance_km !== null &&
+            experience.distance_km !== undefined && (
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <span>{experience.distance_km.toFixed(1)} km</span>
+              </div>
+            )}
         </div>
 
         {experience.host_name && (
-          <p className="text-xs text-muted-foreground">Par {experience.host_name}</p>
+          <p className="text-xs text-muted-foreground">
+            Par {experience.host_name}
+          </p>
         )}
 
-        {experience.type === 'lodging' && experience.rooms && experience.rooms.length > 0 && (
-          <div className="border-t pt-2 space-y-1">
-            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-              <DoorOpen className="w-3 h-3" />
-              {experience.rooms.length} type{experience.rooms.length > 1 ? 's' : ''} de chambre
-            </p>
-            {experience.rooms.slice(0, 3).map((room, i) => (
-              <div key={i} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  <BedDouble className="w-3 h-3" />
-                  {room.name}
-                  {room.max_persons && <span className="text-[10px]">({room.max_persons} pers.)</span>}
-                </span>
-                <span className="font-medium">{room.price_mad} MAD</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {experience.type === "lodging" &&
+          experience.rooms &&
+          experience.rooms.length > 0 && (
+            <div className="border-t pt-2 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                <DoorOpen className="w-3 h-3" />
+                {experience.rooms.length} type
+                {experience.rooms.length > 1 ? "s" : ""} de chambre
+              </p>
+              {experience.rooms.slice(0, 3).map((room) => (
+                <div
+                  key={`${room.name}-${room.type ?? "room"}`}
+                  className="flex items-center justify-between text-xs"
+                >
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <BedDouble className="w-3 h-3" />
+                    {room.name}
+                    {room.max_persons && (
+                      <span className="text-[10px]">
+                        ({room.max_persons} pers.)
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium">{room.price_mad} MAD</span>
+                </div>
+              ))}
+            </div>
+          )}
 
         <div className="flex items-center justify-between pt-2">
           <div>
             <p className="text-2xl font-bold">{experience.price_mad} MAD</p>
             <p className="text-xs text-muted-foreground">
-              {experience.type === 'lodging' ? 'par nuit' : 'par personne'}
+              {experience.type === "lodging" ? "par nuit" : "par personne"}
             </p>
           </div>
 

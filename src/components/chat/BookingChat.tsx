@@ -20,6 +20,7 @@ import {
   useCreateConversation,
   useSaveMessage,
 } from "@/hooks/use-conversations";
+import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { ChatInput } from "./ChatInput";
 import { ChatWelcome } from "./ChatWelcome";
 import { MessageList } from "./MessageList";
@@ -252,8 +253,12 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
 
   // Reset when navigating from /chat/:id -> /chat (e.g., navbar click)
   useEffect(() => {
+    const normalizedPathname = stripLocalePrefix(pathname);
+    const normalizedPreviousPathname = stripLocalePrefix(
+      previousPathname.current,
+    );
     const movedToRootChat =
-      pathname === "/chat" && previousPathname.current !== "/chat";
+      normalizedPathname === "/chat" && normalizedPreviousPathname !== "/chat";
 
     previousPathname.current = pathname;
 
@@ -364,7 +369,11 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
         setConversationId(currentConvId);
 
         // Update URL without navigation (to preserve component state)
-        window.history.replaceState(null, "", `/chat/${currentConvId}`);
+        window.history.replaceState(
+          null,
+          "",
+          localizeHref(`/chat/${currentConvId}`, pathname),
+        );
       }
 
       await sendMessage(

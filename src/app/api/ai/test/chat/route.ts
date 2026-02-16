@@ -5,22 +5,30 @@ import { stepCountIs, streamText } from "ai";
 type ChatMessage =
   | { role: "user"; content: string }
   | { role: "assistant"; content: string };
-import { buildSystemPrompt } from "@/lib/ai/system-prompt";
+
+type ToolCallCapture = {
+  tool: string;
+  arguments: unknown;
+  toolCallId: string;
+  result?: unknown;
+};
+
 import { loadCatalogContext } from "@/lib/ai/catalog-context";
+import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import {
-  searchExperiences,
-  getExperienceDetails,
   checkAvailability,
-  getExperiencePromos,
-  validatePromoCode,
-  findSimilar,
-  getExperienceOptionDetails,
-  requestUserLocation,
-  getLinkedExperiences,
   createBookingIntent,
+  findSimilar,
+  getExperienceDetails,
+  getExperienceOptionDetails,
+  getExperiencePromos,
+  getLinkedExperiences,
   offerQuickReplies,
+  requestUserLocation,
+  searchExperiences,
   selectRoomType,
   suggestDateOptions,
+  validatePromoCode,
 } from "@/lib/ai/tools";
 
 export const maxDuration = 30;
@@ -48,8 +56,9 @@ export async function POST(req: Request) {
 
     // Get or create conversation history
     let messages: ChatMessage[] = [];
-    if (!reset_context && conversations.has(conversationId)) {
-      messages = conversations.get(conversationId)!;
+    const existingMessages = conversations.get(conversationId);
+    if (!reset_context && existingMessages) {
+      messages = existingMessages;
     }
 
     // Add user message
@@ -94,7 +103,7 @@ export async function POST(req: Request) {
 
     // Collect the full response
     let fullText = "";
-    const toolCalls: any[] = [];
+    const toolCalls: ToolCallCapture[] = [];
 
     for await (const chunk of result.fullStream) {
       if (chunk.type === "text-delta") {
@@ -147,8 +156,12 @@ export async function POST(req: Request) {
       metadata: {
         model: CHAT_MODEL,
         tokens_used: usage?.totalTokens || 0,
-        prompt_tokens: (usage as any)?.promptTokens || 0,
-        completion_tokens: (usage as any)?.completionTokens || 0,
+        prompt_tokens:
+          (usage as (typeof usage & { promptTokens?: number }) | undefined)
+            ?.promptTokens || 0,
+        completion_tokens:
+          (usage as (typeof usage & { completionTokens?: number }) | undefined)
+            ?.completionTokens || 0,
         response_time_ms: responseTime,
         finish_reason: finishReason,
         tool_calls_count: toolCalls.length,

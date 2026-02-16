@@ -58,14 +58,23 @@ function renderRoom(option: Record<string, unknown>) {
   const equipments = asStringArray(option.equipments);
 
   return (
-    <div key={id} className="rounded-md border bg-background/60 px-3 py-3 space-y-2">
+    <div
+      key={id}
+      className="rounded-md border bg-background/60 px-3 py-3 space-y-2"
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{name}</p>
-        {priceMad !== null ? <Badge variant="outline">{priceMad} MAD / nuit</Badge> : null}
+        {priceMad !== null ? (
+          <Badge variant="outline">{priceMad} MAD / nuit</Badge>
+        ) : null}
       </div>
 
-      {roomType ? <p className="text-xs text-muted-foreground">Type: {roomType}</p> : null}
-      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+      {roomType ? (
+        <p className="text-xs text-muted-foreground">Type: {roomType}</p>
+      ) : null}
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
 
       <div className="text-xs text-muted-foreground flex flex-wrap gap-3">
         {maxPersons !== null ? <span>Max: {maxPersons} pers.</span> : null}
@@ -92,8 +101,10 @@ function renderRoom(option: Record<string, unknown>) {
 
 function renderDeparture(option: Record<string, unknown>) {
   const id = asString(option.id) || "departure";
-  const departAt = formatDateTime(option.depart_at) || asString(option.depart_at) || "-";
-  const returnAt = formatDateTime(option.return_at) || asString(option.return_at);
+  const departAt =
+    formatDateTime(option.depart_at) || asString(option.depart_at) || "-";
+  const returnAt =
+    formatDateTime(option.return_at) || asString(option.return_at);
   const seatsAvailable = asNumber(option.seats_available);
   const seatsTotal = asNumber(option.seats_total);
   const priceMad = asNumber(option.price_mad);
@@ -101,14 +112,23 @@ function renderDeparture(option: Record<string, unknown>) {
   const notes = asString(option.guide_notes);
 
   return (
-    <div key={id} className="rounded-md border bg-background/60 px-3 py-3 space-y-1">
+    <div
+      key={id}
+      className="rounded-md border bg-background/60 px-3 py-3 space-y-1"
+    >
       <p className="text-sm font-medium">Depart: {departAt}</p>
-      {returnAt ? <p className="text-xs text-muted-foreground">Retour: {returnAt}</p> : null}
+      {returnAt ? (
+        <p className="text-xs text-muted-foreground">Retour: {returnAt}</p>
+      ) : null}
       <p className="text-xs text-muted-foreground">
         Places: {seatsAvailable ?? "?"}/{seatsTotal ?? "?"}
       </p>
-      {priceMad !== null ? <p className="text-xs text-muted-foreground">Prix: {priceMad} MAD</p> : null}
-      {status ? <p className="text-xs text-muted-foreground">Statut: {status}</p> : null}
+      {priceMad !== null ? (
+        <p className="text-xs text-muted-foreground">Prix: {priceMad} MAD</p>
+      ) : null}
+      {status ? (
+        <p className="text-xs text-muted-foreground">Statut: {status}</p>
+      ) : null}
       {notes ? <p className="text-sm text-muted-foreground">{notes}</p> : null}
     </div>
   );
@@ -116,7 +136,8 @@ function renderDeparture(option: Record<string, unknown>) {
 
 function renderSession(option: Record<string, unknown>) {
   const id = asString(option.id) || "session";
-  const startAt = formatDateTime(option.start_at) || asString(option.start_at) || "-";
+  const startAt =
+    formatDateTime(option.start_at) || asString(option.start_at) || "-";
   const endAt = formatDateTime(option.end_at) || asString(option.end_at);
   const capacityAvailable = asNumber(option.capacity_available);
   const capacityTotal = asNumber(option.capacity_total);
@@ -125,14 +146,23 @@ function renderSession(option: Record<string, unknown>) {
   const notes = asString(option.notes);
 
   return (
-    <div key={id} className="rounded-md border bg-background/60 px-3 py-3 space-y-1">
+    <div
+      key={id}
+      className="rounded-md border bg-background/60 px-3 py-3 space-y-1"
+    >
       <p className="text-sm font-medium">Session: {startAt}</p>
-      {endAt ? <p className="text-xs text-muted-foreground">Fin: {endAt}</p> : null}
+      {endAt ? (
+        <p className="text-xs text-muted-foreground">Fin: {endAt}</p>
+      ) : null}
       <p className="text-xs text-muted-foreground">
         Capacite: {capacityAvailable ?? "?"}/{capacityTotal ?? "?"}
       </p>
-      {priceMad !== null ? <p className="text-xs text-muted-foreground">Prix: {priceMad} MAD</p> : null}
-      {status ? <p className="text-xs text-muted-foreground">Statut: {status}</p> : null}
+      {priceMad !== null ? (
+        <p className="text-xs text-muted-foreground">Prix: {priceMad} MAD</p>
+      ) : null}
+      {status ? (
+        <p className="text-xs text-muted-foreground">Statut: {status}</p>
+      ) : null}
       {notes ? <p className="text-sm text-muted-foreground">{notes}</p> : null}
     </div>
   );
@@ -144,7 +174,9 @@ export function ExperienceOptionDetailsPanel({
   details: ExperienceOptionDetailsData;
 }) {
   const location = [details.experience.city, details.experience.region]
-    .filter((value): value is string => typeof value === "string" && value.length > 0)
+    .filter(
+      (value): value is string => typeof value === "string" && value.length > 0,
+    )
     .join(", ");
 
   const optionTypeLabel =
@@ -157,7 +189,9 @@ export function ExperienceOptionDetailsPanel({
           : "Details option";
 
   const options = Array.isArray(details.options)
-    ? details.options.filter((item): item is Record<string, unknown> => isRecord(item))
+    ? details.options.filter((item): item is Record<string, unknown> =>
+        isRecord(item),
+      )
     : [];
 
   return (
@@ -165,10 +199,16 @@ export function ExperienceOptionDetailsPanel({
       <CardContent className="p-4 space-y-4">
         <div className="space-y-1">
           <Badge variant="secondary">{optionTypeLabel}</Badge>
-          <h4 className="text-base font-semibold">{details.experience.title}</h4>
-          {location ? <p className="text-xs text-muted-foreground">{location}</p> : null}
+          <h4 className="text-base font-semibold">
+            {details.experience.title}
+          </h4>
+          {location ? (
+            <p className="text-xs text-muted-foreground">{location}</p>
+          ) : null}
           {details.query ? (
-            <p className="text-xs text-muted-foreground">Filtre: "{details.query}"</p>
+            <p className="text-xs text-muted-foreground">
+              Filtre: "{details.query}"
+            </p>
           ) : null}
         </div>
 
