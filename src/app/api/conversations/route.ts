@@ -137,7 +137,9 @@ export async function GET(req: NextRequest) {
 
       const { data, error } = await supabaseAny
         .from("ai_conversations")
-        .select("id, title, first_message, created_at, updated_at")
+        .select(
+          "id, title, first_message, summary, booking_id, locked_at, created_at, updated_at",
+        )
         .eq("user_id", user.id)
         .is("archived_at", null)
         .order("updated_at", { ascending: false })
@@ -154,7 +156,9 @@ export async function GET(req: NextRequest) {
 
       const { data, error } = await serviceClientAny
         .from("ai_conversations")
-        .select("id, title, first_message, created_at, updated_at")
+        .select(
+          "id, title, first_message, summary, booking_id, locked_at, created_at, updated_at",
+        )
         .eq("client_id", clientId)
         .is("user_id", null)
         .is("archived_at", null)

@@ -24,12 +24,12 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
     <ChatProvider>
       <SidebarProvider defaultOpen>
         <ConversationSidebar />
-        <SidebarInset className="h-[calc(100vh)] flex flex-col">
-          <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-3 md:px-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <SidebarTrigger />
+        <SidebarInset className="h-dvh min-h-dvh max-h-dvh flex flex-col">
+          <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-2 sm:px-3 md:px-4">
+            <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-sm text-muted-foreground">
+              <SidebarTrigger className="size-8" />
               <MessageSquare className="h-4 w-4" />
-              <span>Conversations</span>
+              <span className="hidden sm:inline">Conversations</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="hidden items-center gap-2 md:flex">

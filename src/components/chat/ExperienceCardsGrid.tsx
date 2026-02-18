@@ -61,11 +61,7 @@ export function ExperienceCardsGrid({
         </div>
       )}
 
-      <div
-        className={
-          isSingle ? "max-w-md" : "grid grid-cols-1 md:grid-cols-2 gap-4"
-        }
-      >
+      <div className="flex flex-col gap-6">
         {experiences.map((experience) => (
           <ExperienceCard
             key={experience.id}

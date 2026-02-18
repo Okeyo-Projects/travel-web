@@ -99,7 +99,7 @@ The tool will:
         // Get experience details
         const { data: experience, error: expError } = await db
           .from("experiences")
-          .select("id, title, type, host_id, published")
+          .select("id, title, type, host_id, status")
           .eq("id", item.experience_id)
           .single();
 
@@ -110,7 +110,7 @@ The tool will:
           };
         }
 
-        if (!experience.published) {
+        if (experience.status !== "published") {
           return {
             success: false,
             error: `Experience "${experience.title}" is not available for booking`,
@@ -157,8 +157,8 @@ The tool will:
           children: item.children,
           infants: item.infants,
           rooms: item.rooms,
-          departure_id: item.departure_id,
-          session_id: item.session_id,
+          departure_id: experience.type === "trip" ? (item.departure_id ?? null) : null,
+          session_id: experience.type === "activity" ? (item.session_id ?? null) : null,
           guest_notes: item.guest_notes,
           quote: quoteResult,
         });
@@ -183,7 +183,7 @@ The tool will:
           children: mainItem.children,
           infants: mainItem.infants,
           rooms: mainItem.rooms ? JSON.stringify(mainItem.rooms) : null,
-          departure_id: mainItem.departure_id,
+          departure_id: mainItem.experience_type === "trip" ? (mainItem.departure_id ?? null) : null,
           price_subtotal_cents: mainItem.quote.subtotal_cents,
           price_fees_cents: mainItem.quote.fees_cents,
           price_taxes_cents: mainItem.quote.taxes_cents,
@@ -217,8 +217,8 @@ The tool will:
         children: item.children,
         infants: item.infants,
         rooms: item.rooms ? JSON.stringify(item.rooms) : null,
-        departure_id: item.departure_id,
-        session_id: item.session_id,
+        departure_id: item.experience_type === "trip" ? (item.departure_id ?? null) : null,
+        session_id: item.experience_type === "activity" ? (item.session_id ?? null) : null,
         price_subtotal_cents: item.quote.subtotal_cents,
         price_fees_cents: item.quote.fees_cents,
         price_taxes_cents: item.quote.taxes_cents,

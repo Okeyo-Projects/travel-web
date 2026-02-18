@@ -6,6 +6,10 @@ import { Compass } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { AuthRequiredCard } from "./AuthRequiredCard";
+import {
+  BookingConfirmCard,
+  type BookingIntentSummary,
+} from "./BookingConfirmCard";
 import { type DateOptionItem, DateOptionsPicker } from "./DateOptionsPicker";
 import {
   ExperienceCardsGrid,
@@ -35,6 +39,9 @@ interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
   onQuickReply?: (reply: string) => void;
+  activeConversationId?: string | null;
+  lockedBookingId?: string | null;
+  isConversationLocked?: boolean;
 }
 
 type TextPart = { type: "text"; text: string };
@@ -61,7 +68,7 @@ function renderInlineMarkdown(text: string): ReactNode[] {
       return (
         <code
           key={getKey("code", token)}
-          className="rounded bg-muted px-1 py-0.5 text-[0.9em] font-mono"
+          className="rounded bg-muted px-1 py-0.5 text-[0.9em] font-mono break-all"
         >
           {token.slice(1, -1)}
         </code>
@@ -238,6 +245,55 @@ function extractAuthRequiredReason(output: unknown): string | null {
   }
 
   return "Vous devez être connecté pour réserver.";
+}
+
+function extractBookingIntent(output: unknown): BookingIntentSummary | null {
+  if (!isRecord(output) || output.success !== true) return null;
+  if (typeof output.booking_id !== "string") return null;
+  if (!isRecord(output.summary)) return null;
+
+  const s = output.summary;
+  if (typeof s.total_cents !== "number") return null;
+  if (typeof s.currency !== "string") return null;
+  if (!Array.isArray(s.items) || s.items.length === 0) return null;
+
+  const items = s.items
+    .filter(isRecord)
+    .map((item) => {
+      if (typeof item.experience_title !== "string") return null;
+      if (typeof item.from_date !== "string") return null;
+      if (typeof item.to_date !== "string") return null;
+      if (typeof item.adults !== "number") return null;
+      return {
+        experience_title: item.experience_title,
+        experience_type:
+          typeof item.experience_type === "string"
+            ? item.experience_type
+            : undefined,
+        from_date: item.from_date,
+        to_date: item.to_date,
+        adults: item.adults,
+        children: typeof item.children === "number" ? item.children : undefined,
+        infants: typeof item.infants === "number" ? item.infants : undefined,
+        nights: typeof item.nights === "number" ? item.nights : undefined,
+        subtotal_cents:
+          typeof item.subtotal_cents === "number"
+            ? item.subtotal_cents
+            : undefined,
+        total_cents:
+          typeof item.total_cents === "number" ? item.total_cents : undefined,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  if (items.length === 0) return null;
+
+  return {
+    booking_id: output.booking_id,
+    total_cents: s.total_cents,
+    currency: s.currency,
+    items,
+  };
 }
 
 function extractQuickReplies(output: unknown): {
@@ -499,6 +555,15 @@ function isExperienceDetailsData(data: unknown): data is ExperienceDetailsData {
   return true;
 }
 
+function isBookingIntentSummary(data: unknown): data is BookingIntentSummary {
+  if (!isRecord(data)) return false;
+  if (typeof data.booking_id !== "string") return false;
+  if (typeof data.total_cents !== "number") return false;
+  if (typeof data.currency !== "string") return false;
+  if (!Array.isArray(data.items) || data.items.length === 0) return false;
+  return true;
+}
+
 function isExperienceOptionDetailsData(
   data: unknown,
 ): data is ExperienceOptionDetailsData {
@@ -515,6 +580,9 @@ export function MessageList({
   messages,
   isLoading,
   onQuickReply,
+  activeConversationId,
+  lockedBookingId,
+  isConversationLocked = false,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -524,7 +592,7 @@ export function MessageList({
   });
 
   return (
-    <div className="flex-1 w-full max-w-3xl mx-auto px-4 py-6 space-y-6">
+    <div className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6">
       {messages.map((message) => (
         <MessageItem
           key={message.id}
@@ -532,15 +600,18 @@ export function MessageList({
           isLastMessage={message.id === messages.at(-1)?.id}
           isLoading={isLoading}
           onQuickReply={onQuickReply}
+          activeConversationId={activeConversationId}
+          lockedBookingId={lockedBookingId}
+          isConversationLocked={isConversationLocked}
         />
       ))}
 
       {isLoading && (
-        <div className="flex items-start gap-4">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 animate-pulse">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 animate-pulse">
             <Compass className="w-4 h-4 text-primary" />
           </div>
-          <div className="rounded-2xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground animate-pulse">
+          <div className="rounded-2xl bg-muted/40 px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-muted-foreground animate-pulse">
             Je réfléchis à votre demande...
           </div>
         </div>
@@ -556,11 +627,17 @@ function MessageItem({
   isLastMessage,
   isLoading,
   onQuickReply,
+  activeConversationId,
+  lockedBookingId,
+  isConversationLocked = false,
 }: {
   message: Message;
   isLastMessage: boolean;
   isLoading: boolean;
   onQuickReply?: (reply: string) => void;
+  activeConversationId?: string | null;
+  lockedBookingId?: string | null;
+  isConversationLocked?: boolean;
 }) {
   const isUser = message.role === "user";
 
@@ -574,8 +651,10 @@ function MessageItem({
         animate={{ opacity: 1, y: 0 }}
         className="flex justify-end"
       >
-        <div className="bg-primary/5 text-foreground max-w-[85%] rounded-2xl rounded-tr-sm px-5 py-3 text-base">
-          <p className="whitespace-pre-wrap leading-relaxed">{text}</p>
+        <div className="bg-primary/5 text-foreground max-w-[90%] sm:max-w-[85%] rounded-2xl rounded-tr-sm px-4 sm:px-5 py-2.5 sm:py-3 text-[15px] sm:text-base">
+          <p className="whitespace-pre-wrap break-words leading-relaxed">
+            {text}
+          </p>
         </div>
       </motion.div>
     );
@@ -594,6 +673,7 @@ function MessageItem({
     "room_type_selector",
     "location_request",
     "auth_required",
+    "booking_confirm",
   ]);
   const textBlocks = parsedContent.filter((block) => block.type === "text");
   const beforeMessageUIBlocks = parsedContent.filter(
@@ -624,9 +704,9 @@ function MessageItem({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-4"
+      className="flex items-start gap-3 sm:gap-4"
     >
-      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
+      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mt-1 shadow-sm">
         <Compass className="w-4 h-4 text-primary-foreground" />
       </div>
 
@@ -636,7 +716,7 @@ function MessageItem({
             return (
               <div
                 key={block.key}
-                className="prose prose-neutral dark:prose-invert max-w-none"
+                className="prose prose-neutral dark:prose-invert max-w-none break-words text-[15px] sm:text-base"
               >
                 {renderAssistantText(block.content)}
               </div>
@@ -649,6 +729,9 @@ function MessageItem({
                 component={block.content.component}
                 data={block.content.data}
                 onQuickReply={onQuickReply}
+                activeConversationId={activeConversationId}
+                lockedBookingId={lockedBookingId}
+                isConversationLocked={isConversationLocked}
               />
             </div>
           );
@@ -747,20 +830,39 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
       part.type === "tool-createBookingIntent" &&
       part.state === "output-available"
     ) {
-      const reason = extractAuthRequiredReason(part.output);
-      if (!reason) continue;
-
-      pushUniqueBlock(
-        {
-          key: `auth_required:${reason}`,
-          type: "ui",
-          content: {
-            component: "auth_required",
-            data: { reason },
+      // Auth required case
+      const authReason = extractAuthRequiredReason(part.output);
+      if (authReason) {
+        pushUniqueBlock(
+          {
+            key: `auth_required:${authReason}`,
+            type: "ui",
+            content: {
+              component: "auth_required",
+              data: { reason: authReason },
+            },
           },
-        },
-        `auth_required:${reason}`,
-      );
+          `auth_required:${authReason}`,
+        );
+        continue;
+      }
+
+      // Success case — render the booking confirm card
+      const bookingIntent = extractBookingIntent(part.output);
+      if (bookingIntent) {
+        const signature = `booking_confirm:${bookingIntent.booking_id}`;
+        pushUniqueBlock(
+          {
+            key: signature,
+            type: "ui",
+            content: {
+              component: "booking_confirm",
+              data: bookingIntent,
+            },
+          },
+          signature,
+        );
+      }
     }
 
     if (
@@ -943,10 +1045,16 @@ function UIBlock({
   component,
   data,
   onQuickReply,
+  activeConversationId,
+  lockedBookingId,
+  isConversationLocked = false,
 }: {
   component: string;
   data: unknown;
   onQuickReply?: (reply: string) => void;
+  activeConversationId?: string | null;
+  lockedBookingId?: string | null;
+  isConversationLocked?: boolean;
 }) {
   switch (component) {
     case "experience_cards":
@@ -1008,6 +1116,21 @@ function UIBlock({
     case "option_details":
       if (!isExperienceOptionDetailsData(data)) return null;
       return <ExperienceOptionDetailsPanel details={data} />;
+
+    case "booking_confirm":
+      if (!isBookingIntentSummary(data)) return null;
+      if (
+        isConversationLocked ||
+        (lockedBookingId && lockedBookingId === data.booking_id)
+      ) {
+        return null;
+      }
+      return (
+        <BookingConfirmCard
+          summary={data}
+          conversationId={activeConversationId}
+        />
+      );
 
     default:
       return (

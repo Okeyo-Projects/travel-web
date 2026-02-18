@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -57,7 +57,7 @@ export function ConversationSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b p-4 gap-3">
+      <SidebarHeader className="border-b p-4 gap-3 pt-[calc(1rem+env(safe-area-inset-top))]">
         <Link
           href={localizeHref("/", pathname)}
           aria-label="Go to home page"
@@ -83,7 +83,7 @@ export function ConversationSidebar() {
         </SidebarMenuButton>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -102,7 +102,14 @@ export function ConversationSidebar() {
                     normalizedPathname === `/chat/${conv.id}` ||
                     conversationId === conv.id;
                   const title = conv.title || "Nouvelle conversation";
-                  const preview = conv.first_message || "";
+                  const summary =
+                    typeof conv.summary === "string" ? conv.summary.trim() : "";
+                  const hasSummary =
+                    summary.length > 0 &&
+                    summary.toLocaleLowerCase() !== title.toLocaleLowerCase();
+                  const hasBooking =
+                    typeof conv.booking_id === "string" &&
+                    conv.booking_id.length > 0;
                   const timeAgo = formatDistanceToNow(
                     new Date(conv.updated_at),
                     {
@@ -124,10 +131,15 @@ export function ConversationSidebar() {
                               <p className="text-sm font-medium truncate">
                                 {title}
                               </p>
+                              {hasBooking ? (
+                                <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                              ) : null}
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                              {preview}
-                            </p>
+                            {hasSummary ? (
+                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                                {summary}
+                              </p>
+                            ) : null}
                             <p className="text-xs text-muted-foreground mt-1">
                               {timeAgo}
                             </p>

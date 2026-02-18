@@ -24,6 +24,10 @@ interface ChatContextType {
   newConversationNonce: number;
   clientId: string;
   getLocationParams: () => { lat: number; lng: number } | null;
+  lockedBookingId: string | null;
+  setLockedBookingId: (id: string | null) => void;
+  lockedConversationId: string | null;
+  setLockedConversationId: (id: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -35,6 +39,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   );
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [newConversationNonce, setNewConversationNonce] = useState(0);
+  const [lockedBookingId, setLockedBookingId] = useState<string | null>(null);
+  const [lockedConversationId, setLockedConversationId] = useState<
+    string | null
+  >(null);
 
   // Generate stable client ID for anonymous users
   const [clientId, setClientId] = useState("");
@@ -62,6 +70,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const startNewConversation = () => {
     setConversationId(null);
+    setLockedBookingId(null);
+    setLockedConversationId(null);
     setNewConversationNonce((value) => value + 1);
   };
 
@@ -77,6 +87,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         newConversationNonce,
         clientId,
         getLocationParams,
+        lockedBookingId,
+        setLockedBookingId,
+        lockedConversationId,
+        setLockedConversationId,
       }}
     >
       {children}

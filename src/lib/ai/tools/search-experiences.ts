@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { embedQuery } from "@/lib/embeddings";
 import { createClient } from "@/lib/supabase/server";
+import { getImageUrl } from "@/utils/functions";
 
 const searchExperiencesSchema = z.object({
   query: z.string().describe("Search query from user in natural language"),
@@ -249,6 +250,7 @@ async function formatResults(results: any[], db: any) {
     is_available: exp.is_available,
     host_name: exp.host_name,
     thumbnail_url: exp.thumbnail_url,
+    video_url: (exp.video_id && getImageUrl(exp.video_id)) || undefined,
     rooms: undefined as any,
   }));
 

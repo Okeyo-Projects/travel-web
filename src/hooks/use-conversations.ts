@@ -6,6 +6,9 @@ export interface Conversation {
   id: string;
   title: string | null;
   first_message: string | null;
+  summary: string | null;
+  booking_id: string | null;
+  locked_at: string | null;
   created_at: string;
   updated_at: string;
 }

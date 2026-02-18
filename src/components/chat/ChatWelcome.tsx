@@ -84,18 +84,20 @@ export function ChatWelcome({
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 max-w-4xl mx-auto w-full">
+    <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:p-4 max-w-4xl mx-auto w-full">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center mb-12"
+        className="text-center mb-6 sm:mb-12"
       >
-        <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <Compass className="w-8 h-8 text-primary" />
+        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <Compass className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-4">{title}</h1>
-        <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3 sm:mb-4">
+          {title}
+        </h1>
+        <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto">
           {description}
         </p>
       </motion.div>

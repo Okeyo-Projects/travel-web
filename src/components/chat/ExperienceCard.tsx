@@ -62,7 +62,7 @@ export function ExperienceCard({
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative h-48 w-full group">
+      <div className="relative aspect-video w-full group bg-muted">
         {isPlaying && experience.video_url ? (
           <video
             ref={videoRef}
@@ -94,9 +94,9 @@ export function ExperienceCard({
                 <button
                   type="button"
                   onClick={handlePlay}
-                  className="w-12 h-12 rounded-full flex items-center justify-center bg-background/30 backdrop-blur-md border border-white/30 text-white hover:scale-110 transition-transform duration-300 hover:bg-background/40"
+                  className="w-16 h-16 rounded-full flex items-center justify-center bg-background/30 backdrop-blur-md border border-white/30 text-white hover:scale-110 transition-transform duration-300 hover:bg-background/40"
                 >
-                  <Play className="w-5 h-5 fill-white ml-1" />
+                  <Play className="w-8 h-8 fill-white ml-1" />
                 </button>
               </div>
             )}
@@ -126,7 +126,7 @@ export function ExperienceCard({
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <MapPin className="w-4 h-4" />
             <span>{experience.city}</span>
@@ -169,11 +169,11 @@ export function ExperienceCard({
               {experience.rooms.slice(0, 3).map((room) => (
                 <div
                   key={`${room.name}-${room.type ?? "room"}`}
-                  className="flex items-center justify-between text-xs"
+                  className="flex items-center justify-between gap-2 text-xs"
                 >
-                  <span className="flex items-center gap-1 text-muted-foreground">
+                  <span className="flex items-center gap-1 text-muted-foreground min-w-0">
                     <BedDouble className="w-3 h-3" />
-                    {room.name}
+                    <span className="truncate">{room.name}</span>
                     {room.max_persons && (
                       <span className="text-[10px]">
                         ({room.max_persons} pers.)
@@ -186,7 +186,7 @@ export function ExperienceCard({
             </div>
           )}
 
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-2xl font-bold">{experience.price_mad} MAD</p>
             <p className="text-xs text-muted-foreground">
@@ -194,14 +194,23 @@ export function ExperienceCard({
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex w-full sm:w-auto gap-2">
             {onSelect && (
-              <Button variant="outline" size="sm" onClick={onSelect}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onSelect}
+                className="flex-1 sm:flex-none"
+              >
                 Détails
               </Button>
             )}
             {onBook && (
-              <Button size="sm" onClick={onBook}>
+              <Button
+                size="sm"
+                onClick={onBook}
+                className="flex-1 sm:flex-none"
+              >
                 Réserver
               </Button>
             )}

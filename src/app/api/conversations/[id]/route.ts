@@ -162,6 +162,57 @@ export async function GET(
   }
 }
 
+// PATCH /api/conversations/[id] - Lock conversation after a booking is confirmed
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id: conversationId } = await params;
+    const body = await req.json();
+    const bookingId =
+      typeof body?.booking_id === "string" ? body.booking_id : null;
+
+    const userClient = await createClient();
+    const {
+      data: { user },
+    } = await userClient.auth.getUser();
+
+    const authorized = await resolveAuthorizedConversation(
+      req,
+      conversationId,
+      userClient,
+      user?.id ?? null,
+    );
+
+    if (!authorized) {
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 },
+      );
+    }
+
+    const authorizedSupabaseAny = asLooseSupabaseClient(authorized.supabase);
+    const { error } = await authorizedSupabaseAny
+      .from("ai_conversations")
+      .update({
+        locked_at: new Date().toISOString(),
+        ...(bookingId ? { booking_id: bookingId } : {}),
+      })
+      .eq("id", conversationId);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Lock conversation error:", error);
+    return NextResponse.json(
+      { error: "Failed to lock conversation" },
+      { status: 500 },
+    );
+  }
+}
+
 // DELETE /api/conversations/[id] - Archive conversation
 export async function DELETE(
   req: NextRequest,

@@ -44,6 +44,25 @@ function extractTextFromParts(parts: unknown[] | null): string {
     .trim();
 }
 
+function buildConversationSummary(content: string | null): string | null {
+  if (!content) return null;
+
+  const plainText = content
+    .replaceAll(/\[(.+?)\]\((.+?)\)/g, "$1")
+    .replaceAll(/`([^`]+)`/g, "$1")
+    .replaceAll(/\*\*([^*]+)\*\*/g, "$1")
+    .replaceAll(/\s+/g, " ")
+    .trim();
+
+  if (!plainText) return null;
+  if (plainText.length <= 180) return plainText;
+
+  const slice = plainText.slice(0, 180);
+  const lastSpace = slice.lastIndexOf(" ");
+  const trimmed = (lastSpace > 120 ? slice.slice(0, lastSpace) : slice).trim();
+  return `${trimmed}…`;
+}
+
 type LooseQueryResult<T = unknown> = Promise<{ data: T; error: unknown }>;
 type LooseQueryPayload = { data: unknown; error: unknown };
 
@@ -204,10 +223,21 @@ export async function POST(
 
     if (error) throw error;
 
-    // Update conversation's updated_at timestamp
+    // Update metadata for conversation list (recency + assistant summary preview).
+    const conversationUpdate: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    const shouldUpdateSummary = message.role === "assistant";
+    if (shouldUpdateSummary) {
+      const summary = buildConversationSummary(content);
+      if (summary) {
+        conversationUpdate.summary = summary;
+      }
+    }
+
     await supabaseAny
       .from("ai_conversations")
-      .update({ updated_at: new Date().toISOString() })
+      .update(conversationUpdate)
       .eq("id", conversationId);
 
     return NextResponse.json({ message: data });

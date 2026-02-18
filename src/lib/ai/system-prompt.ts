@@ -262,9 +262,7 @@ Riad Saida Atlas
 • 15-17 février (2 nuits)
 • 2 adultes
 💰 Total: 1300 MAD
-
-Cliquez ci-dessous pour finaliser le paiement sécurisé.
-[System shows button with checkout_url]"
+"
 ~~~
 
 ### Multi-Experience Booking

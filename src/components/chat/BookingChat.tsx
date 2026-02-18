@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import { DefaultChatTransport } from "ai";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
   type ChangeEvent,
@@ -156,6 +156,11 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setConversationId,
     newConversationNonce,
     clientId,
+    lockedBookingId,
+    setLockedBookingId,
+    lockedConversationId,
+    setLockedConversationId,
+    startNewConversation,
   } = useChatContext();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
@@ -169,6 +174,10 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const persistingMessageIds = useRef(new Set<string>());
   const previousPathname = useRef(pathname);
   const activeConversationId = initialConversationId || conversationId;
+  const isConversationLocked =
+    !!activeConversationId &&
+    !!lockedBookingId &&
+    lockedConversationId === activeConversationId;
 
   const { data: conversationData, isLoading: loadingConversation } =
     useConversation(initialConversationId || null);
@@ -206,6 +215,51 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       inFlightTextRef.current = null;
     }
   }, [status]);
+
+  // Restore or clear locked state when changing conversations
+  useEffect(() => {
+    if (!activeConversationId) {
+      if (lockedConversationId !== null) setLockedConversationId(null);
+      if (lockedBookingId !== null) setLockedBookingId(null);
+      return;
+    }
+
+    if (loadingConversation) return;
+    if (!conversationData?.conversation) return;
+
+    const conv = conversationData?.conversation as
+      | Record<string, unknown>
+      | undefined;
+    const conversationBookingId =
+      typeof conv?.booking_id === "string" ? conv.booking_id : null;
+    const conversationLocked = !!conv?.locked_at && !!conversationBookingId;
+
+    if (conversationLocked) {
+      if (lockedConversationId !== activeConversationId) {
+        setLockedConversationId(activeConversationId);
+      }
+      if (lockedBookingId !== conversationBookingId) {
+        setLockedBookingId(conversationBookingId);
+      }
+      return;
+    }
+
+    if (
+      lockedConversationId === activeConversationId ||
+      lockedBookingId !== null
+    ) {
+      setLockedConversationId(null);
+      setLockedBookingId(null);
+    }
+  }, [
+    activeConversationId,
+    conversationData,
+    loadingConversation,
+    lockedBookingId,
+    lockedConversationId,
+    setLockedBookingId,
+    setLockedConversationId,
+  ]);
 
   // Load existing messages from conversation
   useEffect(() => {
@@ -265,12 +319,20 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     if (!movedToRootChat) return;
 
     setConversationId(null);
+    setLockedBookingId(null);
+    setLockedConversationId(null);
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
-  }, [pathname, setConversationId, setMessages]);
+  }, [
+    pathname,
+    setConversationId,
+    setLockedBookingId,
+    setLockedConversationId,
+    setMessages,
+  ]);
 
   // Handle client-side mounting
   useEffect(() => {
@@ -345,6 +407,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     if (
       !normalizedText ||
       isLoading ||
+      isConversationLocked ||
       isCreatingConversation ||
       isSendingRef.current ||
       inFlightTextRef.current === normalizedText
@@ -376,6 +439,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
         );
       }
 
+      setInput("");
       await sendMessage(
         { text: normalizedText },
         {
@@ -388,7 +452,6 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
           },
         },
       );
-      setInput("");
     } catch (error) {
       console.error("Failed to send message:", error);
       isSendingRef.current = false;
@@ -464,9 +527,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     publicAgentConfig?.suggested_prompts?.[fallbackLanguage];
 
   return (
-    <div className="flex flex-col h-full bg-background relative overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col bg-background relative overflow-hidden">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto scroll-smooth">
+      <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
         <AnimatePresence mode="wait">
           {showWelcome ? (
             <motion.div
@@ -495,22 +558,52 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
                 messages={messages}
                 isLoading={isLoading}
                 onQuickReply={(reply) => void sendUserMessage(reply)}
+                activeConversationId={activeConversationId}
+                lockedBookingId={isConversationLocked ? lockedBookingId : null}
+                isConversationLocked={isConversationLocked}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Input Area */}
-      <div className="flex-shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4">
-        <ChatInput
-          input={input}
-          handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
-          onSubmitMessage={() => void sendUserMessage(input)}
-          isLoading={isLoading}
-          onRequestLocation={handleRequestLocation}
-        />
+      {/* Input Area — hidden when conversation is locked after a booking */}
+      <div
+        className="flex-shrink-0 bg-gradient-to-t from-background via-background to-transparent pt-2 sm:pt-4"
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
+        {isConversationLocked ? (
+          <div className="w-full max-w-3xl mx-auto px-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30 px-4 py-3.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                  Réservation envoyée
+                </p>
+                <p className="text-xs text-emerald-700/70 dark:text-emerald-400/70 mt-0.5">
+                  Cette conversation est terminée.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={startNewConversation}
+                className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 transition-colors shrink-0"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                Nouvelle conversation
+              </button>
+            </div>
+          </div>
+        ) : (
+          <ChatInput
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+            onSubmitMessage={() => void sendUserMessage(input)}
+            isLoading={isLoading}
+            onRequestLocation={handleRequestLocation}
+          />
+        )}
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ export function DateOptionsPicker({
   if (!question || options.length === 0) return null;
 
   return (
-    <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+    <div className="rounded-xl border bg-muted/30 p-3 sm:p-4 space-y-3">
       <div className="flex items-start gap-2">
         <CalendarDays className="h-4 w-4 text-primary mt-0.5" />
         <p className="text-sm text-foreground">{question}</p>
@@ -45,7 +45,7 @@ export function DateOptionsPicker({
             size="sm"
             disabled={disabled || !onSelect}
             onClick={() => onSelect?.(option.reply_text)}
-            className="rounded-full"
+            className="h-auto whitespace-normal text-left leading-snug py-1.5 rounded-2xl"
           >
             {option.label}
           </Button>

@@ -18,7 +18,7 @@ export function QuickReplies({
   if (options.length === 0) return null;
 
   return (
-    <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+    <div className="rounded-xl border bg-muted/30 p-3 sm:p-4 space-y-3">
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <Button
@@ -28,7 +28,7 @@ export function QuickReplies({
             size="sm"
             disabled={disabled || !onSelect}
             onClick={() => onSelect?.(option)}
-            className="rounded-full"
+            className="h-auto whitespace-normal text-left leading-snug py-1.5 rounded-2xl"
           >
             {option}
           </Button>
