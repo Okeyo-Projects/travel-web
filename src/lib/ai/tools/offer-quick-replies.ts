@@ -23,6 +23,48 @@ const offerQuickRepliesSchema = z.object({
     ),
 });
 
+const LODGING_FALLBACK_OPTIONS = [
+  "Riad romantique",
+  "Calme & nature",
+  "Piscine / Spa",
+  "Petit budget",
+  "Je ne sais pas",
+];
+
+const NON_LODGING_PATTERNS: RegExp[] = [
+  /\btrip\b/i,
+  /\btrips\b/i,
+  /\bactivity\b/i,
+  /\bactivities\b/i,
+  /activité/i,
+  /activités/i,
+  /trek/i,
+  /randonn[éee]/i,
+  /excursion/i,
+  /atelier/i,
+  /session/i,
+  /departure/i,
+  /voyage/i,
+  /aventure/i,
+];
+
+function isLodgingOnlyOption(value: string): boolean {
+  return !NON_LODGING_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+function sanitizeQuestion(input: string): string {
+  const normalized = input.trim();
+  if (!normalized) {
+    return "Quel type d'hébergement vous intéresse ?";
+  }
+
+  if (NON_LODGING_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return "Quel type d'hébergement vous intéresse ?";
+  }
+
+  return normalized;
+}
+
 function sanitizeOptions(input: string[]): string[] {
   const seen = new Set<string>();
   const output: string[] = [];
@@ -30,6 +72,7 @@ function sanitizeOptions(input: string[]): string[] {
   for (const value of input) {
     const trimmed = value.trim();
     if (!trimmed) continue;
+    if (!isLodgingOnlyOption(trimmed)) continue;
     const key = trimmed.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
@@ -38,7 +81,7 @@ function sanitizeOptions(input: string[]): string[] {
   }
 
   if (output.length < 2) {
-    return ["Oui", "Non"];
+    return LODGING_FALLBACK_OPTIONS;
   }
 
   return output;
@@ -50,7 +93,7 @@ Use this when you need the user to choose one option (city, dates preference, bu
 instead of typing a full response. Keep options short and actionable.`,
   inputSchema: offerQuickRepliesSchema,
   execute: async ({ question, options, allow_free_text }) => {
-    const normalizedQuestion = question.trim();
+    const normalizedQuestion = sanitizeQuestion(question);
     const normalizedOptions = sanitizeOptions(options);
 
     return {

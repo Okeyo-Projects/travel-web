@@ -559,6 +559,51 @@ export type Database = {
           },
         ];
       };
+      website_testimonials: {
+        Row: {
+          avatar_key: string;
+          created_at: string;
+          deleted_at: string | null;
+          id: string;
+          is_active: boolean;
+          message: string;
+          metadata: Json;
+          name: string;
+          rate: number;
+          role: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          avatar_key: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          message: string;
+          metadata?: Json;
+          name: string;
+          rate?: number;
+          role: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          avatar_key?: string;
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          message?: string;
+          metadata?: Json;
+          name?: string;
+          rate?: number;
+          role?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       chats_messages: {
         Row: {
           booking_id: string | null;

@@ -21,26 +21,27 @@ export function ChatWelcome({
   const defaultSuggestions = [
     {
       icon: Hotel,
-      title: "Hébergement Romantique",
+      title: "Riad Romantique",
       prompt: "Je cherche un riad romantique à Marrakech pour ce weekend.",
       color: "text-rose-500 bg-rose-500/10",
     },
     {
       icon: MapIcon,
-      title: "Aventure dans l'Atlas",
-      prompt: "Propose-moi une randonnée de 2 jours dans l'Atlas.",
+      title: "Lodge Calme Atlas",
+      prompt: "Je cherche un lodge calme dans l'Atlas pour 2 nuits.",
       color: "text-emerald-500 bg-emerald-500/10",
     },
     {
       icon: Compass,
-      title: "Activités Locales",
-      prompt: "Quelles sont les meilleures activités culturelles à Fès ?",
+      title: "Piscine & Détente",
+      prompt:
+        "Montre-moi un hébergement avec piscine et hammam près de Marrakech.",
       color: "text-blue-500 bg-blue-500/10",
     },
     {
       icon: Tag,
-      title: "Offres Spéciales",
-      prompt: "Montre-moi les offres de dernière minute pour Agadir.",
+      title: "Petit Budget",
+      prompt: "Je veux une maison d'hôtes petit budget à Chefchaouen.",
       color: "text-amber-500 bg-amber-500/10",
     },
   ];
@@ -66,7 +67,7 @@ export function ChatWelcome({
   const title = welcomeTitle || "Bonjour, je suis votre Assistant Voyage";
   const description =
     welcomeDescription ||
-    "Je peux vous aider à planifier votre séjour au Maroc, trouver des hébergements uniques et réserver des expériences inoubliables.";
+    "Je peux vous aider à trouver le lodge idéal au Maroc, comparer les chambres et préparer votre réservation.";
 
   const container = {
     hidden: { opacity: 0 },

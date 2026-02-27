@@ -9,9 +9,9 @@ export async function POST(req: Request) {
   // Simple mock response generator
   const mockResponse = `Je suis l'assistant Okeyo. Vous avez dit : "${lastMessage.content}". 
   
-Je peux vous aider à trouver des expériences de voyage, des hébergements ou des activités. Dites-moi simplement ce que vous recherchez !
+Je peux vous aider à trouver des hébergements (riads, lodges, maisons d'hôtes) et à choisir la chambre qui vous convient.
   
-Par exemple : "Je cherche un séjour romantique à Bali" ou "Quelles sont les activités à faire à Tokyo ?"`;
+Par exemple : "Je cherche un riad romantique à Marrakech" ou "Je veux un lodge calme petit budget à Chefchaouen."`;
 
   // Create a stream from the mock response
   const encoder = new TextEncoder();

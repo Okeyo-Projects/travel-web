@@ -9,7 +9,9 @@ const searchExperiencesSchema = z.object({
   type: z
     .enum(["lodging", "trip", "activity"])
     .optional()
-    .describe("Type of experience to search for"),
+    .describe(
+      "Requested type from model. Runtime enforces lodging-only search.",
+    ),
   city: z
     .string()
     .optional()
@@ -30,11 +32,11 @@ const searchExperiencesSchema = z.object({
     .max(5)
     .optional()
     .describe("Minimum average rating (0-5)"),
-  guests: z.number().optional().describe("Number of guests/participants"),
+  guests: z.number().optional().describe("Number of lodging guests"),
   date_from: z
     .string()
     .optional()
-    .describe("Check-in date or activity date (YYYY-MM-DD format)"),
+    .describe("Check-in date (YYYY-MM-DD format)"),
   date_to: z
     .string()
     .optional()
@@ -69,6 +71,8 @@ const searchExperiencesSchema = z.object({
     .default(10)
     .describe("Maximum number of results to return"),
 });
+
+const FORCED_EXPERIENCE_TYPE = "lodging";
 
 // Common city name variants to handle typos in database
 const CITY_VARIANTS: Record<string, string[]> = {
@@ -138,6 +142,40 @@ function toCitySlug(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function resolveMediaAssetUrl(
+  asset: {
+    path?: string | null;
+    bucket?: string | null;
+  } | null,
+): string | null {
+  if (!asset?.path) {
+    return null;
+  }
+  return getImageUrl(asset.path, asset.bucket || "media");
+}
+
+function resolveVideoAssetUrl(
+  asset: {
+    path?: string | null;
+    hls_playlist_url?: string | null;
+    bucket?: string | null;
+  } | null,
+): string | null {
+  if (!asset) {
+    return null;
+  }
+
+  const videoUrl = resolveMediaAssetUrl(asset);
+  if (videoUrl) {
+    return videoUrl;
+  }
+
+  return getImageUrl(
+    asset.hls_playlist_url || undefined,
+    asset.bucket || "media",
+  );
+}
+
 async function executeSearch(
   db: any,
   queryEmbedding: number[] | null,
@@ -178,7 +216,7 @@ async function executeSearch(
         query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
         semantic_threshold: threshold,
         text_query: params.query,
-        exp_type: params.type || null,
+        exp_type: FORCED_EXPERIENCE_TYPE,
         city_filter:
           overrides.city_filter !== undefined
             ? overrides.city_filter
@@ -217,11 +255,19 @@ async function executeSearch(
       return { results, error, used_threshold: threshold };
     }
 
-    lastResults = results;
+    const lodgingResults = Array.isArray(results)
+      ? results.filter((exp: any) => exp?.type === FORCED_EXPERIENCE_TYPE)
+      : results;
+
+    lastResults = lodgingResults;
     lastThreshold = threshold;
 
-    if (results && results.length > 0) {
-      return { results, error: null, used_threshold: threshold };
+    if (lodgingResults && lodgingResults.length > 0) {
+      return {
+        results: lodgingResults,
+        error: null,
+        used_threshold: threshold,
+      };
     }
   }
 
@@ -250,9 +296,148 @@ async function formatResults(results: any[], db: any) {
     is_available: exp.is_available,
     host_name: exp.host_name,
     thumbnail_url: exp.thumbnail_url,
-    video_url: (exp.video_id && getImageUrl(exp.video_id)) || undefined,
+    video_url: undefined as string | undefined,
+    gallery: undefined as string[] | undefined,
     rooms: undefined as any,
+    _video_id: exp.video_id as string | null | undefined,
   }));
+
+  const experienceIds = formatted.map((e) => e.id);
+
+  // Canonical media linkage: experiences.video_id -> media_assets via FK
+  if (experienceIds.length > 0) {
+    const { data: experienceMedia } = await db
+      .from("experiences")
+      .select(`
+        id,
+        thumbnail_url,
+        video:media_assets!fk_experiences_video(
+          id,
+          path,
+          hls_playlist_url,
+          bucket
+        )
+      `)
+      .in("id", experienceIds)
+      .is("deleted_at", null);
+
+    if (experienceMedia) {
+      const mediaByExperience = new Map<string, any>();
+      for (const row of experienceMedia) {
+        const videoData = Array.isArray(row.video)
+          ? row.video[0] || null
+          : row.video;
+        mediaByExperience.set(row.id, {
+          thumbnail_url: row.thumbnail_url,
+          video: videoData,
+        });
+      }
+
+      for (const experience of formatted) {
+        const linkedMedia = mediaByExperience.get(experience.id);
+        if (!linkedMedia) continue;
+
+        if (!experience.thumbnail_url && linkedMedia.thumbnail_url) {
+          experience.thumbnail_url = linkedMedia.thumbnail_url;
+        }
+
+        if (!experience.video_url) {
+          const linkedVideoUrl = resolveVideoAssetUrl(linkedMedia.video);
+          if (linkedVideoUrl) {
+            experience.video_url = linkedVideoUrl;
+          }
+        }
+
+        if (!experience._video_id && linkedMedia.video?.id) {
+          experience._video_id = linkedMedia.video.id;
+        }
+      }
+    }
+  }
+
+  // Fallback video resolution from raw video IDs when direct FK join did not yield URLs.
+  const videoIds = Array.from(
+    new Set(
+      formatted
+        .filter((item) => !item.video_url)
+        .map((item) => item._video_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+
+  if (videoIds.length > 0) {
+    const { data: videoAssets } = await db
+      .from("media_assets")
+      .select("id, path, hls_playlist_url, bucket")
+      .in("id", videoIds)
+      .is("deleted_at", null);
+
+    const videoById = new Map<string, any>();
+    for (const asset of videoAssets || []) {
+      videoById.set(asset.id, asset);
+    }
+
+    for (const experience of formatted) {
+      if (experience.video_url) continue;
+      if (!experience._video_id) continue;
+      const asset = videoById.get(experience._video_id);
+      const videoUrl = resolveVideoAssetUrl(asset);
+      experience.video_url = videoUrl || undefined;
+    }
+  }
+
+  // Fetch gallery images for all returned experiences
+  if (experienceIds.length > 0) {
+    const { data: media } = await db
+      .from("experience_media")
+      .select(`
+        experience_id,
+        media_id,
+        media_asset:media_assets!experience_media_media_id_fkey (
+          id,
+          path,
+          hls_playlist_url,
+          bucket,
+          kind
+        )
+      `)
+      .in("experience_id", experienceIds)
+      .order("order_index", { ascending: true });
+
+    if (media) {
+      const galleryByExp: Record<string, string[]> = {};
+      const fallbackVideoByExp: Record<string, string> = {};
+      for (const m of media) {
+        if (!galleryByExp[m.experience_id]) galleryByExp[m.experience_id] = [];
+        if (m.media_asset?.kind === "video") {
+          if (!fallbackVideoByExp[m.experience_id]) {
+            const videoUrl = resolveVideoAssetUrl(m.media_asset);
+            if (videoUrl) {
+              fallbackVideoByExp[m.experience_id] = videoUrl;
+            }
+          }
+          continue;
+        }
+
+        const url = resolveMediaAssetUrl(m.media_asset);
+        if (!url) continue;
+        if (galleryByExp[m.experience_id].includes(url)) continue;
+        galleryByExp[m.experience_id].push(url);
+      }
+
+      for (const exp of formatted) {
+        if (!exp.video_url && fallbackVideoByExp[exp.id]) {
+          exp.video_url = fallbackVideoByExp[exp.id];
+        }
+        if (galleryByExp[exp.id]) {
+          exp.gallery = galleryByExp[exp.id];
+        }
+        if (!exp.thumbnail_url && exp.gallery?.length) {
+          exp.thumbnail_url = exp.gallery[0];
+        }
+      }
+    }
+  }
 
   // Fetch room types for lodging experiences
   const lodgingIds = formatted
@@ -263,7 +448,7 @@ async function formatResults(results: any[], db: any) {
     const { data: rooms } = await db
       .from("lodging_room_types")
       .select(
-        "id, experience_id, name, room_type, price_cents, capacity_beds, max_persons",
+        "id, experience_id, name, room_type, price_cents, capacity_beds, max_persons, photos",
       )
       .in("experience_id", lodgingIds)
       .is("deleted_at", null)
@@ -280,6 +465,9 @@ async function formatResults(results: any[], db: any) {
           price_mad: r.price_cents ? r.price_cents / 100 : 0,
           capacity_beds: r.capacity_beds,
           max_persons: r.max_persons,
+          photos:
+            r.photos?.map((id: string) => getImageUrl(id)).filter(Boolean) ||
+            [],
         });
       }
       for (const exp of formatted) {
@@ -290,11 +478,11 @@ async function formatResults(results: any[], db: any) {
     }
   }
 
-  return formatted;
+  return formatted.map(({ _video_id, ...experience }) => experience);
 }
 
 export const searchExperiences = tool({
-  description: `Search for experiences (lodging, trips, activities) in Morocco using semantic search.
+  description: `Search for lodging experiences in Morocco using semantic search.
 This tool combines AI-powered semantic search with filters like location, price, dates, and promotions.
 Use this when users ask to find, search, or discover experiences.
 The tool automatically handles city name variants and does progressive fallback searches if no results are found.`,

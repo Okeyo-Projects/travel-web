@@ -68,38 +68,38 @@ const DEFAULT_WELCOME_MESSAGES: AgentWelcomeMessages = {
   fr: {
     title: "Bonjour, je suis votre Assistant Voyage",
     description:
-      "Je peux vous aider à planifier votre séjour au Maroc, trouver des hébergements uniques et réserver des expériences inoubliables.",
+      "Je peux vous aider à trouver le lodge idéal au Maroc, comparer les chambres et préparer votre réservation.",
   },
   en: {
     title: "Hi, I am your Travel Assistant",
     description:
-      "I can help you plan your trip in Morocco, find unique stays, and book unforgettable experiences.",
+      "I can help you find the right lodge in Morocco, compare rooms, and prepare your booking.",
   },
   ar: {
     title: "مرحبا، أنا مساعد السفر الخاص بك",
     description:
-      "يمكنني مساعدتك في تخطيط رحلتك في المغرب والعثور على إقامات مميزة وحجز تجارب لا تنسى.",
+      "يمكنني مساعدتك في العثور على السكن المناسب في المغرب ومقارنة الغرف وتجهيز الحجز.",
   },
 };
 
 const DEFAULT_SUGGESTED_PROMPTS: AgentSuggestedPrompts = {
   fr: [
     "Je cherche un riad romantique à Marrakech pour ce weekend.",
-    "Propose-moi une randonnée de 2 jours dans l'Atlas.",
-    "Quelles sont les meilleures activités culturelles à Fès ?",
-    "Montre-moi les offres de dernière minute pour Agadir.",
+    "Je veux une maison d'hôtes calme à Chefchaouen pour 2 nuits.",
+    "Montre-moi des lodges avec piscine près de Marrakech.",
+    "Je cherche un hébergement petit budget à Imlil.",
   ],
   en: [
     "I am looking for a romantic riad in Marrakech this weekend.",
-    "Suggest a 2-day hike in the Atlas.",
-    "What are the best cultural activities in Fes?",
-    "Show me last-minute offers for Agadir.",
+    "I need a quiet guesthouse in Chefchaouen for 2 nights.",
+    "Show me lodges with a pool near Marrakech.",
+    "I am looking for a budget stay in Imlil.",
   ],
   ar: [
     "أبحث عن رياض رومانسي في مراكش نهاية هذا الأسبوع.",
-    "اقترح علي رحلة مشي لمدة يومين في الأطلس.",
-    "ما أفضل الأنشطة الثقافية في فاس؟",
-    "اعرض لي عروض اللحظة الأخيرة في أكادير.",
+    "أريد دار ضيافة هادئة في شفشاون ليلتين.",
+    "اعرض لي نُزلاً مع مسبح قرب مراكش.",
+    "أبحث عن إقامة اقتصادية في إمليل.",
   ],
 };
 

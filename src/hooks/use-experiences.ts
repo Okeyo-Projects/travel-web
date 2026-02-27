@@ -32,6 +32,8 @@ interface ExperienceWithMeta extends ExperienceListItem {
   }>;
 }
 
+type RoomListItem = NonNullable<ExperienceListItem["rooms"]>[number];
+
 function parseDateOnly(isoDate: string): Date {
   const [year, month, day] = isoDate.split("-").map(Number);
   return new Date(Date.UTC(year, (month || 1) - 1, day || 1));
@@ -318,6 +320,11 @@ async function fetchExperiencesWithMeta(
       region,
       type,
       thumbnail_url,
+      video:media_assets!fk_experiences_video(
+        path,
+        hls_playlist_url,
+        bucket
+      ),
       avg_rating,
       reviews_count,
       host:hosts!experiences_host_id_fkey(
@@ -337,10 +344,12 @@ async function fetchExperiencesWithMeta(
       ),
       rooms:lodging_room_types(
         id,
+        name,
         price_cents,
         currency,
         max_persons,
-        total_rooms
+        total_rooms,
+        photos
       )`;
 
   let query = supabase
@@ -400,14 +409,35 @@ async function fetchExperiencesWithMeta(
       const lodgingData = Array.isArray(exp.lodging)
         ? exp.lodging[0] || null
         : exp.lodging;
-      const rooms = exp.rooms || [];
+      const rooms = Array.isArray(exp.rooms) ? exp.rooms : [];
+      const mappedRooms: RoomListItem[] = rooms
+        .map((room: any) => ({
+          id: room.id,
+          name: room.name ?? null,
+          price_cents: room.price_cents ?? null,
+          currency: room.currency ?? null,
+          max_persons: room.max_persons ?? null,
+          total_rooms: room.total_rooms ?? null,
+          photo_urls: Array.isArray(room.photos)
+            ? room.photos
+                .map((path: string) => resolveStorageUrl(path))
+                .filter((url: string | null): url is string => Boolean(url))
+            : [],
+        }))
+        .sort(
+          (
+            a: { price_cents: number | null },
+            b: { price_cents: number | null },
+          ) =>
+            (a.price_cents ?? Number.MAX_SAFE_INTEGER) -
+            (b.price_cents ?? Number.MAX_SAFE_INTEGER),
+        );
       const minRoomPrice =
-        rooms.length > 0
-          ? rooms.reduce((min: any, room: any) => {
-              if (
-                !min ||
-                (room.price_cents && room.price_cents < min.price_cents)
-              ) {
+        mappedRooms.length > 0
+          ? mappedRooms.reduce<RoomListItem | null>((min, room) => {
+              const roomPrice = room.price_cents ?? Number.MAX_SAFE_INTEGER;
+              const minPrice = min?.price_cents ?? Number.MAX_SAFE_INTEGER;
+              if (!min || roomPrice < minPrice) {
                 return room;
               }
               return min;
@@ -415,6 +445,17 @@ async function fetchExperiencesWithMeta(
           : null;
 
       const tripData = Array.isArray(exp.trip) ? exp.trip[0] || null : exp.trip;
+      const videoData = Array.isArray(exp.video)
+        ? exp.video[0] || null
+        : exp.video;
+      const videoBucket = videoData?.bucket || "media";
+      const videoUrl = videoData?.path
+        ? resolveStorageUrl(videoData.path, videoBucket)
+        : null;
+      const videoHlsUrl = videoData?.hls_playlist_url
+        ? resolveStorageUrl(videoData.hls_playlist_url, videoBucket)
+        : null;
+      const thumbnailUrl = resolveStorageUrl(exp.thumbnail_url);
       const priceCents =
         tripData?.price_cents || minRoomPrice?.price_cents || null;
 
@@ -425,7 +466,10 @@ async function fetchExperiencesWithMeta(
         city: exp.city,
         region: exp.region,
         type: exp.type,
-        thumbnail_url: resolveStorageUrl(exp.thumbnail_url),
+        thumbnail_url: thumbnailUrl,
+        video_url: videoUrl,
+        video_hls_url: videoHlsUrl,
+        rooms: mappedRooms,
         avg_rating: exp.avg_rating,
         reviews_count: exp.reviews_count,
         host: exp.host

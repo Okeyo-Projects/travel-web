@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useImageViewer } from "@/hooks/use-image-viewer";
 import { getImageUrl } from "@/utils/functions";
 
 interface RoomInfo {
@@ -12,6 +13,7 @@ interface RoomInfo {
   price_mad: number;
   capacity_beds?: number;
   max_persons?: number;
+  photos?: string[];
 }
 
 interface ExperienceCardProps {
@@ -33,6 +35,7 @@ interface ExperienceCardProps {
     video_url?: string;
     host_name?: string;
     rooms?: RoomInfo[];
+    gallery?: string[];
   };
   onSelect?: () => void;
   onBook?: () => void;
@@ -51,6 +54,7 @@ export function ExperienceCard({
 }: ExperienceCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { openImageViewer, Viewer } = useImageViewer();
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -62,7 +66,7 @@ export function ExperienceCard({
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative aspect-video w-full group bg-muted">
+      <div className={`mx-4 rounded-sm overflow-hidden relative w-full md:w-[300px] group bg-muted ${experience.video_url ? "aspect-[9/16]" : "aspect-video"}`}>
         {isPlaying && experience.video_url ? (
           <video
             ref={videoRef}
@@ -113,6 +117,26 @@ export function ExperienceCard({
           </>
         )}
       </div>
+
+      {/* Horizontal Gallery */}
+      {experience.gallery && experience.gallery.length > 0 && (
+        <div className="flex gap-2 p-4 pb-0 overflow-x-auto snap-x scrollbar-hide">
+          {experience.gallery.map((imgUrl, i) => (
+            <div
+              key={i}
+              className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 snap-start bg-muted cursor-pointer"
+              onClick={() => openImageViewer(experience.gallery!, i)}
+            >
+              <Image
+                src={imgUrl}
+                alt={`${experience.title} image ${i + 1}`}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <CardContent className="p-4 space-y-3">
         <div>
@@ -171,16 +195,25 @@ export function ExperienceCard({
                   key={`${room.name}-${room.type ?? "room"}`}
                   className="flex items-center justify-between gap-2 text-xs"
                 >
-                  <span className="flex items-center gap-1 text-muted-foreground min-w-0">
-                    <BedDouble className="w-3 h-3" />
-                    <span className="truncate">{room.name}</span>
+                  <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                    {room.photos && room.photos.length > 0 ? (
+                      <div
+                        className="relative w-8 h-8 flex-shrink-0 rounded overflow-hidden bg-muted cursor-pointer"
+                        onClick={() => openImageViewer(room.photos!, 0)}
+                      >
+                        <Image src={room.photos[0]} alt={room.name} fill className="object-cover" />
+                      </div>
+                    ) : (
+                      <BedDouble className="w-4 h-4 flex-shrink-0" />
+                    )}
+                    <span className="truncate flex-1">{room.name}</span>
                     {room.max_persons && (
-                      <span className="text-[10px]">
+                      <span className="text-[10px] flex-shrink-0">
                         ({room.max_persons} pers.)
                       </span>
                     )}
-                  </span>
-                  <span className="font-medium">{room.price_mad} MAD</span>
+                  </div>
+                  <span className="font-medium flex-shrink-0">{room.price_mad} MAD</span>
                 </div>
               ))}
             </div>
@@ -217,6 +250,7 @@ export function ExperienceCard({
           </div>
         </div>
       </CardContent>
+      {Viewer}
     </Card>
   );
 }

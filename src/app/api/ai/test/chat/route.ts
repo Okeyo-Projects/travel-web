@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     // Build system prompt with today's date
     const todayDate = new Date().toISOString().split("T")[0];
     let systemPrompt = buildSystemPrompt(todayDate);
+    systemPrompt += `\n\n## CRITICAL LODGING-ONLY MODE\nYou are in strict lodging-only mode.\n- Recommend and discuss ONLY lodging experiences.\n- Never suggest trips, treks, tours, workshops, or activities.\n- Always call searchExperiences with type="lodging".\n- If user asks for a trip/activity, redirect to a lodging suggestion with the same vibe/location.`;
 
     // Load catalog context
     const catalogContext = await loadCatalogContext();

@@ -431,8 +431,14 @@ export async function POST(req: Request) {
         ? isTruthyEnvVar(configuredGreetingUnsureOption)
         : true;
     const greetingOptions = includeUnsureGreetingOption
-      ? ["Montagne", "Plage", "Désert", "Je ne sais pas"]
-      : ["Montagne", "Plage", "Désert"];
+      ? [
+          "Riad romantique",
+          "Calme & nature",
+          "Piscine / Spa",
+          "Petit budget",
+          "Je ne sais pas",
+        ]
+      : ["Riad romantique", "Calme & nature", "Piscine / Spa", "Petit budget"];
     aiDebug("chat.route", "greeting_quick_replies_config", {
       requestId,
       includeUnsureGreetingOption,
@@ -441,7 +447,7 @@ export async function POST(req: Request) {
 
     const frenchGreetingTemplate = [
       "Salut ! Bienvenue sur OKEYO Travel.",
-      "Je suis là pour t'aider à t'évader autrement au Maroc : des auberges pleines de charme, des expériences locales, et des endroits calmes loin de la foule.",
+      "Je suis là pour t'aider à trouver le lodge parfait au Maroc : des riads de charme, des maisons d'hôtes cosy et des adresses calmes loin de la foule.",
       "Pour le moment, on te fait découvrir : Chefchaouen, Imlil, Ouirgane, Lalla Takerkoust, Agafay et Essaouira.",
       "Et si tu ne sais pas encore où aller, aucun souci.",
       "Dis-moi simplement ce qui t'attire le plus.",
@@ -449,13 +455,14 @@ export async function POST(req: Request) {
     ].join("\\n");
 
     // Runtime safety overrides.
+    systemPrompt += `\n\n## CRITICAL LODGING-ONLY MODE\nYou are in strict lodging-only mode.\n- Recommend and discuss ONLY lodging experiences (riads, lodges, maisons d'hôtes, hôtels).\n- Never suggest trips, treks, tours, workshops, or activities.\n- Always call searchExperiences with type="lodging".\n- If user asks for a trip/activity, politely redirect to a lodging suggestion matching the same vibe/location.\n- Any quick-reply options must stay lodging-focused (style, budget, destination, room preference).`;
     systemPrompt += `\n\n## CRITICAL GREETING QUICK REPLIES RULE\nWhen user sends a greeting (hello/bonjour/salut/marhba/hi/hey), do not call searchExperiences.\nCall offerQuickReplies with exactly these options: ${greetingOptions
       .map((option) => `"${option}"`)
       .join(
         ", ",
       )}.\nIf greeting is in French, use exactly this welcome text before the quick replies:\n${frenchGreetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
-    systemPrompt += `\n\n## CRITICAL DESTINATION CLARIFICATION RULE\nWhen user asks for a type or vibe without city/region (examples: "je veux une auberge", "je veux un endroit calme"), do NOT call searchExperiences yet unless the user explicitly asks for cross-region suggestions.\nFirst call offerQuickReplies to clarify destination or ambiance with concise options such as: "Marrakech", "Chefchaouen", "Atlas (Imlil/Ouirgane)", "Essaouira (Plage)", "Agafay (Désert)", "Je ne sais pas".\nAfter user chooses, call searchExperiences with the chosen context.`;
-    systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room, departure, or session, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room/session/departure details without attempting the relevant tool call first.`;
+    systemPrompt += `\n\n## CRITICAL DESTINATION CLARIFICATION RULE\nWhen user asks for a type or vibe without city/region (examples: "je veux une auberge", "je veux un endroit calme"), do NOT call searchExperiences yet unless the user explicitly asks for cross-region suggestions.\nFirst call offerQuickReplies to clarify destination or ambiance with concise options such as: "Marrakech", "Chefchaouen", "Atlas (Imlil/Ouirgane)", "Essaouira", "Agafay", "Je ne sais pas".\nAfter user chooses, call searchExperiences with type="lodging" and the chosen context.`;
+    systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room option, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room details without attempting the relevant tool call first.`;
     systemPrompt += `\n\n## CRITICAL EXPERIENCE DETAIL RULE\nWhen the user asks details about a specific experience by name, resolve the exact experience_id from recent tool outputs.\nIf no reliable ID is available, call searchExperiences(query=user wording, limit=4) first, then call getExperienceDetails with the returned ID.\nNever claim "experience not found" without trying that fallback path.`;
 
     // Add user location context if available

@@ -10,10 +10,9 @@ const getLinkedExperiencesSchema = z.object({
 });
 
 export const getLinkedExperiences = tool({
-  description: `Get experiences linked to a specific experience.
+  description: `Get lodging experiences linked to a specific experience.
 Linked experiences are related offerings that complement the main experience.
-For example: a lodge may be linked to nearby activities/treks, an activity may be linked to lodging.
-Use this when user shows interest in an experience to suggest complementary options.`,
+Use this when user shows interest in an experience to suggest complementary lodging options.`,
   inputSchema: getLinkedExperiencesSchema,
   execute: async ({ experience_id }) => {
     try {
@@ -51,7 +50,10 @@ Use this when user shows interest in an experience to suggest complementary opti
 
       // Filter out unpublished experiences and format
       const linkedExperiences = (links || [])
-        .filter((link: any) => link.target?.published)
+        .filter(
+          (link: any) =>
+            link.target?.published && link.target?.type === "lodging",
+        )
         .map((link: any) => ({
           id: link.target.id,
           title: link.target.title,
