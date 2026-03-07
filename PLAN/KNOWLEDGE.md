@@ -23,9 +23,9 @@ A travel experiences platform where users can discover, book, and interact with 
 | Backend / DB | Supabase (Postgres, Auth, Storage, Edge Functions, RLS) |
 | AI | Vercel AI SDK (`ai` package) |
 | Payments | Stripe (planned) |
-| Types | Shared `packages/types/` monorepo package |
+| Types | `web/src/types/` (domain types + auto-generated Supabase types) |
 | Admin Panel | TanStack Router + shadcn/ui (`apps/admin/`) |
-| Mobile | Expo + React Native + NativeWind (`apps/mobile/`) |
+| Mobile | Expo + React Native + NativeWind (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) |
 
 ## Monorepo Structure
 
@@ -54,7 +54,7 @@ A travel experiences platform where users can discover, book, and interact with 
         embeddings/          # Embedding utilities
         supabase/            # Supabase client utilities
         routing/             # URL slug helpers
-      types/                 # Web-specific types (booking, payment, experience, etc.)
+      types/                 # All types (supabase.ts, booking, experience, payment, etc.)
       providers/             # React context providers (query-provider)
     PLAN/                    # Task management for AI agent
       AGENT.md               # Agent workflow instructions (this file's companion)
@@ -73,26 +73,16 @@ A travel experiences platform where users can discover, book, and interact with 
         features/            # Feature modules
         routes/              # TanStack Router routes
         components/          # Admin components
-  packages/
-    types/src/               # Shared TypeScript types
-      supabase.ts            # Auto-generated Supabase types
-      booking.ts             # Booking types
-      experience.ts          # Experience types
-      profile.ts             # Profile types
-      payment.ts             # Payment types
-      media.ts               # Media types
-      social.ts              # Social types
-      common.ts              # Common/shared types
-    ui/                      # Shared UI package
-    utils/                   # Shared utilities
-  infra/
+  web/
     supabase/
+      config.toml            # Supabase project config
       migrations/            # ALL Supabase migrations go here
+      functions/             # Supabase Edge Functions
 ```
 
 ## Database Schema (Supabase/Postgres)
 
-Key tables (see `infra/supabase/migrations/` and `packages/types/src/supabase.ts` for full schema):
+Key tables (see `web/supabase/migrations/` and `web/src/types/supabase.ts` for full schema):
 
 - **profiles** - User profiles (linked to Supabase Auth)
 - **experiences** - Hosted experiences/activities
@@ -115,8 +105,8 @@ Key tables (see `infra/supabase/migrations/` and `packages/types/src/supabase.ts
 
 ## Design Reference
 
-The mobile app (`apps/mobile/`) is the **primary source of inspiration** for UI/UX design. When implementing web features:
-1. Check the corresponding mobile screen in `apps/mobile/app/` first
+The mobile app (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) is the **primary source of inspiration** for UI/UX design. When implementing web features:
+1. Check the corresponding mobile screen in `/Users/naimabdelkerim/Code/travel/apps/mobile/app/` first
 2. Adapt the layout and UX patterns for web (responsive, not mobile-only)
 3. Use shadcn/ui components to achieve similar visual results
 4. Keep the same user flows and information hierarchy
@@ -124,9 +114,9 @@ The mobile app (`apps/mobile/`) is the **primary source of inspiration** for UI/
 ## Data Flow - Understanding Before Building
 
 Before working on any feature, you MUST:
-1. Read the relevant Supabase migration files in `infra/supabase/migrations/` to understand the table schema
-2. Check `packages/types/src/supabase.ts` for the auto-generated types
-3. Check `packages/types/src/` for the domain-specific type files
+1. Read the relevant Supabase migration files in `web/supabase/migrations/` to understand the table schema
+2. Check `web/src/types/supabase.ts` for the auto-generated Supabase types
+3. Check `web/src/types/` for the domain-specific type files
 4. Understand RLS policies that apply (see `*_rls_policies.sql` migrations)
 5. Check existing hooks in `web/src/hooks/` for data fetching patterns already in place
 
@@ -137,9 +127,9 @@ Before working on any feature, you MUST:
 - **State**: TanStack Query for server state, React Context/useState for UI state
 - **Data fetching**: Supabase client in hooks or server components. Use TanStack Query for client-side caching.
 - **AI**: Use Vercel AI SDK (`useChat`, `streamText`, tool calls) for AI features
-- **Types**: Shared types in `packages/types/src/`, web-specific types in `web/src/types/`
+- **Types**: All types live in `web/src/types/` (including `supabase.ts` auto-generated types)
 - **Imports**: React > Third-party > Internal libs > Hooks > Components > Types
-- **Migrations**: ALL Supabase migrations go in `infra/supabase/migrations/`, never elsewhere
+- **Migrations**: ALL Supabase migrations go in `web/supabase/migrations/`, never elsewhere
 
 ## Commands Reference
 
@@ -153,10 +143,10 @@ pnpm tsc --noEmit              # Type check
 # From /travel/ (git root)
 git checkout -b task/007-xxx   # New task branch
 
-# Supabase
-supabase migration new <name>  # Create migration (from infra/supabase/)
+# Supabase (from web/supabase/)
+supabase migration new <name>  # Create migration
 supabase db push               # Apply migrations
-supabase gen types typescript --local > packages/types/src/supabase.ts  # Regenerate types
+supabase gen types typescript --local > ../src/types/supabase.ts  # Regenerate types
 ```
 
 ## Before Starting Any Task
@@ -164,8 +154,8 @@ supabase gen types typescript --local > packages/types/src/supabase.ts  # Regene
 1. Read this file (KNOWLEDGE.md)
 2. Read the specific task file in `web/PLAN/tasks/`
 3. Read the relevant Supabase schema/migrations to understand the data model
-4. Check `packages/types/src/supabase.ts` for current generated types
-5. Check the mobile app (`apps/mobile/`) for design reference
+4. Check `web/src/types/supabase.ts` for current generated types
+5. Check the mobile app (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) for design reference
 6. Check existing hooks and components in `web/src/` for patterns to follow
 7. Build backend (migrations, types) first, then frontend
 8. Always create types first, then hook, then component

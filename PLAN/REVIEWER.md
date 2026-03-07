@@ -37,18 +37,18 @@ You are an automated code review agent. Your job is to review tasks with `status
 - Import order follows convention (React > Third-party > Internal libs > Hooks > Components > Types)
 
 **C. Supabase Backend (if applicable)**
-- Migrations are in `infra/supabase/migrations/` -- not anywhere else
+- Migrations are in `web/supabase/migrations/` -- not anywhere else
 - RLS policies are properly defined for new tables
 - Indexes exist for frequently queried columns
-- Types in `packages/types/src/` are updated to match schema changes
+- Types in `web/src/types/` are updated to match schema changes
 - Data fetching uses Supabase client correctly (proper error handling, auth context)
 
 **D. Architecture**
 - No data duplication between server state (TanStack Query) and local state (useState/Context)
 - Correct state management choice (TanStack Query for server data, Context/useState for UI)
 - AI features use Vercel AI SDK patterns (`useChat`, tool definitions, `streamText`)
-- Types defined in `packages/types/src/` for shared types, `web/src/types/` for web-only
-- Design follows mobile app patterns from `apps/mobile/` where applicable
+- Types defined in `web/src/types/` for shared types, `web/src/types/` for web-only
+- Design follows mobile app patterns from `/Users/naimabdelkerim/Code/travel/apps/mobile/` where applicable
 
 **E. Safety**
 - No security vulnerabilities (injection, XSS, etc.)
@@ -114,4 +114,4 @@ You are an automated code review agent. Your job is to review tasks with `status
 - **Never approve without checking build** -- `tsc --noEmit` and `lint` must pass
 - **Critical/Major = reject, Minor-only = approve with notes**
 - **Git root** is at `/travel/` (the monorepo root)
-- **Verify migrations location** -- any new migration MUST be in `infra/supabase/migrations/`
+- **Verify migrations location** -- any new migration MUST be in `web/supabase/migrations/`

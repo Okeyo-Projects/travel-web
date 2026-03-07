@@ -27,8 +27,8 @@ You are an automated coding agent running on a schedule. Follow this workflow st
 - Set `status: in_progress` and `updated: <today>`
 - Create a new git branch: `task/<id>-<short-slug>` (e.g., `task/001-add-auth`)
 - Read the full task description and acceptance criteria
-- **Understand the data model first:** Read relevant Supabase migrations in `infra/supabase/migrations/` and types in `packages/types/src/` to understand the schema before writing code
-- **Check the mobile app** (`apps/mobile/`) for design reference on UI tasks
+- **Understand the data model first:** Read relevant Supabase migrations in `web/supabase/migrations/` and types in `web/src/types/` to understand the schema before writing code
+- **Check the mobile app** (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) for design reference on UI tasks
 - **Break the work into small steps** and write them as a checklist under `## Checklist`
 - Each step should be small enough to complete in ~5 minutes
 - Commit the checklist to the task file before starting implementation
@@ -38,12 +38,12 @@ You are an automated coding agent running on a schedule. Follow this workflow st
 - Do NOT add extra features or refactor unrelated code
 
 **Architecture rules:**
-- **Database migrations** go in `infra/supabase/migrations/` -- never create migration files anywhere else
-- **Shared types** go in `packages/types/src/` -- web-specific types go in `web/src/types/`
+- **Database migrations** go in `web/supabase/migrations/` -- never create migration files anywhere else
+- **Shared types** go in `web/src/types/` -- web-specific types go in `web/src/types/`
 - **UI components** use shadcn/ui + Tailwind CSS -- no inline styles, no CSS modules
 - **Data fetching** uses Supabase client + TanStack Query for caching
 - **AI features** use Vercel AI SDK (`useChat`, `streamText`, tool definitions)
-- **Design reference:** Check `apps/mobile/` for the corresponding screen to match UX patterns
+- **Design reference:** Check `/Users/naimabdelkerim/Code/travel/apps/mobile/` for the corresponding screen to match UX patterns
 
 **After completing each checklist step:**
   - Check it off (`- [x]`) in the task file
@@ -87,8 +87,8 @@ You are an automated coding agent running on a schedule. Follow this workflow st
 - **Never push to main directly** -- always use a PR
 - **Append, don't overwrite** agent logs -- each run gets a new dated entry
 - **Git root** is at `/travel/` (the monorepo root), not a subdirectory
-- **Supabase migrations** always go in `infra/supabase/migrations/` -- never in `web/` or elsewhere
-- **Check data schema** before implementing -- read relevant migrations and `packages/types/src/supabase.ts` to understand tables, columns, RLS policies, and relationships
-- **Mobile app is design reference** -- check `apps/mobile/app/` for the corresponding screen before building any UI
+- **Supabase migrations** always go in `web/supabase/migrations/` -- never in `web/` or elsewhere
+- **Check data schema** before implementing -- read relevant migrations and `web/src/types/supabase.ts` to understand tables, columns, RLS policies, and relationships
+- **Mobile app is design reference** -- check `/Users/naimabdelkerim/Code/travel/apps/mobile/app/` for the corresponding screen before building any UI
 - **Never loop on blocked steps** -- if a checklist step requires something unavailable in this environment (network, live deployment, external service, credentials), mark it as skipped with a note explaining what's needed, set `progress: 100`, and submit the task for review. Do NOT retry the same blocked step across multiple runs.
 - **Max 2 retries on environment-blocked steps** -- if you've logged the same blocked step twice, skip it on the third run. The step will be tested manually.

@@ -24,9 +24,9 @@ progress: 0               # percentage 0-100, updated by agent
 <!-- Relevant files, docs, links, or background info -->
 <!-- IMPORTANT: List relevant Supabase tables/migrations and mobile app screens -->
 <!-- Example:
-  - Schema: infra/supabase/migrations/20251004002801_create_experience_tables.sql
-  - Types: packages/types/src/experience.ts
-  - Mobile reference: apps/mobile/app/(user)/explore/index.tsx
+  - Schema: web/supabase/migrations/20251004002801_create_experience_tables.sql
+  - Types: web/src/types/experience.ts
+  - Mobile reference: /Users/naimabdelkerim/Code/travel/apps/mobile/app/(user)/explore/index.tsx
 -->
 
 ## Checklist
