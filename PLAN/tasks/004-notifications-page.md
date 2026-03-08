@@ -1,12 +1,12 @@
 ---
 id: "004"
 title: "Notifications Page with Unread Badge and Navigation"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/004-notifications-page
 pr: null
 attempts: 0
 depends_on: []
