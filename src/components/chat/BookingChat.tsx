@@ -20,6 +20,8 @@ import {
   useCreateConversation,
   useSaveMessage,
 } from "@/hooks/use-conversations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { ChatInput } from "./ChatInput";
 import { ChatWelcome } from "./ChatWelcome";
@@ -172,6 +174,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const inFlightTextRef = useRef<string | null>(null);
   const persistedMessageIds = useRef(new Set<string>());
   const persistingMessageIds = useRef(new Set<string>());
+  const hasTrackedBookingCreatedRef = useRef(false);
   const previousPathname = useRef(pathname);
   const activeConversationId = initialConversationId || conversationId;
   const isConversationLocked =
@@ -429,6 +432,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
         });
 
         currentConvId = result.conversation.id;
+        captureEvent(ANALYTICS_EVENT.CHAT_STARTED, {
+          conversation_id: currentConvId,
+        });
         setConversationId(currentConvId);
 
         // Update URL without navigation (to preserve component state)
@@ -440,6 +446,10 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       }
 
       setInput("");
+      captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
+        message_length: normalizedText.length,
+        has_tool_call: false,
+      });
       await sendMessage(
         { text: normalizedText },
         {
@@ -491,6 +501,21 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       },
     );
   };
+
+  useEffect(() => {
+    if (!lockedBookingId || hasTrackedBookingCreatedRef.current) return;
+
+    captureEvent(ANALYTICS_EVENT.CHAT_BOOKING_CREATED, {
+      booking_id: lockedBookingId,
+      conversation_id: activeConversationId,
+    });
+    hasTrackedBookingCreatedRef.current = true;
+  }, [activeConversationId, lockedBookingId]);
+
+  useEffect(() => {
+    if (lockedBookingId) return;
+    hasTrackedBookingCreatedRef.current = false;
+  }, [lockedBookingId]);
 
   if (!mounted || loadingConversation) {
     return (

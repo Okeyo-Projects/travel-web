@@ -22,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { cn } from "@/lib/utils";
 
 type MessageState = {
@@ -83,11 +85,16 @@ export function AuthModal() {
     });
 
     if (error) {
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: "email",
+        error_message: error.message,
+      });
       setMessage({ type: "error", text: error.message });
       setIsSubmitting(false);
       return;
     }
 
+    captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_SUCCESS, { method: "email" });
     setIsSubmitting(false);
   };
 
@@ -113,6 +120,10 @@ export function AuthModal() {
     });
 
     if (error) {
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: "email_signup",
+        error_message: error.message,
+      });
       setMessage({ type: "error", text: error.message });
       setIsSubmitting(false);
       return;
@@ -123,10 +134,18 @@ export function AuthModal() {
         type: "success",
         text: "Check your email to confirm your account.",
       });
+      captureEvent(ANALYTICS_EVENT.AUTH_SIGNUP_SUCCESS, {
+        method: "email",
+        email_confirmation_required: true,
+      });
       setIsSubmitting(false);
       return;
     }
 
+    captureEvent(ANALYTICS_EVENT.AUTH_SIGNUP_SUCCESS, {
+      method: "email",
+      email_confirmation_required: false,
+    });
     setIsSubmitting(false);
   };
 
@@ -142,6 +161,10 @@ export function AuthModal() {
     });
 
     if (error) {
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: provider,
+        error_message: error.message,
+      });
       const normalizedError = error.message.toLowerCase();
       if (
         normalizedError.includes("cancel") ||
@@ -155,7 +178,10 @@ export function AuthModal() {
         setMessage({ type: "error", text: error.message });
       }
       setIsSubmitting(false);
+      return;
     }
+
+    captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_SUCCESS, { method: provider });
   };
 
   const headerCopy = useMemo(() => {

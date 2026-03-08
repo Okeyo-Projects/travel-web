@@ -6,6 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
@@ -62,6 +64,10 @@ export function CompactExperienceCard({
   };
 
   const handleCardClick = () => {
+    captureEvent(ANALYTICS_EVENT.EXPERIENCE_CARD_CLICKED, {
+      experience_id: experience.id,
+      source: "collection",
+    });
     if (onOpenDetails) {
       onOpenDetails();
     }
@@ -207,7 +213,15 @@ export function CompactExperienceCard({
           </div>
         </div>
       ) : (
-        <Link href={href}>
+        <Link
+          href={href}
+          onClick={() =>
+            captureEvent(ANALYTICS_EVENT.EXPERIENCE_CARD_CLICKED, {
+              experience_id: experience.id,
+              source: "collection",
+            })
+          }
+        >
           <div
             className={cn(
               "group relative flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer",

@@ -33,8 +33,10 @@ export const metadata: Metadata = {
 };
 
 import type { ReactNode } from "react";
+import { PostHogPageView } from "@/components/analytics/posthog-pageview";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthProvider } from "@/providers/auth-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
 import QueryProvider from "@/providers/query-provider";
 
 export default async function RootLayout({
@@ -60,13 +62,16 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col bg-white`}
       >
-        <QueryProvider>
-          <AuthProvider>
-            <main className="flex-1">{children}</main>
-            <FloatingChatButton />
-            <AuthModal />
-          </AuthProvider>
-        </QueryProvider>
+        <PostHogProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <PostHogPageView />
+              <main className="flex-1">{children}</main>
+              <FloatingChatButton />
+              <AuthModal />
+            </AuthProvider>
+          </QueryProvider>
+        </PostHogProvider>
         <noscript>
           {/* biome-ignore lint/performance/noImgElement: Noscript fallback pixel must be a plain img tag. */}
           <img

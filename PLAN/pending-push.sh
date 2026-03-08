@@ -10,4 +10,8 @@ gh pr merge --merge --auto
 # Task 006: Add Apple Sign-In to Auth Modal
 git push -u origin task/006-social-login
 gh pr create --base main --head task/006-social-login --title "task(006): Add Apple Sign-In to Auth Modal" --body "Automated migration task. See PLAN/tasks/006-social-login.md for details."
+
+# Task 016: Implement PostHog Analytics with Full Event Tracking
+git push -u origin task/016-posthog-analytics
+gh pr create --base main --head task/016-posthog-analytics --title "task(016): Implement PostHog Analytics with Full Event Tracking" --body "Automated migration task. See PLAN/tasks/016-posthog-analytics.md for details."
 gh pr merge --merge --auto

@@ -74,7 +74,7 @@ export default function OffersPage() {
                   -20%
                 </Badge>
               </div>
-              <ExperienceCard experience={experience} />
+              <ExperienceCard experience={experience} source="offers" />
             </div>
           ))}
         </div>

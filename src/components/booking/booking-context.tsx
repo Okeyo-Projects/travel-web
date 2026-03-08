@@ -6,6 +6,8 @@ import {
   type BookingQuoteResult,
   useGetBookingQuote,
 } from "@/hooks/use-booking-mutations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import type { ExperienceDetail } from "@/types/experience-detail";
 
 /* -------------------------------------------------------------------------------------------------
@@ -106,6 +108,9 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     (exp: ExperienceDetail) => {
       setExperience(exp);
       setIsOpen(true);
+      captureEvent(ANALYTICS_EVENT.BOOKING_STARTED, {
+        experience_id: exp.id,
+      });
 
       // Reset form
       setStartDate(undefined);
@@ -218,6 +223,9 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
   const nextStep = React.useCallback(() => {
     const currentIndex = stepsOrder.indexOf(currentStep);
     if (currentIndex < stepsOrder.length - 1) {
+      captureEvent(ANALYTICS_EVENT.BOOKING_STEP_COMPLETED, {
+        step: currentStep,
+      });
       setCurrentStep(stepsOrder[currentIndex + 1]);
     }
   }, [currentStep, stepsOrder]);

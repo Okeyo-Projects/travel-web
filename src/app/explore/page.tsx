@@ -37,6 +37,8 @@ import { useCategories } from "@/hooks/use-categories";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useInfiniteExperiences } from "@/hooks/use-experiences";
 import { useAllCategoryGroups } from "@/hooks/use-experiences-by-category";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildCategorySlug } from "@/lib/routing/slugs";
 import type { ExperienceSort, ExperienceType } from "@/types/experience";
@@ -131,6 +133,33 @@ export default function ExplorePage() {
       ),
     );
   }, [categoryQuery, categories, pathname, router]);
+
+  useEffect(() => {
+    if (!showSearchResults) return;
+    if (isLoadingSearch || isFetchingNextPage) return;
+
+    captureEvent(ANALYTICS_EVENT.EXPERIENCE_SEARCH, {
+      query: debouncedSearch || locationQuery || "",
+      filters: JSON.stringify({
+        type: activeType,
+        dateFrom,
+        dateTo,
+        guests: guestsCount,
+      }),
+      results_count: searchResults.length,
+    });
+  }, [
+    activeType,
+    dateFrom,
+    dateTo,
+    debouncedSearch,
+    guestsCount,
+    isFetchingNextPage,
+    isLoadingSearch,
+    locationQuery,
+    searchResults.length,
+    showSearchResults,
+  ]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -367,6 +396,7 @@ export default function ExplorePage() {
                     <ExperienceCard
                       key={experience.id}
                       experience={experience}
+                      source="search"
                     />
                   ))}
                 </div>

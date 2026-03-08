@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
 import { ReviewList } from "@/components/experience/ReviewList";
@@ -32,6 +32,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBooking } from "@/hooks/use-booking";
 import { useExperienceDetail } from "@/hooks/use-experience-detail";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 
 function formatMoney(cents: number | null | undefined, currency = "MAD") {
   if (typeof cents !== "number") {
@@ -179,6 +181,14 @@ export default function ExperiencePage() {
   const hasRoomsTab = Boolean(lodging?.rooms?.length);
   const hasItineraryTab = Boolean(trip?.itinerary?.length || trip);
 
+  useEffect(() => {
+    captureEvent(ANALYTICS_EVENT.EXPERIENCE_VIEWED, {
+      experience_id: experience.id,
+      type: experience.type,
+      category: experience.category,
+    });
+  }, [experience.category, experience.id, experience.type]);
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="bg-[#19181b] px-4 py-4 shadow-sm sm:px-8">
@@ -198,6 +208,10 @@ export default function ExperiencePage() {
               size="icon"
               onClick={async () => {
                 await navigator.clipboard.writeText(window.location.href);
+                captureEvent(ANALYTICS_EVENT.EXPERIENCE_SHARED, {
+                  experience_id: experience.id,
+                  method: "clipboard",
+                });
                 toast.success("Lien copié");
               }}
             >
@@ -208,6 +222,12 @@ export default function ExperiencePage() {
               size="icon"
               onClick={() => {
                 setIsSaved((previous) => !previous);
+                captureEvent(
+                  isSaved
+                    ? ANALYTICS_EVENT.EXPERIENCE_UNLIKED
+                    : ANALYTICS_EVENT.EXPERIENCE_LIKED,
+                  { experience_id: experience.id, source: "detail_page" },
+                );
                 toast.success(isSaved ? "Retiré des favoris" : "Ajouté aux favoris");
               }}
             >
@@ -229,6 +249,10 @@ export default function ExperiencePage() {
               className="gap-2"
               onClick={async () => {
                 await navigator.clipboard.writeText(window.location.href);
+                captureEvent(ANALYTICS_EVENT.EXPERIENCE_SHARED, {
+                  experience_id: experience.id,
+                  method: "clipboard",
+                });
                 toast.success("Lien copié");
               }}
             >
@@ -240,6 +264,12 @@ export default function ExperiencePage() {
               className="gap-2"
               onClick={() => {
                 setIsSaved((previous) => !previous);
+                captureEvent(
+                  isSaved
+                    ? ANALYTICS_EVENT.EXPERIENCE_UNLIKED
+                    : ANALYTICS_EVENT.EXPERIENCE_LIKED,
+                  { experience_id: experience.id, source: "detail_page" },
+                );
                 toast.success(isSaved ? "Retiré des favoris" : "Ajouté aux favoris");
               }}
             >

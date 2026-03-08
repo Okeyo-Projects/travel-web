@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useRequiredAuth } from "@/hooks/use-required-auth";
 import { useExperienceSocial } from "@/hooks/use-social";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
@@ -151,6 +153,15 @@ export function ExperienceDetailModal({
   }, [open, currentMedia?.src]);
 
   const social = useExperienceSocial(currentExperience?.id ?? null);
+
+  useEffect(() => {
+    if (!open || !currentExperience) return;
+
+    captureEvent(ANALYTICS_EVENT.EXPERIENCE_VIEWED, {
+      experience_id: currentExperience.id,
+      type: currentExperience.type,
+    });
+  }, [currentExperience, open]);
 
   if (!open || !currentExperience) {
     return null;

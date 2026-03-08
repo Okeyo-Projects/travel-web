@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "./use-auth";
 
@@ -132,6 +134,9 @@ export function useExperienceSocial(experienceId: string | null) {
           .eq("target_id", experienceId)
           .eq("user_id", user.id);
         if (error) throw error;
+        captureEvent(ANALYTICS_EVENT.EXPERIENCE_UNLIKED, {
+          experience_id: experienceId,
+        });
       } else {
         const { error } = await supabase.from("social_likes").insert({
           user_id: user.id,
@@ -139,6 +144,9 @@ export function useExperienceSocial(experienceId: string | null) {
           target_id: experienceId,
         });
         if (error) throw error;
+        captureEvent(ANALYTICS_EVENT.EXPERIENCE_LIKED, {
+          experience_id: experienceId,
+        });
       }
     },
     onSuccess: invalidateSocial,
@@ -186,6 +194,10 @@ export function useExperienceSocial(experienceId: string | null) {
         text: body,
       });
       if (error) throw error;
+      captureEvent(ANALYTICS_EVENT.COMMENT_ADDED, {
+        experience_id: experienceId,
+        comment_length: body.length,
+      });
     },
     onSuccess: invalidateSocial,
   });
@@ -200,6 +212,10 @@ export function useExperienceSocial(experienceId: string | null) {
         platform,
       });
       if (error) throw error;
+      captureEvent(ANALYTICS_EVENT.EXPERIENCE_SHARED, {
+        experience_id: experienceId,
+        method: platform,
+      });
     },
     onSuccess: invalidateSocial,
   });

@@ -3,10 +3,13 @@
 import { ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { ExperienceCard } from "@/components/experience-card";
 import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/use-categories";
 import { useExperiencesByCategory } from "@/hooks/use-experiences-by-category";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { categoryMatchesSlug } from "@/lib/routing/slugs";
 
@@ -35,6 +38,14 @@ export default function ExploreCategoryPage() {
   const backToExploreHref = localizeHref("/explore", pathname);
   const isLoading =
     isLoadingCategories || (Boolean(category) && isLoadingExperiences);
+
+  useEffect(() => {
+    if (!category) return;
+    captureEvent(ANALYTICS_EVENT.CATEGORY_VIEWED, {
+      category_slug: routeSlug,
+      category_id: category.id,
+    });
+  }, [category, routeSlug]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,7 +94,7 @@ export default function ExploreCategoryPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {experiences.map((experience) => (
-                  <ExperienceCard key={experience.id} experience={experience} />
+                  <ExperienceCard key={experience.id} experience={experience} source="category" />
                 ))}
               </div>
             )}

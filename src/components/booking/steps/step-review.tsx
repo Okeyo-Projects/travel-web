@@ -18,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useCreateBooking } from "@/hooks/use-booking-mutations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { cn } from "@/lib/utils";
 
 const NOTE_TEMPLATES = [
@@ -108,6 +110,12 @@ export function StepReview() {
         },
       });
 
+      captureEvent(ANALYTICS_EVENT.BOOKING_SUBMITTED, {
+        booking_id: booking?.id ?? null,
+        experience_id: experience.id,
+        total_price: quote.total_cents,
+        guest_count: adults + children + infants,
+      });
       toast.success("Booking request sent!");
       router.push(booking?.id ? `/bookings/${booking.id}` : "/bookings");
     } catch (error) {

@@ -14,6 +14,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
@@ -23,9 +25,14 @@ import { getImageUrl } from "@/utils/functions";
 interface ExperienceCardProps {
   experience: ExperienceListItem;
   className?: string;
+  source?: string;
 }
 
-export function ExperienceCard({ experience, className }: ExperienceCardProps) {
+export function ExperienceCard({
+  experience,
+  className,
+  source = "explore",
+}: ExperienceCardProps) {
   const pathname = usePathname();
   const price = experience.trip?.price_cents
     ? new Intl.NumberFormat("en-US", {
@@ -68,7 +75,15 @@ export function ExperienceCard({ experience, className }: ExperienceCardProps) {
   );
 
   return (
-    <Link href={href}>
+    <Link
+      href={href}
+      onClick={() =>
+        captureEvent(ANALYTICS_EVENT.EXPERIENCE_CARD_CLICKED, {
+          experience_id: experience.id,
+          source,
+        })
+      }
+    >
       <Card
         className={cn(
           "overflow-hidden group h-full hover:shadow-lg transition-shadow duration-300",
