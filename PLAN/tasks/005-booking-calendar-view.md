@@ -1,12 +1,12 @@
 ---
 id: "005"
 title: "Calendar View for User Bookings"
-status: todo
+status: in_progress
 priority: medium
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/005-booking-calendar-view
 pr: null
 attempts: 0
 depends_on: []
@@ -80,3 +80,7 @@ Reference the mobile bookings calendar at `/Users/naimabdelkerim/Code/travel/app
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-08
+- Started task on branch `task/005-booking-calendar-view`.
+- Confirmed no `in_progress` tasks existed; selected task 005 as next eligible `todo` by priority and ID order.
