@@ -25,3 +25,8 @@ gh pr merge --merge --auto
 git push -u origin task/009-remove-offers-page
 gh pr create --base main --head task/009-remove-offers-page --title "task(009): Remove Offers Page" --body "Automated migration task. See PLAN/tasks/009-remove-offers-page.md for details."
 gh pr merge --merge --auto
+
+# Task 012: User-to-Host Mode Switch for Host Profiles
+git push -u origin task/012-host-mode-switch
+gh pr create --base main --head task/012-host-mode-switch --title "task(012): User-to-Host Mode Switch for Host Profiles" --body "Automated migration task. See PLAN/tasks/012-host-mode-switch.md for details."
+gh pr merge --merge --auto

@@ -1,7 +1,7 @@
 ---
 id: "012"
 title: "User-to-Host Mode Switch for Host Profiles"
-status: in_progress
+status: review
 priority: medium
 created: 2026-03-07
 updated: 2026-03-08
@@ -10,7 +10,7 @@ branch: task/012-host-mode-switch
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 100
 ---
 
 ## Description
@@ -37,13 +37,13 @@ Note: The actual host pages (analytics, experience management, availability mana
 
 ## Acceptance Criteria
 
-- [ ] "Switch to Host" option visible only for users with `is_host = true`
-- [ ] Mode toggle in user menu/navbar
-- [ ] Host navigation shows Dashboard, Experiences, Availability menu items
-- [ ] "Switch to Traveler" returns to normal user navigation
-- [ ] Current mode persisted in session (localStorage or URL-based)
-- [ ] Host pages use a host layout wrapper
-- [ ] Non-host users cannot access host routes (redirect to user home)
+- [x] "Switch to Host" option visible only for users with `is_host = true`
+- [x] Mode toggle in user menu/navbar
+- [x] Host navigation shows Dashboard, Experiences, Availability menu items
+- [x] "Switch to Traveler" returns to normal user navigation
+- [x] Current mode persisted in session (localStorage or URL-based)
+- [x] Host pages use a host layout wrapper
+- [x] Non-host users cannot access host routes (redirect to user home)
 
 ## Context
 
@@ -58,16 +58,21 @@ Note: The actual host pages (analytics, experience management, availability mana
 
 - [x] Read profile schema for host-related fields
 - [x] Read mobile host layout and mode switching
-- [ ] Create host mode context/state (ViewModeProvider)
-- [ ] Add "Switch to Host" and mode indicator in user menu for hosts only
-- [ ] Add host-mode-aware marketing/chat header navigation links
-- [ ] Create host layout wrapper with host navigation shell
-- [ ] Create `/host`, `/host/experiences`, `/host/availability` routes
-- [ ] Add host route protection (redirect non-host users)
-- [ ] Add "Switch to Traveler" in host layout navigation
-- [ ] Persist and restore mode selection via localStorage
-- [ ] Run lint/type/build checks and document environment blockers
+- [x] Create host mode context/state (ViewModeProvider)
+- [x] Add "Switch to Host" and mode indicator in user menu for hosts only
+- [x] Add host-mode-aware marketing/chat header navigation links
+- [x] Create host layout wrapper with host navigation shell
+- [x] Create `/host`, `/host/experiences`, `/host/availability` routes
+- [x] Add host route protection (redirect non-host users)
+- [x] Add "Switch to Traveler" in host layout navigation
+- [x] Persist and restore mode selection via localStorage
+- [x] Run lint/type/build checks and document environment blockers
 
 ## Review Notes
+- `pnpm tsc --noEmit` failed: `Command "tsc" not found`.
+- `pnpm lint` failed: `biome: command not found`.
+- `pnpm build` failed: `next: command not found`.
+- Environment blocker: `node_modules` is missing in this runtime. Run `pnpm install` before validating typecheck/lint/build in CI or local dev.
 
 ## Agent Log
+- 2026-03-08: Implemented host/traveler mode switching infrastructure with persisted view mode (`ViewModeProvider`), host-only switch actions in user menu, host-aware top navigation in marketing/chat/nav headers, guarded `/host` layout shell with `Dashboard/Experiences/Availability` navigation, and placeholder host pages for `/host`, `/host/experiences`, and `/host/availability`. Non-host users are redirected away from host routes.
