@@ -1,12 +1,12 @@
 ---
 id: "001"
 title: "Redesign Experience Detail Page (Airbnb/Booking-level)"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/001-experience-detail-redesign
 pr: null
 attempts: 0
 depends_on: []
@@ -60,22 +60,29 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 
 ## Checklist
 
-- [ ] Read current experience detail page and all related components
-- [ ] Read mobile experience detail for design reference
-- [ ] Read experience schema and types
-- [ ] Redesign gallery component (grid layout + lightbox)
-- [ ] Build header section (title, location, rating, host, share/save)
-- [ ] Redesign overview section (highlights bar, description expand, amenities grid)
-- [ ] Build itinerary tab for trip experiences
-- [ ] Build stay tab for lodging experiences (house rules, policies)
-- [ ] Improve rooms tab with photo carousel per room
-- [ ] Improve location tab with map display
-- [ ] Build host info section
-- [ ] Redesign sticky booking sidebar (desktop)
-- [ ] Build mobile sticky footer
-- [ ] Ensure responsive layout across breakpoints
-- [ ] Polish UI to industry standard
+- [ ] Audit current experience page and dependent components
+- [ ] Audit mobile reference screen and map section parity gaps
+- [ ] Audit schema/types for experience details, rooms, itinerary, stay, and location
+- [ ] Implement Airbnb-style gallery grid with show-all action
+- [ ] Add gallery lightbox behavior for full media browsing
+- [ ] Build enhanced header with ratings, host summary, share, and save actions
+- [ ] Build overview highlights bar and expandable description
+- [ ] Replace amenities checklist with icon-based amenities grid
+- [ ] Add itinerary tab rendering with day-by-day cards for trip experiences
+- [ ] Add stay tab rendering with house rules/check-in/out/cancellation blocks
+- [ ] Upgrade rooms tab with media carousel and richer room metadata cards
+- [ ] Replace location placeholder with coordinate-backed map embed/static map
+- [ ] Build host information section with stats and contact CTA
+- [ ] Redesign desktop sticky booking sidebar with estimate breakdown
+- [ ] Add mobile sticky reserve footer with price and CTA
+- [ ] Validate responsive behavior across mobile/tablet/desktop breakpoints
+- [ ] Run lint/tests and fix regressions
+- [ ] Final visual polish pass against acceptance criteria
 
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-08
+- Started task on branch `task/001-experience-detail-redesign`.
+- Updated checklist into smaller implementation steps for incremental save-point commits.
