@@ -1,12 +1,12 @@
 ---
 id: "001"
 title: "Redesign Experience Detail Page (Airbnb/Booking-level)"
-status: review
+status: done
 priority: high
 created: 2026-03-07
 updated: 2026-03-08
 assigned: codex
-branch: task/001-experience-detail-redesign
+branch: null
 pr: null
 attempts: 0
 depends_on: []

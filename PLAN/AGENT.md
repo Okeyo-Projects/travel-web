@@ -13,19 +13,24 @@ You are an automated coding agent running on a schedule. Follow this workflow st
 - Read the `## Checklist` section -- checked items are DONE, unchecked items remain
 - Read the latest entry in `## Agent Log` to understand what you did last
 - **Continue from where you left off** -- do NOT redo completed checklist items
-- Skip to step 3 (Implement) and pick up from the first unchecked item
+- Skip to step 4 (Implement) and pick up from the first unchecked item
 
 ### 2. Pick a new task
 - Only reach this step if NO `in_progress` tasks exist
-- Scan all task files in `web/PLAN/tasks/` with `status: todo`
+- Ensure you are on the `main` branch (`git checkout main`)
+- Scan all `.md` files in `web/PLAN/tasks/` (excluding `_TEMPLATE.md`) and read their YAML frontmatter
+- Look for files with `status: todo` in their frontmatter
+- **Prioritize review-feedback tasks:** Tasks with `status: todo` AND `progress: 100` have been sent back from review with fix instructions. These take priority over fresh `todo` tasks regardless of priority level. Read their `## Review Notes` for what needs fixing.
 - **Skip** any task whose `depends_on` list contains IDs that are NOT `status: done` or `status: review`
-- From eligible tasks, pick by priority: urgent > high > medium > low
+- From eligible tasks (after review-feedback tasks), pick by priority: urgent > high > medium > low
 - If same priority, pick the lowest ID first
+- **Debug if zero tasks found:** If you find no task files or no eligible tasks, log the list of files you scanned and their statuses before stopping -- this helps diagnose issues
 - If no eligible `todo` tasks exist, stop -- do nothing
 
 ### 3. Start work (new tasks only)
 - Set `status: in_progress` and `updated: <today>`
-- Create a new git branch: `task/<id>-<short-slug>` (e.g., `task/001-add-auth`)
+- **Clean up stale worktrees first:** Run `git worktree prune` before creating branches to avoid "already used by worktree" errors
+- Create a new git branch from `main`: `git checkout -b task/<id>-<short-slug> main` (e.g., `task/001-add-auth`)
 - Read the full task description and acceptance criteria
 - **Understand the data model first:** Read relevant Supabase migrations in `web/supabase/migrations/` and types in `web/src/types/` to understand the schema before writing code
 - **Check the mobile app** (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) for design reference on UI tasks
@@ -72,10 +77,15 @@ You are an automated coding agent running on a schedule. Follow this workflow st
 - Do NOT attempt `git push` or `gh` commands directly -- the environment has no network access
 
 ### 6. Handle review feedback
-- If a task has `status: todo` AND `attempts > 0`, it was sent back from review
-- Read the `## Review Notes` section for feedback
-- Address ALL feedback points before resubmitting
+- A task sent back from review has `status: todo` AND `progress: 100` (may also have `attempts > 0`)
+- Read the `## Review Notes` section carefully -- it contains:
+  - **Blocking issues** (`[CRITICAL/MAJOR]`) with `Fix:` instructions -- these MUST be addressed
+  - **Non-blocking notes** (`[MINOR/MEDIUM]`) with `Suggestion:` -- fix these while you're at it
+- Switch to the task's existing branch (`branch:` field) -- do NOT create a new branch
+- Address ALL blocking issues before resubmitting
 - Increment `attempts` count
+- Reset `progress:` to reflect actual completion as you work through fixes
+- When all fixes are done, submit for review again (step 5)
 
 ## Rules
 - **Resume before picking new work** -- always check for `in_progress` tasks first
@@ -87,6 +97,9 @@ You are an automated coding agent running on a schedule. Follow this workflow st
 - **Never push to main directly** -- always use a PR
 - **Append, don't overwrite** agent logs -- each run gets a new dated entry
 - **Git root** is at `/travel/` (the monorepo root), not a subdirectory
+- **One branch per task** -- never create a second branch for the same task ID (e.g., `task/001-foo-2`). If the branch already exists, switch to it and continue there
+- **Never merge with `--strategy ours`** -- this silently discards branch work. If there are merge conflicts, resolve them properly or skip the merge and log the conflict
+- **Always start from main** -- before picking tasks, ensure you are on `main` so you read the correct task file statuses
 - **Supabase migrations** always go in `web/supabase/migrations/` -- never in `web/` or elsewhere
 - **Check data schema** before implementing -- read relevant migrations and `web/src/types/supabase.ts` to understand tables, columns, RLS policies, and relationships
 - **Mobile app is design reference** -- check `/Users/naimabdelkerim/Code/travel/apps/mobile/app/` for the corresponding screen before building any UI
