@@ -1,12 +1,12 @@
 ---
 id: "012"
 title: "User-to-Host Mode Switch for Host Profiles"
-status: todo
+status: in_progress
 priority: medium
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/012-host-mode-switch
 pr: null
 attempts: 0
 depends_on: []
@@ -56,16 +56,17 @@ Note: The actual host pages (analytics, experience management, availability mana
 
 ## Checklist
 
-- [ ] Read profile schema for host-related fields
-- [ ] Read mobile host layout and mode switching
+- [x] Read profile schema for host-related fields
+- [x] Read mobile host layout and mode switching
 - [ ] Create host mode context/state (ViewModeProvider)
-- [ ] Add "Switch to Host" in user menu for hosts
-- [ ] Create host layout component with sidebar/nav
-- [ ] Create host route group (`/host/...`)
-- [ ] Add route protection (redirect non-hosts)
-- [ ] Add "Switch to Traveler" in host navigation
-- [ ] Persist mode selection
-- [ ] Polish UI and transitions
+- [ ] Add "Switch to Host" and mode indicator in user menu for hosts only
+- [ ] Add host-mode-aware marketing/chat header navigation links
+- [ ] Create host layout wrapper with host navigation shell
+- [ ] Create `/host`, `/host/experiences`, `/host/availability` routes
+- [ ] Add host route protection (redirect non-host users)
+- [ ] Add "Switch to Traveler" in host layout navigation
+- [ ] Persist and restore mode selection via localStorage
+- [ ] Run lint/type/build checks and document environment blockers
 
 ## Review Notes
 
