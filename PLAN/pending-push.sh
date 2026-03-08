@@ -15,3 +15,8 @@ gh pr create --base main --head task/006-social-login --title "task(006): Add Ap
 git push -u origin task/016-posthog-analytics
 gh pr create --base main --head task/016-posthog-analytics --title "task(016): Implement PostHog Analytics with Full Event Tracking" --body "Automated migration task. See PLAN/tasks/016-posthog-analytics.md for details."
 gh pr merge --merge --auto
+
+# Task 005: Calendar View for User Bookings
+git push -u origin task/005-booking-calendar-view
+gh pr create --base main --head task/005-booking-calendar-view --title "task(005): Calendar View for User Bookings" --body "Automated migration task. See PLAN/tasks/005-booking-calendar-view.md for details."
+gh pr merge --merge --auto
