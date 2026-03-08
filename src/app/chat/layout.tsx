@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
+import { NotificationBell } from "@/components/site/NotificationBell";
 import { UserMenu } from "@/components/site/UserMenu";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +47,10 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                 </Button>
               </div>
               {user ? (
-                <UserMenu variant="light" />
+                <>
+                  <NotificationBell variant="light" />
+                  <UserMenu variant="light" />
+                </>
               ) : (
                 <Button
                   variant="default"

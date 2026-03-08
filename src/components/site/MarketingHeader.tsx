@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
 
 interface MarketingHeaderProps {
@@ -66,7 +67,10 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
 
       <div className="hidden items-center gap-2 md:flex">
         {user ? (
-          <UserMenu />
+          <>
+            <NotificationBell />
+            <UserMenu />
+          </>
         ) : (
           <Button
             type="button"
