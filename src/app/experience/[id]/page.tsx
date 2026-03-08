@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
@@ -203,18 +203,15 @@ export default function ExperiencePage() {
     { id: "location", label: "Location", visible: true },
     { id: "reviews", label: "Reviews", visible: true },
   ].filter((tab) => tab.visible);
-  const galleryImages = useMemo(() => {
-    const mediaImages = experience.gallery
-      .map((media) => media.url)
-      .filter((url): url is string => Boolean(url));
-    if (
-      experience.thumbnailUrl &&
-      !mediaImages.some((image) => image === experience.thumbnailUrl)
-    ) {
-      mediaImages.unshift(experience.thumbnailUrl);
-    }
-    return mediaImages;
-  }, [experience.gallery, experience.thumbnailUrl]);
+  const galleryImages = experience.gallery
+    .map((media) => media.url)
+    .filter((url): url is string => Boolean(url));
+  if (
+    experience.thumbnailUrl &&
+    !galleryImages.some((image) => image === experience.thumbnailUrl)
+  ) {
+    galleryImages.unshift(experience.thumbnailUrl);
+  }
 
   const description = experience.longDescription || experience.shortDescription;
   const shortDescription =
