@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBooking } from "@/hooks/use-booking";
 import { useExperienceDetail } from "@/hooks/use-experience-detail";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
+import { ReviewList } from "@/components/experience/ReviewList";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 
 export default function ExperiencePage() {
@@ -313,9 +314,7 @@ export default function ExperiencePage() {
               </TabsContent>
 
               <TabsContent value="reviews" className="mt-0 focus-visible:outline-none pb-8 animate-in fade-in duration-300">
-                <div className="text-center text-muted-foreground py-12 border rounded-2xl bg-muted/10">
-                  Les avis seront bientôt disponibles.
-                </div>
+                <ReviewList experienceId={experience.id} />
               </TabsContent>
             </Tabs>
           </div>

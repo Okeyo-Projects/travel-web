@@ -13,11 +13,14 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ReviewForm } from "@/components/experience/ReviewForm";
+import { ReviewStars } from "@/components/experience/ReviewStars";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { useReviewForBooking } from "@/hooks/use-reviews";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 
@@ -244,6 +247,7 @@ export default function BookingDetailPage() {
   const canCancel = booking?.status
     ? ["pending_host", "pending_payment", "approved"].includes(booking.status)
     : false;
+  const bookingReviewQuery = useReviewForBooking(booking?.id);
 
   const handleStartPayment = async () => {
     if (!booking) return;
@@ -465,6 +469,44 @@ export default function BookingDetailPage() {
             </CardContent>
           </Card>
         )}
+
+        {booking.status === "completed" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Votre avis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {bookingReviewQuery.isLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Chargement de votre avis...
+                </div>
+              ) : bookingReviewQuery.data ? (
+                <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-medium">Avis déjà publié</p>
+                    <ReviewStars rating={bookingReviewQuery.data.ratingOverall} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {bookingReviewQuery.data.text}
+                  </p>
+                </div>
+              ) : booking.experience?.id ? (
+                <ReviewForm
+                  bookingId={booking.id}
+                  experienceId={booking.experience.id}
+                  onSuccess={() => {
+                    refetch();
+                  }}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Impossible de retrouver l'expérience associée à cette réservation.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
           <CardHeader>
