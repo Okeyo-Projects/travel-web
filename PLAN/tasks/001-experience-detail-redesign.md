@@ -10,7 +10,7 @@ branch: task/001-experience-detail-redesign-codex
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 20
 ---
 
 ## Description
@@ -60,9 +60,9 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 
 ## Checklist
 
-- [ ] Read current experience detail page and all related components
-- [ ] Read mobile experience detail for design reference
-- [ ] Read experience schema and types
+- [x] Read current experience detail page and all related components
+- [x] Read mobile experience detail for design reference
+- [x] Read experience schema and types
 - [ ] Redesign gallery component (grid layout + lightbox)
 - [ ] Build header section (title, location, rating, host, share/save)
 - [ ] Redesign overview section (highlights bar, description expand, amenities grid)
@@ -82,3 +82,6 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 
 ### 2026-03-08 (automation run)
 - Task started on branch `task/001-experience-detail-redesign-codex` because `task/001-experience-detail-redesign` is currently checked out in another worktree and unavailable in this environment.
+- Audited current web page implementation (`src/app/experience/[id]/page.tsx`, `ExperienceGallery`, and `use-experience-detail`) to identify gaps against acceptance criteria.
+- Reviewed mobile reference structure in `/apps/mobile/app/experience/[experienceId]/index.tsx` for tab hierarchy and section ordering.
+- Reviewed schema/types (`20251004002801_create_experience_tables.sql`, `src/types/experience-detail.ts`) for itinerary, lodging policies, host fields, and room media shape.
