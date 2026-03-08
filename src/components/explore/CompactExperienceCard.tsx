@@ -15,11 +15,13 @@ import { getImageUrl } from "@/utils/functions";
 interface CompactExperienceCardProps {
   experience: ExperienceListItem;
   className?: string;
+  onOpenDetails?: () => void;
 }
 
 export function CompactExperienceCard({
   experience,
   className,
+  onOpenDetails,
 }: CompactExperienceCardProps) {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -57,6 +59,12 @@ export function CompactExperienceCard({
     event.preventDefault();
     event.stopPropagation();
     setIsVideoOpen(true);
+  };
+
+  const handleCardClick = () => {
+    if (onOpenDetails) {
+      onOpenDetails();
+    }
   };
 
   const togglePlayback = () => {
@@ -124,8 +132,17 @@ export function CompactExperienceCard({
 
   return (
     <>
-      <Link href={href}>
+      {onOpenDetails ? (
         <div
+          role="button"
+          tabIndex={0}
+          onClick={handleCardClick}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              handleCardClick();
+            }
+          }}
           className={cn(
             "group relative flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer",
             className,
@@ -189,7 +206,74 @@ export function CompactExperienceCard({
             </p>
           </div>
         </div>
-      </Link>
+      ) : (
+        <Link href={href}>
+          <div
+            className={cn(
+              "group relative flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer",
+              className,
+            )}
+          >
+            {/* Image Container */}
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
+              {thumbnailUrl ? (
+                <Image
+                  src={thumbnailUrl}
+                  alt={experience.title}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400">No image</span>
+                </div>
+              )}
+
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+              {videoUrl && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={handleVideoClick}
+                    className="flex h-14 w-14 items-center justify-center rounded-full border border-white/40 bg-black/35 text-white backdrop-blur-md transition-transform duration-300 hover:scale-105 hover:bg-black/45"
+                    aria-label={`Play video for ${experience.title}`}
+                  >
+                    <Play className="ml-0.5 h-7 w-7 fill-current" />
+                  </button>
+                </div>
+              )}
+
+              {/* Location Badge - Top Right */}
+              <div className="absolute top-3 right-3 z-20">
+                <span className="px-3 py-1.5 bg-black/40 backdrop-blur-md text-white text-sm font-medium rounded-full">
+                  {experience.city}
+                </span>
+              </div>
+
+              {/* Price Badge - Bottom Left (MAD only, no $ symbol) */}
+              <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2">
+                {price !== null && (
+                  <span className="px-2.5 py-1 bg-black/60 backdrop-blur-md text-white text-sm font-medium rounded-full">
+                    {price} MAD
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Title & Subtitle */}
+            <div className="mt-3 px-1">
+              <h3 className="text-gray-900 font-semibold text-lg leading-tight line-clamp-1">
+                {experience.title}
+              </h3>
+              <p className="text-gray-500 text-sm mt-1 line-clamp-1">
+                {experience.short_description}
+              </p>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {isMounted &&
         isVideoOpen &&

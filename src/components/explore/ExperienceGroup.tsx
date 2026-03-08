@@ -2,11 +2,12 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
 import { getImageUrl } from "@/utils/functions";
 import { CompactExperienceCard } from "./CompactExperienceCard";
+import { ExperienceDetailModal } from "./ExperienceDetailModal";
 
 interface ExperienceGroupProps {
   title: string;
@@ -26,6 +27,9 @@ export function ExperienceGroup({
   onMoreClick,
 }: ExperienceGroupProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [activeExperienceIndex, setActiveExperienceIndex] = useState<
+    number | null
+  >(null);
 
   const scroll = (direction: "left" | "right") => {
     if (!scrollContainerRef.current) return;
@@ -106,10 +110,21 @@ export function ExperienceGroup({
             <CompactExperienceCard
               key={experience.id}
               experience={experience}
+              onOpenDetails={() =>
+                setActiveExperienceIndex(
+                  experiences.findIndex((item) => item.id === experience.id),
+                )
+              }
             />
           ))}
         </div>
       </div>
+      <ExperienceDetailModal
+        open={activeExperienceIndex !== null}
+        experiences={experiences}
+        startIndex={activeExperienceIndex ?? 0}
+        onClose={() => setActiveExperienceIndex(null)}
+      />
     </div>
   );
 }
