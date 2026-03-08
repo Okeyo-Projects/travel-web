@@ -22,12 +22,12 @@ A travel experiences platform where users can discover, book, and interact with 
 | Backend / DB | Supabase (Postgres, Auth, Storage, Edge Functions, RLS) |
 | AI | Vercel AI SDK (`ai` package) |
 | Payments | Stripe (planned) |
-| Types | `web/src/types/` (domain types + auto-generated Supabase types) |
+| Types | `src/types/` (domain types + auto-generated Supabase types) |
 | Mobile | Expo + React Native + NativeWind (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) |
 
 ## Database Schema (Supabase/Postgres)
 
-Key tables (see `web/supabase/migrations/` and `web/src/types/supabase.ts` for full schema):
+Key tables (see `supabase/migrations/` and `src/types/supabase.ts` for full schema):
 
 - **profiles** - User profiles (linked to Supabase Auth)
 - **experiences** - Hosted experiences/activities
@@ -59,11 +59,11 @@ The mobile app (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) is the **prima
 ## Data Flow - Understanding Before Building
 
 Before working on any feature, you MUST:
-1. Read the relevant Supabase migration files in `web/supabase/migrations/` to understand the table schema
-2. Check `web/src/types/supabase.ts` for the auto-generated Supabase types
-3. Check `web/src/types/` for the domain-specific type files
+1. Read the relevant Supabase migration files in `supabase/migrations/` to understand the table schema
+2. Check `src/types/supabase.ts` for the auto-generated Supabase types
+3. Check `src/types/` for the domain-specific type files
 4. Understand RLS policies that apply (see `*_rls_policies.sql` migrations)
-5. Check existing hooks in `web/src/hooks/` for data fetching patterns already in place
+5. Check existing hooks in `src/hooks/` for data fetching patterns already in place
 
 ## Coding Conventions
 
@@ -72,20 +72,20 @@ Before working on any feature, you MUST:
 - **State**: TanStack Query for server state, React Context/useState for UI state
 - **Data fetching**: Supabase client in hooks or server components. Use TanStack Query for client-side caching.
 - **AI**: Use Vercel AI SDK (`useChat`, `streamText`, tool calls) for AI features
-- **Types**: All types live in `web/src/types/` (including `supabase.ts` auto-generated types)
+- **Types**: All types live in `src/types/` (including `supabase.ts` auto-generated types)
 - **Imports**: React > Third-party > Internal libs > Hooks > Components > Types
-- **Migrations**: ALL Supabase migrations go in `web/supabase/migrations/`, never elsewhere
+- **Migrations**: ALL Supabase migrations go in `supabase/migrations/`, never elsewhere
 
 ## Commands Reference
 
 ```bash
-# From /travel/web/
+# From /travel-web/
 pnpm dev                       # Next.js dev server
 pnpm build                     # Production build
 pnpm lint                      # Lint
 pnpm tsc --noEmit              # Type check
 
-# From /travel/ (git root)
+# From /travel-web/ (git root)
 git checkout -b task/007-xxx   # New task branch
 
 ```
@@ -93,10 +93,10 @@ git checkout -b task/007-xxx   # New task branch
 ## Before Starting Any Task
 
 1. Read this file (KNOWLEDGE.md)
-2. Read the specific task file in `web/PLAN/tasks/`
+2. Read the specific task file in `PLAN/tasks/`
 3. Read the relevant Supabase schema/migrations to understand the data model
-4. Check `web/src/types/supabase.ts` for current generated types
+4. Check `src/types/supabase.ts` for current generated types
 5. Check the mobile app (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) for design reference
-6. Check existing hooks and components in `web/src/` for patterns to follow
+6. Check existing hooks and components in `src/` for patterns to follow
 7. Build backend (migrations, types) first, then frontend
 8. Always create types first, then hook, then component
