@@ -10,7 +10,7 @@ branch: task/001-experience-detail-redesign
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 17
 ---
 
 ## Description
@@ -60,9 +60,9 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 
 ## Checklist
 
-- [ ] Audit current experience page and dependent components
-- [ ] Audit mobile reference screen and map section parity gaps
-- [ ] Audit schema/types for experience details, rooms, itinerary, stay, and location
+- [x] Audit current experience page and dependent components
+- [x] Audit mobile reference screen and map section parity gaps
+- [x] Audit schema/types for experience details, rooms, itinerary, stay, and location
 - [ ] Implement Airbnb-style gallery grid with show-all action
 - [ ] Add gallery lightbox behavior for full media browsing
 - [ ] Build enhanced header with ratings, host summary, share, and save actions
@@ -86,3 +86,4 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 ### 2026-03-08
 - Started task on branch `task/001-experience-detail-redesign`.
 - Updated checklist into smaller implementation steps for incremental save-point commits.
+- Audited current web detail page, mobile reference screen, and schema/type coverage before implementation.
