@@ -6,3 +6,8 @@
 git push -u origin task/001-experience-detail-redesign-2
 gh pr create --base main --head task/001-experience-detail-redesign-2 --title "task(001): Redesign Experience Detail Page (Airbnb/Booking-level)" --body "Automated migration task. See web/PLAN/tasks/001-experience-detail-redesign.md for details."
 gh pr merge --merge --auto
+
+# Task 002: Implement Reviews System on Experience Detail
+git push -u origin task/002-reviews-system-2
+gh pr create --base main --head task/002-reviews-system-2 --title "task(002): Implement Reviews System on Experience Detail" --body "Automated migration task. See web/PLAN/tasks/002-reviews-system.md for details."
+gh pr merge --merge --auto
