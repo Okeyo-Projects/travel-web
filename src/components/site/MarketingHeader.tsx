@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
+import { useViewMode } from "@/providers/view-mode-provider";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
@@ -17,7 +18,9 @@ interface MarketingHeaderProps {
 
 export function MarketingHeader({ className }: MarketingHeaderProps) {
   const { user, loading, openAuthModal } = useAuth();
+  const { mode } = useViewMode();
   const pathname = usePathname();
+  const isHostMode = Boolean(user && mode === "host");
 
   return (
     <header
@@ -39,30 +42,55 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
       </Link>
 
       <nav className="hidden items-center gap-10 text-base text-white/90 lg:flex">
-        <Link
-          href={localizeHref("/", pathname)}
-          className="transition-colors hover:text-white"
-        >
-          Home
-        </Link>
-        <Link
-          href={localizeHref("/explore", pathname)}
-          className="transition-colors hover:text-white"
-        >
-          Explore
-        </Link>
-        <Link
-          href={localizeHref("/collections", pathname)}
-          className="transition-colors hover:text-white"
-        >
-          Collections
-        </Link>
-        <Link
-          href={localizeHref("/chat", pathname)}
-          className="transition-colors hover:text-white"
-        >
-          Assistant IA
-        </Link>
+        {isHostMode ? (
+          <>
+            <Link
+              href={localizeHref("/host", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href={localizeHref("/host/experiences", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Experiences
+            </Link>
+            <Link
+              href={localizeHref("/host/availability", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Availability
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link
+              href={localizeHref("/", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Home
+            </Link>
+            <Link
+              href={localizeHref("/explore", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Explore
+            </Link>
+            <Link
+              href={localizeHref("/collections", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Collections
+            </Link>
+            <Link
+              href={localizeHref("/chat", pathname)}
+              className="transition-colors hover:text-white"
+            >
+              Assistant IA
+            </Link>
+          </>
+        )}
       </nav>
 
       <div className="hidden items-center gap-2 md:flex">

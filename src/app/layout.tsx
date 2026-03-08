@@ -38,6 +38,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthProvider } from "@/providers/auth-provider";
 import { PostHogProvider } from "@/providers/posthog-provider";
 import QueryProvider from "@/providers/query-provider";
+import { ViewModeProvider } from "@/providers/view-mode-provider";
 
 export default async function RootLayout({
   children,
@@ -65,10 +66,12 @@ export default async function RootLayout({
         <PostHogProvider>
           <QueryProvider>
             <AuthProvider>
-              <PostHogPageView />
-              <main className="flex-1">{children}</main>
-              <FloatingChatButton />
-              <AuthModal />
+              <ViewModeProvider>
+                <PostHogPageView />
+                <main className="flex-1">{children}</main>
+                <FloatingChatButton />
+                <AuthModal />
+              </ViewModeProvider>
             </AuthProvider>
           </QueryProvider>
         </PostHogProvider>

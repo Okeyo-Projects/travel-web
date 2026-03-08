@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, LogOut, Settings, User } from "lucide-react";
+import { BriefcaseBusiness, CalendarDays, Compass, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
+import { useViewMode } from "@/providers/view-mode-provider";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
 import { getImageUrl } from "@/utils/functions";
@@ -33,7 +35,9 @@ interface UserMenuProps {
 
 export function UserMenu({ variant = "dark" }: UserMenuProps) {
   const { user, signOut } = useAuth();
+  const { mode, canHost, setMode } = useViewMode();
   const pathname = usePathname();
+  const router = useRouter();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -42,10 +46,14 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
       const supabase = createClient();
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("display_name, avatar_url, is_host")
         .eq("id", user!.id)
         .single();
-      return data as { display_name: string; avatar_url: string | null } | null;
+      return data as {
+        display_name: string;
+        avatar_url: string | null;
+        is_host: boolean | null;
+      } | null;
     },
   });
 
@@ -86,6 +94,11 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
           <p className="text-xs text-muted-foreground truncate">
             {user?.email}
           </p>
+          <div className="mt-1">
+            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+              {mode === "host" ? "Host mode" : "Traveler mode"}
+            </Badge>
+          </div>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -106,6 +119,29 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
             Settings
           </Link>
         </DropdownMenuItem>
+        {canHost && (
+          <DropdownMenuItem
+            onClick={() => {
+              if (mode === "host") {
+                setMode("traveler");
+                if (pathname.startsWith("/host")) {
+                  router.push(localizeHref("/explore", pathname));
+                }
+                return;
+              }
+
+              setMode("host");
+              router.push(localizeHref("/host", pathname));
+            }}
+          >
+            {mode === "host" ? (
+              <Compass className="mr-2 h-4 w-4" />
+            ) : (
+              <BriefcaseBusiness className="mr-2 h-4 w-4" />
+            )}
+            {mode === "host" ? "Switch to Traveler" : "Switch to Host"}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut()}

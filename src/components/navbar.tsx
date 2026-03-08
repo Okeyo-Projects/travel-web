@@ -6,11 +6,14 @@ import { NotificationBell } from "@/components/site/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
+import { useViewMode } from "@/providers/view-mode-provider";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { user } = useAuth();
+  const { mode } = useViewMode();
   const pathname = usePathname();
+  const isHostMode = Boolean(user && mode === "host");
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm">
@@ -33,26 +36,53 @@ export function Navbar() {
 
         {/* Desktop Nav - Only the two requested buttons */}
         <nav className="flex items-center gap-4">
-          <Link href={localizeHref("/collections", pathname)}>
-            <Button variant="ghost" className="font-medium">
-              Nos collections
-            </Button>
-          </Link>
-          <Link href={localizeHref("/chat", pathname)}>
-            <Button variant="ghost" className="font-medium">
-              Assistant IA
-            </Button>
-          </Link>
-          <Link href={localizeHref("/explore", pathname)}>
-            <Button
-              className={cn(
-                "rounded-lg px-6 font-medium transition-colors",
-                "bg-black text-white hover:bg-black/80 border-0",
-              )}
-            >
-              Explorer nos trésors
-            </Button>
-          </Link>
+          {isHostMode ? (
+            <>
+              <Link href={localizeHref("/host", pathname)}>
+                <Button variant="ghost" className="font-medium">
+                  Dashboard
+                </Button>
+              </Link>
+              <Link href={localizeHref("/host/experiences", pathname)}>
+                <Button variant="ghost" className="font-medium">
+                  Experiences
+                </Button>
+              </Link>
+              <Link href={localizeHref("/host/availability", pathname)}>
+                <Button
+                  className={cn(
+                    "rounded-lg px-6 font-medium transition-colors",
+                    "bg-black text-white hover:bg-black/80 border-0",
+                  )}
+                >
+                  Availability
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href={localizeHref("/collections", pathname)}>
+                <Button variant="ghost" className="font-medium">
+                  Nos collections
+                </Button>
+              </Link>
+              <Link href={localizeHref("/chat", pathname)}>
+                <Button variant="ghost" className="font-medium">
+                  Assistant IA
+                </Button>
+              </Link>
+              <Link href={localizeHref("/explore", pathname)}>
+                <Button
+                  className={cn(
+                    "rounded-lg px-6 font-medium transition-colors",
+                    "bg-black text-white hover:bg-black/80 border-0",
+                  )}
+                >
+                  Explorer nos trésors
+                </Button>
+              </Link>
+            </>
+          )}
           {user ? <NotificationBell variant="light" /> : null}
         </nav>
       </div>
