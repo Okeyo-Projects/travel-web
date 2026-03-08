@@ -1,16 +1,16 @@
 ---
 id: "010"
 title: "Functional Profile Editing with Avatar Upload"
-status: todo
+status: in_progress
 priority: medium
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/010-profile-editing
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 5
 ---
 
 ## Description
@@ -61,17 +61,18 @@ The profile page displays user info but editing is non-functional. Make the "Edi
 
 ## Checklist
 
-- [ ] Read profile page and auth provider
-- [ ] Read profiles schema and storage bucket config
-- [ ] Read mobile update-profile screen for reference
-- [ ] Build EditProfileModal/page component
-- [ ] Implement avatar file picker with preview
-- [ ] Implement Supabase Storage upload for avatars
-- [ ] Implement profile update mutation
-- [ ] Add form validation
-- [ ] Add loading and success states
-- [ ] Verify avatar updates reflect across app
-- [ ] Polish UI
+- [x] Read profile page and auth provider
+- [x] Read profiles schema and storage bucket config
+- [x] Read mobile update-profile screen for reference
+- [ ] Add editable profile state and open/close edit dialog flow on profile page
+- [ ] Build display name + bio form UI with prefilled values and validation messaging
+- [ ] Add avatar file picker and local preview in the edit flow
+- [ ] Implement avatar upload to Supabase Storage with progress state
+- [ ] Implement profile save mutation (display name, bio, avatar_url)
+- [ ] Add loading, disabled, and cancel/reset behaviors
+- [ ] Add success/error toasts and query cache invalidation for profile consumers
+- [ ] Verify updated avatar/name/bio reflect immediately on profile and menu surfaces
+- [ ] Final polish and task log updates
 
 ## Review Notes
 
