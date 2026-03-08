@@ -5,33 +5,90 @@ import {
   Calendar,
   Check,
   ChevronLeft,
+  Clock3,
   Heart,
   Loader2,
   MapPin,
-  Share2,
+  Minus,
   ShieldCheck,
+  Share2,
   Star,
   Users,
-  Wifi,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBooking } from "@/hooks/use-booking";
 import { useExperienceDetail } from "@/hooks/use-experience-detail";
-import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
-import { MarketingHeader } from "@/components/site/MarketingHeader";
+
+function formatMoney(cents: number | null | undefined, currency = "MAD") {
+  if (typeof cents !== "number") {
+    return "Sur demande";
+  }
+
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
+
+function formatDuration(days: number | null, hours: number | null) {
+  if (days && days > 0) {
+    return `${days} jour${days > 1 ? "s" : ""}`;
+  }
+  if (hours && hours > 0) {
+    return `${hours}h`;
+  }
+  return "Flexible";
+}
+
+function formatDate(date: string | null | undefined) {
+  if (!date) {
+    return "--/--";
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(date));
+}
+
+function buildMapLinks(
+  latitude: number | null,
+  longitude: number | null,
+  locationLabel: string,
+) {
+  if (typeof latitude !== "number" || typeof longitude !== "number") {
+    const encodedQuery = encodeURIComponent(locationLabel);
+    return {
+      embedUrl: "https://www.openstreetmap.org/export/embed.html?bbox=-10.5%2C27.5%2C-0.5%2C36.5&layer=mapnik",
+      externalUrl: `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`,
+    };
+  }
+
+  const delta = 0.035;
+  const left = longitude - delta;
+  const right = longitude + delta;
+  const top = latitude + delta;
+  const bottom = latitude - delta;
+
+  return {
+    embedUrl: `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latitude}%2C${longitude}`,
+    externalUrl: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=12/${latitude}/${longitude}`,
+  };
+}
 
 export default function ExperiencePage() {
   const params = useParams();
@@ -39,9 +96,12 @@ export default function ExperiencePage() {
   const { data, isLoading, isError } = useExperienceDetail(identifier);
   const { openBooking, BookingModal } = useBooking();
 
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -49,12 +109,10 @@ export default function ExperiencePage() {
 
   if (isError || !data) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-destructive text-lg font-medium">
-          Une erreur est survenue
-        </p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
+        <p className="text-center text-lg font-medium text-destructive">Une erreur est survenue</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
-          Réessayer
+          Recharger
         </Button>
       </div>
     );
@@ -63,341 +121,550 @@ export default function ExperiencePage() {
   const experience = data.transformed;
   const { host, trip, lodging } = experience;
 
-  const price = trip?.price_per_person
-    ? new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: trip.price_currency,
-    }).format(trip.price_per_person / 100)
-    : lodging?.rooms[0]?.price_cents
-      ? new Intl.NumberFormat("fr-FR", {
-        style: "currency",
-        currency: lodging.rooms[0].currency,
-      }).format(lodging.rooms[0].price_cents / 100)
-      : "Sur demande";
+  const heroImages = experience.gallery
+    .map((item) => item.url)
+    .filter((item): item is string => Boolean(item));
 
-  const allGalleryImages = experience.gallery
-    .map((g) => g.url)
-    .filter(Boolean) as string[];
-
-  if (experience.thumbnailUrl && !allGalleryImages.includes(experience.thumbnailUrl)) {
-    allGalleryImages.unshift(experience.thumbnailUrl);
+  if (experience.thumbnailUrl && !heroImages.includes(experience.thumbnailUrl)) {
+    heroImages.unshift(experience.thumbnailUrl);
   }
 
-  // Find next available date if any
-  const nextDeparture = trip?.departures?.[0]?.depart_at ? new Date(trip.departures[0].depart_at) : null;
-  const departureDateStr = nextDeparture ? nextDeparture.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }) : "--/--";
+  const locationLabel = [experience.city, experience.region, experience.country]
+    .filter(Boolean)
+    .join(", ");
 
-  // Determine top amenities to highlight (mocking Wifi if present in keywords)
-  const hasWifi = experience.amenities.some(a => a.label.toLowerCase().includes('wifi'));
-  const totalBeds = lodging?.rooms?.reduce((acc, r) => acc + (r.capacity_beds || 0), 0) || 0;
-  const maxCapacity = lodging?.rooms?.reduce((acc, r) => acc + (r.max_persons || 0), 0) || trip?.group_size_max || 0;
+  const latitude = experience.location?.latitude ?? null;
+  const longitude = experience.location?.longitude ?? null;
+  const mapLinks = buildMapLinks(latitude, longitude, locationLabel || "Morocco");
+
+  const nightsLabel = trip ? "pers." : "nuit";
+  const basePrice =
+    trip?.price_cents ??
+    lodging?.rooms.find((room) => typeof room.price_cents === "number")?.price_cents ??
+    null;
+  const baseCurrency = trip?.currency ?? lodging?.rooms[0]?.currency ?? "MAD";
+  const formattedPrice = formatMoney(basePrice, baseCurrency);
+  const nextDeparture = trip?.departures?.[0]?.depart_at;
+
+  const capacity = trip?.group_size_max
+    ? trip.group_size_max
+    : lodging?.rooms?.length
+      ? lodging.rooms.reduce((acc, room) => acc + (room.max_persons || 0), 0)
+      : null;
+
+  const description = experience.longDescription || experience.shortDescription;
+  const showReadMore = description.length > 280;
+  const visibleDescription = showReadMore && !descriptionExpanded ? `${description.slice(0, 280)}...` : description;
+
+  const itineraryByDay = (() => {
+    if (!trip?.itinerary?.length) {
+      return [] as Array<{ day: number; items: typeof trip.itinerary }>;
+    }
+
+    const grouped = new Map<number, typeof trip.itinerary>();
+    for (const item of trip.itinerary) {
+      const day = item.day_number || 1;
+      const current = grouped.get(day) ?? [];
+      current.push(item);
+      grouped.set(day, current);
+    }
+
+    return Array.from(grouped.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([day, items]) => ({ day, items }));
+  })();
+
+  const hasStayTab = Boolean(lodging);
+  const hasRoomsTab = Boolean(lodging?.rooms?.length);
+  const hasItineraryTab = Boolean(trip?.itinerary?.length || trip);
 
   return (
-    <div className="min-h-screen bg-background pb-24 font-sans">
-      {/* Universal Header wrapped in dark background to match its white text/logo theme */}
-      <div className="bg-[#1a1a1a] px-5 py-4 sm:px-8 shadow-sm relative z-50">
-        <div className="max-w-[1280px] mx-auto">
+    <div className="min-h-screen bg-background pb-24">
+      <div className="bg-[#19181b] px-4 py-4 shadow-sm sm:px-8">
+        <div className="mx-auto max-w-7xl">
           <MarketingHeader />
         </div>
       </div>
 
-      {/* Top Bar for back & share */}
-      <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b px-4 py-3 flex items-center justify-between lg:hidden">
-        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon">
-            <Share2 className="h-5 w-5" />
+      <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
-            <Heart className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={async () => {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success("Lien copié");
+              }}
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setIsSaved((previous) => !previous);
+                toast.success(isSaved ? "Retiré des favoris" : "Ajouté aux favoris");
+              }}
+            >
+              <Heart className={`h-5 w-5 ${isSaved ? "fill-current text-rose-500" : ""}`} />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        {/* Hidden on mobile, shown on desktop */}
-        <div className="hidden lg:flex justify-between items-start mb-6">
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="hidden items-center justify-between lg:flex">
           <Button variant="ghost" className="gap-2" onClick={() => window.history.back()}>
             <ChevronLeft className="h-4 w-4" />
             Retour
           </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
-              <Share2 className="h-4 w-4" /> Partager
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={async () => {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success("Lien copié");
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+              Partager
             </Button>
-            <Button variant="outline" className="gap-2">
-              <Heart className="h-4 w-4" /> Enregistrer
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => {
+                setIsSaved((previous) => !previous);
+                toast.success(isSaved ? "Retiré des favoris" : "Ajouté aux favoris");
+              }}
+            >
+              <Heart className={`h-4 w-4 ${isSaved ? "fill-current text-rose-500" : ""}`} />
+              {isSaved ? "Enregistré" : "Enregistrer"}
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative items-start">
+        <section className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {experience.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="capitalize">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
 
-          {/* LEFT COLUMN: Gallery */}
-          <div className="lg:col-span-5 xl:col-span-6 space-y-4">
-            <div className="lg:sticky lg:top-8">
-              <ExperienceGallery images={allGalleryImages} videoUrl={experience.video?.url} />
+            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{experience.title}</h1>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1 text-foreground">
+                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                <span className="font-semibold">{experience.metrics.rating?.toFixed(1) ?? "Nouveau"}</span>
+                <span className="underline underline-offset-2">({experience.metrics.reviews} avis)</span>
+              </div>
+              <span className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                {locationLabel}
+              </span>
             </div>
           </div>
 
-          {/* MIDDLE COLUMN: Details via Tabs */}
-          <div className="lg:col-span-4 xl:col-span-4 space-y-6">
+          <ExperienceGallery images={heroImages} videoUrl={experience.video?.url} />
+        </section>
 
-            {/* Title & Summary */}
-            <section className="space-y-6 pt-2">
-              <div>
-                <div className="flex gap-2 mb-3 flex-wrap">
-                  {experience.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="capitalize">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                <h1 className="text-3xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground">
-                  {experience.title}
-                </h1>
-
-                {experience.metrics.rating && (
-                  <div className="flex items-center gap-2 mt-4 text-sm font-medium">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span>{experience.metrics.rating.toFixed(1)}</span>
-                    <span className="text-muted-foreground underline">
-                      {experience.metrics.reviews} avis
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Inspiration-style Badges */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {totalBeds > 0 && (
-                  <div className="flex items-center gap-3 border rounded-xl p-3 bg-muted/20">
-                    <BedDouble className="h-5 w-5 text-muted-foreground" />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-8 lg:grid-cols-12 lg:gap-10">
+          <section className="space-y-6 md:col-span-5 lg:col-span-8">
+            {host ? (
+              <div className="rounded-2xl border bg-card p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-14 w-14 border">
+                      <AvatarImage src={host.avatarUrl ?? undefined} />
+                      <AvatarFallback>{host.name.slice(0, 1)}</AvatarFallback>
+                    </Avatar>
                     <div>
-                      <p className="text-xs text-muted-foreground">Lits</p>
-                      <p className="text-sm font-semibold">{totalBeds}</p>
-                    </div>
-                  </div>
-                )}
-                {maxCapacity > 0 && (
-                  <div className="flex items-center gap-3 border rounded-xl p-3 bg-muted/20">
-                    <Users className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Capacité</p>
-                      <p className="text-sm font-semibold">{maxCapacity} max</p>
-                    </div>
-                  </div>
-                )}
-                {hasWifi && (
-                  <div className="flex items-center gap-3 border rounded-xl p-3 bg-muted/20">
-                    <Wifi className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Wifi</p>
-                      <p className="text-sm font-semibold">Inclus</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Content Tabs */}
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="w-full justify-start overflow-x-auto bg-transparent border-b rounded-none p-0 h-auto mb-6 sticky top-0 bg-background/95 z-10 pt-4 pb-0">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 text-base">Aperçu</TabsTrigger>
-                {lodging && lodging.rooms && lodging.rooms.length > 0 && (
-                  <TabsTrigger value="rooms" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 text-base">Chambres</TabsTrigger>
-                )}
-                <TabsTrigger value="location" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 text-base">Emplacement</TabsTrigger>
-                <TabsTrigger value="reviews" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 text-base">Avis</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-8 mt-0 focus-visible:outline-none pb-8 animate-in fade-in duration-300">
-                {/* Host Section */}
-                {host && (
-                  <section className="space-y-4">
-                    <h2 className="text-xl font-semibold">Proposé par</h2>
-                    <div className="flex items-center gap-4 border rounded-2xl p-4 bg-muted/10">
-                      <Avatar className="h-14 w-14 border">
-                        <AvatarImage src={host.avatarUrl ?? undefined} />
-                        <AvatarFallback>{host.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-lg">{host.name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                          {host.verified && (
-                            <span className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs font-medium">
-                              <ShieldCheck className="h-3 w-3" /> Vérifié
-                            </span>
-                          )}
-                          <span>Hôte depuis {new Date().getFullYear()}</span>
-                        </div>
+                      <p className="text-sm text-muted-foreground">Hosted by</p>
+                      <p className="text-lg font-semibold">{host.name}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        {host.verified ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Vérifié
+                          </span>
+                        ) : null}
+                        <span>{host.responseRate ?? "-"}% taux de réponse</span>
+                        <span>{host.responseTimeHours ?? "-"}h temps de réponse</span>
                       </div>
                     </div>
-                  </section>
-                )}
+                  </div>
+                  <Button variant="outline">Contacter l&apos;hôte</Button>
+                </div>
+              </div>
+            ) : null}
 
-                <div className="prose prose-slate max-w-none text-muted-foreground dark:prose-invert">
-                  <p>{experience.longDescription || experience.shortDescription}</p>
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0">
+                <TabsTrigger
+                  value="overview"
+                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                >
+                  Aperçu
+                </TabsTrigger>
+                {hasItineraryTab ? (
+                  <TabsTrigger
+                    value="itinerary"
+                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  >
+                    Itinéraire
+                  </TabsTrigger>
+                ) : null}
+                {hasStayTab ? (
+                  <TabsTrigger
+                    value="stay"
+                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  >
+                    Séjour
+                  </TabsTrigger>
+                ) : null}
+                {hasRoomsTab ? (
+                  <TabsTrigger
+                    value="rooms"
+                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                  >
+                    Chambres
+                  </TabsTrigger>
+                ) : null}
+                <TabsTrigger
+                  value="location"
+                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                >
+                  Emplacement
+                </TabsTrigger>
+                <TabsTrigger
+                  value="reviews"
+                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                >
+                  Avis
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="mt-5 space-y-6">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Card className="rounded-2xl border-muted">
+                    <CardContent className="flex items-center gap-3 p-4">
+                      <Clock3 className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Durée</p>
+                        <p className="font-medium">{formatDuration(trip?.duration_days ?? null, trip?.duration_hours ?? null)}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="rounded-2xl border-muted">
+                    <CardContent className="flex items-center gap-3 p-4">
+                      <Users className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Capacité max</p>
+                        <p className="font-medium">{capacity ?? "Flexible"}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="rounded-2xl border-muted">
+                    <CardContent className="flex items-center gap-3 p-4">
+                      <Badge className="h-6 rounded-full px-2 text-xs" variant="secondary">
+                        {experience.type}
+                      </Badge>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Type</p>
+                        <p className="font-medium capitalize">{experience.type}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {experience.amenities.length > 0 && (
-                  <div className="mt-8 space-y-4">
-                    <h3 className="font-semibold text-lg">Inclus dans ce lieu</h3>
-                    <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-                      {experience.amenities.map((amenity) => (
-                        <div key={amenity.key} className="flex items-center gap-3">
-                          <div className="p-2 bg-muted/50 rounded-lg">
-                            <Check className="h-4 w-4 text-foreground" />
-                          </div>
-                          <span className="text-sm font-medium text-foreground/80">{amenity.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold">À propos de cette expérience</h2>
+                  <p className="leading-relaxed text-muted-foreground">{visibleDescription}</p>
+                  {showReadMore ? (
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 font-semibold"
+                      onClick={() => setDescriptionExpanded((state) => !state)}
+                    >
+                      {descriptionExpanded ? "Voir moins" : "Lire plus"}
+                    </Button>
+                  ) : null}
+                </div>
 
-              {lodging && lodging.rooms && lodging.rooms.length > 0 && (
-                <TabsContent value="rooms" className="mt-0 focus-visible:outline-none pb-8 animate-in fade-in duration-300">
-                  <div className="space-y-4">
-                    {lodging.rooms.map((room) => (
-                      <div key={room.id} className="flex gap-4 border rounded-2xl p-4 hover:bg-muted/30 transition-colors">
-                        {room.photoUrls[0] ? (
-                          <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden flex-shrink-0 bg-muted">
-                            <Image src={room.photoUrls[0]} alt={room.name || "Chambre"} fill className="object-cover" />
-                          </div>
-                        ) : (
-                          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                            <BedDouble className="h-8 w-8 text-muted-foreground/50" />
-                          </div>
-                        )}
-                        <div className="flex flex-col flex-1 py-1">
-                          <h3 className="font-semibold text-lg">{room.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{room.description}</p>
-                          <div className="mt-auto flex flex-wrap gap-3 text-xs font-medium pt-3">
-                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-background border rounded-lg">
-                              <Users className="h-3.5 w-3.5" />
-                              {room.max_persons} max
-                            </span>
-                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-background border rounded-lg">
-                              <BedDouble className="h-3.5 w-3.5" />
-                              {room.capacity_beds} lits
-                            </span>
-                          </div>
-                        </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Équipements</h3>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {experience.amenities.map((amenity) => (
+                      <div key={amenity.key} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                        <Check className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">{amenity.label}</span>
                       </div>
                     ))}
                   </div>
-                </TabsContent>
-              )}
-
-              <TabsContent value="location" className="mt-0 focus-visible:outline-none pb-8 animate-in fade-in duration-300">
-                <div className="flex flex-col gap-2 relative">
-                  <div className="flex items-center gap-2 text-muted-foreground p-3 border rounded-xl bg-muted/10">
-                    <MapPin className="h-5 w-5 flex-shrink-0 text-primary" />
-                    <span>
-                      {experience.address ? `${(experience.address as any).street || ''} ` : ''}
-                      {experience.city}, {experience.region ? `${experience.region}, ` : ''} {experience.country}
-                    </span>
-                  </div>
-                  {/* Placeholder for map - in the future this would be a Google Map */}
-                  <div className="w-full h-48 bg-muted rounded-2xl mt-4 flex items-center justify-center border relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=Morocco&zoom=5&size=600x300&maptype=roadmap&sensor=false')] bg-cover opacity-20 dark:opacity-10 dark:invert" />
-                    <Button variant="secondary" className="relative z-10 rounded-full shadow-md font-medium">
-                      Voir sur la carte
-                    </Button>
-                  </div>
                 </div>
+
+                {experience.servicesIncluded.length || experience.servicesExcluded.length ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Card className="rounded-2xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Ce qui est inclus</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        {experience.servicesIncluded.length ? (
+                          experience.servicesIncluded.map((service) => (
+                            <p key={service.key} className="flex items-center gap-2">
+                              <Check className="h-4 w-4 text-emerald-600" />
+                              {service.label}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">Aucun détail fourni</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                    <Card className="rounded-2xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Non inclus</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        {experience.servicesExcluded.length ? (
+                          experience.servicesExcluded.map((service) => (
+                            <p key={service.key} className="flex items-center gap-2">
+                              <Minus className="h-4 w-4 text-amber-600" />
+                              {service.label}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">Aucun détail fourni</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : null}
               </TabsContent>
 
-              <TabsContent value="reviews" className="mt-0 focus-visible:outline-none pb-8 animate-in fade-in duration-300">
-                <div className="text-center text-muted-foreground py-12 border rounded-2xl bg-muted/10">
-                  Les avis seront bientôt disponibles.
+              <TabsContent value="itinerary" className="mt-5 space-y-4">
+                {itineraryByDay.length ? (
+                  itineraryByDay.map(({ day, items }) => (
+                    <Card key={day} className="rounded-2xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Jour {day}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {items.map((item) => (
+                          <div key={item.id} className="rounded-xl border bg-muted/20 p-3">
+                            <p className="font-medium">{item.title}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{item.details}</p>
+                            <p className="mt-2 text-xs text-muted-foreground">{item.location_name ?? "Lieu à confirmer"}</p>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                    Détails d&apos;itinéraire indisponibles pour cette expérience.
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="stay" className="mt-5 space-y-4">
+                {lodging ? (
+                  <>
+                    <Card className="rounded-2xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Règles de la maison</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm text-muted-foreground">
+                        <p className="flex items-center gap-2">
+                          {lodging.non_fumeur ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-rose-600" />}
+                          Non-fumeur
+                        </p>
+                        <p className="flex items-center gap-2">
+                          {lodging.animaux_acceptes ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-rose-600" />}
+                          Animaux acceptés
+                        </p>
+                        <p>
+                          <span className="font-medium text-foreground">Séjour minimum:</span>{" "}
+                          {lodging.min_stay_nights ?? 1} nuit(s)
+                        </p>
+                        <p>{lodging.house_rules ?? "Règles supplémentaires à confirmer avec l&apos;hôte."}</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="rounded-2xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Horaires et annulation</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm text-muted-foreground">
+                        <p>
+                          Check-in: <span className="font-medium text-foreground">{lodging.check_in_time ?? "Flexible"}</span>
+                        </p>
+                        <p>
+                          Check-out: <span className="font-medium text-foreground">{lodging.check_out_time ?? "Flexible"}</span>
+                        </p>
+                        <p>
+                          Politique d&apos;annulation: <span className="font-medium capitalize text-foreground">{experience.cancellationPolicy}</span>
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                    Informations de séjour indisponibles.
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="rooms" className="mt-5 space-y-4">
+                {lodging?.rooms?.length ? (
+                  lodging.rooms.map((room) => (
+                    <Card key={room.id} className="overflow-hidden rounded-2xl">
+                      <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
+                        <div className="bg-muted/30 p-2">
+                          {room.photoUrls.length ? (
+                            <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
+                              <CarouselContent className="ml-0">
+                                {room.photoUrls.map((photoUrl, index) => (
+                                  <CarouselItem key={`${room.id}-${index}`} className="pl-0">
+                                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
+                                      <Image src={photoUrl} alt={room.name || "Room"} fill className="object-cover" />
+                                    </div>
+                                  </CarouselItem>
+                                ))}
+                              </CarouselContent>
+                            </Carousel>
+                          ) : (
+                            <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-muted">
+                              <BedDouble className="h-8 w-8 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-3 p-4">
+                          <h3 className="text-lg font-semibold">{room.name ?? "Chambre"}</h3>
+                          <p className="text-sm text-muted-foreground">{room.description ?? "Description non renseignée."}</p>
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            <Badge variant="secondary" className="gap-1">
+                              <Users className="h-3 w-3" />
+                              {room.max_persons} pers. max
+                            </Badge>
+                            <Badge variant="secondary" className="gap-1">
+                              <BedDouble className="h-3 w-3" />
+                              {room.capacity_beds} lit(s)
+                            </Badge>
+                          </div>
+                          <Separator />
+                          <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                    Aucune chambre disponible.
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="location" className="mt-5 space-y-4">
+                <Card className="rounded-2xl">
+                  <CardContent className="space-y-4 p-4">
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <MapPin className="mt-0.5 h-4 w-4 text-primary" />
+                      <span>{locationLabel || "Adresse non renseignée"}</span>
+                    </div>
+                    <div className="overflow-hidden rounded-xl border">
+                      <iframe
+                        title="Carte de l'expérience"
+                        src={mapLinks.embedUrl}
+                        className="h-72 w-full"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                      <a href={mapLinks.externalUrl} target="_blank" rel="noreferrer">
+                        Ouvrir dans Maps
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="reviews" className="mt-5">
+                <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+                  Les avis détaillés arrivent prochainement.
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
+          </section>
 
-          {/* RIGHT COLUMN: Booking Sidebar */}
-          <div className="lg:col-span-3 xl:col-span-2 hidden lg:block">
-            <div className="sticky top-8">
-              <Card className="shadow-lg border-muted/60 overflow-hidden">
-                <CardHeader className="bg-muted/10 border-b">
-                  <CardTitle className="flex flex-col">
-                    <span className="text-sm font-normal text-muted-foreground mb-1">
-                      {trip ? "Prochain départ" : "À partir de"}
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold">{price}</span>
-                      <span className="text-muted-foreground font-normal text-sm">
-                        / {trip ? "pers." : "nuit"}
-                      </span>
+          <aside className="md:col-span-3 lg:col-span-4">
+            <div className="md:sticky md:top-24">
+              <Card className="rounded-2xl border-muted/70 shadow-sm">
+                <CardHeader className="space-y-2">
+                  <CardTitle className="flex items-end justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        {trip ? "Prochain départ" : "Tarif"}
+                      </p>
+                      <p className="text-3xl font-semibold">{formattedPrice}</p>
                     </div>
+                    <p className="pb-1 text-sm text-muted-foreground">/ {nightsLabel}</p>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 pt-6">
+                <CardContent className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="border rounded-xl p-3 bg-background hover:border-primary/50 transition-colors cursor-pointer">
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">
-                        Arrivée
+                    <div className="rounded-xl border p-3">
+                      <p className="text-[11px] uppercase text-muted-foreground">Arrivée</p>
+                      <p className="mt-1 text-sm font-medium">
+                        <Calendar className="mr-1 inline h-3.5 w-3.5 text-primary" />
+                        {formatDate(nextDeparture)}
                       </p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">{departureDateStr}</span>
-                      </div>
                     </div>
-                    <div className="border rounded-xl p-3 bg-background hover:border-primary/50 transition-colors cursor-pointer">
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">
-                        Départ
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">--/--</span>
-                      </div>
+                    <div className="rounded-xl border p-3">
+                      <p className="text-[11px] uppercase text-muted-foreground">Départ</p>
+                      <p className="mt-1 text-sm font-medium">--/--</p>
                     </div>
                   </div>
-
-                  <div className="border rounded-xl p-3 bg-background hover:border-primary/50 transition-colors cursor-pointer">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase block mb-1">
-                      Voyageurs
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">{maxCapacity > 0 ? `Max ${maxCapacity}` : "1 voyageur"}</span>
-                    </div>
+                  <div className="rounded-xl border p-3">
+                    <p className="text-[11px] uppercase text-muted-foreground">Voyageurs</p>
+                    <p className="mt-1 text-sm font-medium">{capacity ? `Jusqu'à ${capacity}` : "1 voyageur"}</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/30 p-3 text-sm text-muted-foreground">
+                    Vous ne serez pas débité maintenant. Le montant exact sera confirmé avant paiement.
                   </div>
                 </CardContent>
-                <CardFooter className="pt-2 pb-6 bg-muted/5">
-                  <Button
-                    className="w-full h-12 text-md rounded-xl shadow-md hover:shadow-lg transition-all"
-                    size="lg"
-                    onClick={() => openBooking(experience)}
-                  >
+                <CardFooter className="flex-col gap-2">
+                  <Button className="h-11 w-full" onClick={() => openBooking(experience)}>
                     Vérifier la disponibilité
                   </Button>
+                  <p className="text-xs text-muted-foreground">Annulation selon la politique {experience.cancellationPolicy}</p>
                 </CardFooter>
               </Card>
             </div>
+          </aside>
+        </div>
+      </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 p-4 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase text-muted-foreground">À partir de</p>
+            <p className="text-lg font-semibold">{formattedPrice}</p>
           </div>
-
+          <Button className="h-11 rounded-full px-8" onClick={() => openBooking(experience)}>
+            Réserver
+          </Button>
         </div>
-      </div>
-
-      {/* Mobile Sticky Booking Footer */}
-      <div className="lg:hidden fixed bottom-16 sm:bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-md border-t z-50 flex items-center justify-between shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">À partir de</p>
-          <p className="text-lg font-bold">{price}</p>
-        </div>
-        <Button
-          size="lg"
-          className="rounded-full px-8 shadow-md"
-          onClick={() => openBooking(experience)}
-        >
-          Réserver
-        </Button>
       </div>
 
       <BookingModal />
