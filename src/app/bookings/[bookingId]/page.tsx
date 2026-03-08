@@ -21,6 +21,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useReviewForBooking } from "@/hooks/use-reviews";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 
@@ -269,6 +271,10 @@ export default function BookingDetailPage() {
 
       const session = data as PayzoneSession;
       setLastPaymentId(session.paymentId);
+      captureEvent(ANALYTICS_EVENT.PAYMENT_INITIATED, {
+        booking_id: booking.id,
+        method: "payzone",
+      });
       openPayzonePaywall(session);
       toast.success("Page de paiement ouverte dans un nouvel onglet.");
     } catch (err) {
@@ -339,6 +345,10 @@ export default function BookingDetailPage() {
       }
 
       toast.success("Réservation annulée.");
+      captureEvent(ANALYTICS_EVENT.BOOKING_CANCELLED, {
+        booking_id: booking.id,
+        reason: "user_cancelled",
+      });
       await queryClient.invalidateQueries({ queryKey: ["bookings", user.id] });
       await refetch();
     } catch (err) {

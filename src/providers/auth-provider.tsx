@@ -11,6 +11,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import {
+  captureEvent,
+  identifyAnalyticsUser,
+  resetAnalyticsUser,
+} from "@/lib/analytics/posthog";
 import { createClient } from "@/lib/supabase/client";
 
 export type AuthMode = "login" | "signup";
@@ -43,6 +49,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authMode, setAuthModeState] = useState<AuthMode>("login");
   const pendingActionRef = useRef<AuthModalOptions["onAuthed"] | null>(null);
 
+  const identifyUser = useCallback(
+    async (nextSession: Session) => {
+      const user = nextSession.user;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_host, preferred_language, created_at")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      identifyAnalyticsUser(user.id, {
+        role: profile?.is_host ? "host" : "traveler",
+        language:
+          profile?.preferred_language ??
+          user.user_metadata?.preferred_language ??
+          null,
+        created_at: profile?.created_at ?? user.created_at ?? null,
+      });
+    },
+    [supabase],
+  );
+
   useEffect(() => {
     let isActive = true;
 
@@ -62,6 +89,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(nextSession ?? null);
       setLoading(false);
 
+      if (nextSession?.user) {
+        void identifyUser(nextSession);
+      } else {
+        resetAnalyticsUser();
+      }
+
       if (nextSession) {
         if (pendingActionRef.current) {
           const action = pendingActionRef.current;
@@ -79,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isActive = false;
       data.subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [identifyUser, supabase]);
 
   const setAuthMode = useCallback((mode: AuthMode) => {
     setAuthModeState(mode);
@@ -92,8 +125,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (options?.mode) {
       setAuthModeState(options.mode);
     }
+    captureEvent(ANALYTICS_EVENT.AUTH_MODAL_OPENED, {
+      mode: options?.mode ?? authMode,
+    });
     setAuthModalOpen(true);
-  }, []);
+  }, [authMode]);
 
   const closeAuthModal = useCallback(() => {
     pendingActionRef.current = null;
@@ -101,7 +137,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    captureEvent(ANALYTICS_EVENT.AUTH_LOGOUT);
     await supabase.auth.signOut();
+    resetAnalyticsUser();
   }, [supabase]);
 
   const value = useMemo<AuthContextValue>(

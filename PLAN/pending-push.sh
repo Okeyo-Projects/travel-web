@@ -6,3 +6,8 @@
 git push -u origin task/004-notifications-page
 gh pr create --base main --head task/004-notifications-page --title "task(004): Notifications Page with Unread Badge and Navigation" --body "Automated migration task. See PLAN/tasks/004-notifications-page.md for details."
 gh pr merge --merge --auto
+
+# Task 016: Implement PostHog Analytics with Full Event Tracking
+git push -u origin task/016-posthog-analytics
+gh pr create --base main --head task/016-posthog-analytics --title "task(016): Implement PostHog Analytics with Full Event Tracking" --body "Automated migration task. See PLAN/tasks/016-posthog-analytics.md for details."
+gh pr merge --merge --auto
