@@ -1,7 +1,7 @@
 ---
 id: "005"
 title: "Calendar View for User Bookings"
-status: in_progress
+status: review
 priority: medium
 created: 2026-03-07
 updated: 2026-03-08
@@ -10,7 +10,7 @@ branch: task/005-booking-calendar-view
 pr: null
 attempts: 0
 depends_on: []
-progress: 90
+progress: 100
 ---
 
 ## Description
@@ -79,6 +79,11 @@ Reference the mobile bookings calendar at `/Users/naimabdelkerim/Code/travel/app
 
 ## Review Notes
 
+- Validation blocked in this environment due to missing dependencies:
+  - `pnpm tsc --noEmit` → `Command "tsc" not found`
+  - `pnpm lint` → `biome: command not found`
+  - Root cause: `node_modules` is not installed in this workspace.
+
 ## Agent Log
 
 ### 2026-03-08
@@ -91,3 +96,4 @@ Reference the mobile bookings calendar at `/Users/naimabdelkerim/Code/travel/app
   - Added status color legend and responsive calendar layout.
   - Added agenda panel for selected day with booking cards, status badge, guests, and day indicator text.
   - Added booking card click-through to booking detail route.
+- Moved task to `review`, set `progress: 100`, and queued manual push/PR commands in `PLAN/pending-push.sh`.
