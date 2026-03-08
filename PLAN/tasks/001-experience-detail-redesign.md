@@ -1,12 +1,12 @@
 ---
 id: "001"
 title: "Redesign Experience Detail Page (Airbnb/Booking-level)"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/001-experience-detail-redesign-codex
 pr: null
 attempts: 0
 depends_on: []
@@ -79,3 +79,6 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-08 (automation run)
+- Task started on branch `task/001-experience-detail-redesign-codex` because `task/001-experience-detail-redesign` is currently checked out in another worktree and unavailable in this environment.
