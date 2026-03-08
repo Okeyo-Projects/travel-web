@@ -53,17 +53,6 @@ export function Navbar() {
               Explorer nos trésors
             </Button>
           </Link>
-          <Link href={localizeHref("/offers", pathname)}>
-            <Button
-              variant="outline"
-              className={cn(
-                "rounded-lg px-6 font-medium transition-colors",
-                "bg-white text-black border border-input hover:bg-accent",
-              )}
-            >
-              Nos offres du moment
-            </Button>
-          </Link>
           {user ? <NotificationBell variant="light" /> : null}
         </nav>
       </div>

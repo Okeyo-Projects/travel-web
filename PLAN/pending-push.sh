@@ -20,3 +20,8 @@ gh pr merge --merge --auto
 git push -u origin task/005-booking-calendar-view
 gh pr create --base main --head task/005-booking-calendar-view --title "task(005): Calendar View for User Bookings" --body "Automated migration task. See PLAN/tasks/005-booking-calendar-view.md for details."
 gh pr merge --merge --auto
+
+# Task 009: Remove Offers Page
+git push -u origin task/009-remove-offers-page
+gh pr create --base main --head task/009-remove-offers-page --title "task(009): Remove Offers Page" --body "Automated migration task. See PLAN/tasks/009-remove-offers-page.md for details."
+gh pr merge --merge --auto
