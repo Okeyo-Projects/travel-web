@@ -10,7 +10,7 @@ branch: task/001-experience-detail-redesign-codex
 pr: null
 attempts: 0
 depends_on: []
-progress: 20
+progress: 88
 ---
 
 ## Description
@@ -63,17 +63,17 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 - [x] Read current experience detail page and all related components
 - [x] Read mobile experience detail for design reference
 - [x] Read experience schema and types
-- [ ] Redesign gallery component (grid layout + lightbox)
-- [ ] Build header section (title, location, rating, host, share/save)
-- [ ] Redesign overview section (highlights bar, description expand, amenities grid)
-- [ ] Build itinerary tab for trip experiences
-- [ ] Build stay tab for lodging experiences (house rules, policies)
-- [ ] Improve rooms tab with photo carousel per room
-- [ ] Improve location tab with map display
-- [ ] Build host info section
-- [ ] Redesign sticky booking sidebar (desktop)
-- [ ] Build mobile sticky footer
-- [ ] Ensure responsive layout across breakpoints
+- [x] Redesign gallery component (grid layout + lightbox)
+- [x] Build header section (title, location, rating, host, share/save)
+- [x] Redesign overview section (highlights bar, description expand, amenities grid)
+- [x] Build itinerary tab for trip experiences
+- [x] Build stay tab for lodging experiences (house rules, policies)
+- [x] Improve rooms tab with photo carousel per room
+- [x] Improve location tab with map display
+- [x] Build host info section
+- [x] Redesign sticky booking sidebar (desktop)
+- [x] Build mobile sticky footer
+- [x] Ensure responsive layout across breakpoints
 - [ ] Polish UI to industry standard
 
 ## Review Notes
@@ -85,3 +85,6 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 - Audited current web page implementation (`src/app/experience/[id]/page.tsx`, `ExperienceGallery`, and `use-experience-detail`) to identify gaps against acceptance criteria.
 - Reviewed mobile reference structure in `/apps/mobile/app/experience/[experienceId]/index.tsx` for tab hierarchy and section ordering.
 - Reviewed schema/types (`20251004002801_create_experience_tables.sql`, `src/types/experience-detail.ts`) for itinerary, lodging policies, host fields, and room media shape.
+- Rebuilt `ExperienceGallery` into a desktop 1+4 layout with lightbox triggers and a dedicated "Show all photos" action.
+- Reworked the experience detail page layout and sections: functional share/save actions, enhanced overview with expandable description and amenity icon grid, itinerary/stay tabs, room photo carousel cards, embedded location map, host section, and refreshed sticky booking CTAs for desktop/mobile.
+- Validation is blocked in this environment because dependencies are not installed (`node_modules` missing, `biome` and `tsc` commands unavailable).
