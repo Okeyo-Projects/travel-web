@@ -10,7 +10,7 @@ branch: task/006-social-login
 pr: null
 attempts: 0
 depends_on: []
-progress: 5
+progress: 70
 ---
 
 ## Description
@@ -49,9 +49,9 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 
 - [x] Read current auth modal implementation
 - [x] Read auth provider for OAuth flow pattern (Google)
-- [ ] Add Apple logo icon + Apple sign-in button under Google
-- [ ] Implement `signInWithOAuth({ provider: 'apple' })` using existing redirect pattern
-- [ ] Add/verify error handling for Apple OAuth failures and cancellations
+- [x] Add Apple logo icon + Apple sign-in button under Google
+- [x] Implement `signInWithOAuth({ provider: 'apple' })` using existing redirect pattern
+- [x] Add/verify error handling for Apple OAuth failures and cancellations
 - [ ] Verify button visibility in both login and signup modal states
 - [ ] Verify mobile and desktop layout spacing/responsiveness
 - [ ] Document required Supabase Apple provider configuration in task notes
@@ -64,3 +64,5 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 - Started task on branch `task/006-social-login`.
 - Reviewed auth modal/provider flow, relevant profile/auth schema and RLS migrations, and mobile login screen reference.
 - Converted checklist into small execution steps and marked context-reading steps complete.
+- Added Apple OAuth support to auth modal with a black branded button and inline Apple icon placed below Google.
+- Reused Supabase OAuth redirect pattern and normalized cancellation/denial errors to a user-friendly message.
