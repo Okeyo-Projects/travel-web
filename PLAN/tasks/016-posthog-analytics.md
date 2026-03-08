@@ -2,11 +2,12 @@
 id: "016"
 title: "Implement PostHog Analytics with Full Event Tracking"
 status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/016-posthog-analytics
 pr: null
 attempts: 0
 depends_on: []
@@ -99,23 +100,20 @@ Integrate PostHog analytics into the web app with comprehensive event tracking. 
 
 ## Checklist
 
-- [ ] Install `posthog-js` package
-- [ ] Create PostHogProvider component
-- [ ] Create PostHogPageView component for route tracking
-- [ ] Add to root layout
-- [ ] Add environment variables to `.env.example`
-- [ ] Implement user identification on auth state change
-- [ ] Add auth events (login, signup, logout)
-- [ ] Add experience discovery events (view, search, card click)
-- [ ] Add booking flow events (start, steps, submit, cancel)
-- [ ] Add chat events (start, message, booking)
-- [ ] Add social events (like, comment, share)
-- [ ] Add host events (mode switch, publish, availability)
-- [ ] Create `usePostHogEvent` utility hook for easy event firing
-- [ ] Export `useFeatureFlag` hook
-- [ ] Disable in development or make configurable
-- [ ] Test events fire correctly
-- [ ] Verify build passes
+- [ ] Add PostHog dependency and environment variable entries
+- [ ] Create analytics constants and typed event/property definitions
+- [ ] Implement `PostHogProvider` initialization with env + dev guard + consent gate
+- [ ] Implement route-change page view tracking component
+- [ ] Wire provider/page-view into app root layout
+- [ ] Add auth user identify/reset wiring in auth provider
+- [ ] Add reusable analytics hooks (`usePostHogEvent`, `useFeatureFlag`)
+- [ ] Add auth event tracking (modal open, login, signup, logout, failures)
+- [ ] Add experience discovery tracking (view, search, card click, category)
+- [ ] Add booking flow tracking (start, step completed, submit, cancel, payment)
+- [ ] Add AI chat tracking (start, message sent, booking created)
+- [ ] Add social tracking (like/unlike, comment, share)
+- [ ] Add host tracking hooks (mode entered, publish/unpublish, availability updated)
+- [ ] Run typecheck/lint/build validations and capture any environment blockers
 
 ## Review Notes
 
