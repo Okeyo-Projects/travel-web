@@ -74,3 +74,4 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 - Verified by code path that social buttons are outside login/signup conditional rendering, so Apple appears in both modes on desktop and mobile modal layouts.
 - Validation blocked by environment: `pnpm tsc --noEmit` fails (`Command "tsc" not found`) and `pnpm lint` fails (`biome: command not found`) because `node_modules` is missing.
 - Marked task ready for review with manual dependency install + runtime OAuth validation pending.
+- Appended task `006` commands to `PLAN/pending-push.sh`; push/PR/merge remains pending manual execution.
