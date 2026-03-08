@@ -55,6 +55,19 @@ export type BookingQuoteResult = {
   message: string;
 };
 
+export type CancelBookingInput = {
+  bookingId: string;
+  guestId: string;
+  reason?: string;
+  details?: string;
+};
+
+const CANCELLABLE_BOOKING_STATUSES: BookingStatus[] = [
+  "pending_host",
+  "approved",
+  "pending_payment",
+];
+
 export function useCreateBooking() {
   const queryClient = useQueryClient();
   const supabase = createClient();
@@ -123,6 +136,59 @@ export function useGetBookingQuote() {
       }
 
       return result as BookingQuoteResult;
+    },
+  });
+}
+
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (input: CancelBookingInput) => {
+      const cancellationReason = input.reason
+        ? input.details?.trim()
+          ? `${input.reason} — ${input.details.trim()}`
+          : input.reason
+        : input.details?.trim() || null;
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: input.guestId,
+          cancellation_reason: cancellationReason,
+        })
+        .eq("id", input.bookingId)
+        .eq("guest_id", input.guestId)
+        .in("status", CANCELLABLE_BOOKING_STATUSES)
+        .select("id,guest_id,experience_id,status")
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (!data) {
+        throw new Error("Impossible d'annuler cette réservation.");
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["bookings", data.guest_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["booking-detail", data.id, data.guest_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-bookings", data.guest_id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["experience-availability", data.experience_id],
+      });
     },
   });
 }
