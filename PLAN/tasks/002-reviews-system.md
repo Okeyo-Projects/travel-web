@@ -10,7 +10,7 @@ branch: task/002-reviews-system-2
 pr: null
 attempts: 0
 depends_on: ["001"]
-progress: 0
+progress: 90
 ---
 
 ## Description
@@ -54,19 +54,21 @@ Also add a review submission flow accessible from the booking detail page when a
 
 ## Checklist
 
-- [ ] Read review system migrations and understand schema
-- [ ] Read mobile app review display for design reference
-- [ ] Create review types in `web/src/types/`
-- [ ] Create `use-reviews.ts` hook (fetch reviews for experience, submit review)
-- [ ] Build ReviewSummary component (avg rating, breakdown chart)
-- [ ] Build ReviewCard component (avatar, name, date, rating, text, host response)
-- [ ] Build ReviewList component with sort and pagination
-- [ ] Integrate into experience detail Reviews tab
-- [ ] Build ReviewForm component (star selector, text input, submit)
-- [ ] Add review submission to booking detail page (completed bookings only)
-- [ ] Handle empty states and loading states
-- [ ] Polish UI
+- [x] Read review system migrations and understand schema
+- [x] Read mobile app review display for design reference
+- [x] Create review types in `web/src/types/`
+- [x] Create `use-reviews.ts` hook (fetch reviews for experience, submit review)
+- [x] Build ReviewSummary component (avg rating, breakdown chart)
+- [x] Build ReviewCard component (avatar, name, date, rating, text, host response)
+- [x] Build ReviewList component with sort and pagination
+- [x] Integrate into experience detail Reviews tab
+- [x] Build ReviewForm component (star selector, text input, submit)
+- [x] Add review submission to booking detail page (completed bookings only)
+- [x] Handle empty states and loading states
+- [x] Polish UI
 
 ## Review Notes
 
 ## Agent Log
+- 2026-03-08: Started task on branch `task/002-reviews-system`. Reviewed review schema (`reviews`, `review_requests`), RLS/triggers, and mobile experience reviews UX. Ready to implement shared types/hook/components and booking review submission flow.
+- 2026-03-08: Implemented reviews stack for web: new review types (`src/types/review.ts`), data hook (`src/hooks/use-reviews.ts`), review UI components (summary/card/list/form), replaced experience Reviews tab placeholder, and added completed-booking review submission with existing-review detection.

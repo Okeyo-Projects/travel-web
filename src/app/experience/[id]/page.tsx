@@ -21,6 +21,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
+import { ReviewList } from "@/components/experience/ReviewList";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -600,9 +601,7 @@ export default function ExperiencePage() {
               </TabsContent>
 
               <TabsContent value="reviews" className="mt-5">
-                <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Les avis détaillés arrivent prochainement.
-                </div>
+                <ReviewList experienceId={experience.id} />
               </TabsContent>
             </Tabs>
           </section>
