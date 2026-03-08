@@ -1,16 +1,16 @@
 ---
 id: "006"
 title: "Add Apple Sign-In to Auth Modal"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/006-social-login
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 5
 ---
 
 ## Description
@@ -47,14 +47,20 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 
 ## Checklist
 
-- [ ] Read current auth modal implementation
-- [ ] Read auth provider for OAuth flow pattern (Google)
-- [ ] Add Apple sign-in button with proper styling
-- [ ] Implement `signInWithOAuth({ provider: 'apple' })` handler
-- [ ] Handle success and error states
-- [ ] Test on both login and signup views
-- [ ] Verify responsive layout
+- [x] Read current auth modal implementation
+- [x] Read auth provider for OAuth flow pattern (Google)
+- [ ] Add Apple logo icon + Apple sign-in button under Google
+- [ ] Implement `signInWithOAuth({ provider: 'apple' })` using existing redirect pattern
+- [ ] Add/verify error handling for Apple OAuth failures and cancellations
+- [ ] Verify button visibility in both login and signup modal states
+- [ ] Verify mobile and desktop layout spacing/responsiveness
+- [ ] Document required Supabase Apple provider configuration in task notes
 
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-08
+- Started task on branch `task/006-social-login`.
+- Reviewed auth modal/provider flow, relevant profile/auth schema and RLS migrations, and mobile login screen reference.
+- Converted checklist into small execution steps and marked context-reading steps complete.
