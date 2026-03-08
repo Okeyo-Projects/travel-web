@@ -1,16 +1,16 @@
 ---
 id: "009"
 title: "Remove Offers Page"
-status: todo
+status: in_progress
 priority: medium
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/009-remove-offers-page
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 10
 ---
 
 ## Description
@@ -44,12 +44,12 @@ Remove the `/offers` page entirely. It uses mock data and has non-functional fea
 
 ## Checklist
 
-- [ ] Identify all references to offers page
-- [ ] Remove offers page file
-- [ ] Remove or clean up mock data
-- [ ] Remove navigation links
-- [ ] Verify no broken links remain
-- [ ] Verify build passes
+- [ ] Identify all references to `/offers` and mock data usage
+- [ ] Remove `src/app/offers/page.tsx`
+- [ ] Remove `src/lib/mock-data.ts` if no longer referenced
+- [ ] Remove `/offers` navigation links from shared layouts/components
+- [ ] Verify no `/offers` or `mock-data` references remain in `src/`
+- [ ] Run build/lint checks and document any environment blockers
 
 ## Review Notes
 
