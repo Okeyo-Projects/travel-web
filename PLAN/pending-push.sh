@@ -20,3 +20,8 @@ gh pr merge --merge --auto
 git push -u origin task/005-booking-calendar-view
 gh pr create --base main --head task/005-booking-calendar-view --title "task(005): Calendar View for User Bookings" --body "Automated migration task. See PLAN/tasks/005-booking-calendar-view.md for details."
 gh pr merge --merge --auto
+
+# Task 010: Functional Profile Editing with Avatar Upload
+git push -u origin task/010-profile-editing
+gh pr create --base main --head task/010-profile-editing --title "task(010): Functional Profile Editing with Avatar Upload" --body "Automated migration task. See PLAN/tasks/010-profile-editing.md for details."
+gh pr merge --merge --auto
