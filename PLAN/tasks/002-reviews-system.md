@@ -1,16 +1,16 @@
 ---
 id: "002"
 title: "Implement Reviews System on Experience Detail"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/002-reviews-system
 pr: null
 attempts: 0
 depends_on: ["001"]
-progress: 0
+progress: 15
 ---
 
 ## Description
@@ -54,8 +54,8 @@ Also add a review submission flow accessible from the booking detail page when a
 
 ## Checklist
 
-- [ ] Read review system migrations and understand schema
-- [ ] Read mobile app review display for design reference
+- [x] Read review system migrations and understand schema
+- [x] Read mobile app review display for design reference
 - [ ] Create review types in `web/src/types/`
 - [ ] Create `use-reviews.ts` hook (fetch reviews for experience, submit review)
 - [ ] Build ReviewSummary component (avg rating, breakdown chart)
@@ -70,3 +70,4 @@ Also add a review submission flow accessible from the booking detail page when a
 ## Review Notes
 
 ## Agent Log
+- 2026-03-08: Started task on branch `task/002-reviews-system`. Reviewed review schema (`reviews`, `review_requests`), RLS/triggers, and mobile experience reviews UX. Ready to implement shared types/hook/components and booking review submission flow.
