@@ -3,6 +3,6 @@
 
 
 # Task 001: Redesign Experience Detail Page (Airbnb/Booking-level)
-git push -u origin task/001-experience-detail-redesign
-gh pr create --base main --head task/001-experience-detail-redesign --title "task(001): Redesign Experience Detail Page (Airbnb/Booking-level)" --body "Automated migration task. See web/PLAN/tasks/001-experience-detail-redesign.md for details."
+git push -u origin task/001-experience-detail-redesign-2
+gh pr create --base main --head task/001-experience-detail-redesign-2 --title "task(001): Redesign Experience Detail Page (Airbnb/Booking-level)" --body "Automated migration task. See web/PLAN/tasks/001-experience-detail-redesign.md for details."
 gh pr merge --merge --auto

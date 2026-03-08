@@ -6,7 +6,7 @@ priority: high
 created: 2026-03-07
 updated: 2026-03-08
 assigned: codex
-branch: task/001-experience-detail-redesign
+branch: task/001-experience-detail-redesign-2
 pr: null
 attempts: 0
 depends_on: []
@@ -91,3 +91,8 @@ Reference: The mobile app's experience detail at `/Users/naimabdelkerim/Code/tra
 - Added coordinate parsing from PostGIS location values in experience detail transform for map rendering.
 - Validation blocked by missing dependencies in environment (`node_modules` absent; `biome` and `tsc` commands unavailable).
 - Task moved to `review`; push/PR commands prepared in `PLAN/pending-push.sh` for manual execution.
+
+### 2026-03-08 (automation rerun)
+- Replayed completed task commits onto `task/001-experience-detail-redesign-2` because `task/001-experience-detail-redesign` is currently attached to another worktree.
+- Updated task frontmatter and pending push commands to point at the active rerun branch.
+- Re-checked validation commands: `pnpm lint` and `pnpm tsc --noEmit` remain blocked in this environment due missing `node_modules`.
