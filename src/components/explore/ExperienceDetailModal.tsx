@@ -16,7 +16,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { type TouchEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,9 @@ export function ExperienceDetailModal({
 }: ExperienceDetailModalProps) {
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [comment, setComment] = useState("");
+  const [isMediaVisible, setIsMediaVisible] = useState(true);
+  const [isExperienceVisible, setIsExperienceVisible] = useState(true);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const pathname = usePathname();
   const { requireAuth } = useRequiredAuth();
 
@@ -123,6 +126,30 @@ export function ExperienceDetailModal({
     setActiveMediaIndex(0);
   }, [currentExperience?.id]);
 
+  useEffect(() => {
+    if (!open) return;
+    setIsExperienceVisible(false);
+    const frame = window.requestAnimationFrame(() => {
+      setIsExperienceVisible(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [open, activeIndex]);
+
+  useEffect(() => {
+    if (!open) return;
+    setIsMediaVisible(false);
+    const frame = window.requestAnimationFrame(() => {
+      setIsMediaVisible(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [open, currentMedia?.src]);
+
   const social = useExperienceSocial(currentExperience?.id ?? null);
 
   if (!open || !currentExperience) {
@@ -157,8 +184,41 @@ export function ExperienceDetailModal({
     }
   };
 
+  const handleNextExperience = () => {
+    setActiveIndex((value) => Math.min(experiences.length - 1, value + 1));
+  };
+
+  const handlePreviousExperience = () => {
+    setActiveIndex((value) => Math.max(0, value - 1));
+  };
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    setTouchStartX(event.touches[0]?.clientX ?? null);
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (touchStartX === null) return;
+    const endX = event.changedTouches[0]?.clientX ?? touchStartX;
+    const delta = endX - touchStartX;
+    const swipeThreshold = 60;
+
+    if (Math.abs(delta) >= swipeThreshold) {
+      if (delta < 0) {
+        handleNextExperience();
+      } else {
+        handlePreviousExperience();
+      }
+    }
+
+    setTouchStartX(null);
+  };
+
   return (
-    <div className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm transition-opacity duration-300"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <button
         type="button"
         className="absolute inset-0"
@@ -167,7 +227,14 @@ export function ExperienceDetailModal({
       />
 
       <div className="absolute inset-0 flex items-center justify-center p-0 md:p-4">
-        <div className="relative h-full w-full overflow-hidden bg-white md:h-[92vh] md:max-w-6xl md:rounded-3xl">
+        <div
+          className={cn(
+            "relative h-full w-full overflow-hidden bg-white transition-all duration-300 ease-out md:h-[92vh] md:max-w-6xl md:rounded-3xl",
+            isExperienceVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-1.5 opacity-0",
+          )}
+        >
           <button
             type="button"
             onClick={onClose}
@@ -188,14 +255,20 @@ export function ExperienceDetailModal({
                   loop
                   playsInline
                   controls
-                  className="h-full w-full object-cover md:object-contain"
+                  className={cn(
+                    "h-full w-full object-cover transition-opacity duration-300 md:object-contain",
+                    isMediaVisible ? "opacity-100" : "opacity-0",
+                  )}
                 />
               ) : currentMedia?.src ? (
                 <Image
                   src={currentMedia.src}
                   alt={currentExperience.title}
                   fill
-                  className="object-cover md:object-contain"
+                  className={cn(
+                    "object-cover transition-opacity duration-300 md:object-contain",
+                    isMediaVisible ? "opacity-100" : "opacity-0",
+                  )}
                 />
               ) : (
                 <div className="text-sm text-white/70">Media unavailable</div>
@@ -266,8 +339,8 @@ export function ExperienceDetailModal({
                     }
                   >
                     <Heart
-                      className={cn(
-                        "h-4 w-4 transition-transform",
+                    className={cn(
+                        "h-4 w-4 transition-transform duration-200",
                         social.likedByUser &&
                           "fill-rose-500 text-rose-500 scale-110",
                       )}
@@ -301,7 +374,7 @@ export function ExperienceDetailModal({
                   >
                     <Bookmark
                       className={cn(
-                        "h-4 w-4",
+                        "h-4 w-4 transition-colors duration-200",
                         social.savedByUser && "fill-gray-900 text-gray-900",
                       )}
                     />
@@ -398,7 +471,7 @@ export function ExperienceDetailModal({
 
           <button
             type="button"
-            onClick={() => setActiveIndex((value) => Math.max(0, value - 1))}
+            onClick={handlePreviousExperience}
             disabled={activeIndex === 0}
             className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
             aria-label="Previous experience"
@@ -407,9 +480,7 @@ export function ExperienceDetailModal({
           </button>
           <button
             type="button"
-            onClick={() =>
-              setActiveIndex((value) => Math.min(experiences.length - 1, value + 1))
-            }
+            onClick={handleNextExperience}
             disabled={activeIndex === experiences.length - 1}
             className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
             aria-label="Next experience"
