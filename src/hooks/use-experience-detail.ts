@@ -23,6 +23,7 @@ const SELECT_EXPERIENCE_DETAIL = `
   title,
   short_description,
   long_description,
+  location,
   city,
   region,
   address,
@@ -309,6 +310,45 @@ function normalizeArray<T>(value: T | T[] | null | undefined): T[] {
   return Array.isArray(value) ? value : [value];
 }
 
+function parseLocation(location: unknown): {
+  latitude: number;
+  longitude: number;
+} | null {
+  if (!location) {
+    return null;
+  }
+
+  if (
+    typeof location === "object" &&
+    location !== null &&
+    "coordinates" in location
+  ) {
+    const coordinates = (location as { coordinates?: unknown }).coordinates;
+    if (Array.isArray(coordinates) && coordinates.length >= 2) {
+      const longitude = Number(coordinates[0]);
+      const latitude = Number(coordinates[1]);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        return { latitude, longitude };
+      }
+    }
+  }
+
+  if (typeof location === "string") {
+    const pointMatch = location.match(
+      /POINT\s*\(\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)/i,
+    );
+    if (pointMatch) {
+      const longitude = Number(pointMatch[1]);
+      const latitude = Number(pointMatch[2]);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        return { latitude, longitude };
+      }
+    }
+  }
+
+  return null;
+}
+
 function parseLodging(
   lodgingRecords:
     | ExperienceLodgingRecord
@@ -419,6 +459,7 @@ function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
     region: record.region,
     country,
     address,
+    location: parseLocation(record.location),
     type: record.type,
     tags: record.tags ?? [],
     languages: record.languages ?? [],

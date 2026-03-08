@@ -132,6 +132,10 @@ export type ExperienceDetail = {
   region: string | null;
   country: string | null;
   address: Record<string, unknown> | null;
+  location: {
+    latitude: number;
+    longitude: number;
+  } | null;
   type: Database["public"]["Enums"]["experience_type"];
   tags: string[];
   languages: string[];
