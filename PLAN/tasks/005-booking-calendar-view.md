@@ -10,7 +10,7 @@ branch: task/005-booking-calendar-view
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 90
 ---
 
 ## Description
@@ -62,20 +62,20 @@ Reference the mobile bookings calendar at `/Users/naimabdelkerim/Code/travel/app
 
 ## Checklist
 
-- [ ] Read current bookings page implementation
-- [ ] Read mobile calendar view for design reference
-- [ ] Read booking schema for date and status fields
-- [ ] Add view toggle (List/Calendar) to bookings page
-- [ ] Build CalendarGrid component (month view with navigation)
-- [ ] Build BookingDot component (color-coded by status)
-- [ ] Map bookings to calendar dates (expand date ranges to individual dots)
-- [ ] Build ColorLegend component
-- [ ] Build AgendaPanel component (day's bookings list)
-- [ ] Build AgendaBookingCard component (thumbnail, title, dates, status)
-- [ ] Add day indicator logic (check-in/intermediate/check-out)
-- [ ] Handle empty days and months with no bookings
-- [ ] Ensure responsiveness
-- [ ] Polish UI
+- [x] Read current bookings page implementation
+- [x] Read mobile calendar view for design reference
+- [x] Read booking schema for date and status fields
+- [x] Add view toggle (List/Calendar) to bookings page
+- [x] Build CalendarGrid component (month view with navigation)
+- [x] Build BookingDot component (color-coded by status)
+- [x] Map bookings to calendar dates (expand date ranges to individual dots)
+- [x] Build ColorLegend component
+- [x] Build AgendaPanel component (day's bookings list)
+- [x] Build AgendaBookingCard component (thumbnail, title, dates, status)
+- [x] Add day indicator logic (check-in/intermediate/check-out)
+- [x] Handle empty days and months with no bookings
+- [x] Ensure responsiveness
+- [x] Polish UI
 
 ## Review Notes
 
@@ -84,3 +84,10 @@ Reference the mobile bookings calendar at `/Users/naimabdelkerim/Code/travel/app
 ### 2026-03-08
 - Started task on branch `task/005-booking-calendar-view`.
 - Confirmed no `in_progress` tasks existed; selected task 005 as next eligible `todo` by priority and ID order.
+- Implemented bookings calendar mode on `src/app/bookings/page.tsx`:
+  - Added List/Calendar view toggle while preserving existing list UI and filters.
+  - Added month grid with prev/next navigation and booking dots per day (status color coded).
+  - Expanded multi-day bookings across all dates in each booking range.
+  - Added status color legend and responsive calendar layout.
+  - Added agenda panel for selected day with booking cards, status badge, guests, and day indicator text.
+  - Added booking card click-through to booking detail route.
