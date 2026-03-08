@@ -1,12 +1,12 @@
 ---
 id: "002"
 title: "Implement Reviews System on Experience Detail"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/002-reviews-system-2
 pr: null
 attempts: 0
 depends_on: ["001"]
