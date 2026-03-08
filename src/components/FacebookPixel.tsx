@@ -1,25 +1,31 @@
-'use client'
+"use client";
 
-import Script from 'next/script'
-import { usePathname } from 'next/navigation'
-import { useEffect } from 'react'
+import { usePathname } from "next/navigation";
+import Script from "next/script";
+import { useEffect } from "react";
+
+type FacebookWindow = Window & {
+  fbq?: (...args: unknown[]) => void;
+};
 
 export default function FacebookPixel() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     // This effect runs on route changes to track page views
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      ;(window as any).fbq('track', 'PageView')
+    if (!pathname) return;
+    if (typeof window === "undefined") return;
+    const fbq = (window as FacebookWindow).fbq;
+    if (fbq) {
+      fbq("track", "PageView");
     }
-  }, [pathname])
+  }, [pathname]);
 
   return (
     <Script
       id="fb-pixel"
       strategy="afterInteractive"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Required inline bootstrap snippet for Facebook Pixel.
       dangerouslySetInnerHTML={{
         __html: `
           !function(f,b,e,v,n,t,s)
@@ -35,5 +41,5 @@ export default function FacebookPixel() {
         `,
       }}
     />
-  )
+  );
 }

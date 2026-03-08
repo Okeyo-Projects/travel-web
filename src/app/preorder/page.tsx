@@ -1,26 +1,29 @@
 "use client";
 
+import { CheckCircle2, Globe, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, Loader2, Globe } from "lucide-react";
-import Image from "next/image";
+import { Input } from "@/components/ui/input";
 
-type Language = 'fr' | 'ar';
+type Language = "fr" | "ar";
 
 const content = {
   fr: {
     welcome: "Merci et bienvenue dans l'univers Okeyo ! ✨",
-    problem: "On sait ce que c’est : vouloir s’évader mais finir par rester chez soi parce que tout organiser est un vrai casse-tête. 🤯",
+    problem:
+      "On sait ce que c’est : vouloir s’évader mais finir par rester chez soi parce que tout organiser est un vrai casse-tête. 🤯",
     solution: "C’est pour vous qu'on a créé Okeyo Travel.",
-    valueProp: "Oubliez le stress des réservations : notre IA planifie votre détox de 3 jours en moins de 2 minutes. ⏱️",
+    valueProp:
+      "Oubliez le stress des réservations : notre IA planifie votre détox de 3 jours en moins de 2 minutes. ⏱️",
     features: [
       "✨ Destination selon votre moral.",
-      "✨ Activités & Transport inclus."
+      "✨ Activités & Transport inclus.",
     ],
     cta_main: "Ne gérez plus rien, profitez enfin.",
-    launch: "Lancement dans moins de 30 jours ! Votre accès exclusif et vos -20% arrivent par email une semaine avant. 🎁",
+    launch:
+      "Lancement dans moins de 30 jours ! Votre accès exclusif et vos -20% arrivent par email une semaine avant. 🎁",
     form: {
       name: "Nom complet",
       namePlaceholder: "Votre nom",
@@ -29,21 +32,26 @@ const content = {
       submit: "Rejoindre la liste d'attente",
       submitting: "Inscription...",
       success: "Merci ! Vous êtes sur la liste.",
-      error: "Une erreur est survenue."
+      error: "Une erreur est survenue.",
     },
-    privacy: "Vos données sont protégées conformément à notre politique de confidentialité."
+    privacy:
+      "Vos données sont protégées conformément à notre politique de confidentialité.",
   },
   ar: {
     welcome: "Shokran u merhba bik f 3alam Okeyo! ✨",
-    problem: "Hna 3arfin fach katbghi dir un voyage bach tertah, katweli f stress akhor dyal takhtit, tgerer l budget, o ma 3arefch rassek ghatkun satisfait wla la o we9tek me7doud 🤯",
-    solution: "Hadchi 3lach fekerna f Okeyo travel, hit hta hna kan3icho nefss tajriba",
-    valueProp: "Nsa sda3 had sda3 kamel: l'IA dyalkom katqad lik voyage d ra7a kamel dyal 3 jours f 9el men 2 min . ⏱️",
+    problem:
+      "Hna 3arfin fach katbghi dir un voyage bach tertah, katweli f stress akhor dyal takhtit, tgerer l budget, o ma 3arefch rassek ghatkun satisfait wla la o we9tek me7doud 🤯",
+    solution:
+      "Hadchi 3lach fekerna f Okeyo travel, hit hta hna kan3icho nefss tajriba",
+    valueProp:
+      "Nsa sda3 had sda3 kamel: l'IA dyalkom katqad lik voyage d ra7a kamel dyal 3 jours f 9el men 2 min . ⏱️",
     features: [
       "✨ Wijha 3la hssab lgana dialek",
-      "✨ Activités o transport li ghaydik men la gare hta l lminta9a li baghi"
+      "✨ Activités o transport li ghaydik men la gare hta l lminta9a li baghi",
     ],
     cta_main: "Ma tdir walo, ghir stmte3. 💙🤖",
-    launch: "Ghadi ntlaqaw fl qrib! Ghadi ywslek email fih -20% smana qbl l'lancement. 🎁",
+    launch:
+      "Ghadi ntlaqaw fl qrib! Ghadi ywslek email fih -20% smana qbl l'lancement. 🎁",
     form: {
       name: "Smiya lkamila",
       namePlaceholder: "Smiytk",
@@ -52,39 +60,48 @@ const content = {
       submit: "Dkhol la liste d'attente",
       submitting: "Kaytsjel...",
       success: "Shokran! Rak tqydti m3ana.",
-      error: "Wqe3 shi mochkil."
+      error: "Wqe3 shi mochkil.",
     },
-    privacy: "Ma tkhafsh 3la les données dialek, rahom mkhbyin mzyan."
-  }
+    privacy: "Ma tkhafsh 3la les données dialek, rahom mkhbyin mzyan.",
+  },
 };
 
 export default function PreOrderPage() {
   const [formData, setFormData] = useState({
     name: "",
-    email: ""
+    email: "",
   });
-  const [lang, setLang] = useState<Language>('fr');
+  const [lang, setLang] = useState<Language>("fr");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; email?: string; submit?: string }>({});
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    submit?: string;
+  }>({});
 
   const t = content[lang];
 
   const toggleLang = () => {
-    setLang(prev => prev === 'fr' ? 'ar' : 'fr');
+    setLang((prev) => (prev === "fr" ? "ar" : "fr"));
   };
 
   const validateForm = () => {
     const newErrors: { name?: string; email?: string } = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = lang === 'fr' ? "Veuillez entrer votre nom" : "3afak dkhl smiytk";
+      newErrors.name =
+        lang === "fr" ? "Veuillez entrer votre nom" : "3afak dkhl smiytk";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = lang === 'fr' ? "Veuillez entrer votre email" : "3afak dkhl l'email";
+      newErrors.email =
+        lang === "fr" ? "Veuillez entrer votre email" : "3afak dkhl l'email";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = lang === 'fr' ? "Format email invalide" : "Format d l'email mashi howa hadak";
+      newErrors.email =
+        lang === "fr"
+          ? "Format email invalide"
+          : "Format d l'email mashi howa hadak";
     }
 
     setErrors(newErrors);
@@ -102,20 +119,20 @@ export default function PreOrderPage() {
     setErrors({});
 
     try {
-      const response = await fetch('/api/preorder', {
-        method: 'POST',
+      const response = await fetch("/api/preorder", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit');
+        throw new Error("Failed to submit");
       }
 
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (_error) {
       setErrors({ submit: t.form.error });
     } finally {
       setIsSubmitting(false);
@@ -124,7 +141,6 @@ export default function PreOrderPage() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden bg-[#fafafa]">
-
       {/* Background gradients for premium feel */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-200/30 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-200/30 rounded-full blur-[100px] pointer-events-none" />
@@ -138,12 +154,11 @@ export default function PreOrderPage() {
           className="rounded-full bg-white/50 backdrop-blur-md border border-gray-200 hover:bg-white/80 hover:text-gray-900 transition-all font-medium text-gray-700"
         >
           <Globe className="w-4 h-4 mr-2" />
-          {lang === 'fr' ? 'العربية (Darija)' : 'Français'}
+          {lang === "fr" ? "العربية (Darija)" : "Français"}
         </Button>
       </div>
 
       <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-12 items-center relative z-10">
-
         {/* Left Content */}
         <div className="space-y-8">
           <div className="flex justify-start">
@@ -180,9 +195,7 @@ export default function PreOrderPage() {
               ))}
             </ul>
 
-            <p className="text-xl font-bold text-blue-600">
-              {t.cta_main}
-            </p>
+            <p className="text-xl font-bold text-blue-600">{t.cta_main}</p>
           </div>
         </div>
 
@@ -203,9 +216,13 @@ export default function PreOrderPage() {
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle2 className="w-10 h-10 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{t.form.success}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  {t.form.success}
+                </h3>
                 <p className="text-gray-500">
-                  {lang === 'fr' ? 'Surveillez votre boite email !' : 'Shoqi l\'email dialek !'}
+                  {lang === "fr"
+                    ? "Surveillez votre boite email !"
+                    : "Shoqi l'email dialek !"}
                 </p>
               </div>
             ) : (
@@ -215,10 +232,14 @@ export default function PreOrderPage() {
                     type="text"
                     placeholder={t.form.namePlaceholder}
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="h-14 px-5 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 text-lg transition-all"
                   />
-                  {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                  {errors.name && (
+                    <p className="text-sm text-red-500">{errors.name}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -226,10 +247,14 @@ export default function PreOrderPage() {
                     type="email"
                     placeholder={t.form.emailPlaceholder}
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     className="h-14 px-5 rounded-xl bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 text-lg transition-all"
                   />
-                  {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-sm text-red-500">{errors.email}</p>
+                  )}
                 </div>
 
                 <Button
@@ -247,7 +272,11 @@ export default function PreOrderPage() {
                   )}
                 </Button>
 
-                {errors.submit && <p className="text-center text-sm text-red-500">{errors.submit}</p>}
+                {errors.submit && (
+                  <p className="text-center text-sm text-red-500">
+                    {errors.submit}
+                  </p>
+                )}
 
                 <p className="text-xs text-center text-gray-400 mt-4">
                   {t.privacy}
@@ -256,7 +285,6 @@ export default function PreOrderPage() {
             )}
           </Card>
         </div>
-
       </div>
     </div>
   );

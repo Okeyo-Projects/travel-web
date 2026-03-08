@@ -1,0 +1,10 @@
+# Copy this content to a new file called .env in this directory
+# infra/supabase/.env
+
+SUPABASE_URL=https://nfqamqrxgpyuhjhedllg.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+
+# Get your service_role key from:
+# https://supabase.com/dashboard/project/nfqamqrxgpyuhjhedllg/settings/api
+# Look for "service_role" key (NOT the anon key)
+

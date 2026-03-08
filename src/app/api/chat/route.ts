@@ -1,4 +1,3 @@
-import { streamText } from 'ai';
 // import { openai } from '@ai-sdk/openai'; // Assuming openai is installed or I can mock it.
 // Since I don't have an API key, I'll use a mock stream or a simple response.
 
@@ -10,17 +9,17 @@ export async function POST(req: Request) {
   // Simple mock response generator
   const mockResponse = `Je suis l'assistant Okeyo. Vous avez dit : "${lastMessage.content}". 
   
-Je peux vous aider à trouver des expériences de voyage, des hébergements ou des activités. Dites-moi simplement ce que vous recherchez !
+Je peux vous aider à trouver des hébergements (riads, lodges, maisons d'hôtes) et à choisir la chambre qui vous convient.
   
-Par exemple : "Je cherche un séjour romantique à Bali" ou "Quelles sont les activités à faire à Tokyo ?"`;
+Par exemple : "Je cherche un riad romantique à Marrakech" ou "Je veux un lodge calme petit budget à Chefchaouen."`;
 
   // Create a stream from the mock response
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const words = mockResponse.split(' ');
+      const words = mockResponse.split(" ");
       for (const word of words) {
-        controller.enqueue(encoder.encode(word + ' '));
+        controller.enqueue(encoder.encode(`${word} `));
         await new Promise((resolve) => setTimeout(resolve, 50)); // Simulate typing delay
       }
       controller.close();
@@ -28,6 +27,6 @@ Par exemple : "Je cherche un séjour romantique à Bali" ou "Quelles sont les ac
   });
 
   return new Response(stream, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }

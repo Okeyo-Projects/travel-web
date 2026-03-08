@@ -84,8 +84,8 @@
   --muted-foreground: 91 100 124; /* #5b647c - muted text */
 
   /* Accent - using accentTertiary */
-  --accent: 123 97 255; /* #7b61ff - accentTertiary */
-  --accent-foreground: 255 255 255;
+  --accent: 255 194 212; /* #ffc2d4 - accentSecondary */
+  --accent-foreground: 0 0 0;
 
   /* Destructive/Error */
   --destructive: 239 68 68; /* #ef4444 - error */
@@ -185,13 +185,24 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -211,7 +222,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -242,5 +254,46 @@
 }
 
 .hero-bg {
-  background: linear-gradient(180deg, #4FD1C5 0%, #A7F3D0 100%);
+  background: linear-gradient(180deg, #4fd1c5 0%, #a7f3d0 100%);
+}
+
+.word-swap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  text-align: center;
+  opacity: 0;
+  animation: wordSwap 6s infinite;
+}
+
+.word-2 {
+  animation-delay: 2s;
+}
+
+.word-3 {
+  animation-delay: 4s;
+}
+
+@keyframes wordSwap {
+  0% {
+    opacity: 0;
+    transform: translateY(35%);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  40% {
+    opacity: 0;
+    transform: translateY(-35%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-35%);
+  }
 }

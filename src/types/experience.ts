@@ -1,4 +1,4 @@
-export type ExperienceType = 'trip' | 'lodging' | 'activity';
+export type ExperienceType = "trip" | "lodging" | "activity";
 
 export interface ExperienceListItem {
   id: string;
@@ -8,6 +8,8 @@ export interface ExperienceListItem {
   region: string | null;
   type: ExperienceType;
   thumbnail_url: string | null;
+  video_url?: string | null;
+  video_hls_url?: string | null;
   avg_rating: number | null;
   reviews_count: number | null;
   host: {
@@ -16,6 +18,15 @@ export interface ExperienceListItem {
     avatar_url: string | null;
     verified: boolean | null;
   } | null;
+  rooms?: {
+    id: string;
+    name: string | null;
+    price_cents: number | null;
+    currency: string | null;
+    max_persons: number | null;
+    total_rooms: number | null;
+    photo_urls: string[];
+  }[];
   trip: {
     price_cents: number | null;
     currency: string | null;
@@ -33,8 +44,8 @@ export interface ExperienceListItem {
 }
 
 export type ExperienceSort =
-  | 'newest'
-  | 'popular'
-  | 'rating'
-  | 'price_high'
-  | 'price_low';
+  | "newest"
+  | "popular"
+  | "rating"
+  | "price_high"
+  | "price_low";
