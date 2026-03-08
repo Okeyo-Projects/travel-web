@@ -10,7 +10,6 @@ A travel experiences platform where users can discover, book, and interact with 
 - **Frontend (Mobile):** Expo SDK, React Native (primary design reference)
 - **Backend:** Supabase (Postgres DB, Auth, Storage, Edge Functions, RLS)
 - **AI:** Vercel AI SDK for chat-based booking flows
-- **Admin:** TanStack Router + shadcn/ui (in `apps/admin/`)
 
 ## Tech Stack
 
@@ -24,61 +23,7 @@ A travel experiences platform where users can discover, book, and interact with 
 | AI | Vercel AI SDK (`ai` package) |
 | Payments | Stripe (planned) |
 | Types | `web/src/types/` (domain types + auto-generated Supabase types) |
-| Admin Panel | TanStack Router + shadcn/ui (`apps/admin/`) |
 | Mobile | Expo + React Native + NativeWind (`/Users/naimabdelkerim/Code/travel/apps/mobile/`) |
-
-## Monorepo Structure
-
-```
-/travel/                     # Git root
-  web/                       # Next.js web app
-    src/
-      app/                   # Next.js App Router pages
-        api/                 # API routes (ai, preorder, etc.)
-        chat/                # Chat pages
-        bookings/            # Booking pages
-        explore/             # Explore/category pages
-        collections/         # Collection pages
-      components/
-        ui/                  # shadcn/ui components (button, card, dialog, etc.)
-        chat/                # Chat-specific components
-        booking/             # Booking flow components
-        home/                # Landing page sections
-        site/                # Site-wide components (header, floating chat)
-        ai-elements/         # AI message rendering
-        auth/                # Auth modal
-        explore/             # Explore page components
-      hooks/                 # Custom hooks (use-auth, use-booking-mutations, etc.)
-      lib/
-        ai/                  # AI tools, prompt builder, catalog context
-        embeddings/          # Embedding utilities
-        supabase/            # Supabase client utilities
-        routing/             # URL slug helpers
-      types/                 # All types (supabase.ts, booking, experience, payment, etc.)
-      providers/             # React context providers (query-provider)
-    PLAN/                    # Task management for AI agent
-      AGENT.md               # Agent workflow instructions (this file's companion)
-      KNOWLEDGE.md           # This file
-      REVIEWER.md            # Review agent instructions
-      tasks/                 # Task files
-  apps/
-    mobile/                  # Expo React Native app (design reference)
-      app/                   # Expo Router file-based routes
-        (auth)/              # Auth screens
-        (user)/              # User tabs
-        (host)/              # Host tabs
-        (onboarding)/        # Onboarding flow
-    admin/                   # Admin panel (TanStack Router)
-      src/
-        features/            # Feature modules
-        routes/              # TanStack Router routes
-        components/          # Admin components
-  web/
-    supabase/
-      config.toml            # Supabase project config
-      migrations/            # ALL Supabase migrations go here
-      functions/             # Supabase Edge Functions
-```
 
 ## Database Schema (Supabase/Postgres)
 
@@ -143,10 +88,6 @@ pnpm tsc --noEmit              # Type check
 # From /travel/ (git root)
 git checkout -b task/007-xxx   # New task branch
 
-# Supabase (from web/supabase/)
-supabase migration new <name>  # Create migration
-supabase db push               # Apply migrations
-supabase gen types typescript --local > ../src/types/supabase.ts  # Regenerate types
 ```
 
 ## Before Starting Any Task
