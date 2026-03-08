@@ -1,12 +1,12 @@
 ---
 id: "003"
 title: "Social Feed / Reels with TikTok/Instagram-style Interaction"
-status: review
+status: done
 priority: high
 created: 2026-03-07
 updated: 2026-03-08
 assigned: codex
-branch: task/003-social-feed-reels
+branch: null
 pr: null
 attempts: 0
 depends_on: []

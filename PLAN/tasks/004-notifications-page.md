@@ -84,4 +84,3 @@ Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/
 
 ## Agent Log
 - 2026-03-08: Implemented notifications end-to-end for web: new notification types + navigation mapping, realtime TanStack hook (`use-notifications`), notification bell with unread badge in active headers (`MarketingHeader`, chat layout, and `navbar.tsx`), reusable list/item UI, and protected `/notifications` page with mark-one/mark-all-as-read behavior. Validation commands were attempted but blocked in this environment because `node_modules` are not installed (`biome` and `tsc` unavailable).
-- 2026-03-08: Synced completed Task 004 implementation from `task/004-notifications-page` onto `main` for automation continuity, confirmed task metadata remains `review` with 100% progress, and re-ran validation commands. Checks are still environment-blocked (`node_modules` missing, so `pnpm lint` cannot find `biome` and `pnpm tsc --noEmit` cannot find `tsc`).
