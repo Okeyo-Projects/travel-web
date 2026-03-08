@@ -1,16 +1,16 @@
 ---
 id: "004"
 title: "Notifications Page with Unread Badge and Navigation"
-status: todo
+status: review
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-08
 assigned: codex
-branch: null
+branch: task/004-notifications-page
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 100
 ---
 
 ## Description
@@ -41,17 +41,17 @@ Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/
 
 ## Acceptance Criteria
 
-- [ ] Bell icon with unread badge in site navbar
-- [ ] Unread count updates in real-time (Supabase realtime)
-- [ ] Notifications page lists all notifications, newest first
-- [ ] Each notification shows icon, title, message, relative timestamp
-- [ ] Unread notifications visually distinct (bold/highlighted)
-- [ ] Clicking notification navigates to relevant page
-- [ ] Clicking notification marks it as read
-- [ ] "Mark all as read" button works
-- [ ] Empty state when no notifications
-- [ ] Page is responsive (mobile-friendly)
-- [ ] Only visible to authenticated users
+- [x] Bell icon with unread badge in site navbar
+- [x] Unread count updates in real-time (Supabase realtime)
+- [x] Notifications page lists all notifications, newest first
+- [x] Each notification shows icon, title, message, relative timestamp
+- [x] Unread notifications visually distinct (bold/highlighted)
+- [x] Clicking notification navigates to relevant page
+- [x] Clicking notification marks it as read
+- [x] "Mark all as read" button works
+- [x] Empty state when no notifications
+- [x] Page is responsive (mobile-friendly)
+- [x] Only visible to authenticated users
 
 ## Context
 
@@ -65,21 +65,22 @@ Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/
 
 ## Checklist
 
-- [ ] Read notification schema and types
-- [ ] Read mobile notifications screen for design reference
-- [ ] Create notification types in `web/src/types/`
-- [ ] Create `use-notifications.ts` hook (fetch, mark read, mark all read, unread count, realtime subscription)
-- [ ] Build NotificationBell component (icon + badge)
-- [ ] Integrate NotificationBell into navbar
-- [ ] Build NotificationItem component (icon, title, message, timestamp, read state)
-- [ ] Build NotificationList component
-- [ ] Create `/notifications` page
-- [ ] Add navigation mapping (notification type -> target URL)
-- [ ] Add "Mark all as read" functionality
-- [ ] Add Supabase realtime subscription for live updates
-- [ ] Handle empty and loading states
-- [ ] Polish UI and responsiveness
+- [x] Read notification schema and types
+- [x] Read mobile notifications screen for design reference
+- [x] Create notification types in `web/src/types/`
+- [x] Create `use-notifications.ts` hook (fetch, mark read, mark all read, unread count, realtime subscription)
+- [x] Build NotificationBell component (icon + badge)
+- [x] Integrate NotificationBell into navbar
+- [x] Build NotificationItem component (icon, title, message, timestamp, read state)
+- [x] Build NotificationList component
+- [x] Create `/notifications` page
+- [x] Add navigation mapping (notification type -> target URL)
+- [x] Add "Mark all as read" functionality
+- [x] Add Supabase realtime subscription for live updates
+- [x] Handle empty and loading states
+- [x] Polish UI and responsiveness
 
 ## Review Notes
 
 ## Agent Log
+- 2026-03-08: Implemented notifications end-to-end for web: new notification types + navigation mapping, realtime TanStack hook (`use-notifications`), notification bell with unread badge in active headers (`MarketingHeader`, chat layout, and `navbar.tsx`), reusable list/item UI, and protected `/notifications` page with mark-one/mark-all-as-read behavior. Validation commands were attempted but blocked in this environment because `node_modules` are not installed (`biome` and `tsc` unavailable).

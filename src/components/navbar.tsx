@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/site/NotificationBell";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
+  const { user } = useAuth();
   const pathname = usePathname();
 
   return (
@@ -61,6 +64,7 @@ export function Navbar() {
               Nos offres du moment
             </Button>
           </Link>
+          {user ? <NotificationBell variant="light" /> : null}
         </nav>
       </div>
     </header>
