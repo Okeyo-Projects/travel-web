@@ -42,7 +42,10 @@ export default function HostDashboardPage() {
       </div>
 
       {error ? (
-        <Alert variant="destructive" className="border-red-200 bg-red-50 text-red-800">
+        <Alert
+          variant="destructive"
+          className="border-red-200 bg-red-50 text-red-800"
+        >
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Could not load dashboard</AlertTitle>
           <AlertDescription>{error.message}</AlertDescription>
@@ -75,7 +78,9 @@ export default function HostDashboardPage() {
       ) : (
         <Card className="p-10 text-center">
           <BarChart3 className="mx-auto mb-4 h-12 w-12 text-slate-500" />
-          <h2 className="text-xl font-semibold text-slate-900">No analytics yet</h2>
+          <h2 className="text-xl font-semibold text-slate-900">
+            No analytics yet
+          </h2>
           <p className="mt-2 text-sm text-slate-600">{emptyMessage}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild variant="secondary">
