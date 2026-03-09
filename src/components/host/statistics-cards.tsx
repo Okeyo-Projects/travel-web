@@ -1,0 +1,62 @@
+"use client";
+
+import { DollarSign, Star, Ticket, Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { HostDashboardSummary } from "@/types/host-analytics";
+
+function formatMoney(cents: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
+
+type StatisticsCardsProps = {
+  summary: HostDashboardSummary;
+};
+
+export function StatisticsCards({ summary }: StatisticsCardsProps) {
+  const cards = [
+    {
+      title: "Total bookings",
+      value: summary.totalBookings.toLocaleString(),
+      icon: Ticket,
+    },
+    {
+      title: "Revenue",
+      value: formatMoney(summary.totalRevenueCents, summary.currency),
+      icon: DollarSign,
+    },
+    {
+      title: "Guests hosted",
+      value: summary.totalGuests.toLocaleString(),
+      icon: Users,
+    },
+    {
+      title: "Average rating",
+      value: summary.averageRating
+        ? summary.averageRating.toFixed(1)
+        : "No ratings",
+      icon: Star,
+    },
+  ] as const;
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card) => (
+        <Card key={card.title}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {card.title}
+            </CardTitle>
+            <card.icon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold tracking-tight">{card.value}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}

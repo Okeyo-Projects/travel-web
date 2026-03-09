@@ -1,7 +1,7 @@
 ---
 id: "013"
 title: "Host Analytics Dashboard"
-status: in_progress
+status: review
 priority: high
 created: 2026-03-07
 updated: 2026-03-09
@@ -10,7 +10,7 @@ branch: task/013-host-analytics-dashboard
 pr: null
 attempts: 0
 depends_on: ["012"]
-progress: 10
+progress: 100
 ---
 
 ## Description
@@ -42,15 +42,15 @@ Consider using a charting library like Recharts (already common in Next.js proje
 
 ## Acceptance Criteria
 
-- [ ] Dashboard page accessible at `/host` for host users
-- [ ] Statistics cards showing bookings, revenue, guests, rating
-- [ ] At least 2 charts (bookings over time, bookings by status)
-- [ ] Time period selector changes data range
-- [ ] Recent bookings list with quick actions
-- [ ] Data fetched from Supabase (host's own data only)
-- [ ] Loading skeletons while data loads
-- [ ] Empty state for new hosts with no data
-- [ ] Responsive layout (cards stack on mobile)
+- [x] Dashboard page accessible at `/host` for host users
+- [x] Statistics cards showing bookings, revenue, guests, rating
+- [x] At least 2 charts (bookings over time, bookings by status)
+- [x] Time period selector changes data range
+- [x] Recent bookings list with quick actions
+- [x] Data fetched from Supabase (host's own data only)
+- [x] Loading skeletons while data loads
+- [x] Empty state for new hosts with no data
+- [x] Responsive layout (cards stack on mobile)
 
 ## Context
 
@@ -65,19 +65,26 @@ Consider using a charting library like Recharts (already common in Next.js proje
 - [x] Read host reports stats function and schema
 - [x] Read mobile host dashboard for design reference
 - [x] Confirm charting library availability (Recharts already installed)
-- [ ] Create typed host analytics models and `use-host-stats.ts` hook
-- [ ] Implement time period filtering and aggregate metric calculators
-- [ ] Build `TimePeriodSelector` component
-- [ ] Build `StatisticsCards` component
-- [ ] Build `BookingsChart` component (bookings + revenue trends)
-- [ ] Build `StatusBreakdownChart` component (status mix donut)
-- [ ] Build `ExperienceBreakdownChart` component (top experiences)
-- [ ] Build `RecentBookingsList` component with quick actions
-- [ ] Create `/host` dashboard page and compose all sections
-- [ ] Add loading skeletons, empty states, and error state
-- [ ] Polish responsive layout and spacing
+- [x] Create typed host analytics models and `use-host-stats.ts` hook
+- [x] Implement time period filtering and aggregate metric calculators
+- [x] Build `TimePeriodSelector` component
+- [x] Build `StatisticsCards` component
+- [x] Build `BookingsChart` component (bookings + revenue trends)
+- [x] Build `StatusBreakdownChart` component (status mix donut)
+- [x] Build `ExperienceBreakdownChart` component (top experiences)
+- [x] Build `RecentBookingsList` component with quick actions
+- [x] Create `/host` dashboard page and compose all sections
+- [x] Add loading skeletons, empty states, and error state
+- [x] Polish responsive layout and spacing
 
 ## Review Notes
+
+- The referenced `get_host_reports_stats` implementation in current migrations/functions points to moderation reports (`get_host_reports_and_stats`) and does not expose booking analytics fields.
+- Dashboard analytics are therefore computed from host-owned `bookings` joined with `profiles`/`experiences`, scoped by authenticated host ownership (`hosts.owner_id = auth user` and `bookings.host_id = host.id`).
+- Validation in this environment:
+  - `pnpm exec biome check` on all new host dashboard files: pass.
+  - `pnpm build`: fails on pre-existing unrelated type errors in `src/app/experience/[id]/page.tsx`.
+  - Global `pnpm tsc --noEmit` / `pnpm lint`: fail with extensive pre-existing repo issues outside Task 013 scope.
 
 ## Agent Log
 
@@ -85,3 +92,15 @@ Consider using a charting library like Recharts (already common in Next.js proje
 - Started Task 013 on branch `task/013-host-analytics-dashboard`.
 - Read schema/migrations and mobile host references.
 - Confirmed there is no existing `/host` route on `main`; dashboard will be implemented as a new route.
+
+### 2026-03-09 (implementation)
+- Implemented host analytics dashboard at `/host` with:
+  - Time-period selector (`7d`, `30d`, `3m`, `6m`, `1y`, `all`).
+  - Metrics cards (bookings, revenue, guests hosted, average rating).
+  - Charts for bookings/revenue trend, status breakdown, and top experiences.
+  - Recent bookings list with quick links to booking and experience pages.
+  - Loading skeletons, host/non-host empty states, and error alert.
+- Added new host analytics domain types and query/aggregation hook:
+  - `src/types/host-analytics.ts`
+  - `src/hooks/use-host-stats.ts`
+- Added reusable host dashboard components under `src/components/host/`.
