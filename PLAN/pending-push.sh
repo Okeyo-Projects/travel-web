@@ -30,3 +30,8 @@ gh pr merge --merge --auto
 git push -u origin task/012-host-mode-switch
 gh pr create --base main --head task/012-host-mode-switch --title "task(012): User-to-Host Mode Switch for Host Profiles" --body "Automated migration task. See PLAN/tasks/012-host-mode-switch.md for details."
 gh pr merge --merge --auto
+
+# Task 014: Host Experience Visibility Management
+git push -u origin task/014-host-experience-visibility
+gh pr create --base main --head task/014-host-experience-visibility --title "task(014): Host Experience Visibility Management" --body "Automated migration task. See PLAN/tasks/014-host-experience-visibility.md for details."
+gh pr merge --merge --auto
