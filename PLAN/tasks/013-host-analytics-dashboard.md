@@ -1,16 +1,16 @@
 ---
 id: "013"
 title: "Host Analytics Dashboard"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-09
 assigned: codex
-branch: null
+branch: task/013-host-analytics-dashboard
 pr: null
 attempts: 0
 depends_on: ["012"]
-progress: 0
+progress: 10
 ---
 
 ## Description
@@ -62,19 +62,26 @@ Consider using a charting library like Recharts (already common in Next.js proje
 
 ## Checklist
 
-- [ ] Read host reports stats function and schema
-- [ ] Read mobile host dashboard for design reference
-- [ ] Install charting library (Recharts or similar)
-- [ ] Create `use-host-stats.ts` hook
-- [ ] Build StatisticsCards component
-- [ ] Build BookingsChart component (over time)
-- [ ] Build StatusBreakdownChart component
-- [ ] Build RecentBookingsList component
-- [ ] Build TimePeriodSelector component
-- [ ] Create `/host` dashboard page
-- [ ] Handle loading, empty, and error states
-- [ ] Polish UI and responsiveness
+- [x] Read host reports stats function and schema
+- [x] Read mobile host dashboard for design reference
+- [x] Confirm charting library availability (Recharts already installed)
+- [ ] Create typed host analytics models and `use-host-stats.ts` hook
+- [ ] Implement time period filtering and aggregate metric calculators
+- [ ] Build `TimePeriodSelector` component
+- [ ] Build `StatisticsCards` component
+- [ ] Build `BookingsChart` component (bookings + revenue trends)
+- [ ] Build `StatusBreakdownChart` component (status mix donut)
+- [ ] Build `ExperienceBreakdownChart` component (top experiences)
+- [ ] Build `RecentBookingsList` component with quick actions
+- [ ] Create `/host` dashboard page and compose all sections
+- [ ] Add loading skeletons, empty states, and error state
+- [ ] Polish responsive layout and spacing
 
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-09
+- Started Task 013 on branch `task/013-host-analytics-dashboard`.
+- Read schema/migrations and mobile host references.
+- Confirmed there is no existing `/host` route on `main`; dashboard will be implemented as a new route.
