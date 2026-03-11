@@ -66,7 +66,7 @@ export function ExperienceCard({
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className={`mx-4 rounded-sm overflow-hidden relative w-full md:w-[300px] group bg-muted ${experience.video_url ? "aspect-[9/16]" : "aspect-video"}`}>
+      <div className={`mx-0 sm:mx-4 rounded-t-lg sm:rounded-sm overflow-hidden relative w-full sm:w-[300px] group bg-muted ${experience.video_url ? "aspect-[9/16]" : "aspect-video"}`}>
         {isPlaying && experience.video_url ? (
           <video
             ref={videoRef}
@@ -140,17 +140,17 @@ export function ExperienceCard({
 
       <CardContent className="p-4 space-y-3">
         <div>
-          <h3 className="font-semibold text-lg line-clamp-2">
+          <h3 className="font-semibold text-base sm:text-lg line-clamp-2">
             {experience.title}
           </h3>
           {experience.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">
               {experience.description}
             </p>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <MapPin className="w-4 h-4" />
             <span>{experience.city}</span>
@@ -221,8 +221,8 @@ export function ExperienceCard({
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-2xl font-bold">{experience.price_mad} MAD</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xl sm:text-2xl font-bold">{experience.price_mad} MAD</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               {experience.type === "lodging" ? "par nuit" : "par personne"}
             </p>
           </div>

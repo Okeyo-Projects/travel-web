@@ -641,46 +641,36 @@ export default function ExperiencePage() {
 
           <aside className="md:col-span-3 lg:col-span-4">
             <div className="md:sticky md:top-24">
-              <Card className="rounded-2xl border-muted/70 shadow-sm">
-                <CardHeader className="space-y-2">
-                  <CardTitle className="flex items-end justify-between gap-2">
+              <Card className="rounded-3xl border-muted/60 shadow-lg shadow-black/5 overflow-hidden">
+                <div className="bg-gradient-to-br from-primary/5 via-transparent to-transparent p-6 sm:p-8">
+                  <div className="flex flex-col gap-6">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        {trip ? "Prochain départ" : "Tarif"}
+                      <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground mb-1">
+                        {trip ? "Prochain départ" : "Tarif à partir de"}
                       </p>
-                      <p className="text-3xl font-semibold">{formattedPrice}</p>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold tracking-tight text-foreground">{formattedPrice}</span>
+                        <span className="text-base font-medium text-muted-foreground">/ {nightsLabel}</span>
+                      </div>
                     </div>
-                    <p className="pb-1 text-sm text-muted-foreground">/ {nightsLabel}</p>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl border p-3">
-                      <p className="text-[11px] uppercase text-muted-foreground">Arrivée</p>
-                      <p className="mt-1 text-sm font-medium">
-                        <Calendar className="mr-1 inline h-3.5 w-3.5 text-primary" />
-                        {formatDate(nextDeparture)}
+
+                    <Button 
+                      className="w-full h-14 text-base font-semibold rounded-2xl shadow-md hover:shadow-lg transition-all" 
+                      onClick={() => openBooking(experience)}
+                    >
+                      Réserver cette expérience
+                    </Button>
+
+                    <div className="text-center space-y-2">
+                       <p className="text-sm font-medium text-muted-foreground">
+                        Vous ne serez pas débité maintenant
+                      </p>
+                      <p className="text-xs text-muted-foreground/80">
+                        Annulation selon la politique {experience.cancellationPolicy}
                       </p>
                     </div>
-                    <div className="rounded-xl border p-3">
-                      <p className="text-[11px] uppercase text-muted-foreground">Départ</p>
-                      <p className="mt-1 text-sm font-medium">--/--</p>
-                    </div>
                   </div>
-                  <div className="rounded-xl border p-3">
-                    <p className="text-[11px] uppercase text-muted-foreground">Voyageurs</p>
-                    <p className="mt-1 text-sm font-medium">{capacity ? `Jusqu'à ${capacity}` : "1 voyageur"}</p>
-                  </div>
-                  <div className="rounded-xl bg-muted/30 p-3 text-sm text-muted-foreground">
-                    Vous ne serez pas débité maintenant. Le montant exact sera confirmé avant paiement.
-                  </div>
-                </CardContent>
-                <CardFooter className="flex-col gap-2">
-                  <Button className="h-11 w-full" onClick={() => openBooking(experience)}>
-                    Vérifier la disponibilité
-                  </Button>
-                  <p className="text-xs text-muted-foreground">Annulation selon la politique {experience.cancellationPolicy}</p>
-                </CardFooter>
+                </div>
               </Card>
             </div>
           </aside>

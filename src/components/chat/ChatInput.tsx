@@ -46,7 +46,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-3 py-2 sm:p-4">
+    <div className="w-full max-w-3xl mx-auto px-2 py-2 sm:px-3 sm:py-4">
       <div
         className={cn(
           "relative flex flex-col bg-background border rounded-2xl shadow-sm transition-all duration-200",
@@ -64,7 +64,7 @@ export function ChatInput({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="Posez votre question..."
-            className="min-h-[56px] max-h-[160px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-3 text-base"
+            className="min-h-[50px] sm:min-h-[56px] max-h-[140px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-base"
             rows={1}
           />
 
