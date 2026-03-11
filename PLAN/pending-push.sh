@@ -35,3 +35,8 @@ gh pr merge --merge --auto
 git push -u origin task/014-host-experience-visibility
 gh pr create --base main --head task/014-host-experience-visibility --title "task(014): Host Experience Visibility Management" --body "Automated migration task. See PLAN/tasks/014-host-experience-visibility.md for details."
 gh pr merge --merge --auto
+
+# Task 013: Host Analytics Dashboard
+git push -u origin task/013-host-analytics-dashboard
+gh pr create --base main --head task/013-host-analytics-dashboard --title "task(013): Host Analytics Dashboard" --body "Automated migration task. See PLAN/tasks/013-host-analytics-dashboard.md for details."
+gh pr merge --merge --auto
