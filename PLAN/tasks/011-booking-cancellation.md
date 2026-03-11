@@ -1,16 +1,16 @@
 ---
 id: "011"
 title: "Complete Booking Cancellation Flow"
-status: todo
+status: in_progress
 priority: medium
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-09
 assigned: codex
-branch: null
+branch: task/011-booking-cancellation
 pr: null
 attempts: 0
 depends_on: []
-progress: 0
+progress: 10
 ---
 
 ## Description
@@ -69,3 +69,7 @@ The booking detail page has a "Cancel booking" button but the flow may be incomp
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-09 - Session Start
+- Picked as next eligible `todo` task (medium priority, lowest ID among eligible tasks).
+- Set task to `in_progress` and started implementation branch `task/011-booking-cancellation`.
