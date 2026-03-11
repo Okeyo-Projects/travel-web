@@ -58,13 +58,18 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                 ) : (
                   <>
                     <Button asChild variant="ghost" size="sm">
-                      <Link href={localizeHref("/collections", pathname)}>
-                        Collections
+                      <Link href={localizeHref("/", pathname)}>
+                        Home
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/explore", pathname)}>
                         Explore
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={localizeHref("/collections", pathname)}>
+                        Collections
                       </Link>
                     </Button>
                   </>

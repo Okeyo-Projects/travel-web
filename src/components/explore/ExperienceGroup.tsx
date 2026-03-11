@@ -110,6 +110,7 @@ export function ExperienceGroup({
             <CompactExperienceCard
               key={experience.id}
               experience={experience}
+              className="w-[280px] sm:w-[320px]"
               onOpenDetails={() =>
                 setActiveExperienceIndex(
                   experiences.findIndex((item) => item.id === experience.id),

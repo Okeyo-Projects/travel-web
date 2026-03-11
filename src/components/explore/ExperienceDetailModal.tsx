@@ -8,6 +8,7 @@ import {
   Heart,
   MapPin,
   MessageCircle,
+  Play,
   Send,
   Share2,
   Star,
@@ -16,7 +17,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type TouchEvent, useEffect, useMemo, useState } from "react";
+import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,9 @@ export function ExperienceDetailModal({
   const [comment, setComment] = useState("");
   const [isMediaVisible, setIsMediaVisible] = useState(true);
   const [isExperienceVisible, setIsExperienceVisible] = useState(true);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const pathname = usePathname();
   const { requireAuth } = useRequiredAuth();
 
@@ -128,6 +131,8 @@ export function ExperienceDetailModal({
     setActiveMediaIndex(0);
   }, [currentExperience?.id]);
 
+  const currentMedia = mediaItems[activeMediaIndex];
+
   useEffect(() => {
     if (!open) return;
     setIsExperienceVisible(false);
@@ -174,7 +179,6 @@ export function ExperienceDetailModal({
   const detailsHref = localizeHref(`/experience/${slug}`, pathname);
   const bookingHref = localizeHref(`/experience/${slug}?booking=1`, pathname);
 
-  const currentMedia = mediaItems[activeMediaIndex];
   const locationLabel = currentExperience.region
     ? `${currentExperience.city}, ${currentExperience.region}`
     : currentExperience.city;
@@ -204,13 +208,13 @@ export function ExperienceDetailModal({
   };
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    setTouchStartX(event.touches[0]?.clientX ?? null);
+    setTouchStartY(event.touches[0]?.clientY ?? null);
   };
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
-    if (touchStartX === null) return;
-    const endX = event.changedTouches[0]?.clientX ?? touchStartX;
-    const delta = endX - touchStartX;
+    if (touchStartY === null) return;
+    const endY = event.changedTouches[0]?.clientY ?? touchStartY;
+    const delta = endY - touchStartY;
     const swipeThreshold = 60;
 
     if (Math.abs(delta) >= swipeThreshold) {
@@ -221,7 +225,7 @@ export function ExperienceDetailModal({
       }
     }
 
-    setTouchStartX(null);
+    setTouchStartY(null);
   };
 
   return (
@@ -258,26 +262,46 @@ export function ExperienceDetailModal({
           <div className="grid h-full grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]">
             <div className="relative flex h-[42vh] items-center justify-center bg-black md:h-full">
               {currentMedia?.type === "video" ? (
-                <video
-                  key={currentMedia.src}
-                  src={currentMedia.src}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                  className={cn(
-                    "h-full w-full object-cover transition-opacity duration-300 md:object-contain",
-                    isMediaVisible ? "opacity-100" : "opacity-0",
+                <>
+                  <video
+                    ref={videoRef}
+                    key={currentMedia.src}
+                    src={currentMedia.src}
+                    autoPlay
+                    loop
+                    playsInline
+                    className={cn(
+                      "h-full w-full object-contain transition-opacity duration-300 md:object-contain",
+                      isMediaVisible ? "opacity-100" : "opacity-0",
+                    )}
+                    onClick={() => {
+                      if (videoRef.current) {
+                        if (isPlaying) {
+                          videoRef.current.pause();
+                        } else {
+                          void videoRef.current.play();
+                        }
+                        setIsPlaying((prev) => !prev);
+                      }
+                    }}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                  />
+                  {!isPlaying && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/40 bg-black/45 text-white backdrop-blur-md">
+                        <Play className="ml-1 h-8 w-8 fill-current" />
+                      </div>
+                    </div>
                   )}
-                />
+                </>
               ) : currentMedia?.src ? (
                 <Image
                   src={currentMedia.src}
                   alt={currentExperience.title}
                   fill
                   className={cn(
-                    "object-cover transition-opacity duration-300 md:object-contain",
+                    "object-contain transition-opacity duration-300 md:object-contain",
                     isMediaVisible ? "opacity-100" : "opacity-0",
                   )}
                 />

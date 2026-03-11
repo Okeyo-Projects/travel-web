@@ -2,8 +2,8 @@
 
 import { addDays, format } from "date-fns";
 import {
-  Bike,
   Calendar,
+  Home,
   Loader2,
   MapPin,
   Minus,
@@ -15,8 +15,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
-import { ExperienceCard } from "@/components/experience-card";
-import { ExperienceGroup } from "@/components/explore";
+import { CompactExperienceCard, ExperienceGroup } from "@/components/explore";
 import { FooterSection } from "@/components/home/FooterSection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
@@ -53,7 +52,7 @@ export default function ExplorePage() {
   const [locationQuery, setLocationQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
 
-  const [activeType, setActiveType] = useState<ExperienceType | "all">("all");
+  const [activeType, setActiveType] = useState<ExperienceType | "all">("lodging");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [guestsCount, setGuestsCount] = useState(1);
   const [activeSort] = useState<ExperienceSort>("newest");
@@ -71,10 +70,8 @@ export default function ExplorePage() {
     activeType === "all"
       ? "All Activity"
       : activeType === "lodging"
-        ? "Stays"
-        : activeType === "trip"
-          ? "Trips"
-          : "Activities";
+        ? "Lodge"
+        : "";
   const guestsLabel = `${guestsCount} guest${guestsCount > 1 ? "s" : ""}`;
   const hasSearchText = debouncedSearch.length > 0 || locationQuery.length > 0;
   const hasActiveFilters =
@@ -223,9 +220,9 @@ export default function ExplorePage() {
                   type="button"
                   className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
                 >
-                  <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
+                  <Home className="w-5 h-5 text-[#ff2566] shrink-0" />
                   <div className="text-left min-w-0 hidden sm:block">
-                    <p className="text-xs text-gray-400">Activity</p>
+                    <p className="text-xs text-gray-400">Experience</p>
                     <p className="text-sm text-white">{activityLabel}</p>
                   </div>
                 </button>
@@ -235,13 +232,7 @@ export default function ExplorePage() {
                   All Activity
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActiveType("lodging")}>
-                  Stays
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveType("trip")}>
-                  Trips
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveType("activity")}>
-                  Activities
+                  Lodge
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -393,10 +384,9 @@ export default function ExplorePage() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {searchResults.map((experience) => (
-                    <ExperienceCard
+                    <CompactExperienceCard
                       key={experience.id}
                       experience={experience}
-                      source="search"
                     />
                   ))}
                 </div>

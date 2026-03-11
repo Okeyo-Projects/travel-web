@@ -23,7 +23,7 @@ export type ExtendedNotificationKind =
 
 export type NotificationKind = Enums<"notification_kind"> | ExtendedNotificationKind;
 
-export type NotificationTarget = Pick<
-  NotificationRow,
-  "kind" | "entity_type" | "entity_id" | "action_url"
->;
+export type NotificationTarget = Omit<
+  Pick<NotificationRow, "kind" | "entity_type" | "entity_id" | "action_url">,
+  "kind"
+> & { kind: NotificationKind };

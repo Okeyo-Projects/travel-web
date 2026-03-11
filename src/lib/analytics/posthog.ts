@@ -95,7 +95,7 @@ function ensurePosthogStub() {
   if (typeof window === "undefined" || window.posthog) return;
 
   const posthogStub: any[] & {
-    init?: (...args: unknown[]) => void;
+    init?: (token: string, config: Record<string, unknown>) => void;
     capture?: (...args: unknown[]) => void;
     identify?: (...args: unknown[]) => void;
     reset?: (...args: unknown[]) => void;

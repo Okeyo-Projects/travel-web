@@ -121,7 +121,7 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
         </DropdownMenuItem>
         {canHost && (
           <DropdownMenuItem
-            onClick={() => {
+            onSelect={() => {
               if (mode === "host") {
                 setMode("traveler");
                 if (pathname.startsWith("/host")) {

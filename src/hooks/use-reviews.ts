@@ -299,7 +299,8 @@ export function useCreateReview() {
         throw error;
       }
 
-      await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- table may not be in generated types yet
+      await (supabase as any)
         .from("review_requests")
         .update({ status: "completed", completed_at: new Date().toISOString() })
         .eq("booking_id", input.bookingId)

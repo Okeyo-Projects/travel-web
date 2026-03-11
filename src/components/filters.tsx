@@ -101,13 +101,11 @@ export function Filters({
           <div className="py-6 space-y-8">
             {/* Experience Type */}
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Experience Type</Label>
+              <Label className="text-base font-semibold">Experience</Label>
               <div className="flex flex-wrap gap-2">
                 {[
                   { value: "all", label: "All" },
-                  { value: "trip", label: "Trips" },
-                  { value: "lodging", label: "Stays" },
-                  { value: "activity", label: "Activities" },
+                  { value: "lodging", label: "Lodge" },
                 ].map((type) => (
                   <Button
                     key={type.value}

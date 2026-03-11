@@ -22,7 +22,8 @@ function socialQueryKey(experienceId: string) {
 }
 
 export function useExperienceSocial(experienceId: string | null) {
-  const supabase = createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- social tables not yet in generated types
+  const supabase = createClient() as any;
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
