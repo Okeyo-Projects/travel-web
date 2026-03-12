@@ -15,6 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ReviewForm } from "@/components/experience/ReviewForm";
 import { ReviewStars } from "@/components/experience/ReviewStars";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -220,7 +221,8 @@ function getCancellationPolicyInfo(
     } else {
       estimate = "Remboursement estimé: 0%.";
     }
-    details = "Flexible: remboursement partiel possible à l'approche du séjour.";
+    details =
+      "Flexible: remboursement partiel possible à l'approche du séjour.";
   } else if (normalizedPolicy === "moderate") {
     if (daysBeforeStart >= 5) {
       estimate = "Remboursement estimé: 100%.";
@@ -307,6 +309,7 @@ export default function BookingDetailPage() {
       return data as BookingDetail;
     },
   });
+  const bookingReviewQuery = useReviewForBooking(user ? bookingId : null);
 
   if (!authLoading && !user) {
     return (
@@ -337,7 +340,6 @@ export default function BookingDetailPage() {
   const canCancel = booking?.status
     ? ["pending_host", "pending_payment", "approved"].includes(booking.status)
     : false;
-  const bookingReviewQuery = useReviewForBooking(booking?.id);
   const cancellationPolicyInfo = booking
     ? getCancellationPolicyInfo(
         booking.experience?.cancellation_policy,
@@ -448,7 +450,9 @@ export default function BookingDetailPage() {
         reason: cancelReason || "user_cancelled",
       });
       await queryClient.invalidateQueries({ queryKey: ["bookings", user.id] });
-      await queryClient.invalidateQueries({ queryKey: ["user-bookings", user.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["user-bookings", user.id],
+      });
       setIsCancelDialogOpen(false);
       router.push("/bookings");
     } catch (err) {
@@ -555,17 +559,23 @@ export default function BookingDetailPage() {
         {cancellationPolicyInfo && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Politique d'annulation</CardTitle>
+              <CardTitle className="text-base">
+                Politique d'annulation
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <p className="text-sm">
                 Politique appliquée:{" "}
-                <span className="font-medium">{cancellationPolicyInfo.label}</span>
+                <span className="font-medium">
+                  {cancellationPolicyInfo.label}
+                </span>
               </p>
               <p className="text-sm text-muted-foreground">
                 {cancellationPolicyInfo.details}
               </p>
-              <p className="text-sm font-medium">{cancellationPolicyInfo.estimate}</p>
+              <p className="text-sm font-medium">
+                {cancellationPolicyInfo.estimate}
+              </p>
             </CardContent>
           </Card>
         )}
@@ -611,7 +621,9 @@ export default function BookingDetailPage() {
                 <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-medium">Avis déjà publié</p>
-                    <ReviewStars rating={bookingReviewQuery.data.ratingOverall} />
+                    <ReviewStars
+                      rating={bookingReviewQuery.data.ratingOverall}
+                    />
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {bookingReviewQuery.data.text}
@@ -627,7 +639,8 @@ export default function BookingDetailPage() {
                 />
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Impossible de retrouver l'expérience associée à cette réservation.
+                  Impossible de retrouver l'expérience associée à cette
+                  réservation.
                 </p>
               )}
             </CardContent>
@@ -638,40 +651,52 @@ export default function BookingDetailPage() {
           <CardHeader>
             <CardTitle className="text-base">Actions</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            {canPay && (
-              <Button onClick={handleStartPayment} disabled={isStartingPayment}>
-                {isStartingPayment ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                Payer maintenant
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={handleCheckPaymentStatus}
-              disabled={!lastPaymentId || isCheckingPayment}
-            >
-              {isCheckingPayment ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              Vérifier le paiement
-            </Button>
-            {canCancel && (
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              {canPay && (
+                <Button
+                  onClick={handleStartPayment}
+                  disabled={isStartingPayment}
+                >
+                  {isStartingPayment ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  Payer maintenant
+                </Button>
+              )}
               <Button
-                variant="destructive"
-                onClick={() => setIsCancelDialogOpen(true)}
-                disabled={cancelBookingMutation.isPending}
+                variant="outline"
+                onClick={handleCheckPaymentStatus}
+                disabled={!lastPaymentId || isCheckingPayment}
               >
-                {cancelBookingMutation.isPending ? (
+                {isCheckingPayment ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : null}
-                Annuler la réservation
+                Vérifier le paiement
               </Button>
+              {canCancel && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setIsCancelDialogOpen(true)}
+                  disabled={cancelBookingMutation.isPending}
+                >
+                  {cancelBookingMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  Annuler la réservation
+                </Button>
+              )}
+              <Button variant="ghost" asChild>
+                <Link href="/bookings">Retour</Link>
+              </Button>
+            </div>
+
+            {(canPay || booking.status === "pending_payment") && (
+              <PayzoneBadge
+                title="Paiement securise avec Payzone"
+                description="Le reglement s'effectue sur la page de paiement securisee de Payzone."
+              />
             )}
-            <Button variant="ghost" asChild>
-              <Link href="/bookings">Retour</Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
@@ -688,7 +713,8 @@ export default function BookingDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer l'annulation</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Votre réservation sera annulée immédiatement.
+              Cette action est irréversible. Votre réservation sera annulée
+              immédiatement.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -703,11 +729,15 @@ export default function BookingDetailPage() {
                   <SelectValue placeholder="Sélectionner une raison" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="changed_plans">Changement de plans</SelectItem>
+                  <SelectItem value="changed_plans">
+                    Changement de plans
+                  </SelectItem>
                   <SelectItem value="found_alternative">
                     Alternative trouvée
                   </SelectItem>
-                  <SelectItem value="price_too_high">Prix trop élevé</SelectItem>
+                  <SelectItem value="price_too_high">
+                    Prix trop élevé
+                  </SelectItem>
                   <SelectItem value="personal_reasons">
                     Raisons personnelles
                   </SelectItem>

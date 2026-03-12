@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 import { useBookingContext } from "@/components/booking/booking-context";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -303,6 +304,11 @@ export function StepReview() {
           You won't be charged until the host accepts your request.
         </p>
       </div>
+
+      <PayzoneBadge
+        title="Secure payment powered by Payzone"
+        description="Once the host accepts, payment is completed on Payzone's secure checkout page."
+      />
     </div>
   );
 }

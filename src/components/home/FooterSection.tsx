@@ -1,5 +1,6 @@
 import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 
 const COMPANY_LINKS = ["Traveling", "About Locate", "Success", "Information"];
 
@@ -7,11 +8,13 @@ export function FooterSection() {
   return (
     <footer className="bg-white px-4 pb-6 sm:px-6 sm:pb-10">
       <div className="relative mx-auto max-w-[1380px] overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-r from-[#121419] via-[#191a1f] to-[#670833] px-6 py-10 text-white sm:px-10 sm:py-14">
-        <img
+        <Image
           src="/ai-pattern.png"
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-35"
+          fill
+          sizes="(min-width: 1024px) 1380px, 100vw"
+          className="pointer-events-none object-cover opacity-35"
         />
 
         <div className="relative z-10 grid gap-12 lg:grid-cols-[1.1fr_0.8fr_1.4fr]">
@@ -50,6 +53,15 @@ export function FooterSection() {
                 <Twitter className="h-4 w-4" />
               </button>
             </div>
+
+            <PayzoneBadge
+              title="Payment partner"
+              description="Transactions are processed securely through Payzone."
+              className="mt-6 border-white/10 bg-white/5"
+              titleClassName="text-white"
+              descriptionClassName="text-white/70"
+              imageWrapperClassName="bg-white/95"
+            />
           </div>
 
           <div>
