@@ -10,9 +10,13 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import {
+  BookingCancellationDialog,
+  type BookingCancellationPayload,
+} from "@/components/booking/BookingCancellationDialog";
 import { ReviewForm } from "@/components/experience/ReviewForm";
 import { ReviewStars } from "@/components/experience/ReviewStars";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { useCancelBooking } from "@/hooks/use-booking-mutations";
 import { useReviewForBooking } from "@/hooks/use-reviews";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
@@ -27,6 +32,13 @@ import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
+type CancellationPolicy = Database["public"]["Enums"]["cancellation_policy"];
+
+const CANCELLABLE_STATUSES: BookingStatus[] = [
+  "pending_host",
+  "approved",
+  "pending_payment",
+];
 
 type BookingDetail = {
   id: string;
@@ -41,6 +53,9 @@ type BookingDetail = {
   price_total_cents: number;
   currency: string;
   status: BookingStatus | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  cancelled_by: string | null;
   guest_notes: string | null;
   host_notes: string | null;
   created_at: string;
@@ -51,6 +66,7 @@ type BookingDetail = {
     city: string | null;
     thumbnail_url: string | null;
     type: string | null;
+    cancellation_policy: CancellationPolicy;
   } | null;
 };
 
@@ -78,6 +94,100 @@ function formatPrice(cents: number, currency: string) {
     currency,
     maximumFractionDigits: 0,
   }).format(cents / 100);
+}
+
+function parseDateOnly(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function subtractDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() - days);
+  return next;
+}
+
+function formatLongDate(value: Date) {
+  return value.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function getCancellationPolicyInfo(
+  policy: CancellationPolicy | null,
+  fromDate: string,
+  totalCents: number,
+  currency: string,
+) {
+  const arrivalDate = parseDateOnly(fromDate);
+  const arrivalLabel = formatLongDate(arrivalDate);
+  const totalLabel = formatPrice(totalCents, currency);
+  const now = new Date();
+
+  switch (policy) {
+    case "free":
+      return {
+        badge: "Annulation gratuite",
+        policySummary: `Annulation sans frais jusqu'au ${arrivalLabel}.`,
+        refundSummary:
+          now < arrivalDate
+            ? `Remboursement estimé à ${totalLabel} si vous annulez avant le début du séjour.`
+            : "Le séjour a déjà commencé, aucun remboursement automatique n'est indiqué.",
+      };
+    case "flexible": {
+      const deadline = subtractDays(arrivalDate, 1);
+      const deadlineLabel = formatLongDate(deadline);
+
+      return {
+        badge: "Flexible (24 h)",
+        policySummary:
+          "Remboursement intégral si l'annulation intervient au moins 24 h avant l'arrivée.",
+        refundSummary:
+          now <= deadline
+            ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
+            : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+      };
+    }
+    case "strict": {
+      const deadline = subtractDays(arrivalDate, 14);
+      const deadlineLabel = formatLongDate(deadline);
+
+      return {
+        badge: "Stricte (14 jours)",
+        policySummary:
+          "Remboursement intégral si l'annulation intervient au moins 14 jours avant l'arrivée.",
+        refundSummary:
+          now <= deadline
+            ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
+            : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+      };
+    }
+    case "non_refundable":
+      return {
+        badge: "Non remboursable",
+        policySummary:
+          "Cette expérience ne prévoit pas de remboursement en cas d'annulation.",
+        refundSummary:
+          "Aucun remboursement n'est prévu par la politique de l'expérience.",
+      };
+    case "moderate":
+    default: {
+      const deadline = subtractDays(arrivalDate, 7);
+      const deadlineLabel = formatLongDate(deadline);
+
+      return {
+        badge: "Modérée (7 jours)",
+        policySummary:
+          "Remboursement intégral si l'annulation intervient au moins 7 jours avant l'arrivée.",
+        refundSummary:
+          now <= deadline
+            ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
+            : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+      };
+    }
+  }
 }
 
 function getStatusBadge(status: BookingStatus | null) {
@@ -167,13 +277,15 @@ function openPayzonePaywall(session: PayzoneSession) {
 
 export default function BookingDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
+  const cancelBookingMutation = useCancelBooking();
   const bookingId = params?.bookingId as string;
   const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
   const [isStartingPayment, setIsStartingPayment] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancellationDialog, setShowCancellationDialog] = useState(false);
 
   const {
     data: booking,
@@ -204,11 +316,14 @@ export default function BookingDetailPage() {
           price_total_cents,
           currency,
           status,
+          cancellation_reason,
+          cancelled_at,
+          cancelled_by,
           guest_notes,
           host_notes,
           created_at,
           updated_at,
-          experience:experiences(id, title, city, thumbnail_url, type)
+          experience:experiences(id, title, city, thumbnail_url, type, cancellation_policy)
         `,
         )
         .eq("id", bookingId)
@@ -247,7 +362,7 @@ export default function BookingDetailPage() {
 
   const canPay = booking?.status === "approved";
   const canCancel = booking?.status
-    ? ["pending_host", "pending_payment", "approved"].includes(booking.status)
+    ? CANCELLABLE_STATUSES.includes(booking.status)
     : false;
   const bookingReviewQuery = useReviewForBooking(booking?.id);
 
@@ -329,36 +444,33 @@ export default function BookingDetailPage() {
     }
   };
 
-  const handleCancelBooking = async () => {
+  const handleCancelBooking = async ({
+    reason,
+    reasonLabel,
+    details,
+  }: BookingCancellationPayload) => {
     if (!booking || !user) return;
-    setIsCancelling(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled" })
-        .eq("id", booking.id)
-        .eq("guest_id", user.id);
+      await cancelBookingMutation.mutateAsync({
+        bookingId: booking.id,
+        guestId: user.id,
+        reason: reasonLabel,
+        details,
+      });
 
-      if (error) {
-        throw error;
-      }
-
+      setShowCancellationDialog(false);
       toast.success("Réservation annulée.");
       captureEvent(ANALYTICS_EVENT.BOOKING_CANCELLED, {
         booking_id: booking.id,
-        reason: "user_cancelled",
+        reason: reason ?? "unspecified",
       });
-      await queryClient.invalidateQueries({ queryKey: ["bookings", user.id] });
-      await refetch();
+      router.replace("/bookings");
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
           : "Impossible d'annuler la réservation.";
       toast.error(message);
-    } finally {
-      setIsCancelling(false);
     }
   };
 
@@ -391,6 +503,19 @@ export default function BookingDetailPage() {
   }
 
   const StatusIcon = statusMeta.icon;
+  const cancellationInfo = getCancellationPolicyInfo(
+    booking.experience?.cancellation_policy ?? null,
+    booking.from_date,
+    booking.price_total_cents,
+    booking.currency,
+  );
+  const cancellationDateLabel = booking.cancelled_at
+    ? new Date(booking.cancelled_at).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -451,6 +576,40 @@ export default function BookingDetailPage() {
                 </span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Annulation et remboursement
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{cancellationInfo.badge}</Badge>
+              {booking.status === "cancelled" && cancellationDateLabel ? (
+                <Badge variant="destructive">
+                  Annulée le {cancellationDateLabel}
+                </Badge>
+              ) : null}
+            </div>
+            <div className="space-y-2 text-sm">
+              <p>{cancellationInfo.policySummary}</p>
+              <p className="text-muted-foreground">
+                {cancellationInfo.refundSummary}
+              </p>
+            </div>
+            {booking.cancellation_reason ? (
+              <div className="rounded-xl border bg-muted/20 p-4 text-sm">
+                <p className="font-medium text-foreground">
+                  Motif enregistré
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  {booking.cancellation_reason}
+                </p>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -544,10 +703,10 @@ export default function BookingDetailPage() {
             {canCancel && (
               <Button
                 variant="destructive"
-                onClick={handleCancelBooking}
-                disabled={isCancelling}
+                onClick={() => setShowCancellationDialog(true)}
+                disabled={cancelBookingMutation.isPending}
               >
-                {isCancelling ? (
+                {cancelBookingMutation.isPending ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : null}
                 Annuler la réservation
@@ -558,6 +717,15 @@ export default function BookingDetailPage() {
             </Button>
           </CardContent>
         </Card>
+
+        <BookingCancellationDialog
+          open={showCancellationDialog}
+          onOpenChange={setShowCancellationDialog}
+          onConfirm={handleCancelBooking}
+          isLoading={cancelBookingMutation.isPending}
+          policySummary={cancellationInfo.policySummary}
+          refundSummary={cancellationInfo.refundSummary}
+        />
       </div>
     </div>
   );

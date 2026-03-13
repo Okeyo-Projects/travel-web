@@ -55,6 +55,27 @@ export type BookingQuoteResult = {
   message: string;
 };
 
+export type CancelBookingInput = {
+  bookingId: string;
+  guestId: string;
+  reason?: string | null;
+  details?: string | null;
+};
+
+function combineCancellationReason(
+  reason?: string | null,
+  details?: string | null,
+) {
+  const normalizedReason = reason?.trim();
+  const normalizedDetails = details?.trim();
+
+  if (normalizedReason && normalizedDetails) {
+    return `${normalizedReason}: ${normalizedDetails}`;
+  }
+
+  return normalizedReason ?? normalizedDetails ?? null;
+}
+
 export function useCreateBooking() {
   const queryClient = useQueryClient();
   const supabase = createClient();
@@ -123,6 +144,55 @@ export function useGetBookingQuote() {
       }
 
       return result as BookingQuoteResult;
+    },
+  });
+}
+
+export function useCancelBooking() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (input: CancelBookingInput) => {
+      const { data, error } = await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: input.guestId,
+          cancellation_reason: combineCancellationReason(
+            input.reason,
+            input.details,
+          ),
+        })
+        .eq("id", input.bookingId)
+        .eq("guest_id", input.guestId)
+        .in("status", ["pending_host", "approved", "pending_payment"])
+        .select("id, guest_id")
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Cette réservation ne peut plus être annulée.");
+      }
+
+      return data;
+    },
+    onSuccess: async (data) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["user-bookings", data.guest_id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["bookings", data.guest_id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["booking-detail", data.id, data.guest_id],
+        }),
+      ]);
     },
   });
 }

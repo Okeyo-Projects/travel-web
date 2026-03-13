@@ -10,7 +10,7 @@ branch: task/011-booking-cancellation
 pr: null
 attempts: 0
 depends_on: []
-progress: 30
+progress: 80
 ---
 
 ## Description
@@ -58,11 +58,11 @@ The booking detail page has a "Cancel booking" button but the flow may be incomp
 - [x] Read booking detail page and mutations hook
 - [x] Read booking schema for cancellation logic and triggers
 - [x] Read mobile booking detail for cancellation UX reference
-- [ ] Build CancellationDialog component
-- [ ] Add reason selector and optional details
-- [ ] Implement cancellation mutation
-- [ ] Add success/error handling
-- [ ] Display cancellation policy on booking detail
+- [x] Build CancellationDialog component
+- [x] Add reason selector and optional details
+- [x] Implement cancellation mutation
+- [x] Add success/error handling
+- [x] Display cancellation policy on booking detail
 - [ ] Verify cancelled booking renders correctly
 - [ ] Polish UI
 
