@@ -13,6 +13,9 @@
       "Bash(git rev-list --left-right --count main...task/002-reviews-system-2)",
       "Bash(git rev-list --left-right --count main...task-002-reviews-system)",
       "Bash(git rev-list --left-right --count main...task/003-social-feed-reels)"
+    ],
+    "additionalDirectories": [
+      "/Users/naimabdelkerim/Code"
     ]
   }
 }

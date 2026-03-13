@@ -10,8 +10,13 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ReviewForm } from "@/components/experience/ReviewForm";
 import { ReviewStars } from "@/components/experience/ReviewStars";
@@ -44,6 +49,12 @@ import { useCancelBooking } from "@/hooks/use-booking-mutations";
 import { useReviewForBooking } from "@/hooks/use-reviews";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import {
+  isPayzoneSession,
+  type PayzoneReturnStatus,
+  type PayzoneSession,
+  readPayzoneReturnParams,
+} from "@/lib/payzone";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 
@@ -76,13 +87,6 @@ type BookingDetail = {
       | Database["public"]["Enums"]["cancellation_policy"]
       | null;
   } | null;
-};
-
-type PayzoneSession = {
-  paymentId: string;
-  paywallUrl: string;
-  payload: string;
-  signature: string;
 };
 
 function formatDateRange(from: string, to: string) {
@@ -165,11 +169,11 @@ function getStatusBadge(status: BookingStatus | null) {
   }
 }
 
-function openPayzonePaywall(session: PayzoneSession) {
+function openPayzonePaywall(session: PayzoneSession, target: string) {
   const form = document.createElement("form");
   form.method = "POST";
   form.action = session.paywallUrl;
-  form.target = "_blank";
+  form.target = target;
   form.style.display = "none";
 
   const payloadField = document.createElement("input");
@@ -254,6 +258,8 @@ function getCancellationPolicyInfo(
 export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const bookingId = params?.bookingId as string;
@@ -264,6 +270,11 @@ export default function BookingDetailPage() {
   const [cancelReason, setCancelReason] = useState<string>("");
   const [cancelDetails, setCancelDetails] = useState("");
   const cancelBookingMutation = useCancelBooking();
+  const handledReturnKeyRef = useRef<string | null>(null);
+  const pendingPaymentStorageKey = useMemo(
+    () => `payzone:pending-payment:${bookingId}`,
+    [bookingId],
+  );
 
   const {
     data: booking,
@@ -311,6 +322,146 @@ export default function BookingDetailPage() {
   });
   const bookingReviewQuery = useReviewForBooking(user ? bookingId : null);
 
+  const persistPendingPaymentId = useCallback(
+    (paymentId: string) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      window.sessionStorage.setItem(pendingPaymentStorageKey, paymentId);
+    },
+    [pendingPaymentStorageKey],
+  );
+
+  const clearPendingPaymentId = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(pendingPaymentStorageKey);
+    }
+    setLastPaymentId(null);
+  }, [pendingPaymentStorageKey]);
+
+  const handleCheckPaymentStatus = useCallback(
+    async (
+      paymentIdOverride?: string | null,
+      returnStatus?: PayzoneReturnStatus | null,
+    ) => {
+      const paymentId = paymentIdOverride ?? lastPaymentId;
+      if (!paymentId) {
+        toast.message("Aucun paiement en cours à vérifier.");
+        return;
+      }
+
+      setIsCheckingPayment(true);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.functions.invoke(
+          "get-payment-status",
+          {
+            body: { paymentId },
+          },
+        );
+
+        if (error || !data) {
+          throw new Error(
+            error?.message ?? "Impossible de vérifier le paiement.",
+          );
+        }
+
+        const status = (data as { status?: string }).status;
+
+        if (status === "succeeded" || status === "confirmed") {
+          clearPendingPaymentId();
+          toast.success("Paiement confirmé.");
+        } else if (status === "failed" || status === "cancelled") {
+          clearPendingPaymentId();
+          toast.error("Le paiement n'a pas abouti.");
+        } else if (returnStatus === "success") {
+          setLastPaymentId(paymentId);
+          persistPendingPaymentId(paymentId);
+          toast.message("Paiement reçu, confirmation en cours.");
+        } else if (returnStatus === "failure") {
+          setLastPaymentId(paymentId);
+          persistPendingPaymentId(paymentId);
+          toast.error("Le paiement a échoué. Vous pouvez réessayer.");
+        } else {
+          setLastPaymentId(paymentId);
+          persistPendingPaymentId(paymentId);
+          toast.message(`Statut paiement: ${status ?? "pending"}`);
+        }
+
+        await queryClient.invalidateQueries({
+          queryKey: ["bookings", user?.id],
+        });
+        await refetch();
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Erreur de vérification du paiement.";
+        toast.error(message);
+      } finally {
+        setIsCheckingPayment(false);
+      }
+    },
+    [
+      clearPendingPaymentId,
+      lastPaymentId,
+      persistPendingPaymentId,
+      queryClient,
+      refetch,
+      user?.id,
+    ],
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedPaymentId = window.sessionStorage.getItem(
+      pendingPaymentStorageKey,
+    );
+
+    if (storedPaymentId) {
+      setLastPaymentId((current) => current ?? storedPaymentId);
+    }
+  }, [pendingPaymentStorageKey]);
+
+  useEffect(() => {
+    const { paymentId, status } = readPayzoneReturnParams(searchParams);
+
+    if (!paymentId || !status) {
+      return;
+    }
+
+    const handledKey = `${paymentId}:${status}`;
+    if (handledReturnKeyRef.current === handledKey) {
+      return;
+    }
+
+    handledReturnKeyRef.current = handledKey;
+    setLastPaymentId(paymentId);
+    persistPendingPaymentId(paymentId);
+
+    if (status === "cancel") {
+      clearPendingPaymentId();
+      toast.message("Paiement annulé.");
+      router.replace(pathname, { scroll: false });
+      return;
+    }
+
+    void handleCheckPaymentStatus(paymentId, status).finally(() => {
+      router.replace(pathname, { scroll: false });
+    });
+  }, [
+    clearPendingPaymentId,
+    handleCheckPaymentStatus,
+    pathname,
+    persistPendingPaymentId,
+    router,
+    searchParams,
+  ]);
+
   if (!authLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -349,6 +500,20 @@ export default function BookingDetailPage() {
 
   const handleStartPayment = async () => {
     if (!booking) return;
+
+    const payzoneWindowName = `payzone-checkout-${booking.id}`;
+    const payzoneWindow =
+      typeof window !== "undefined"
+        ? window.open("", payzoneWindowName, "popup=yes,width=520,height=760")
+        : null;
+
+    if (payzoneWindow) {
+      payzoneWindow.document.write(
+        "<html><body style='font-family:system-ui;padding:24px'>Redirection vers Payzone...</body></html>",
+      );
+      payzoneWindow.document.close();
+    }
+
     setIsStartingPayment(true);
     try {
       const supabase = createClient();
@@ -365,15 +530,28 @@ export default function BookingDetailPage() {
         );
       }
 
-      const session = data as PayzoneSession;
+      if (!isPayzoneSession(data)) {
+        throw new Error("Réponse Payzone invalide.");
+      }
+
+      const session = data;
       setLastPaymentId(session.paymentId);
+      persistPendingPaymentId(session.paymentId);
       captureEvent(ANALYTICS_EVENT.PAYMENT_INITIATED, {
         booking_id: booking.id,
         method: "payzone",
       });
-      openPayzonePaywall(session);
-      toast.success("Page de paiement ouverte dans un nouvel onglet.");
+      openPayzonePaywall(session, payzoneWindow ? payzoneWindowName : "_self");
+      toast.success(
+        payzoneWindow
+          ? "Page de paiement ouverte dans une nouvelle fenêtre."
+          : "Redirection vers la page de paiement...",
+      );
     } catch (err) {
+      if (payzoneWindow && !payzoneWindow.closed) {
+        payzoneWindow.close();
+      }
+
       const message =
         err instanceof Error
           ? err.message
@@ -381,47 +559,6 @@ export default function BookingDetailPage() {
       toast.error(message);
     } finally {
       setIsStartingPayment(false);
-    }
-  };
-
-  const handleCheckPaymentStatus = async () => {
-    if (!lastPaymentId) {
-      toast.message("Aucun paiement en cours à vérifier.");
-      return;
-    }
-    setIsCheckingPayment(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.functions.invoke(
-        "get-payment-status",
-        {
-          body: { paymentId: lastPaymentId },
-        },
-      );
-
-      if (error || !data) {
-        throw new Error(
-          error?.message ?? "Impossible de vérifier le paiement.",
-        );
-      }
-
-      const status = (data as { status?: string }).status;
-      if (status === "succeeded" || status === "confirmed") {
-        toast.success("Paiement confirmé.");
-      } else {
-        toast.message(`Statut paiement: ${status ?? "pending"}`);
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["bookings", user?.id] });
-      await refetch();
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Erreur de vérification du paiement.";
-      toast.error(message);
-    } finally {
-      setIsCheckingPayment(false);
     }
   };
 
@@ -666,7 +803,9 @@ export default function BookingDetailPage() {
               )}
               <Button
                 variant="outline"
-                onClick={handleCheckPaymentStatus}
+                onClick={() => {
+                  void handleCheckPaymentStatus();
+                }}
                 disabled={!lastPaymentId || isCheckingPayment}
               >
                 {isCheckingPayment ? (

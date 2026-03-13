@@ -6,7 +6,6 @@ priority: medium          # low | medium | high | urgent
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 assigned: codex           # codex | human | review-agent
-branch: null
 pr: null
 attempts: 0
 depends_on: []            # list of task IDs that must be done first

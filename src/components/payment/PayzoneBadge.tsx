@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 
 type PayzoneBadgeProps = {
   title?: string;
@@ -23,43 +22,13 @@ export function PayzoneBadge({
   imageClassName,
 }: PayzoneBadgeProps) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border/60 bg-muted/30 p-4",
-        className,
-      )}
-    >
-      <div className="space-y-3">
-        {title ? (
-          <p className={cn("text-sm font-medium leading-snug", titleClassName)}>
-            {title}
-          </p>
-        ) : null}
-        <div
-          className={cn(
-            "rounded-xl border border-black/5 bg-white p-3 shadow-sm",
-            imageWrapperClassName,
-          )}
-        >
+
           <Image
             src="/payzone.png"
             alt="Payzone secure payment"
-            width={1162}
+            width={962}
             height={120}
-            className={cn("h-auto w-full", imageClassName)}
+           // className={cn("h-auto w-full", imageClassName)}
           />
-        </div>
-        {description ? (
-          <p
-            className={cn(
-              "text-xs text-muted-foreground",
-              descriptionClassName,
-            )}
-          >
-            {description}
-          </p>
-        ) : null}
-      </div>
-    </div>
   );
 }
