@@ -1,7 +1,7 @@
 ---
 id: "011"
 title: "Complete Booking Cancellation Flow"
-status: in_progress
+status: done
 priority: medium
 created: 2026-03-07
 updated: 2026-03-09
@@ -10,7 +10,7 @@ branch: task/011-booking-cancellation
 pr: null
 attempts: 0
 depends_on: []
-progress: 10
+progress: 100
 ---
 
 ## Description
