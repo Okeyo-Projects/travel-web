@@ -2,7 +2,12 @@ import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
 import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 
-const COMPANY_LINKS = ["Traveling", "About Locate", "Success", "Information"];
+const COMPANY_LINKS = [
+  { label: "Traveling", href: "/" },
+  { label: "About Locate", href: "/" },
+  { label: "Success", href: "/" },
+  { label: "Support", href: "/support" },
+];
 
 export function FooterSection() {
   return (
@@ -68,9 +73,12 @@ export function FooterSection() {
             <h3 className="text-4xl font-black">Company</h3>
             <ul className="mt-5 space-y-3 text-xl text-white/90">
               {COMPANY_LINKS.map((item) => (
-                <li key={item}>
-                  <a href="/" className="transition-colors hover:text-white">
-                    {item}
+                <li key={item.label}>
+                  <a
+                    href={item.href}
+                    className="transition-colors hover:text-white"
+                  >
+                    {item.label}
                   </a>
                 </li>
               ))}

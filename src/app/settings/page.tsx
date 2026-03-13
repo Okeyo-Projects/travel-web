@@ -169,6 +169,20 @@ export default function SettingsPage() {
 
         {/* Legal */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-3">
+          <h2 className="font-semibold">Support</h2>
+          <p className="text-sm text-muted-foreground">
+            Browse FAQs or send a detailed issue report to the support team.
+          </p>
+          <a
+            href="/support"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Help Center & Support
+          </a>
+        </div>
+
+        {/* Legal */}
+        <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-3">
           <h2 className="font-semibold">Legal</h2>
           <div className="space-y-2">
             <a
