@@ -71,6 +71,7 @@ Create a support/help page (`/support`) with FAQ section and a "Report an Issue"
   - `pnpm tsc --noEmit` passed.
   - `pnpm lint` still fails on pre-existing repository-wide issues outside Task 007 scope (for example `supabase/functions/send-trip-reminders/index.ts`, `supabase/functions/validate-promo-code/index.ts`, and `src/app/bookings/page.tsx`).
 - GitHub submission remains environment-blocked in this runtime because network access is unavailable for `git push` / `gh pr`.
+  - `git push -u origin task/007-support-help-page` failed with `Could not resolve host: github.com`.
 
 ## Agent Log
 - 2026-03-13: Started task on branch `task/007-support-help-page`. Reviewed `support_tickets` schema, mobile support screen, and current settings/footer link surfaces before implementation. Identified schema gaps for anonymous submissions plus subject/contact email capture, so implementation will start with a minimal Supabase migration and matching typed web support models.
