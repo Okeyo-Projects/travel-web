@@ -1,12 +1,12 @@
 ---
 id: "007"
 title: "Support/Help Page with FAQ and Report Issue"
-status: todo
+status: in_progress
 priority: low
 created: 2026-03-07
-updated: 2026-03-07
+updated: 2026-03-13
 assigned: codex
-branch: null
+branch: task/007-support-help-page
 pr: null
 attempts: 0
 depends_on: []
@@ -55,17 +55,17 @@ Create a support/help page (`/support`) with FAQ section and a "Report an Issue"
 
 ## Checklist
 
-- [ ] Read support_tickets schema
-- [ ] Read mobile support screen for reference
-- [ ] Create `/support` page
-- [ ] Build FAQ accordion component with categories
-- [ ] Add FAQ search/filter
-- [ ] Build ReportIssueForm component
-- [ ] Create `use-support.ts` hook (submit ticket)
-- [ ] Add success confirmation
-- [ ] Add links from settings and footer
-- [ ] Polish UI and responsiveness
+- [ ] Review support ticket schema, generated types, and current support link surfaces
+- [ ] Extend support ticket schema for subject/contact email and anonymous submissions
+- [ ] Add support domain types and submission hook
+- [ ] Build FAQ data model, search/filter state, and accordion UI
+- [ ] Build report issue form with validation, auth-aware prefills, and success state
+- [ ] Create `/support` page layout with contact options and responsive sections
+- [ ] Wire support links from settings and footer
+- [ ] Run available validation and capture blockers
+- [ ] Update task log, progress, and completion state
 
 ## Review Notes
 
 ## Agent Log
+- 2026-03-13: Started task on branch `task/007-support-help-page`. Reviewed `support_tickets` schema, mobile support screen, and current settings/footer link surfaces before implementation. Identified schema gaps for anonymous submissions plus subject/contact email capture, so implementation will start with a minimal Supabase migration and matching typed web support models.
