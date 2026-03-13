@@ -1,5 +1,15 @@
 "use client";
 
+import { useBookingContext } from "@/components/booking/booking-context";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { useCreateBooking } from "@/hooks/use-booking-mutations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import { cn } from "@/lib/utils";
 import {
   BedDouble,
   Calendar,
@@ -12,16 +22,6 @@ import {
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
-import { useBookingContext } from "@/components/booking/booking-context";
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/use-auth";
-import { useCreateBooking } from "@/hooks/use-booking-mutations";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { cn } from "@/lib/utils";
 
 const NOTE_TEMPLATES = [
   "Special occasion",
@@ -306,8 +306,7 @@ export function StepReview() {
       </div>
 
       <PayzoneBadge
-        title="Secure payment powered by Payzone"
-        description="Once the host accepts, payment is completed on Payzone's secure checkout page."
+
       />
     </div>
   );

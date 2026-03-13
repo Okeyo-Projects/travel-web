@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -371,6 +372,21 @@ export function AuthModal() {
         <AppleLogo className="mr-2 h-4 w-4" />
         Sign in with Apple
       </Button>
+
+      <p className="text-center text-xs leading-6 text-muted-foreground">
+        By continuing, you agree to our{" "}
+        <Link href="/terms" className="font-medium text-foreground hover:text-primary">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/privacy"
+          className="font-medium text-foreground hover:text-primary"
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </div>
   );
 
