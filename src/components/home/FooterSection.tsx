@@ -2,7 +2,12 @@ import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
 import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 
-const COMPANY_LINKS = ["Traveling", "About Locate", "Success", "Information"];
+const COMPANY_LINKS = [
+  { label: "Traveling", href: "/" },
+  { label: "About Locate", href: "/" },
+  { label: "Success", href: "/" },
+  { label: "Support", href: "/support" },
+];
 
 export function FooterSection() {
   return (
@@ -53,24 +58,18 @@ export function FooterSection() {
                 <Twitter className="h-4 w-4" />
               </button>
             </div>
-
-            <PayzoneBadge
-              title="Payment partner"
-              description="Transactions are processed securely through Payzone."
-              className="mt-6 border-white/10 bg-white/5"
-              titleClassName="text-white"
-              descriptionClassName="text-white/70"
-              imageWrapperClassName="bg-white/95"
-            />
           </div>
 
           <div>
             <h3 className="text-4xl font-black">Company</h3>
             <ul className="mt-5 space-y-3 text-xl text-white/90">
               {COMPANY_LINKS.map((item) => (
-                <li key={item}>
-                  <a href="/" className="transition-colors hover:text-white">
-                    {item}
+                <li key={item.label}>
+                  <a
+                    href={item.href}
+                    className="transition-colors hover:text-white"
+                  >
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -97,6 +96,16 @@ export function FooterSection() {
                 <Send className="h-5 w-5" />
               </button>
             </form>
+            <div className="w-full flex justify-end mt-4">
+              <PayzoneBadge
+                title="Payment partner"
+                description="Transactions are processed securely through Payzone."
+                className="mt-6 border-white/10 bg-white/5"
+                titleClassName="text-white"
+                descriptionClassName="text-white/70"
+                imageWrapperClassName=""
+              />
+            </div>
           </div>
         </div>
       </div>
