@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
-import { useCreateSupportTicket } from "@/hooks/use-support";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { useCreateSupportTicket } from "@/hooks/use-support";
 import { cn } from "@/lib/utils";
 import {
   SUPPORT_EMAIL,
@@ -92,7 +92,8 @@ export function ReportIssueForm() {
       values.contactEmail.trim().length > 0 &&
       !EMAIL_PATTERN.test(values.contactEmail.trim())
     ) {
-      nextErrors.contactEmail = "Enter a valid email address or leave it blank.";
+      nextErrors.contactEmail =
+        "Enter a valid email address or leave it blank.";
     }
 
     setErrors(nextErrors);
@@ -182,11 +183,14 @@ export function ReportIssueForm() {
           <Input
             id="support-subject"
             value={values.subject}
-            onChange={(event) => handleFieldChange("subject", event.target.value)}
+            onChange={(event) =>
+              handleFieldChange("subject", event.target.value)
+            }
             placeholder="Example: Payment confirmed but booking missing"
             className={cn(
               "h-12 rounded-2xl border-slate-200 bg-slate-50",
-              errors.subject && "border-destructive focus-visible:ring-destructive/30",
+              errors.subject &&
+                "border-destructive focus-visible:ring-destructive/30",
             )}
           />
           {errors.subject ? (
@@ -218,8 +222,9 @@ export function ReportIssueForm() {
           </Select>
           <p className="text-sm leading-6 text-slate-500">
             {
-              SUPPORT_ISSUE_OPTIONS.find((option) => option.value === values.type)
-                ?.description
+              SUPPORT_ISSUE_OPTIONS.find(
+                (option) => option.value === values.type,
+              )?.description
             }
           </p>
         </div>

@@ -20,7 +20,10 @@ function renderInline(text: string) {
 
     if (value.startsWith("**")) {
       parts.push(
-        <strong key={`${index}-strong`} className="font-semibold text-slate-900">
+        <strong
+          key={`${index}-strong`}
+          className="font-semibold text-slate-900"
+        >
           {value.slice(2, -2)}
         </strong>,
       );
@@ -62,18 +65,26 @@ export function SupportMarkdown({
   content,
   className = "space-y-4 text-sm leading-6 text-slate-600",
 }: SupportMarkdownProps) {
-  const blocks = content.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+  const toKey = (value: string) => value.replace(/\s+/g, " ").trim();
+  const blocks = content
+    .split(/\n\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean);
 
   return (
     <div className={className}>
-      {blocks.map((block, blockIndex) => {
-        const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+      {blocks.map((block) => {
+        const lines = block
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+        const blockKey = toKey(block);
 
         if (lines.every((line) => line.startsWith("- "))) {
           return (
-            <ul key={`ul-${blockIndex}`} className="space-y-2 pl-5">
-              {lines.map((line, lineIndex) => (
-                <li key={`li-${blockIndex}-${lineIndex}`} className="list-disc">
+            <ul key={`ul-${blockKey}`} className="space-y-2 pl-5">
+              {lines.map((line) => (
+                <li key={`li-${blockKey}-${toKey(line)}`} className="list-disc">
                   {renderInline(line.replace(/^- /, ""))}
                 </li>
               ))}
@@ -83,9 +94,12 @@ export function SupportMarkdown({
 
         if (lines.every((line) => /^\d+\.\s/.test(line))) {
           return (
-            <ol key={`ol-${blockIndex}`} className="space-y-2 pl-5">
-              {lines.map((line, lineIndex) => (
-                <li key={`oli-${blockIndex}-${lineIndex}`} className="list-decimal">
+            <ol key={`ol-${blockKey}`} className="space-y-2 pl-5">
+              {lines.map((line) => (
+                <li
+                  key={`oli-${blockKey}-${toKey(line)}`}
+                  className="list-decimal"
+                >
                   {renderInline(line.replace(/^\d+\.\s/, ""))}
                 </li>
               ))}
@@ -93,7 +107,7 @@ export function SupportMarkdown({
           );
         }
 
-        return <p key={`p-${blockIndex}`}>{renderInline(lines.join(" "))}</p>;
+        return <p key={`p-${blockKey}`}>{renderInline(lines.join(" "))}</p>;
       })}
     </div>
   );

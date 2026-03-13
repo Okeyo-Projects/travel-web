@@ -123,7 +123,8 @@ export const SUPPORT_FAQ_ITEMS: ReadonlyArray<SupportFaqItem> = [
   {
     id: "payments-charge",
     category: "payments",
-    question: "I was charged but did not receive a confirmation. What should I do?",
+    question:
+      "I was charged but did not receive a confirmation. What should I do?",
     answer:
       "Start by checking your bookings page and inbox for a pending confirmation.\n\nIf nothing appears within a few minutes, send us:\n- the payment date\n- the amount charged\n- the last 4 digits of the card",
     keywords: ["charged", "confirmation", "card", "payment"],

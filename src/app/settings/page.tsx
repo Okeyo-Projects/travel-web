@@ -35,11 +35,15 @@ export default function SettingsPage() {
     queryKey: ["profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (!user) {
+        return null;
+      }
+
       const supabase = createClient();
       const { data } = await supabase
         .from("profiles")
         .select("display_name, preferred_language, currency")
-        .eq("id", user!.id)
+        .eq("id", user.id)
         .single();
       return data as {
         display_name: string;
@@ -59,11 +63,15 @@ export default function SettingsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (patch: { preferred_language?: Language }) => {
+      if (!user) {
+        throw new Error("User must be signed in to update settings.");
+      }
+
       const supabase = createClient();
       const { error } = await supabase
         .from("profiles")
         .update(patch)
-        .eq("id", user!.id);
+        .eq("id", user.id);
       if (error) throw error;
     },
     onSuccess: () => {

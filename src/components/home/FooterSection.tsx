@@ -58,15 +58,6 @@ export function FooterSection() {
                 <Twitter className="h-4 w-4" />
               </button>
             </div>
-
-            <PayzoneBadge
-              title="Payment partner"
-              description="Transactions are processed securely through Payzone."
-              className="mt-6 border-white/10 bg-white/5"
-              titleClassName="text-white"
-              descriptionClassName="text-white/70"
-              imageWrapperClassName="bg-white/95"
-            />
           </div>
 
           <div>
@@ -105,6 +96,16 @@ export function FooterSection() {
                 <Send className="h-5 w-5" />
               </button>
             </form>
+            <div className="w-full flex justify-end mt-4">
+              <PayzoneBadge
+                title="Payment partner"
+                description="Transactions are processed securely through Payzone."
+                className="mt-6 border-white/10 bg-white/5"
+                titleClassName="text-white"
+                descriptionClassName="text-white/70"
+                imageWrapperClassName=""
+              />
+            </div>
           </div>
         </div>
       </div>

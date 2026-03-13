@@ -7,9 +7,9 @@ import {
   PhoneCall,
 } from "lucide-react";
 import { FooterSection } from "@/components/home/FooterSection";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { ReportIssueForm } from "@/components/support/ReportIssueForm";
 import { SupportFaq } from "@/components/support/SupportFaq";
-import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Button } from "@/components/ui/button";
 import {
   SUPPORT_EMAIL,
@@ -20,7 +20,8 @@ import {
 const CONTACT_CARDS = [
   {
     title: "Email support",
-    description: "Best for detailed issues, screenshots, and booking references.",
+    description:
+      "Best for detailed issues, screenshots, and booking references.",
     value: SUPPORT_EMAIL,
     href: `mailto:${SUPPORT_EMAIL}`,
     icon: Mail,
@@ -34,7 +35,8 @@ const CONTACT_CARDS = [
   },
   {
     title: "Typical response time",
-    description: "Most tickets receive a first response within one business day.",
+    description:
+      "Most tickets receive a first response within one business day.",
     value: "Within 24 hours",
     href: "#report-an-issue",
     icon: Clock3,
@@ -65,7 +67,10 @@ export default function SupportPage() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="h-12 rounded-full bg-white px-6 text-slate-950 hover:bg-white/90">
+              <Button
+                asChild
+                className="h-12 rounded-full bg-white px-6 text-slate-950 hover:bg-white/90"
+              >
                 <a href="#report-an-issue">
                   Report an issue
                   <ArrowRight className="ml-2 size-4" />
