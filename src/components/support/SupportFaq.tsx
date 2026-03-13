@@ -1,9 +1,14 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
 import { Search, Sparkles } from "lucide-react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { SupportMarkdown } from "@/components/support/SupportMarkdown";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -124,7 +129,10 @@ export function SupportFaq({ formHref = "#report-an-issue" }: SupportFaqProps) {
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Try a broader term or send the team a detailed issue report.
           </p>
-          <Button asChild className="mt-5 rounded-full bg-[#d12d61] px-6 hover:bg-[#b82755]">
+          <Button
+            asChild
+            className="mt-5 rounded-full bg-[#d12d61] px-6 hover:bg-[#b82755]"
+          >
             <a href={formHref}>Report an issue</a>
           </Button>
         </div>

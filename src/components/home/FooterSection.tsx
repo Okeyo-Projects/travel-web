@@ -1,6 +1,6 @@
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 
 const COMPANY_LINKS = [
   { label: "Traveling", href: "/" },
@@ -58,7 +58,6 @@ export function FooterSection() {
                 <Twitter className="h-4 w-4" />
               </button>
             </div>
-
           </div>
 
           <div>
@@ -98,19 +97,18 @@ export function FooterSection() {
               </button>
             </form>
             <div className="w-full flex justify-end mt-4">
-            <PayzoneBadge
-              title="Payment partner"
-              description="Transactions are processed securely through Payzone."
-              className="mt-6 border-white/10 bg-white/5"
-              titleClassName="text-white"
-              descriptionClassName="text-white/70"
-              imageWrapperClassName=""
-            />
+              <PayzoneBadge
+                title="Payment partner"
+                description="Transactions are processed securely through Payzone."
+                className="mt-6 border-white/10 bg-white/5"
+                titleClassName="text-white"
+                descriptionClassName="text-white/70"
+                imageWrapperClassName=""
+              />
             </div>
           </div>
         </div>
       </div>
-      
     </footer>
   );
 }
