@@ -172,8 +172,7 @@ function getCancellationPolicyInfo(
         refundSummary:
           "Aucun remboursement n'est prévu par la politique de l'expérience.",
       };
-    case "moderate":
-    default: {
+    case "moderate": {
       const deadline = subtractDays(arrivalDate, 7);
       const deadlineLabel = formatLongDate(deadline);
 
@@ -187,6 +186,13 @@ function getCancellationPolicyInfo(
             : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
       };
     }
+    default:
+      return {
+        badge: "Politique standard",
+        policySummary:
+          "Les conditions d'annulation dépendent de l'expérience réservée.",
+        refundSummary: `Montant de réservation estimé: ${totalLabel}.`,
+      };
   }
 }
 

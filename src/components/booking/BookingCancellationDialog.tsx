@@ -67,6 +67,11 @@ export function BookingCancellationDialog({
     }
   }, [open]);
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (isLoading) return;
+    onOpenChange(nextOpen);
+  };
+
   const handleConfirm = () => {
     const selectedReason = CANCELLATION_REASONS.find(
       (option) => option.value === reason,
@@ -80,7 +85,7 @@ export function BookingCancellationDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-xl" showCloseButton={!isLoading}>
         <DialogHeader>
           <DialogTitle>Annuler la réservation</DialogTitle>

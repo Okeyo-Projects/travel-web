@@ -25,3 +25,8 @@ gh pr merge --merge --auto
 git push -u origin task/009-remove-offers-page
 gh pr create --base main --head task/009-remove-offers-page --title "task(009): Remove Offers Page" --body "Automated migration task. See PLAN/tasks/009-remove-offers-page.md for details."
 gh pr merge --merge --auto
+
+# Task 011: Complete Booking Cancellation Flow
+git push -u origin task/011-booking-cancellation
+gh pr create --base main --head task/011-booking-cancellation --title "task(011): Complete Booking Cancellation Flow" --body "Automated migration task. See PLAN/tasks/011-booking-cancellation.md for details."
+gh pr merge --merge --auto
