@@ -10,7 +10,7 @@ branch: task/007-support-help-page
 pr: null
 attempts: 0
 depends_on: []
-progress: 11
+progress: 22
 ---
 
 ## Description
@@ -56,7 +56,7 @@ Create a support/help page (`/support`) with FAQ section and a "Report an Issue"
 ## Checklist
 
 - [x] Review support ticket schema, generated types, and current support link surfaces
-- [ ] Extend support ticket schema for subject/contact email and anonymous submissions
+- [x] Extend support ticket schema for subject/contact email and anonymous submissions
 - [ ] Add support domain types and submission hook
 - [ ] Build FAQ data model, search/filter state, and accordion UI
 - [ ] Build report issue form with validation, auth-aware prefills, and success state
