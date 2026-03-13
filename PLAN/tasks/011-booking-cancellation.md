@@ -4,13 +4,13 @@ title: "Complete Booking Cancellation Flow"
 status: in_progress
 priority: medium
 created: 2026-03-07
-updated: 2026-03-09
+updated: 2026-03-13
 assigned: codex
 branch: task/011-booking-cancellation
 pr: null
 attempts: 0
 depends_on: []
-progress: 10
+progress: 30
 ---
 
 ## Description
@@ -55,9 +55,9 @@ The booking detail page has a "Cancel booking" button but the flow may be incomp
 
 ## Checklist
 
-- [ ] Read booking detail page and mutations hook
-- [ ] Read booking schema for cancellation logic and triggers
-- [ ] Read mobile booking detail for cancellation UX reference
+- [x] Read booking detail page and mutations hook
+- [x] Read booking schema for cancellation logic and triggers
+- [x] Read mobile booking detail for cancellation UX reference
 - [ ] Build CancellationDialog component
 - [ ] Add reason selector and optional details
 - [ ] Implement cancellation mutation
