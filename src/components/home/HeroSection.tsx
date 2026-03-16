@@ -1,5 +1,5 @@
-import { ChevronDown } from "lucide-react";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { ChevronDown } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -12,10 +12,10 @@ export function HeroSection() {
         playsInline
         preload="auto"
       >
+        <source media="(max-width: 768px)" src="/hero-mobile-video.mp4" type="video/mp4" />
         <source src="/hero-video.mp4" type="video/mp4" />
       </video>
 
-      <div className="absolute inset-0 bg-black/35" />
 
       <div className="relative z-20 mx-auto flex min-h-[100svh] w-full max-w-[1280px] flex-col px-5 pb-8 pt-5 sm:px-8 sm:pb-10 sm:pt-8">
         <MarketingHeader />

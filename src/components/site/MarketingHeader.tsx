@@ -1,16 +1,16 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { cn } from "@/lib/utils";
+import { useViewMode } from "@/providers/view-mode-provider";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { useViewMode } from "@/providers/view-mode-provider";
-import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
 
@@ -97,12 +97,6 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
                 className="transition-colors hover:text-white"
               >
                 Explore
-              </Link>
-              <Link
-                href={localizeHref("/collections", pathname)}
-                className="transition-colors hover:text-white"
-              >
-                Collections
               </Link>
               <Link
                 href={localizeHref("/chat", pathname)}
@@ -195,12 +189,6 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
                     className="text-white/90 text-lg py-3 px-4 rounded-lg hover:bg-white/10 transition-colors"
                   >
                     Explore
-                  </Link>
-                  <Link
-                    href={localizeHref("/collections", pathname)}
-                    className="text-white/90 text-lg py-3 px-4 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    Collections
                   </Link>
                   <Link
                     href={localizeHref("/chat", pathname)}

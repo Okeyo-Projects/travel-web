@@ -3,6 +3,8 @@
 import { Maximize, Minimize, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -10,6 +12,7 @@ interface CustomVideoPlayerProps {
 
 export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const blurVideoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
@@ -18,12 +21,15 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
 
   useEffect(() => {
     const video = videoRef.current;
+    const blurVideo = blurVideoRef.current;
     if (!video) return;
 
     if (isPlaying) {
       video.play().catch(() => setIsPlaying(false));
+      blurVideo?.play().catch(() => {});
     } else {
       video.pause();
+      blurVideo?.pause();
     }
   }, [isPlaying]);
 
@@ -42,14 +48,21 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsPlaying(!isPlaying);
+    const next = !isPlaying;
+    captureEvent(next ? ANALYTICS_EVENT.VIDEO_PLAYED : ANALYTICS_EVENT.VIDEO_PAUSED, {
+      src,
+      progress_pct: Math.round(progress),
+    });
+    setIsPlaying(next);
   };
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const next = !isMuted;
+      videoRef.current.muted = next;
+      captureEvent(next ? ANALYTICS_EVENT.VIDEO_MUTED : ANALYTICS_EVENT.VIDEO_UNMUTED, { src });
+      setIsMuted(next);
     }
   };
 
@@ -81,10 +94,22 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
     <div 
       ref={containerRef}
       className={cn(
-        "relative flex justify-center overflow-hidden bg-black shadow-sm group",
+        "relative flex justify-center overflow-hidden shadow-sm group",
         isFullscreen ? "h-screen w-screen" : "rounded-2xl h-[60vh] md:h-[70vh] w-full"
       )}
     >
+      {/* Blurred background video */}
+      <video
+        ref={blurVideoRef}
+        src={src}
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-80 pointer-events-none"
+      />
+
+      {/* Main video */}
       <video
         ref={videoRef}
         src={src}
@@ -92,7 +117,7 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
         loop
         playsInline
         onClick={togglePlay}
-        className="h-full w-full object-contain cursor-pointer"
+        className="relative h-full w-full object-contain cursor-pointer"
       />
 
       {/* Play/Pause Overlay Icon (shows when paused) */}

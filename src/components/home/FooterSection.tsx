@@ -5,7 +5,6 @@ import Link from "next/link";
 
 const COMPANY_LINKS = [
   { label: "Explore", href: "/explore" },
-  { label: "Collections", href: "/collections" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "Support", href: "/support" },

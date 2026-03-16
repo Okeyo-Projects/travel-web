@@ -320,8 +320,10 @@ export function CompactExperienceCard({
                   {experience.short_description}
                 </p>
               </div>
-              <div className="mt-1 inline-flex items-center justify-center rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-200 pointer-events-none">
-                Details
+              <div className="flex justify-end w-full">
+                <div className="mt-1 inline-flex items-center justify-center rounded-full bg-primary px-10 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/80">
+                  Details
+                </div>
               </div>
             </div>
           </div>

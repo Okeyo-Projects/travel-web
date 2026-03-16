@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { getPostHogClient } from "@/lib/analytics/posthog-server";
 
 export async function POST(request: Request) {
   try {
@@ -57,6 +59,13 @@ export async function POST(request: Request) {
         { status: response.status },
       );
     }
+
+    const posthog = getPostHogClient();
+    posthog?.capture({
+      distinctId: email,
+      event: ANALYTICS_EVENT.PREORDER_SUBMITTED,
+      properties: { name, email },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

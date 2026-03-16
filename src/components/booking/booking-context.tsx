@@ -51,7 +51,7 @@ interface BookingContextValue {
   nights: number;
 
   // Actions
-  openBooking: (experience: ExperienceDetail) => void;
+  openBooking: (experience: ExperienceDetail, roomId?: string) => void;
   closeBooking: () => void;
   setDates: (start: Date | undefined, end: Date | undefined) => void;
   setGuests: (type: "adults" | "children" | "infants", value: number) => void;
@@ -105,7 +105,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
 
   // Reset state when opening for a new experience
   const openBooking = React.useCallback(
-    (exp: ExperienceDetail) => {
+    (exp: ExperienceDetail, roomId?: string) => {
       setExperience(exp);
       setIsOpen(true);
       captureEvent(ANALYTICS_EVENT.BOOKING_STARTED, {
@@ -119,7 +119,7 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       setChildrenCount(0);
       setInfants(0);
       setDepartureId(null);
-      setRoomSelections([]);
+      setRoomSelections(roomId ? [{ roomId, quantity: 1 }] : []);
       setPromoCode(null);
       setGuestNotes("");
       setQuote(null);
@@ -129,7 +129,8 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       if (exp.type === "trip") {
         setCurrentStep("options");
       } else {
-        // Lodging starts with guests (matching mobile)
+        // If a room is pre-selected, jump straight to guests then dates;
+        // otherwise start at guests so user picks room in options.
         setCurrentStep("guests");
       }
     },
@@ -186,9 +187,11 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
             promotionCode: promoCode ?? undefined,
           });
           setQuote(result);
-        } catch {
+        } catch (error) {
           setQuote(null);
-          // Error is handled by hook state, but we could toast here
+          captureEvent(ANALYTICS_EVENT.BOOKING_QUOTE_FAILED, {
+            error_message: error instanceof Error ? error.message : String(error),
+          });
         }
       } else {
         setQuote(null);

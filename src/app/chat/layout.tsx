@@ -1,9 +1,5 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
 import { NotificationBell } from "@/components/site/NotificationBell";
 import { UserMenu } from "@/components/site/UserMenu";
@@ -17,6 +13,10 @@ import { ChatProvider } from "@/contexts/ChatContext";
 import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useViewMode } from "@/providers/view-mode-provider";
+import { MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   const { user, loading, openAuthModal } = useAuth();
@@ -65,11 +65,6 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/explore", pathname)}>
                         Explore
-                      </Link>
-                    </Button>
-                    <Button asChild variant="ghost" size="sm">
-                      <Link href={localizeHref("/collections", pathname)}>
-                        Collections
                       </Link>
                     </Button>
                   </>

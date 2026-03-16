@@ -1,25 +1,9 @@
-import {
-  type AnalyticsEventName,
-  type AnalyticsEventProperties,
-  type AnalyticsUserProperties,
+import posthog from "posthog-js";
+import type {
+  AnalyticsEventName,
+  AnalyticsEventProperties,
+  AnalyticsUserProperties,
 } from "@/lib/analytics/events";
-
-declare global {
-  interface Window {
-    posthog?: {
-      init: (
-        token: string,
-        config: Record<string, unknown>,
-        name?: string,
-      ) => void;
-      capture: (event: string, properties?: Record<string, unknown>) => void;
-      identify: (userId: string, properties?: Record<string, unknown>) => void;
-      reset: () => void;
-      isFeatureEnabled?: (flag: string) => boolean;
-    };
-    __okeyoPosthogInitialized?: boolean;
-  }
-}
 
 function isDoNotTrackEnabled() {
   if (typeof navigator === "undefined") return false;
@@ -46,10 +30,11 @@ function readConsentValue() {
   const cookieValue = document.cookie
     .split(";")
     .map((entry) => entry.trim())
-    .find((entry) =>
-      entry.startsWith("okeyo_cookie_consent=") ||
-      entry.startsWith("tracking_consent=") ||
-      entry.startsWith("analytics_consent="),
+    .find(
+      (entry) =>
+        entry.startsWith("okeyo_cookie_consent=") ||
+        entry.startsWith("tracking_consent=") ||
+        entry.startsWith("analytics_consent="),
     );
 
   if (!cookieValue) return null;
@@ -91,72 +76,12 @@ export function isAnalyticsEnabled() {
   return true;
 }
 
-function ensurePosthogStub() {
-  if (typeof window === "undefined" || window.posthog) return;
-
-  const posthogStub: any[] & {
-    init?: (token: string, config: Record<string, unknown>) => void;
-    capture?: (...args: unknown[]) => void;
-    identify?: (...args: unknown[]) => void;
-    reset?: (...args: unknown[]) => void;
-    people?: { set?: (...args: unknown[]) => void };
-    __SV?: number;
-    _i?: unknown[];
-  } = [];
-
-  posthogStub._i = [];
-  posthogStub.__SV = 1;
-
-  const methods = ["capture", "identify", "reset"];
-
-  for (const method of methods) {
-    (posthogStub as any)[method] = (...args: unknown[]) => {
-      posthogStub.push([method, ...args]);
-    };
-  }
-
-  posthogStub.init = (token: string, config: Record<string, unknown>) => {
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = `${(config.api_host as string) ?? "https://us.i.posthog.com"}/static/array.js`;
-
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag?.parentNode?.insertBefore(script, firstScriptTag);
-
-    posthogStub.push(["init", token, config]);
-  };
-
-  window.posthog = posthogStub as any;
-}
-
-export function initPostHog() {
-  if (typeof window === "undefined") return;
-  if (window.__okeyoPosthogInitialized) return;
-  if (!isAnalyticsEnabled()) return;
-
-  const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
-
-  if (!apiKey || !apiHost) return;
-
-  ensurePosthogStub();
-
-  window.posthog?.init(apiKey, {
-    api_host: apiHost,
-    capture_pageview: false,
-    autocapture: false,
-    persistence: "localStorage+cookie",
-  });
-
-  window.__okeyoPosthogInitialized = true;
-}
-
 export function captureEvent(
   event: AnalyticsEventName,
   properties?: AnalyticsEventProperties,
 ) {
   if (!isAnalyticsEnabled()) return;
-  window.posthog?.capture(event, properties);
+  posthog.capture(event, properties);
 }
 
 export function identifyAnalyticsUser(
@@ -164,14 +89,14 @@ export function identifyAnalyticsUser(
   properties?: AnalyticsUserProperties,
 ) {
   if (!isAnalyticsEnabled()) return;
-  window.posthog?.identify(userId, properties);
+  posthog.identify(userId, properties);
 }
 
 export function resetAnalyticsUser() {
-  window.posthog?.reset();
+  posthog.reset();
 }
 
 export function isFeatureFlagEnabled(flag: string) {
   if (!isAnalyticsEnabled()) return false;
-  return window.posthog?.isFeatureEnabled?.(flag) ?? false;
+  return posthog.isFeatureEnabled(flag) ?? false;
 }

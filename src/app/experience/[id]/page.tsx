@@ -1,24 +1,5 @@
 "use client";
 
-import {
-  BedDouble,
-  Check,
-  ChevronLeft,
-  Clock3,
-  Heart,
-  Loader2,
-  MapPin,
-  Minus,
-  ShieldCheck,
-  Share2,
-  Star,
-  Users,
-  X,
-} from "lucide-react";
-import Image from "next/image";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
 import { ReviewList } from "@/components/experience/ReviewList";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
@@ -33,6 +14,25 @@ import { useBooking } from "@/hooks/use-booking";
 import { useExperienceDetail } from "@/hooks/use-experience-detail";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import {
+  BedDouble,
+  Check,
+  ChevronLeft,
+  Clock3,
+  Heart,
+  Loader2,
+  MapPin,
+  Minus,
+  Share2,
+  ShieldCheck,
+  Star,
+  Users,
+  X,
+} from "lucide-react";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 function formatMoney(cents: number | null | undefined, currency = "MAD") {
   if (typeof cents !== "number") {
@@ -335,12 +335,11 @@ export default function ExperiencePage() {
                             Vérifié
                           </span>
                         ) : null}
-                        <span>{host.responseRate ?? "-"}% taux de réponse</span>
-                        <span>{host.responseTimeHours ?? "-"}h temps de réponse</span>
+                        {/* <span>{host.responseRate ?? "-"}% taux de réponse</span>
+                        <span>{host.responseTimeHours ?? "-"}h temps de réponse</span> */}
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline">Contacter l&apos;hôte</Button>
                 </div>
               </div>
             ) : null}
@@ -627,7 +626,16 @@ export default function ExperiencePage() {
                             </Badge>
                           </div>
                           <Separator />
-                          <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                            <Button
+                              size="sm"
+                              className="rounded-xl"
+                              onClick={() => openBooking(experience, room.id)}
+                            >
+                              Réserver
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </Card>
@@ -731,7 +739,6 @@ export default function ExperiencePage() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline">Contacter l&apos;hôte</Button>
               </div>
             </div>
           ) : null}
@@ -994,7 +1001,16 @@ export default function ExperiencePage() {
                           </Badge>
                         </div>
                         <Separator />
-                        <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                          <Button
+                            size="sm"
+                            className="rounded-xl"
+                            onClick={() => openBooking(experience, room.id)}
+                          >
+                            Réserver
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>

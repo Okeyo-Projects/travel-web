@@ -1,20 +1,20 @@
 ---
 id: "004"
 title: "Notifications Page with Unread Badge and Navigation"
-status: review
+status: done
 priority: high
 created: 2026-03-07
-updated: 2026-03-08
+updated: 2026-03-14
 assigned: codex
 branch: task/004-notifications-page
 pr: null
 attempts: 0
 depends_on: []
 progress: 100
+status_source: task_file
 ---
 
 ## Description
-
 Build a notifications page and integrate an unread notification badge into the site header/navbar. The database already has a `notifications` table with types and read status.
 
 **Notification Bell in Navbar:**
@@ -40,7 +40,6 @@ Build a notifications page and integrate an unread notification badge into the s
 Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/apps/mobile/app/notifications.tsx`.
 
 ## Acceptance Criteria
-
 - [x] Bell icon with unread badge in site navbar
 - [x] Unread count updates in real-time (Supabase realtime)
 - [x] Notifications page lists all notifications, newest first
@@ -54,7 +53,6 @@ Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/
 - [x] Only visible to authenticated users
 
 ## Context
-
 - Schema: `web/supabase/migrations/20251004002812_create_chat_tables.sql` (notifications may be here)
 - Schema: `web/supabase/migrations/20251217000000_enable_notifications_realtime.sql`
 - Schema: `web/supabase/migrations/20251222000002_add_notification_types.sql`
@@ -64,7 +62,6 @@ Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/
 - Mobile reference: `/Users/naimabdelkerim/Code/travel/apps/mobile/app/notifications.tsx`
 
 ## Checklist
-
 - [x] Read notification schema and types
 - [x] Read mobile notifications screen for design reference
 - [x] Create notification types in `web/src/types/`
@@ -84,3 +81,4 @@ Reference the mobile notifications screen at `/Users/naimabdelkerim/Code/travel/
 
 ## Agent Log
 - 2026-03-08: Implemented notifications end-to-end for web: new notification types + navigation mapping, realtime TanStack hook (`use-notifications`), notification bell with unread badge in active headers (`MarketingHeader`, chat layout, and `navbar.tsx`), reusable list/item UI, and protected `/notifications` page with mark-one/mark-all-as-read behavior. Validation commands were attempted but blocked in this environment because `node_modules` are not installed (`biome` and `tsc` unavailable).
+- 2026-03-14: Task status changed from review to done from the command palette.

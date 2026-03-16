@@ -25,12 +25,27 @@ export const ANALYTICS_EVENT = {
   EXPERIENCE_UNPUBLISHED: "experience_unpublished",
   AVAILABILITY_UPDATED: "availability_updated",
   PAGE_VIEWED: "$pageview",
+  // Video
+  VIDEO_PLAYED: "video_played",
+  VIDEO_PAUSED: "video_paused",
+  VIDEO_MUTED: "video_muted",
+  VIDEO_UNMUTED: "video_unmuted",
+  // Errors
+  CHAT_MESSAGE_FAILED: "chat_message_failed",
+  BOOKING_QUOTE_FAILED: "booking_quote_failed",
+  BOOKING_SUBMIT_FAILED: "booking_submit_failed",
+  // Server-side
+  PREORDER_SUBMITTED: "preorder_submitted",
+  AI_CHAT_COMPLETED: "ai_chat_completed",
 } as const;
 
 export type AnalyticsEventName =
   (typeof ANALYTICS_EVENT)[keyof typeof ANALYTICS_EVENT];
 
-export type AnalyticsEventProperties = Record<string, string | number | boolean | null | undefined>;
+export type AnalyticsEventProperties = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
 
 export type AnalyticsUserProperties = {
   role?: "traveler" | "host";

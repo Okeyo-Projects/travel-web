@@ -213,7 +213,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
-    if (status === "ready") {
+    if (status === "ready" || status === "error") {
       isSendingRef.current = false;
       inFlightTextRef.current = null;
     }
@@ -291,11 +291,22 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   useEffect(() => {
     if (initialConversationId && initialConversationId !== conversationId) {
       setConversationId(initialConversationId);
-      setMessages([]);
-      persistedMessageIds.current.clear();
-      persistingMessageIds.current.clear();
+      // Only clear messages if conversationData hasn't loaded yet.
+      // If data is already cached, the loadMessages effect above already set them —
+      // clearing here would erase them since effects run in definition order.
+      if (!conversationData) {
+        setMessages([]);
+        persistedMessageIds.current.clear();
+        persistingMessageIds.current.clear();
+      }
     }
-  }, [initialConversationId, conversationId, setConversationId, setMessages]);
+  }, [
+    initialConversationId,
+    conversationId,
+    conversationData,
+    setConversationId,
+    setMessages,
+  ]);
 
   // Hard reset UI state when user starts a new conversation
   useEffect(() => {
@@ -304,6 +315,8 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
+    isSendingRef.current = false;
+    inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
   }, [newConversationNonce, setMessages]);
@@ -327,6 +340,8 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
+    isSendingRef.current = false;
+    inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
   }, [
@@ -464,6 +479,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       );
     } catch (error) {
       console.error("Failed to send message:", error);
+      captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_FAILED, {
+        error_message: error instanceof Error ? error.message : String(error),
+      });
       isSendingRef.current = false;
       inFlightTextRef.current = null;
     } finally {

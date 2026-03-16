@@ -1,15 +1,5 @@
 "use client";
 
-import { useBookingContext } from "@/components/booking/booking-context";
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/use-auth";
-import { useCreateBooking } from "@/hooks/use-booking-mutations";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { cn } from "@/lib/utils";
 import {
   BedDouble,
   Calendar,
@@ -20,8 +10,19 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import * as React from "react";
 import { toast } from "sonner";
+import { useBookingContext } from "@/components/booking/booking-context";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { useCreateBooking } from "@/hooks/use-booking-mutations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import { cn } from "@/lib/utils";
 
 const NOTE_TEMPLATES = [
   "Special occasion",
@@ -120,6 +121,10 @@ export function StepReview() {
       toast.success("Booking request sent!");
       router.push(booking?.id ? `/bookings/${booking.id}` : "/bookings");
     } catch (error) {
+      posthog.captureException(error, {
+        event: ANALYTICS_EVENT.BOOKING_SUBMIT_FAILED,
+        experience_id: experience?.id,
+      });
       toast.error("Something went wrong. Please try again.");
       console.error(error);
     }
@@ -305,9 +310,7 @@ export function StepReview() {
         </p>
       </div>
 
-      <PayzoneBadge
-
-      />
+      <PayzoneBadge />
     </div>
   );
 }

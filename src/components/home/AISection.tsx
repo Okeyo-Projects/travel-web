@@ -1,11 +1,55 @@
 "use client";
 
 import { Play, Plus, Send } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+const PROMPTS = [
+  "Je veux une auberge de jeunesse paisible avec vue sur les montagnes, idéale pour travailler à distance et rencontrer d'autres voyageurs, budget max 400 dhs / nuit.",
+  "Trouve-moi un riad authentique à Marrakech pour 2 personnes, avec piscine, proche de la médina, pour un week-end romantique.",
+  "Je cherche un hébergement en bord de mer à Agadir, idéal pour une famille avec 2 enfants, cuisine disponible, moins de 800 dhs / nuit.",
+];
+
+const TYPING_SPEED = 30;
+const DELETING_SPEED = 15;
+const PAUSE_AFTER_TYPE = 2500;
+const PAUSE_AFTER_DELETE = 400;
 
 export function AISection() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [displayedText, setDisplayedText] = useState("");
+  const [promptIndex, setPromptIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [userInput, setUserInput] = useState("");
+
+  useEffect(() => {
+    const current = PROMPTS[promptIndex];
+
+    if (!isDeleting && displayedText === current) {
+      const timeout = setTimeout(() => setIsDeleting(true), PAUSE_AFTER_TYPE);
+      return () => clearTimeout(timeout);
+    }
+
+    if (isDeleting && displayedText === "") {
+      const timeout = setTimeout(() => {
+        setIsDeleting(false);
+        setPromptIndex((i) => (i + 1) % PROMPTS.length);
+      }, PAUSE_AFTER_DELETE);
+      return () => clearTimeout(timeout);
+    }
+
+    const timeout = setTimeout(
+      () => {
+        setDisplayedText(
+          isDeleting ? current.slice(0, displayedText.length - 1) : current.slice(0, displayedText.length + 1),
+        );
+      },
+      isDeleting ? DELETING_SPEED : TYPING_SPEED,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [displayedText, isDeleting, promptIndex]);
 
   const handlePlay = () => {
     if (!videoRef.current) return;
@@ -13,7 +57,7 @@ export function AISection() {
   };
 
   return (
-    <section className="bg-[#08090d] px-4 pb-16 pt-2 sm:px-6 sm:pb-24">
+    <section className="bg-[#08090d] px-4 pb-16 pt-2 sm:px-6 sm:pb-24 m-8">
       <div className="relative mx-auto max-w-[1380px] overflow-hidden rounded-[26px] border border-white/10 bg-gradient-to-br from-[#20131d] via-[#60163d] to-[#a1084e] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-[34px]">
         <img
           src="/ai-pattern.png"
@@ -29,11 +73,28 @@ export function AISection() {
           </h2>
 
           <div className="mx-auto mt-8 max-w-[1020px] rounded-[26px] border border-white/10 bg-gradient-to-br from-black/80 to-[#1a1318]/90 p-4 shadow-[0_16px_45px_rgba(0,0,0,0.5)] sm:p-6">
-            <textarea
-              className="h-[120px] w-full resize-none bg-transparent text-base leading-relaxed text-white/85 outline-none placeholder:text-white/75 sm:h-[135px] sm:text-xl"
-              defaultValue="Je veux une auberge de jeunesse paisible avec vue sur les montagnes, idéale pour travailler à distance et rencontrer d'autres voyageurs, budget max 400 dhs / nuit."
-              aria-label="AI prompt input"
-            />
+            {isEditing ? (
+              <textarea
+                className="h-[150px] w-full resize-none bg-transparent text-base leading-relaxed text-white/85 outline-none placeholder:text-white/75 sm:h-[135px] sm:text-xl"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onBlur={() => {
+                  if (!userInput.trim()) setIsEditing(false);
+                }}
+                placeholder="Décrivez votre voyage idéal..."
+                aria-label="AI prompt input"
+                autoFocus
+              />
+            ) : (
+              <textarea
+                className="h-[150px] w-full resize-none bg-transparent text-base leading-relaxed text-white/85 outline-none placeholder:text-white/75 sm:h-[135px] sm:text-xl"
+                value={displayedText}
+                onChange={() => {}}
+                onFocus={() => setIsEditing(true)}
+                aria-label="AI prompt input"
+                readOnly
+              />
+            )}
 
             <div className="mt-6 flex items-center justify-between">
               <button

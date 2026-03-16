@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { localizeHref } from "@/lib/routing/locale-path";
+import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,7 +61,7 @@ export function ExperienceCard({
   const { openImageViewer, Viewer } = useImageViewer();
   const router = useRouter();
   const pathname = usePathname();
-  const experienceHref = localizeHref(`/experience/${experience.id}`, pathname);
+  const experienceHref = localizeHref(`/experience/${buildExperienceSlug({ title: experience.title, id: experience.id })}`, pathname);
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
