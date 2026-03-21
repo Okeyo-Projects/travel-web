@@ -1,10 +1,29 @@
 "use client";
 
+import Hls from "hls.js";
 import { Maximize, Minimize, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+
+function isHlsSrc(src: string) {
+  return src.includes(".m3u8");
+}
+
+function attachHls(video: HTMLVideoElement, src: string): Hls | null {
+  if (!isHlsSrc(src)) return null;
+  if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    // Safari supports HLS natively
+    video.src = src;
+    return null;
+  }
+  if (!Hls.isSupported()) return null;
+  const hls = new Hls();
+  hls.loadSource(src);
+  hls.attachMedia(video);
+  return hls;
+}
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -18,6 +37,29 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
   const [isMuted, setIsMuted] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Attach HLS or set src directly
+  useEffect(() => {
+    const video = videoRef.current;
+    const blurVideo = blurVideoRef.current;
+    if (!video) return;
+
+    let hlsMain: Hls | null = null;
+    let hlsBlur: Hls | null = null;
+
+    if (isHlsSrc(src)) {
+      hlsMain = attachHls(video, src);
+      if (blurVideo) hlsBlur = attachHls(blurVideo, src);
+    } else {
+      video.src = src;
+      if (blurVideo) blurVideo.src = src;
+    }
+
+    return () => {
+      hlsMain?.destroy();
+      hlsBlur?.destroy();
+    };
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -101,7 +143,6 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
       {/* Blurred background video */}
       <video
         ref={blurVideoRef}
-        src={src}
         muted
         loop
         playsInline
@@ -112,7 +153,6 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
       {/* Main video */}
       <video
         ref={videoRef}
-        src={src}
         muted={isMuted}
         loop
         playsInline

@@ -1,5 +1,6 @@
 "use client";
 
+import Hls from "hls.js";
 import { MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -69,6 +70,30 @@ export function CompactExperienceCard({
     }
   };
 
+  // Attach HLS or set src directly
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoUrl) return;
+
+    let hls: Hls | null = null;
+
+    if (videoUrl.includes(".m3u8")) {
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = videoUrl;
+      } else if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(videoUrl);
+        hls.attachMedia(video);
+      }
+    } else {
+      video.src = videoUrl;
+    }
+
+    return () => {
+      hls?.destroy();
+    };
+  }, [videoUrl]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -105,7 +130,6 @@ export function CompactExperienceCard({
             {videoUrl && (
               <video
                 ref={videoRef}
-                src={videoUrl}
                 className={cn(
                   "w-full h-full object-cover",
                   isPlaying ? "block" : "hidden",

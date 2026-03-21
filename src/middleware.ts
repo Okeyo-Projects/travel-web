@@ -23,7 +23,7 @@ function buildCsp(nonce: string): string {
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net",
-    "media-src 'self' blob:",
+    "media-src 'self' blob: https://*.supabase.co",
     "frame-ancestors 'none'",
   ].join("; ");
 }
