@@ -1,7 +1,7 @@
 ---
 id: "017"
 title: "SEO Foundation: robots.txt, sitemap, per-page metadata, canonical, OG tags"
-status: todo
+status: in_progress
 priority: urgent
 created: 2026-03-21
 updated: 2026-03-21
