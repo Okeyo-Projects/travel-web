@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   title: "Okeyo Travel — Trouvez votre destination selon votre humeur",
   description:
     "En 2 minutes, dites-nous votre mood et Okeyo vous recommande la destination idéale. Planification de voyage personnalisée par IA.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Okeyo Travel — Trouvez votre destination selon votre humeur",
+    description:
+      "En 2 minutes, dites-nous votre mood et Okeyo vous recommande la destination idéale.",
+    url: "/",
+  },
 };
 
 export default function HomePage() {
