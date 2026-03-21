@@ -37,11 +37,11 @@ export function useBooking() {
   // Wait, if the state is inside the component, we can't control it from outside unless we use a Ref.
 
   const bookingRef = React.useRef<{
-    open: (exp: ExperienceDetail) => void;
+    open: (exp: ExperienceDetail, roomId?: string) => void;
   } | null>(null);
 
-  const openBooking = React.useCallback((experience: ExperienceDetail) => {
-    bookingRef.current?.open(experience);
+  const openBooking = React.useCallback((experience: ExperienceDetail, roomId?: string) => {
+    bookingRef.current?.open(experience, roomId);
   }, []);
 
   const BookingModalWrapper = React.useMemo(() => {
@@ -64,7 +64,7 @@ const BookingModalTrigger = React.forwardRef((_props, ref) => {
   const { openBooking } = useBookingContext();
 
   React.useImperativeHandle(ref, () => ({
-    open: openBooking,
+    open: (exp: ExperienceDetail, roomId?: string) => openBooking(exp, roomId),
   }));
 
   return null;

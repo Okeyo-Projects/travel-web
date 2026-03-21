@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f in 002 003 004)",
+      "Bash(do echo \"=== Task $f ===\")",
+      "Bash(git show \"main:PLAN/tasks/$f-\"*.md)",
+      "Bash(done)",
+      "Bash(git rev-list --left-right --count main...task/001-experience-detail-redesign)",
+      "Bash(git rev-list --left-right --count main...task/001-experience-detail-redesign-2)",
+      "Bash(git rev-list --left-right --count main...task/001-experience-detail-redesign-b834)",
+      "Bash(git rev-list --left-right --count main...task/001-experience-detail-redesign-codex)",
+      "Bash(git rev-list --left-right --count main...task/002-reviews-system)",
+      "Bash(git rev-list --left-right --count main...task/002-reviews-system-2)",
+      "Bash(git rev-list --left-right --count main...task-002-reviews-system)",
+      "Bash(git rev-list --left-right --count main...task/003-social-feed-reels)",
+      "Bash(ls /Users/naimabdelkerim/Code/travel-web/PLAN/tasks/01[7-9]*.md /Users/naimabdelkerim/Code/travel-web/PLAN/tasks/02[0-2]*.md)"
+    ],
+    "additionalDirectories": [
+      "/Users/naimabdelkerim/Code"
+    ]
+  }
+}

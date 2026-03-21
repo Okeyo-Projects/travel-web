@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +23,27 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { cn } from "@/lib/utils";
 
 type MessageState = {
   type: "error" | "success";
   text: string;
 };
+
+function AppleLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M16.365 12.59c.01 2.704 2.376 3.604 2.402 3.616-.02.063-.378 1.306-1.245 2.587-.748 1.106-1.525 2.209-2.747 2.232-1.2.022-1.586-.71-2.96-.71-1.375 0-1.803.687-2.938.732-1.178.045-2.078-1.186-2.832-2.287-1.54-2.237-2.718-6.323-1.137-9.071.785-1.366 2.189-2.23 3.714-2.252 1.156-.022 2.247.777 2.96.777.711 0 2.048-.961 3.45-.819.587.024 2.238.237 3.298 1.79-.085.053-1.968 1.15-1.965 3.405Zm-2.29-6.091c.63-.762 1.056-1.823.94-2.88-.908.036-2.006.606-2.658 1.367-.585.676-1.097 1.756-.959 2.793 1.012.079 2.046-.516 2.677-1.28Z" />
+    </svg>
+  );
+}
 
 export function AuthModal() {
   const isMobile = useIsMobile();
@@ -70,11 +86,16 @@ export function AuthModal() {
     });
 
     if (error) {
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: "email",
+        error_message: error.message,
+      });
       setMessage({ type: "error", text: error.message });
       setIsSubmitting(false);
       return;
     }
 
+    captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_SUCCESS, { method: "email" });
     setIsSubmitting(false);
   };
 
@@ -100,6 +121,10 @@ export function AuthModal() {
     });
 
     if (error) {
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: "email_signup",
+        error_message: error.message,
+      });
       setMessage({ type: "error", text: error.message });
       setIsSubmitting(false);
       return;
@@ -110,28 +135,54 @@ export function AuthModal() {
         type: "success",
         text: "Check your email to confirm your account.",
       });
+      captureEvent(ANALYTICS_EVENT.AUTH_SIGNUP_SUCCESS, {
+        method: "email",
+        email_confirmation_required: true,
+      });
       setIsSubmitting(false);
       return;
     }
 
+    captureEvent(ANALYTICS_EVENT.AUTH_SIGNUP_SUCCESS, {
+      method: "email",
+      email_confirmation_required: false,
+    });
     setIsSubmitting(false);
   };
 
-  const handleGoogle = async () => {
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
     setIsSubmitting(true);
     setMessage(null);
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider,
       options: {
         redirectTo: window.location.origin,
       },
     });
 
     if (error) {
-      setMessage({ type: "error", text: error.message });
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: provider,
+        error_message: error.message,
+      });
+      const normalizedError = error.message.toLowerCase();
+      if (
+        normalizedError.includes("cancel") ||
+        normalizedError.includes("denied")
+      ) {
+        setMessage({
+          type: "error",
+          text: "Sign-in was cancelled. Please try again.",
+        });
+      } else {
+        setMessage({ type: "error", text: error.message });
+      }
       setIsSubmitting(false);
+      return;
     }
+
+    captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_SUCCESS, { method: provider });
   };
 
   const headerCopy = useMemo(() => {
@@ -306,12 +357,36 @@ export function AuthModal() {
       <Button
         type="button"
         variant="outline"
-        onClick={handleGoogle}
+        onClick={() => handleOAuthSignIn("google")}
         className="h-11 rounded-full border border-input"
         disabled={isSubmitting}
       >
         Continue with Google
       </Button>
+      <Button
+        type="button"
+        onClick={() => handleOAuthSignIn("apple")}
+        className="h-11 rounded-full bg-black text-white hover:bg-black/90"
+        disabled={isSubmitting}
+      >
+        <AppleLogo className="mr-2 h-4 w-4" />
+        Sign in with Apple
+      </Button>
+
+      <p className="text-center text-xs leading-6 text-muted-foreground">
+        By continuing, you agree to our{" "}
+        <Link href="/terms" className="font-medium text-foreground hover:text-primary">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/privacy"
+          className="font-medium text-foreground hover:text-primary"
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </div>
   );
 

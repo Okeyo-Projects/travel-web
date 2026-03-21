@@ -33,9 +33,12 @@ export const metadata: Metadata = {
 };
 
 import type { ReactNode } from "react";
+import { PostHogPageView } from "@/components/analytics/posthog-pageview";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthProvider } from "@/providers/auth-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
 import QueryProvider from "@/providers/query-provider";
+import { ViewModeProvider } from "@/providers/view-mode-provider";
 
 export default async function RootLayout({
   children,
@@ -58,15 +61,20 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col bg-white`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-[100dvh] flex flex-col bg-white`}
       >
-        <QueryProvider>
-          <AuthProvider>
-            <main className="flex-1">{children}</main>
-            <FloatingChatButton />
-            <AuthModal />
-          </AuthProvider>
-        </QueryProvider>
+        <PostHogProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <ViewModeProvider>
+                <PostHogPageView />
+                <main className="flex-1">{children}</main>
+                <FloatingChatButton />
+                <AuthModal />
+              </ViewModeProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </PostHogProvider>
         <noscript>
           {/* biome-ignore lint/performance/noImgElement: Noscript fallback pixel must be a plain img tag. */}
           <img

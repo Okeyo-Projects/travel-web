@@ -8,6 +8,10 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+// Track which booking IDs have already had their modal auto-opened,
+// so remounts don't re-trigger the loop.
+const autoOpenedBookingIds = new Set<string>();
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -217,11 +221,15 @@ export function BookingConfirmCard({
   } = useChatContext();
   const mainItem = summary.items[0];
 
-  // Auto-open the modal when the card first appears
+  // Auto-open the modal when the card first appears, but only once per booking ID
+  // across all mounts/remounts to avoid the modal reopening in a loop.
+  const bookingId = summary.booking_id;
   useEffect(() => {
+    if (autoOpenedBookingIds.has(bookingId)) return;
+    autoOpenedBookingIds.add(bookingId);
     const timer = setTimeout(() => setModalOpen(true), 400);
     return () => clearTimeout(timer);
-  }, []);
+  }, [bookingId]);
 
   const handleConfirmed = async () => {
     const activeConversationId = conversationId || contextConversationId;

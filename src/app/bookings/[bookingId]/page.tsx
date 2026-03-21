@@ -10,18 +10,47 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  BookingCancellationDialog,
+  type BookingCancellationPayload,
+} from "@/components/booking/BookingCancellationDialog";
+import { ReviewForm } from "@/components/experience/ReviewForm";
+import { ReviewStars } from "@/components/experience/ReviewStars";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { useCancelBooking } from "@/hooks/use-booking-mutations";
+import { useReviewForBooking } from "@/hooks/use-reviews";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import {
+  isPayzoneSession,
+  type PayzoneReturnStatus,
+  type PayzoneSession,
+  readPayzoneReturnParams,
+} from "@/lib/payzone";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
+type CancellationPolicy = Database["public"]["Enums"]["cancellation_policy"];
+
+const CANCELLABLE_STATUSES: BookingStatus[] = [
+  "pending_host",
+  "approved",
+  "pending_payment",
+];
 
 type BookingDetail = {
   id: string;
@@ -36,6 +65,8 @@ type BookingDetail = {
   price_total_cents: number;
   currency: string;
   status: BookingStatus | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
   guest_notes: string | null;
   host_notes: string | null;
   created_at: string;
@@ -46,14 +77,8 @@ type BookingDetail = {
     city: string | null;
     thumbnail_url: string | null;
     type: string | null;
+    cancellation_policy: CancellationPolicy | null;
   } | null;
-};
-
-type PayzoneSession = {
-  paymentId: string;
-  paywallUrl: string;
-  payload: string;
-  signature: string;
 };
 
 function formatDateRange(from: string, to: string) {
@@ -73,6 +98,25 @@ function formatPrice(cents: number, currency: string) {
     currency,
     maximumFractionDigits: 0,
   }).format(cents / 100);
+}
+
+function parseDateOnly(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function subtractDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() - days);
+  return next;
+}
+
+function formatLongDate(value: Date) {
+  return value.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
 function getStatusBadge(status: BookingStatus | null) {
@@ -136,11 +180,11 @@ function getStatusBadge(status: BookingStatus | null) {
   }
 }
 
-function openPayzonePaywall(session: PayzoneSession) {
+function openPayzonePaywall(session: PayzoneSession, target: string) {
   const form = document.createElement("form");
   form.method = "POST";
   form.action = session.paywallUrl;
-  form.target = "_blank";
+  form.target = target;
   form.style.display = "none";
 
   const payloadField = document.createElement("input");
@@ -160,15 +204,109 @@ function openPayzonePaywall(session: PayzoneSession) {
   form.remove();
 }
 
+function getCancellationPolicyInfo(
+  policy: CancellationPolicy | null | undefined,
+  fromDate: string,
+  totalCents: number,
+  currency: string,
+) {
+  const arrivalDate = parseDateOnly(fromDate);
+  const arrivalLabel = formatLongDate(arrivalDate);
+  const totalLabel = formatPrice(totalCents, currency);
+  const now = new Date();
+
+  if (policy === "free") {
+    return {
+      badge: "Annulation gratuite",
+      policySummary: `Annulation sans frais jusqu'au ${arrivalLabel}.`,
+      refundSummary:
+        now < arrivalDate
+          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le début du séjour.`
+          : "Le séjour a déjà commencé, aucun remboursement automatique n'est indiqué.",
+    };
+  }
+
+  if (policy === "flexible") {
+    const deadline = subtractDays(arrivalDate, 1);
+    const deadlineLabel = formatLongDate(deadline);
+
+    return {
+      badge: "Flexible (24 h)",
+      policySummary:
+        "Remboursement intégral si l'annulation intervient au moins 24 h avant l'arrivée.",
+      refundSummary:
+        now <= deadline
+          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
+          : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+    };
+  }
+
+  if (policy === "strict") {
+    const deadline = subtractDays(arrivalDate, 14);
+    const deadlineLabel = formatLongDate(deadline);
+
+    return {
+      badge: "Stricte (14 jours)",
+      policySummary:
+        "Remboursement intégral si l'annulation intervient au moins 14 jours avant l'arrivée.",
+      refundSummary:
+        now <= deadline
+          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
+          : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+    };
+  }
+
+  if (policy === "non_refundable") {
+    return {
+      badge: "Non remboursable",
+      policySummary:
+        "Cette expérience ne prévoit pas de remboursement en cas d'annulation.",
+      refundSummary:
+        "Aucun remboursement n'est prévu par la politique de l'expérience.",
+    };
+  }
+
+  if (policy === "moderate") {
+    const deadline = subtractDays(arrivalDate, 7);
+    const deadlineLabel = formatLongDate(deadline);
+
+    return {
+      badge: "Modérée (7 jours)",
+      policySummary:
+        "Remboursement intégral si l'annulation intervient au moins 7 jours avant l'arrivée.",
+      refundSummary:
+        now <= deadline
+          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
+          : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+    };
+  }
+
+  return {
+    badge: "Politique standard",
+    policySummary:
+      "Les conditions d'annulation dépendent de l'expérience réservée.",
+    refundSummary: `Montant de réservation estimé: ${totalLabel}.`,
+  };
+}
+
 export default function BookingDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   const bookingId = params?.bookingId as string;
   const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
   const [isStartingPayment, setIsStartingPayment] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const cancelBookingMutation = useCancelBooking();
+  const handledReturnKeyRef = useRef<string | null>(null);
+  const pendingPaymentStorageKey = useMemo(
+    () => `payzone:pending-payment:${bookingId}`,
+    [bookingId],
+  );
 
   const {
     data: booking,
@@ -199,11 +337,13 @@ export default function BookingDetailPage() {
           price_total_cents,
           currency,
           status,
+          cancellation_reason,
+          cancelled_at,
           guest_notes,
           host_notes,
           created_at,
           updated_at,
-          experience:experiences(id, title, city, thumbnail_url, type)
+          experience:experiences(id, title, city, thumbnail_url, type, cancellation_policy)
         `,
         )
         .eq("id", bookingId)
@@ -214,6 +354,147 @@ export default function BookingDetailPage() {
       return data as BookingDetail;
     },
   });
+  const bookingReviewQuery = useReviewForBooking(user ? bookingId : null);
+
+  const persistPendingPaymentId = useCallback(
+    (paymentId: string) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      window.sessionStorage.setItem(pendingPaymentStorageKey, paymentId);
+    },
+    [pendingPaymentStorageKey],
+  );
+
+  const clearPendingPaymentId = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(pendingPaymentStorageKey);
+    }
+    setLastPaymentId(null);
+  }, [pendingPaymentStorageKey]);
+
+  const handleCheckPaymentStatus = useCallback(
+    async (
+      paymentIdOverride?: string | null,
+      returnStatus?: PayzoneReturnStatus | null,
+    ) => {
+      const paymentId = paymentIdOverride ?? lastPaymentId;
+      if (!paymentId) {
+        toast.message("Aucun paiement en cours à vérifier.");
+        return;
+      }
+
+      setIsCheckingPayment(true);
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.functions.invoke(
+          "get-payment-status",
+          {
+            body: { paymentId },
+          },
+        );
+
+        if (error || !data) {
+          throw new Error(
+            error?.message ?? "Impossible de vérifier le paiement.",
+          );
+        }
+
+        const status = (data as { status?: string }).status;
+
+        if (status === "succeeded" || status === "confirmed") {
+          clearPendingPaymentId();
+          toast.success("Paiement confirmé.");
+        } else if (status === "failed" || status === "cancelled") {
+          clearPendingPaymentId();
+          toast.error("Le paiement n'a pas abouti.");
+        } else if (returnStatus === "success") {
+          setLastPaymentId(paymentId);
+          persistPendingPaymentId(paymentId);
+          toast.message("Paiement reçu, confirmation en cours.");
+        } else if (returnStatus === "failure") {
+          setLastPaymentId(paymentId);
+          persistPendingPaymentId(paymentId);
+          toast.error("Le paiement a échoué. Vous pouvez réessayer.");
+        } else {
+          setLastPaymentId(paymentId);
+          persistPendingPaymentId(paymentId);
+          toast.message(`Statut paiement: ${status ?? "pending"}`);
+        }
+
+        await queryClient.invalidateQueries({
+          queryKey: ["bookings", user?.id],
+        });
+        await refetch();
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Erreur de vérification du paiement.";
+        toast.error(message);
+      } finally {
+        setIsCheckingPayment(false);
+      }
+    },
+    [
+      clearPendingPaymentId,
+      lastPaymentId,
+      persistPendingPaymentId,
+      queryClient,
+      refetch,
+      user?.id,
+    ],
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedPaymentId = window.sessionStorage.getItem(
+      pendingPaymentStorageKey,
+    );
+
+    if (storedPaymentId) {
+      setLastPaymentId((current) => current ?? storedPaymentId);
+    }
+  }, [pendingPaymentStorageKey]);
+
+  useEffect(() => {
+    const { paymentId, status } = readPayzoneReturnParams(searchParams);
+
+    if (!paymentId || !status) {
+      return;
+    }
+
+    const handledKey = `${paymentId}:${status}`;
+    if (handledReturnKeyRef.current === handledKey) {
+      return;
+    }
+
+    handledReturnKeyRef.current = handledKey;
+    setLastPaymentId(paymentId);
+    persistPendingPaymentId(paymentId);
+
+    if (status === "cancel") {
+      clearPendingPaymentId();
+      toast.message("Paiement annulé.");
+      router.replace(pathname, { scroll: false });
+      return;
+    }
+
+    void handleCheckPaymentStatus(paymentId, status).finally(() => {
+      router.replace(pathname, { scroll: false });
+    });
+  }, [
+    clearPendingPaymentId,
+    handleCheckPaymentStatus,
+    pathname,
+    persistPendingPaymentId,
+    router,
+    searchParams,
+  ]);
 
   if (!authLoading && !user) {
     return (
@@ -242,11 +523,33 @@ export default function BookingDetailPage() {
 
   const canPay = booking?.status === "approved";
   const canCancel = booking?.status
-    ? ["pending_host", "pending_payment", "approved"].includes(booking.status)
+    ? CANCELLABLE_STATUSES.includes(booking.status)
     : false;
+  const cancellationPolicyInfo = booking
+    ? getCancellationPolicyInfo(
+        booking.experience?.cancellation_policy,
+        booking.from_date,
+        booking.price_total_cents,
+        booking.currency,
+      )
+    : null;
 
   const handleStartPayment = async () => {
     if (!booking) return;
+
+    const payzoneWindowName = `payzone-checkout-${booking.id}`;
+    const payzoneWindow =
+      typeof window !== "undefined"
+        ? window.open("", payzoneWindowName, "popup=yes,width=520,height=760")
+        : null;
+
+    if (payzoneWindow) {
+      payzoneWindow.document.write(
+        "<html><body style='font-family:system-ui;padding:24px'>Redirection vers Payzone...</body></html>",
+      );
+      payzoneWindow.document.close();
+    }
+
     setIsStartingPayment(true);
     try {
       const supabase = createClient();
@@ -263,11 +566,28 @@ export default function BookingDetailPage() {
         );
       }
 
-      const session = data as PayzoneSession;
+      if (!isPayzoneSession(data)) {
+        throw new Error("Réponse Payzone invalide.");
+      }
+
+      const session = data;
       setLastPaymentId(session.paymentId);
-      openPayzonePaywall(session);
-      toast.success("Page de paiement ouverte dans un nouvel onglet.");
+      persistPendingPaymentId(session.paymentId);
+      captureEvent(ANALYTICS_EVENT.PAYMENT_INITIATED, {
+        booking_id: booking.id,
+        method: "payzone",
+      });
+      openPayzonePaywall(session, payzoneWindow ? payzoneWindowName : "_self");
+      toast.success(
+        payzoneWindow
+          ? "Page de paiement ouverte dans une nouvelle fenêtre."
+          : "Redirection vers la page de paiement...",
+      );
     } catch (err) {
+      if (payzoneWindow && !payzoneWindow.closed) {
+        payzoneWindow.close();
+      }
+
       const message =
         err instanceof Error
           ? err.message
@@ -278,73 +598,35 @@ export default function BookingDetailPage() {
     }
   };
 
-  const handleCheckPaymentStatus = async () => {
-    if (!lastPaymentId) {
-      toast.message("Aucun paiement en cours à vérifier.");
-      return;
-    }
-    setIsCheckingPayment(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.functions.invoke(
-        "get-payment-status",
-        {
-          body: { paymentId: lastPaymentId },
-        },
-      );
-
-      if (error || !data) {
-        throw new Error(
-          error?.message ?? "Impossible de vérifier le paiement.",
-        );
-      }
-
-      const status = (data as { status?: string }).status;
-      if (status === "succeeded" || status === "confirmed") {
-        toast.success("Paiement confirmé.");
-      } else {
-        toast.message(`Statut paiement: ${status ?? "pending"}`);
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["bookings", user?.id] });
-      await refetch();
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Erreur de vérification du paiement.";
-      toast.error(message);
-    } finally {
-      setIsCheckingPayment(false);
-    }
-  };
-
-  const handleCancelBooking = async () => {
+  const handleCancelBooking = async ({
+    reason,
+    reasonLabel,
+    details,
+  }: BookingCancellationPayload) => {
     if (!booking || !user) return;
-    setIsCancelling(true);
+
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled" })
-        .eq("id", booking.id)
-        .eq("guest_id", user.id);
+      await cancelBookingMutation.mutateAsync({
+        bookingId: booking.id,
+        guestId: user.id,
+        reason: reasonLabel ?? undefined,
+        details: details || undefined,
+      });
 
-      if (error) {
-        throw error;
-      }
-
+      clearPendingPaymentId();
       toast.success("Réservation annulée.");
-      await queryClient.invalidateQueries({ queryKey: ["bookings", user.id] });
-      await refetch();
+      captureEvent(ANALYTICS_EVENT.BOOKING_CANCELLED, {
+        booking_id: booking.id,
+        reason: reason ?? "user_cancelled",
+      });
+      setIsCancelDialogOpen(false);
+      router.replace("/bookings");
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
           : "Impossible d'annuler la réservation.";
       toast.error(message);
-    } finally {
-      setIsCancelling(false);
     }
   };
 
@@ -377,6 +659,13 @@ export default function BookingDetailPage() {
   }
 
   const StatusIcon = statusMeta.icon;
+  const cancellationDateLabel = booking.cancelled_at
+    ? new Date(booking.cancelled_at).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -440,6 +729,40 @@ export default function BookingDetailPage() {
           </CardContent>
         </Card>
 
+        {cancellationPolicyInfo && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Annulation et remboursement</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">{cancellationPolicyInfo.badge}</Badge>
+                {booking.status === "cancelled" && cancellationDateLabel ? (
+                  <Badge variant="destructive">
+                    Annulée le {cancellationDateLabel}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="space-y-2 text-sm">
+                <p>{cancellationPolicyInfo.policySummary}</p>
+                <p className="text-muted-foreground">
+                  {cancellationPolicyInfo.refundSummary}
+                </p>
+              </div>
+              {booking.cancellation_reason ? (
+                <div className="rounded-xl border bg-muted/20 p-4 text-sm">
+                  <p className="font-medium text-foreground">
+                    Motif enregistré
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    {booking.cancellation_reason}
+                  </p>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        )}
+
         {(booking.guest_notes || booking.host_notes) && (
           <Card>
             <CardHeader>
@@ -466,47 +789,113 @@ export default function BookingDetailPage() {
           </Card>
         )}
 
+        {booking.status === "completed" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Votre avis</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {bookingReviewQuery.isLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Chargement de votre avis...
+                </div>
+              ) : bookingReviewQuery.data ? (
+                <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-medium">Avis déjà publié</p>
+                    <ReviewStars
+                      rating={bookingReviewQuery.data.ratingOverall}
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {bookingReviewQuery.data.text}
+                  </p>
+                </div>
+              ) : booking.experience?.id ? (
+                <ReviewForm
+                  bookingId={booking.id}
+                  experienceId={booking.experience.id}
+                  onSuccess={() => {
+                    refetch();
+                  }}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Impossible de retrouver l'expérience associée à cette
+                  réservation.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Actions</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-wrap gap-3">
-            {canPay && (
-              <Button onClick={handleStartPayment} disabled={isStartingPayment}>
-                {isStartingPayment ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                Payer maintenant
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              onClick={handleCheckPaymentStatus}
-              disabled={!lastPaymentId || isCheckingPayment}
-            >
-              {isCheckingPayment ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              Vérifier le paiement
-            </Button>
-            {canCancel && (
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              {canPay && (
+                <Button
+                  onClick={handleStartPayment}
+                  disabled={isStartingPayment}
+                >
+                  {isStartingPayment ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  Payer maintenant
+                </Button>
+              )}
               <Button
-                variant="destructive"
-                onClick={handleCancelBooking}
-                disabled={isCancelling}
+                variant="outline"
+                onClick={() => {
+                  void handleCheckPaymentStatus();
+                }}
+                disabled={!lastPaymentId || isCheckingPayment}
               >
-                {isCancelling ? (
+                {isCheckingPayment ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : null}
-                Annuler la réservation
+                Vérifier le paiement
               </Button>
+              {canCancel && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setIsCancelDialogOpen(true)}
+                  disabled={cancelBookingMutation.isPending}
+                >
+                  {cancelBookingMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  Annuler la réservation
+                </Button>
+              )}
+              <Button variant="ghost" asChild>
+                <Link href="/bookings">Retour</Link>
+              </Button>
+            </div>
+
+            {(canPay || booking.status === "pending_payment") && (
+              <PayzoneBadge
+                title="Paiement securise avec Payzone"
+                description="Le reglement s'effectue sur la page de paiement securisee de Payzone."
+              />
             )}
-            <Button variant="ghost" asChild>
-              <Link href="/bookings">Retour</Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
+
+      {cancellationPolicyInfo ? (
+        <BookingCancellationDialog
+          open={isCancelDialogOpen}
+          onOpenChange={setIsCancelDialogOpen}
+          onConfirm={handleCancelBooking}
+          isLoading={cancelBookingMutation.isPending}
+          policySummary={cancellationPolicyInfo.policySummary}
+          refundSummary={cancellationPolicyInfo.refundSummary}
+        />
+      ) : null}
     </div>
   );
 }

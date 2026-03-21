@@ -21,6 +21,9 @@ import {
   suggestDateOptions,
   validatePromoCode,
 } from "@/lib/ai/tools";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { getPostHogClient } from "@/lib/analytics/posthog-server";
+import { createClient } from "@/lib/supabase/server";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -465,6 +468,17 @@ export async function POST(req: Request) {
     systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room option, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room details without attempting the relevant tool call first.`;
     systemPrompt += `\n\n## CRITICAL EXPERIENCE DETAIL RULE\nWhen the user asks details about a specific experience by name, resolve the exact experience_id from recent tool outputs.\nIf no reliable ID is available, call searchExperiences(query=user wording, limit=4) first, then call getExperienceDetails with the returned ID.\nNever claim "experience not found" without trying that fallback path.`;
 
+    // Inject user auth status so the AI never wrongly asks logged-in users to sign in
+    const supabase = await createClient();
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+    if (currentUser) {
+      systemPrompt += `\n\n## USER AUTH STATUS\nThe user IS currently authenticated (logged in). Do NOT ask them to log in or create an account. If any previous tool result in the conversation shows requires_auth=true, that is outdated — the user is now logged in. Retry the booking action directly without asking them to log in again.`;
+    } else {
+      systemPrompt += `\n\n## USER AUTH STATUS\nThe user is NOT authenticated. If they attempt to book, tell them they need to log in first using the Login button at the top of the page.`;
+    }
+
     // Add user location context if available
     if (userLocation?.lat && userLocation?.lng) {
       systemPrompt += `\n\n## Current User Location\nLatitude: ${userLocation.lat}\nLongitude: ${userLocation.lng}\n\nUse these coordinates for distance-based searches without asking for location again.`;
@@ -518,6 +532,18 @@ export async function POST(req: Request) {
                 | (typeof usage & { completionTokens?: number })
                 | undefined
             )?.completionTokens ?? null,
+        });
+
+        const posthog = getPostHogClient();
+        posthog?.capture({
+          distinctId: currentUser?.id ?? sessionId ?? "anonymous",
+          event: ANALYTICS_EVENT.AI_CHAT_COMPLETED,
+          properties: {
+            model: agentConfig.model,
+            finish_reason: finishReason,
+            total_tokens: usage?.totalTokens ?? null,
+            session_id: typeof sessionId === "string" ? sessionId : null,
+          },
         });
       },
     });

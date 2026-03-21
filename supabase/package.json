@@ -1,0 +1,27 @@
+{
+  "name": "@okeyo/supabase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "bun run seed.ts",
+    "migrate": "supabase db push",
+    "reset": "supabase db reset",
+    "gen:types": "supabase gen types typescript --local > ../../packages/types/src/supabase.ts",
+    "status": "supabase db diff",
+    "functions:deploy": "supabase functions deploy",
+    "functions:deploy:prod": "supabase functions deploy --project-ref $SUPABASE_PROJECT_REF",
+    "functions:deploy:single": "supabase functions deploy $FUNCTION_NAME",
+    "functions:serve": "supabase functions serve",
+    "functions:serve:single": "supabase functions serve $FUNCTION_NAME",
+    "functions:list": "supabase functions list",
+    "functions:delete": "supabase functions delete $FUNCTION_NAME"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
+

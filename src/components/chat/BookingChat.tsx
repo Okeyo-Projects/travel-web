@@ -20,6 +20,8 @@ import {
   useCreateConversation,
   useSaveMessage,
 } from "@/hooks/use-conversations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { ChatInput } from "./ChatInput";
 import { ChatWelcome } from "./ChatWelcome";
@@ -172,6 +174,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const inFlightTextRef = useRef<string | null>(null);
   const persistedMessageIds = useRef(new Set<string>());
   const persistingMessageIds = useRef(new Set<string>());
+  const hasTrackedBookingCreatedRef = useRef(false);
   const previousPathname = useRef(pathname);
   const activeConversationId = initialConversationId || conversationId;
   const isConversationLocked =
@@ -210,7 +213,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   const isLoading = status === "submitted" || status === "streaming";
 
   useEffect(() => {
-    if (status === "ready") {
+    if (status === "ready" || status === "error") {
       isSendingRef.current = false;
       inFlightTextRef.current = null;
     }
@@ -288,11 +291,22 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   useEffect(() => {
     if (initialConversationId && initialConversationId !== conversationId) {
       setConversationId(initialConversationId);
-      setMessages([]);
-      persistedMessageIds.current.clear();
-      persistingMessageIds.current.clear();
+      // Only clear messages if conversationData hasn't loaded yet.
+      // If data is already cached, the loadMessages effect above already set them —
+      // clearing here would erase them since effects run in definition order.
+      if (!conversationData) {
+        setMessages([]);
+        persistedMessageIds.current.clear();
+        persistingMessageIds.current.clear();
+      }
     }
-  }, [initialConversationId, conversationId, setConversationId, setMessages]);
+  }, [
+    initialConversationId,
+    conversationId,
+    conversationData,
+    setConversationId,
+    setMessages,
+  ]);
 
   // Hard reset UI state when user starts a new conversation
   useEffect(() => {
@@ -301,6 +315,8 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
+    isSendingRef.current = false;
+    inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
   }, [newConversationNonce, setMessages]);
@@ -324,6 +340,8 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
+    isSendingRef.current = false;
+    inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
   }, [
@@ -429,6 +447,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
         });
 
         currentConvId = result.conversation.id;
+        captureEvent(ANALYTICS_EVENT.CHAT_STARTED, {
+          conversation_id: currentConvId,
+        });
         setConversationId(currentConvId);
 
         // Update URL without navigation (to preserve component state)
@@ -440,6 +461,10 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       }
 
       setInput("");
+      captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
+        message_length: normalizedText.length,
+        has_tool_call: false,
+      });
       await sendMessage(
         { text: normalizedText },
         {
@@ -454,6 +479,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       );
     } catch (error) {
       console.error("Failed to send message:", error);
+      captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_FAILED, {
+        error_message: error instanceof Error ? error.message : String(error),
+      });
       isSendingRef.current = false;
       inFlightTextRef.current = null;
     } finally {
@@ -491,6 +519,21 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
       },
     );
   };
+
+  useEffect(() => {
+    if (!lockedBookingId || hasTrackedBookingCreatedRef.current) return;
+
+    captureEvent(ANALYTICS_EVENT.CHAT_BOOKING_CREATED, {
+      booking_id: lockedBookingId,
+      conversation_id: activeConversationId,
+    });
+    hasTrackedBookingCreatedRef.current = true;
+  }, [activeConversationId, lockedBookingId]);
+
+  useEffect(() => {
+    if (lockedBookingId) return;
+    hasTrackedBookingCreatedRef.current = false;
+  }, [lockedBookingId]);
 
   if (!mounted || loadingConversation) {
     return (

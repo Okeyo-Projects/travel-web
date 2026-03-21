@@ -2176,31 +2176,37 @@ export type Database = {
       };
       support_tickets: {
         Row: {
+          contact_email: string | null;
           created_at: string;
           description: string;
           id: string;
           metadata: Json | null;
           status: Database["public"]["Enums"]["ticket_status"];
+          subject: string;
           type: Database["public"]["Enums"]["issue_type"];
           updated_at: string;
           user_id: string | null;
         };
         Insert: {
+          contact_email?: string | null;
           created_at?: string;
           description: string;
           id?: string;
           metadata?: Json | null;
           status?: Database["public"]["Enums"]["ticket_status"];
+          subject: string;
           type: Database["public"]["Enums"]["issue_type"];
           updated_at?: string;
           user_id?: string | null;
         };
         Update: {
+          contact_email?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           metadata?: Json | null;
           status?: Database["public"]["Enums"]["ticket_status"];
+          subject?: string;
           type?: Database["public"]["Enums"]["issue_type"];
           updated_at?: string;
           user_id?: string | null;
@@ -4202,7 +4208,14 @@ export type Database = {
       experience_type: "lodging" | "trip" | "activity";
       following_type: "user" | "host";
       host_status: "active" | "paused" | "suspended";
-      issue_type: "bug" | "performance" | "ui_ux" | "other";
+      issue_type:
+        | "bug"
+        | "performance"
+        | "ui_ux"
+        | "other"
+        | "feature_request"
+        | "payment_issue"
+        | "account_issue";
       like_target_type: "experience" | "review";
       lodging_type:
         | "auberge_de_jeunesse"

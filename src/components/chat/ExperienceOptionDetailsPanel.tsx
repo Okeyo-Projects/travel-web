@@ -3,6 +3,61 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
+const EQUIPMENT_LABELS: Record<string, string> = {
+  comfort_wi_fi: "Wi-Fi",
+  comfort_air_conditioning: "Climatisation",
+  comfort_heating: "Chauffage",
+  comfort_television: "Télévision",
+  comfort_netflix_smart_tv: "Netflix / Smart TV",
+  comfort_private_bathroom: "Salle de bain privée",
+  comfort_shower: "Douche",
+  comfort_bathtub: "Baignoire",
+  comfort_hot_water: "Eau chaude",
+  comfort_king_size_bed: "Lit king size",
+  comfort_queen_size_bed: "Lit queen size",
+  comfort_bed_linens: "Linge de lit",
+  comfort_towels: "Serviettes",
+  comfort_hair_dryer: "Sèche-cheveux",
+  comfort_iron: "Fer à repasser",
+  comfort_wardrobe: "Armoire",
+  comfort_desk: "Bureau",
+  comfort_living_area: "Coin salon",
+  comfort_fireplace: "Cheminée",
+  kitchen_equipped_kitchen: "Cuisine équipée",
+  kitchen_kitchenware: "Ustensiles de cuisine",
+  kitchen_oven: "Four",
+  kitchen_microwave: "Micro-ondes",
+  kitchen_refrigerator: "Réfrigérateur",
+  kitchen_freezer: "Congélateur",
+  kitchen_coffee_machine: "Machine à café",
+  kitchen_kettle: "Bouilloire",
+  kitchen_breakfast_included: "Petit-déjeuner inclus",
+  kitchen_half_board: "Demi-pension",
+  kitchen_full_board: "Pension complète",
+  kitchen_room_service: "Service de chambre",
+  parking_free_parking: "Parking gratuit",
+  parking_secure_parking: "Parking sécurisé",
+  parking_wheelchair_access: "Accès PMR",
+  parking_elevator: "Ascenseur",
+  outdoor_swimming_pool: "Piscine",
+  outdoor_heated_pool: "Piscine chauffée",
+  outdoor_jacuzzi: "Jacuzzi",
+  outdoor_hammam: "Hammam",
+  outdoor_spa: "Spa",
+  outdoor_gym: "Salle de sport",
+  outdoor_garden: "Jardin",
+  outdoor_terrace: "Terrasse",
+  outdoor_sea_view: "Vue sur mer",
+  outdoor_mountain_view: "Vue sur montagne",
+  outdoor_panoramic_view: "Vue panoramique",
+  outdoor_kids_playground: "Aire de jeux",
+  outdoor_barbecue: "Barbecue",
+};
+
+function getEquipmentLabel(key: string): string {
+  return EQUIPMENT_LABELS[key] ?? key;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -90,7 +145,7 @@ function renderRoom(option: Record<string, unknown>) {
         <div className="flex flex-wrap gap-1">
           {equipments.map((equipment) => (
             <Badge key={`${id}-${equipment}`} variant="secondary">
-              {equipment}
+              {getEquipmentLabel(equipment)}
             </Badge>
           ))}
         </div>

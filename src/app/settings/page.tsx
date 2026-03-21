@@ -35,11 +35,15 @@ export default function SettingsPage() {
     queryKey: ["profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (!user) {
+        return null;
+      }
+
       const supabase = createClient();
       const { data } = await supabase
         .from("profiles")
         .select("display_name, preferred_language, currency")
-        .eq("id", user!.id)
+        .eq("id", user.id)
         .single();
       return data as {
         display_name: string;
@@ -59,11 +63,15 @@ export default function SettingsPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (patch: { preferred_language?: Language }) => {
+      if (!user) {
+        throw new Error("User must be signed in to update settings.");
+      }
+
       const supabase = createClient();
       const { error } = await supabase
         .from("profiles")
         .update(patch)
-        .eq("id", user!.id);
+        .eq("id", user.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -165,6 +173,20 @@ export default function SettingsPage() {
               Log out
             </Button>
           </div>
+        </div>
+
+        {/* Legal */}
+        <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-3">
+          <h2 className="font-semibold">Support</h2>
+          <p className="text-sm text-muted-foreground">
+            Browse FAQs or send a detailed issue report to the support team.
+          </p>
+          <a
+            href="/support"
+            className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Help Center & Support
+          </a>
         </div>
 
         {/* Legal */}

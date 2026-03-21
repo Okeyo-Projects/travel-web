@@ -57,22 +57,28 @@ Returns available options with pricing.`,
           };
         }
 
-        // Check availability for each room type by counting overlapping bookings
-        const availabilityChecks = await Promise.all(
-          roomTypes.map(async (roomType: any) => {
-            // Get all active bookings that overlap with the requested date range
-            const { data: overlappingBookings } = await db
-              .from("bookings")
-              .select("id")
-              .eq("experience_id", experience_id)
-              .eq("room_type_id", roomType.id)
-              .in("status", ["pending", "confirmed", "ongoing"])
-              .lte("check_in", date_to || date_from)
-              .gte("check_out", date_from);
+        // Fetch all overlapping bookings for this experience once, then tally per room type
+        const effectiveDateTo = date_to || date_from;
+        const { data: overlappingBookings } = await db
+          .from("bookings")
+          .select("rooms")
+          .eq("experience_id", experience_id)
+          .in("status", ["pending_host", "confirmed"])
+          .lt("from_date", effectiveDateTo)
+          .gt("to_date", date_from);
 
-            const bookedRooms = overlappingBookings?.length || 0;
+        // Check availability for each room type
+        const availabilityChecks = roomTypes.map((roomType: any) => {
+            // Sum booked quantity for this room type across all overlapping bookings
+            let bookedQuantity = 0;
+            for (const booking of overlappingBookings || []) {
+              const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+              const entry = rooms.find((r: any) => r.room_type_id === roomType.id);
+              if (entry) bookedQuantity += entry.quantity || 1;
+            }
+
             const totalRooms = roomType.total_rooms || 1;
-            const availableRooms = totalRooms - bookedRooms;
+            const availableRooms = Math.max(0, totalRooms - bookedQuantity);
 
             // Check if room capacity meets guest requirements
             const meetsGuestRequirement =
@@ -89,13 +95,12 @@ Returns available options with pricing.`,
               available: hasAvailability,
               total_rooms: totalRooms,
               available_rooms: availableRooms,
-              booked_rooms: bookedRooms,
+              booked_rooms: bookedQuantity,
             };
-          }),
-        );
+          });
 
         const hasAnyAvailability = availabilityChecks.some(
-          (check) => check.available,
+          (check: { available: boolean }) => check.available,
         );
 
         return {

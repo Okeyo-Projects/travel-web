@@ -2,8 +2,8 @@
 
 import { addDays, format } from "date-fns";
 import {
-  Bike,
   Calendar,
+  Home,
   Loader2,
   MapPin,
   Minus,
@@ -15,8 +15,8 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
-import { ExperienceCard } from "@/components/experience-card";
-import { ExperienceGroup } from "@/components/explore";
+import { CompactExperienceCard, ExperienceGroup } from "@/components/explore";
+import { ExperienceDetailModal } from "@/components/explore/ExperienceDetailModal";
 import { FooterSection } from "@/components/home/FooterSection";
 import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
@@ -37,6 +37,8 @@ import { useCategories } from "@/hooks/use-categories";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useInfiniteExperiences } from "@/hooks/use-experiences";
 import { useAllCategoryGroups } from "@/hooks/use-experiences-by-category";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildCategorySlug } from "@/lib/routing/slugs";
 import type { ExperienceSort, ExperienceType } from "@/types/experience";
@@ -47,19 +49,49 @@ export default function ExplorePage() {
   const searchParams = useSearchParams();
   const categoryQuery = searchParams.get("category");
   const { data: categories } = useCategories();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [locationQuery, setLocationQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  const [activeType, setActiveType] = useState<ExperienceType | "all">("all");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [guestsCount, setGuestsCount] = useState(1);
-  const [activeSort] = useState<ExperienceSort>("newest");
+  // All search state lives in the URL
+  const qParam = searchParams.get("q") ?? "";
+  const typeParam = (searchParams.get("type") ?? "all") as ExperienceType | "all";
+  const dateFromParam = searchParams.get("dateFrom") ?? "";
+  const dateToParam = searchParams.get("dateTo") ?? "";
+  const guestsParam = Math.max(1, Number(searchParams.get("guests") ?? "1") || 1);
 
-  const dateFrom = dateRange?.from
-    ? format(dateRange.from, "yyyy-MM-dd")
+  // Local state only for the text input while the user is typing
+  const [locationInput, setLocationInput] = useState(qParam);
+  const debouncedSearch = useDebounce(qParam, 500);
+
+  // Sync input when URL q param changes (e.g. browser back/forward)
+  useEffect(() => {
+    setLocationInput(qParam);
+  }, [qParam]);
+
+  const activeType = typeParam;
+  const dateFrom = dateFromParam || undefined;
+  const dateTo = dateToParam || undefined;
+  const dateRange: DateRange | undefined = dateFromParam
+    ? {
+        from: new Date(dateFromParam),
+        to: dateToParam ? new Date(dateToParam) : undefined,
+      }
     : undefined;
-  const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
+  const guestsCount = guestsParam;
+  const [activeSort] = useState<ExperienceSort>("newest");
+  const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(null);
+
+  const updateParams = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === "") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    }
+    const query = params.toString();
+    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
+  };
+
   const dateLabel = dateRange?.from
     ? dateRange.to
       ? `${format(dateRange.from, "dd MMM")} - ${format(dateRange.to, "dd MMM")}`
@@ -69,12 +101,10 @@ export default function ExplorePage() {
     activeType === "all"
       ? "All Activity"
       : activeType === "lodging"
-        ? "Stays"
-        : activeType === "trip"
-          ? "Trips"
-          : "Activities";
+        ? "Lodge"
+        : "";
   const guestsLabel = `${guestsCount} guest${guestsCount > 1 ? "s" : ""}`;
-  const hasSearchText = debouncedSearch.length > 0 || locationQuery.length > 0;
+  const hasSearchText = debouncedSearch.length > 0;
   const hasActiveFilters =
     activeType !== "all" || Boolean(dateFrom) || guestsCount > 1;
 
@@ -92,7 +122,7 @@ export default function ExplorePage() {
     isError: isSearchError,
   } = useInfiniteExperiences(
     {
-      search: debouncedSearch || locationQuery || undefined,
+      search: debouncedSearch || undefined,
       type: activeType === "all" ? undefined : activeType,
       guests: guestsCount > 1 ? guestsCount : undefined,
       dateFrom,
@@ -107,7 +137,7 @@ export default function ExplorePage() {
   const searchResults = searchData?.pages.flatMap((page) => page.items) || [];
 
   const handleSearch = () => {
-    setSearchQuery(locationQuery.trim());
+    updateParams({ q: locationInput.trim() || null });
   };
 
   const showSearchResults = hasSearchText || hasActiveFilters;
@@ -131,6 +161,32 @@ export default function ExplorePage() {
       ),
     );
   }, [categoryQuery, categories, pathname, router]);
+
+  useEffect(() => {
+    if (!showSearchResults) return;
+    if (isLoadingSearch || isFetchingNextPage) return;
+
+    captureEvent(ANALYTICS_EVENT.EXPERIENCE_SEARCH, {
+      query: debouncedSearch || "",
+      filters: JSON.stringify({
+        type: activeType,
+        dateFrom,
+        dateTo,
+        guests: guestsCount,
+      }),
+      results_count: searchResults.length,
+    });
+  }, [
+    activeType,
+    dateFrom,
+    dateTo,
+    debouncedSearch,
+    guestsCount,
+    isFetchingNextPage,
+    isLoadingSearch,
+    searchResults.length,
+    showSearchResults,
+  ]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -177,8 +233,8 @@ export default function ExplorePage() {
                 <input
                   type="text"
                   placeholder="Search for places..."
-                  value={locationQuery}
-                  onChange={(e) => setLocationQuery(e.target.value)}
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
                   className="w-full bg-transparent text-sm text-white placeholder-gray-500 outline-none border-none p-0"
                 />
               </div>
@@ -194,25 +250,19 @@ export default function ExplorePage() {
                   type="button"
                   className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
                 >
-                  <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
+                  <Home className="w-5 h-5 text-[#ff2566] shrink-0" />
                   <div className="text-left min-w-0 hidden sm:block">
-                    <p className="text-xs text-gray-400">Activity</p>
+                    <p className="text-xs text-gray-400">Experience</p>
                     <p className="text-sm text-white">{activityLabel}</p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-44">
-                <DropdownMenuItem onClick={() => setActiveType("all")}>
+                <DropdownMenuItem onClick={() => updateParams({ type: null })}>
                   All Activity
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveType("lodging")}>
-                  Stays
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveType("trip")}>
-                  Trips
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveType("activity")}>
-                  Activities
+                <DropdownMenuItem onClick={() => updateParams({ type: "lodging" })}>
+                  Lodge
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -238,7 +288,12 @@ export default function ExplorePage() {
                 <DatePickerCalendar
                   mode="range"
                   selected={dateRange}
-                  onSelect={setDateRange}
+                  onSelect={(range) =>
+                    updateParams({
+                      dateFrom: range?.from ? format(range.from, "yyyy-MM-dd") : null,
+                      dateTo: range?.to ? format(range.to, "yyyy-MM-dd") : null,
+                    })
+                  }
                   disabled={(date) => date < addDays(new Date(), -1)}
                   numberOfMonths={1}
                 />
@@ -248,7 +303,7 @@ export default function ExplorePage() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setDateRange(undefined)}
+                      onClick={() => updateParams({ dateFrom: null, dateTo: null })}
                     >
                       Clear
                     </Button>
@@ -289,7 +344,7 @@ export default function ExplorePage() {
                       size="icon"
                       className="h-8 w-8"
                       onClick={() =>
-                        setGuestsCount((value) => Math.max(1, value - 1))
+                        updateParams({ guests: guestsCount > 2 ? String(guestsCount - 1) : null })
                       }
                     >
                       <Minus className="h-4 w-4" />
@@ -302,7 +357,7 @@ export default function ExplorePage() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => setGuestsCount((value) => value + 1)}
+                      onClick={() => updateParams({ guests: String(guestsCount + 1) })}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -333,18 +388,15 @@ export default function ExplorePage() {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                {debouncedSearch || locationQuery
-                  ? `Résultats pour "${debouncedSearch || locationQuery}"`
+                {debouncedSearch
+                  ? `Résultats pour "${debouncedSearch}"`
                   : "Résultats filtrés"}
               </h2>
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setSearchQuery("");
-                  setLocationQuery("");
-                  setActiveType("all");
-                  setDateRange(undefined);
-                  setGuestsCount(1);
+                  setLocationInput("");
+                  router.replace(pathname, { scroll: false });
                 }}
                 className="text-gray-600 hover:text-gray-900"
               >
@@ -363,13 +415,20 @@ export default function ExplorePage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {searchResults.map((experience) => (
-                    <ExperienceCard
+                  {searchResults.map((experience, index) => (
+                    <CompactExperienceCard
                       key={experience.id}
                       experience={experience}
+                      onOpenDetails={() => setActiveSearchIndex(index)}
                     />
                   ))}
                 </div>
+                <ExperienceDetailModal
+                  open={activeSearchIndex !== null}
+                  experiences={searchResults}
+                  startIndex={activeSearchIndex ?? 0}
+                  onClose={() => setActiveSearchIndex(null)}
+                />
 
                 {searchResults.length === 0 && (
                   <div className="text-center py-24">
@@ -380,11 +439,8 @@ export default function ExplorePage() {
                     <Button
                       variant="link"
                       onClick={() => {
-                        setSearchQuery("");
-                        setLocationQuery("");
-                        setActiveType("all");
-                        setDateRange(undefined);
-                        setGuestsCount(1);
+                        setLocationInput("");
+                        router.replace(pathname, { scroll: false });
                       }}
                       className="mt-2 text-[#ff2566]"
                     >

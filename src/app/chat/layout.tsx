@@ -1,10 +1,7 @@
 "use client";
 
-import { MessageSquare } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
+import { NotificationBell } from "@/components/site/NotificationBell";
 import { UserMenu } from "@/components/site/UserMenu";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +12,17 @@ import {
 import { ChatProvider } from "@/contexts/ChatContext";
 import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
+import { useViewMode } from "@/providers/view-mode-provider";
+import { MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   const { user, loading, openAuthModal } = useAuth();
+  const { mode } = useViewMode();
   const pathname = usePathname();
+  const isHostMode = Boolean(user && mode === "host");
 
   return (
     <ChatProvider>
@@ -33,20 +37,44 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="flex items-center gap-2">
               <div className="hidden items-center gap-2 md:flex">
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={localizeHref("/collections", pathname)}>
-                    Collections
-                  </Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={localizeHref("/explore", pathname)}>Explore</Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href={localizeHref("/offers", pathname)}>Offres</Link>
-                </Button>
+                {isHostMode ? (
+                  <>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={localizeHref("/host", pathname)}>
+                        Dashboard
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={localizeHref("/host/experiences", pathname)}>
+                        Experiences
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={localizeHref("/host/availability", pathname)}>
+                        Availability
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={localizeHref("/", pathname)}>
+                        Home
+                      </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="sm">
+                      <Link href={localizeHref("/explore", pathname)}>
+                        Explore
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
               {user ? (
-                <UserMenu variant="light" />
+                <>
+                  <NotificationBell variant="light" />
+                  <UserMenu variant="light" />
+                </>
               ) : (
                 <Button
                   variant="default"
