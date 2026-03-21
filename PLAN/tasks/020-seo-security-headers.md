@@ -1,7 +1,7 @@
 ---
 id: "020"
 title: "SEO Security Headers: X-Frame-Options, CSP, Referrer-Policy, Permissions-Policy"
-status: todo
+status: in_progress
 priority: high
 created: 2026-03-21
 updated: 2026-03-21
