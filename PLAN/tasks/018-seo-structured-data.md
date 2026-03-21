@@ -1,16 +1,16 @@
 ---
 id: "018"
 title: "SEO Structured Data: JSON-LD schemas (Organization, WebSite, BreadcrumbList, WebPage, Experience)"
-status: todo
+status: in_progress
 priority: urgent
 created: 2026-03-21
 updated: 2026-03-21
 assigned: codex
-branch: null
+branch: task/018-seo-structured-data
 pr: null
-attempts: 0
+attempts: 1
 depends_on: ["017"]
-progress: 0
+progress: 10
 ---
 
 ## Description
