@@ -1,7 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { BriefcaseBusiness, CalendarDays, Compass, LogOut, Settings, User } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CalendarDays,
+  Compass,
+  LogOut,
+  Settings,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,10 +21,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { useViewMode } from "@/providers/view-mode-provider";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
+import { useViewMode } from "@/providers/view-mode-provider";
 import { getImageUrl } from "@/utils/functions";
+import { useSiteI18n } from "./site-i18n";
 
 function getInitials(name: string) {
   return name
@@ -38,16 +46,22 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
   const { mode, canHost, setMode } = useViewMode();
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useSiteI18n();
+  const userId = user?.id;
 
   const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
+    queryKey: ["profile", userId],
     enabled: !!user,
     queryFn: async () => {
+      if (!userId) {
+        return null;
+      }
+
       const supabase = createClient();
       const { data } = await supabase
         .from("profiles")
         .select("display_name, avatar_url, is_host")
-        .eq("id", user!.id)
+        .eq("id", userId)
         .single();
       return data as {
         display_name: string;
@@ -74,7 +88,7 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
               ? "ring-white/30 hover:ring-white/60"
               : "ring-border hover:ring-foreground/30"
           }`}
-          aria-label="User menu"
+          aria-label={t("header.userMenu")}
         >
           <Avatar className="size-9">
             <AvatarImage src={avatarUrl} alt={displayName} />
@@ -95,8 +109,13 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
             {user?.email}
           </p>
           <div className="mt-1">
-            <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-              {mode === "host" ? "Host mode" : "Traveler mode"}
+            <Badge
+              variant="outline"
+              className="text-[10px] uppercase tracking-wide"
+            >
+              {mode === "host"
+                ? t("header.hostMode")
+                : t("header.travelerMode")}
             </Badge>
           </div>
         </div>
@@ -104,19 +123,19 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
         <DropdownMenuItem asChild>
           <Link href={localizeHref("/profile", pathname)}>
             <User className="mr-2 h-4 w-4" />
-            Profile
+            {t("header.profile")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={localizeHref("/bookings", pathname)}>
             <CalendarDays className="mr-2 h-4 w-4" />
-            My Bookings
+            {t("header.bookings")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={localizeHref("/settings", pathname)}>
             <Settings className="mr-2 h-4 w-4" />
-            Settings
+            {t("header.settings")}
           </Link>
         </DropdownMenuItem>
         {canHost && (
@@ -139,7 +158,9 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
             ) : (
               <BriefcaseBusiness className="mr-2 h-4 w-4" />
             )}
-            {mode === "host" ? "Switch to Traveler" : "Switch to Host"}
+            {mode === "host"
+              ? t("header.switchToTraveler")
+              : t("header.switchToHost")}
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
@@ -148,7 +169,7 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
           className="text-destructive focus:text-destructive"
         >
           <LogOut className="mr-2 h-4 w-4" />
-          Logout
+          {t("header.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

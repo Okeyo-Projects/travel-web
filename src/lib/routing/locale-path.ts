@@ -1,4 +1,9 @@
-import { type AppLocale, DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
+import {
+  type AppLocale,
+  DEFAULT_LOCALE,
+  isSupportedLocale,
+  LOCALES,
+} from "@/lib/i18n";
 
 function splitHref(href: string) {
   const queryIndex = href.indexOf("?");
@@ -75,4 +80,21 @@ export function localizeHref(
   }
 
   return `/${locale}${withoutLocale}${suffix}`;
+}
+
+export function buildLocaleAlternates(
+  href: string,
+  canonicalLocale: AppLocale = DEFAULT_LOCALE,
+) {
+  const languages = Object.fromEntries(
+    LOCALES.map((locale) => [locale, localizeHref(href, locale)]),
+  ) as Record<AppLocale, string>;
+
+  return {
+    canonical: localizeHref(href, canonicalLocale),
+    languages: {
+      ...languages,
+      "x-default": localizeHref(href, DEFAULT_LOCALE),
+    },
+  };
 }

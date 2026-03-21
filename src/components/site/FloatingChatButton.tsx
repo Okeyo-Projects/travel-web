@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
+import { useT } from "@/providers/translations-provider";
 
 export function FloatingChatButton() {
   const pathname = usePathname();
+  const t = useT();
   const normalizedPathname = stripLocalePrefix(pathname);
   const isChatPage =
     normalizedPathname === "/chat" || normalizedPathname.startsWith("/chat/");
@@ -24,7 +26,7 @@ export function FloatingChatButton() {
       >
         <Link
           href={localizeHref("/chat", pathname)}
-          aria-label="Open AI assistant chat"
+          aria-label={t("floatingChat.open")}
         >
           <Bot className="h-10 w-10" />
         </Link>

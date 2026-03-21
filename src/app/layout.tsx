@@ -1,10 +1,27 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
 import { headers } from "next/headers";
-import "./globals.css";
+import type { ReactNode } from "react";
+import { PostHogPageView } from "@/components/analytics/posthog-pageview";
+import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
+import { AuthModal } from "@/components/auth/auth-modal";
 import FacebookPixel from "@/components/FacebookPixel";
+import { JsonLd } from "@/components/seo/json-ld";
 import { FloatingChatButton } from "@/components/site/FloatingChatButton";
-import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
+import {
+  createTranslator,
+  getLocaleDirection,
+  getLocaleMessages,
+  LOCALE_OPEN_GRAPH,
+  resolveLocale,
+} from "@/lib/i18n";
+import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
+import { AuthProvider } from "@/providers/auth-provider";
+import { PostHogProvider } from "@/providers/posthog-provider";
+import QueryProvider from "@/providers/query-provider";
+import { TranslationsProvider } from "@/providers/translations-provider";
+import { ViewModeProvider } from "@/providers/view-mode-provider";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,46 +43,40 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "Okeyo Travel — Laissez parler votre mood",
-    template: "%s",
-  },
-  description:
-    "En 2 minutes, OKEYO vous recommande l'endroit le plus adapté à vos envies.",
-  robots: process.env.NEXT_PUBLIC_NOINDEX === "true"
-    ? { index: false, follow: false }
-    : { index: true, follow: true },
-  openGraph: {
-    siteName: "Okeyo Travel",
-    locale: "fr_FR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@okeyotravel",
-  },
-  alternates: {
-    languages: {
-      fr: SITE_URL,
-      "x-default": SITE_URL,
+async function getRequestLocale() {
+  const requestHeaders = await headers();
+  return resolveLocale(requestHeaders.get("x-locale"));
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: t("seo.layout.title"),
+      template: "%s",
     },
-  },
-};
-
-import type { ReactNode } from "react";
-import { PostHogPageView } from "@/components/analytics/posthog-pageview";
-import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
-import { JsonLd } from "@/components/seo/json-ld";
-import { AuthModal } from "@/components/auth/auth-modal";
-import { AuthProvider } from "@/providers/auth-provider";
-import { PostHogProvider } from "@/providers/posthog-provider";
-import QueryProvider from "@/providers/query-provider";
-import { ViewModeProvider } from "@/providers/view-mode-provider";
+    description: t("seo.layout.description"),
+    robots:
+      process.env.NEXT_PUBLIC_NOINDEX === "true"
+        ? { index: false, follow: false }
+        : { index: true, follow: true },
+    openGraph: {
+      siteName: t("app.name"),
+      locale: LOCALE_OPEN_GRAPH[locale],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@okeyotravel",
+    },
+    alternates: buildLocaleAlternates("/", locale),
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -73,14 +84,14 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   const requestHeaders = await headers();
-  const headerLocale = requestHeaders.get("x-locale");
   const nonce = requestHeaders.get("x-nonce") ?? undefined;
-  const locale = isSupportedLocale(headerLocale)
-    ? headerLocale
-    : DEFAULT_LOCALE;
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const messages = getLocaleMessages(locale);
+  const direction = getLocaleDirection(locale);
+  const t = createTranslator(messages);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} dir={direction}>
       <FacebookPixel nonce={nonce} />
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
@@ -90,29 +101,31 @@ export default async function RootLayout({
             {
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "Okeyo Travel",
+              name: t("app.name"),
               url: SITE_URL,
               logo: `${SITE_URL}/logo_white.png`,
-              description:
-                "En 2 minutes, OKEYO vous recommande la destination la plus adaptée à vos envies grâce à l'IA.",
+              description: t("seo.layout.organizationDescription"),
               sameAs: ["https://www.instagram.com/okeyotravel"],
               contactPoint: {
                 "@type": "ContactPoint",
                 contactType: "customer service",
-                availableLanguage: "French",
+                availableLanguage: locale,
               },
             },
             {
               "@context": "https://schema.org",
               "@type": "WebSite",
-              name: "Okeyo Travel",
-              url: SITE_URL,
-              inLanguage: "fr",
+              name: t("app.name"),
+              url: `${SITE_URL}${localizeHref("/", locale)}`,
+              inLanguage: locale,
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: `${SITE_URL}/explore?q={search_term_string}`,
+                  urlTemplate: `${SITE_URL}${localizeHref(
+                    "/explore?q={search_term_string}",
+                    locale,
+                  )}`,
                 },
                 "query-input": "required name=search_term_string",
               },
@@ -123,19 +136,21 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-[100dvh] flex flex-col bg-white`}
       >
-        <PostHogProvider>
-          <QueryProvider>
-            <AuthProvider>
-              <ViewModeProvider>
-                <PostHogPageView />
-                <WebVitalsReporter />
-                <main className="flex-1">{children}</main>
-                <FloatingChatButton />
-                <AuthModal />
-              </ViewModeProvider>
-            </AuthProvider>
-          </QueryProvider>
-        </PostHogProvider>
+        <TranslationsProvider locale={locale} messages={messages}>
+          <PostHogProvider>
+            <QueryProvider>
+              <AuthProvider>
+                <ViewModeProvider>
+                  <PostHogPageView />
+                  <WebVitalsReporter />
+                  <main className="flex-1">{children}</main>
+                  <FloatingChatButton />
+                  <AuthModal />
+                </ViewModeProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </PostHogProvider>
+        </TranslationsProvider>
         <noscript>
           {/* biome-ignore lint/performance/noImgElement: Noscript fallback pixel must be a plain img tag. */}
           <img

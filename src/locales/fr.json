@@ -1,0 +1,230 @@
+{
+  "app": {
+    "name": "Okeyo Travel"
+  },
+  "header": {
+    "home": "Accueil",
+    "explore": "Explorer",
+    "assistant": "Assistant IA",
+    "dashboard": "Tableau de bord",
+    "experiences": "Expériences",
+    "availability": "Disponibilités",
+    "profile": "Profil",
+    "bookings": "Mes réservations",
+    "settings": "Paramètres",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "conversations": "Conversations",
+    "homeAria": "Accueil Okeyo Travel",
+    "userMenu": "Menu utilisateur",
+    "hostMode": "Mode hôte",
+    "travelerMode": "Mode voyageur",
+    "switchToTraveler": "Passer en mode voyageur",
+    "switchToHost": "Passer en mode hôte"
+  },
+  "language": {
+    "label": "Langue",
+    "options": {
+      "fr": "Français",
+      "en": "Anglais",
+      "ar": "Arabe"
+    }
+  },
+  "notifications": {
+    "view": "Voir les notifications",
+    "unread": "{count} notifications non lues"
+  },
+  "floatingChat": {
+    "open": "Ouvrir le chat avec l'assistant IA"
+  },
+  "authModal": {
+    "close": "Fermer",
+    "orContinueWith": "Ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "continueWithApple": "Se connecter avec Apple",
+    "legalPrefix": "En continuant, vous acceptez nos",
+    "legalTerms": "Conditions d'utilisation",
+    "legalAnd": "et notre",
+    "legalPrivacy": "Politique de confidentialité",
+    "messages": {
+      "nameRequired": "Veuillez saisir votre nom.",
+      "emailConfirmation": "Vérifiez votre e-mail pour confirmer votre compte.",
+      "oauthCancelled": "La connexion a été annulée. Veuillez réessayer."
+    },
+    "login": {
+      "title": "Connectez-vous",
+      "description": "Bon retour. Entrez vos identifiants pour continuer.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "vous@email.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Connexion",
+      "switchPrompt": "Vous n'avez pas de compte ?",
+      "switchAction": "Créer un compte"
+    },
+    "signup": {
+      "title": "Créez votre compte",
+      "description": "Rejoignez Okeyo Travel en quelques étapes.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Votre nom",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "vous@email.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Créez un mot de passe",
+      "submit": "Créer un compte",
+      "switchPrompt": "Vous avez déjà un compte ?",
+      "switchAction": "Se connecter"
+    }
+  },
+  "common": {
+    "close": "Fermer",
+    "open": "Ouvrir",
+    "loading": "Chargement",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "home": {
+    "hero": {
+      "lead": "Laisser parler votre",
+      "words": {
+        "one": "Mood,",
+        "two": "Envie,",
+        "three": "Désir,"
+      },
+      "trailing": "nous nous occupons du reste",
+      "description": "En 2 minutes, l'IA Okeyo trouve l'expérience qui vous ressemble.",
+      "cta": "Commencer votre voyage"
+    },
+    "ai": {
+      "title": "Décrivez votre voyage idéal, l'IA s'occupe du reste.",
+      "placeholder": "Décrivez votre voyage idéal...",
+      "add": "Ajouter",
+      "send": "Envoyer",
+      "howItWorks": "Comment ça marche",
+      "subtitle": "L'IA construit votre voyage sur mesure",
+      "playDemo": "Lire la démo IA",
+      "prompts": {
+        "one": "Je veux une auberge de jeunesse paisible avec vue sur les montagnes, idéale pour travailler à distance et rencontrer d'autres voyageurs, budget max 400 dhs / nuit.",
+        "two": "Trouve-moi un riad authentique à Marrakech pour 2 personnes, avec piscine, proche de la médina, pour un week-end romantique.",
+        "three": "Je cherche un hébergement en bord de mer à Agadir, idéal pour une famille avec 2 enfants, cuisine disponible, moins de 800 dhs / nuit."
+      }
+    },
+    "explore": {
+      "eyebrow": "Comment ça marche",
+      "title": {
+        "lineOne": "Votre compagnon de",
+        "lineTwo": "voyage intelligent"
+      },
+      "description": "Nous sélectionnons des expériences uniques, soigneusement choisies pour vous.",
+      "cta": "Réserver ma place"
+    },
+    "testimonials": {
+      "eyebrow": "Avis de nos voyageurs",
+      "title": "Ce que disent nos voyageurs",
+      "items": {
+        "one": {
+          "quote": "Grâce à Okeyo, j'ai découvert un riad authentique à Marrakech qui correspondait exactement à mes envies. La recommandation de l'IA était parfaite !",
+          "name": "Camille Mercier",
+          "role": "Voyageuse"
+        },
+        "two": {
+          "quote": "En deux minutes, l'assistant m'a proposé un séjour en bord de mer parfaitement adapté à notre budget famille. Je n'aurais pas trouvé mieux tout seul.",
+          "name": "Thomas Lefebvre",
+          "role": "Voyageur en famille"
+        },
+        "three": {
+          "quote": "L'expérience de réservation est fluide et les suggestions sont vraiment personnalisées. Okeyo a changé ma façon de planifier mes voyages.",
+          "name": "Sofia Benali",
+          "role": "Digital nomade"
+        }
+      }
+    },
+    "footer": {
+      "tagline": "Votre compagnon de voyage intelligent, propulsé par l'IA.",
+      "usefulLinks": "Liens utiles",
+      "newsletterTitle": "Rejoignez notre newsletter",
+      "newsletterDescription": "Recevez nos dernières actualités, offres et conseils voyage chaque semaine.",
+      "emailPlaceholder": "Votre adresse e-mail",
+      "subscribe": "S'abonner",
+      "contact": "Contact",
+      "social": {
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "twitter": "Twitter"
+      },
+      "links": {
+        "explore": "Explorer",
+        "privacy": "Politique de confidentialité",
+        "terms": "Conditions d'utilisation",
+        "support": "Support"
+      },
+      "payzone": {
+        "title": "Paiement partenaire",
+        "description": "Les transactions sur Okeyo Travel sont traitées de manière sécurisée via Payzone."
+      }
+    }
+  },
+  "collections": {
+    "title": "Nos Collections",
+    "subtitle": "Explorez nos sélections thématiques pour trouver l'inspiration.",
+    "empty": "Aucune collection disponible pour le moment."
+  },
+  "seo": {
+    "layout": {
+      "title": "Okeyo Travel — Laissez parler votre mood",
+      "description": "En 2 minutes, OKEYO vous recommande l'endroit le plus adapté à vos envies.",
+      "organizationDescription": "En 2 minutes, OKEYO vous recommande la destination la plus adaptée à vos envies grâce à l'IA."
+    },
+    "home": {
+      "title": "Okeyo Travel — Trouvez votre destination selon votre humeur",
+      "description": "En 2 minutes, dites-nous votre mood et Okeyo vous recommande la destination idéale. Planification de voyage personnalisée par IA.",
+      "serviceName": "Recommandation de voyage par IA — Okeyo Travel",
+      "serviceDescription": "En 2 minutes, notre IA analyse vos envies et vous recommande la destination et l'expérience de voyage idéales."
+    },
+    "chat": {
+      "title": "Assistant voyage IA — Okeyo Travel",
+      "description": "Discutez avec notre assistant IA pour planifier votre voyage sur mesure en quelques minutes."
+    },
+    "chatConversation": {
+      "title": "Conversation — Okeyo Travel",
+      "description": "Continuez votre conversation avec notre assistant."
+    },
+    "collections": {
+      "title": "Nos Collections de voyages — Okeyo Travel",
+      "description": "Découvrez nos collections de destinations triées par thème : aventure, détente, culture et plus encore."
+    },
+    "explore": {
+      "title": "Explorer les destinations — Okeyo Travel",
+      "description": "Filtrez par activité, thème et dates pour trouver votre prochain voyage. Recommandations personnalisées selon vos envies."
+    },
+    "category": {
+      "title": "Explorer par catégorie — Okeyo Travel",
+      "description": "Parcourez les expériences par catégorie et trouvez l'aventure qui correspond à votre envie.",
+      "descriptionPattern": "Découvrez les expériences de la catégorie {title} sur Okeyo Travel."
+    },
+    "experience": {
+      "fallbackTitle": "Expérience de voyage — Okeyo Travel",
+      "fallbackDescription": "Découvrez cette expérience de voyage unique sur Okeyo Travel.",
+      "descriptionPattern": "Découvrez l'expérience \"{title}\" sur Okeyo Travel.",
+      "label": "Expérience"
+    },
+    "support": {
+      "title": "Aide & Support — Okeyo Travel",
+      "description": "Retrouvez toutes nos réponses aux questions fréquentes et contactez notre équipe d'assistance."
+    },
+    "preorder": {
+      "title": "Précommande — Okeyo Travel",
+      "description": "Soyez parmi les premiers à profiter d'Okeyo Travel. Réservez votre accès anticipé dès maintenant."
+    },
+    "terms": {
+      "title": "Conditions d'utilisation | Okeyo Travel",
+      "description": "Consultez les conditions d'utilisation d'Okeyo Travel pour les utilisateurs et les prestataires."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité | Okeyo Travel",
+      "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+    }
+  }
+}

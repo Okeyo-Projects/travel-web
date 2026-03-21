@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +26,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
+import { useT } from "@/providers/translations-provider";
 
 type MessageState = {
   type: "error" | "success";
@@ -47,6 +50,8 @@ function AppleLogo({ className }: { className?: string }) {
 
 export function AuthModal() {
   const isMobile = useIsMobile();
+  const pathname = usePathname();
+  const t = useT();
   const { authModalOpen, authMode, closeAuthModal, setAuthMode, supabase } =
     useAuth();
 
@@ -105,7 +110,7 @@ export function AuthModal() {
     setMessage(null);
 
     if (!signupName.trim()) {
-      setMessage({ type: "error", text: "Please enter your name." });
+      setMessage({ type: "error", text: t("authModal.messages.nameRequired") });
       setIsSubmitting(false);
       return;
     }
@@ -133,7 +138,7 @@ export function AuthModal() {
     if (!data.session) {
       setMessage({
         type: "success",
-        text: "Check your email to confirm your account.",
+        text: t("authModal.messages.emailConfirmation"),
       });
       captureEvent(ANALYTICS_EVENT.AUTH_SIGNUP_SUCCESS, {
         method: "email",
@@ -157,7 +162,7 @@ export function AuthModal() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: window.location.href,
       },
     });
 
@@ -173,7 +178,7 @@ export function AuthModal() {
       ) {
         setMessage({
           type: "error",
-          text: "Sign-in was cancelled. Please try again.",
+          text: t("authModal.messages.oauthCancelled"),
         });
       } else {
         setMessage({ type: "error", text: error.message });
@@ -188,14 +193,14 @@ export function AuthModal() {
   const headerCopy = useMemo(() => {
     return authMode === "login"
       ? {
-          title: "Login Now!",
-          description: "Welcome back! Please enter your details.",
+          title: t("authModal.login.title"),
+          description: t("authModal.login.description"),
         }
       : {
-          title: "Create your account",
-          description: "Join Okeyo Travel in a few steps.",
+          title: t("authModal.signup.title"),
+          description: t("authModal.signup.description"),
         };
-  }, [authMode]);
+  }, [authMode, t]);
 
   const content = (
     <div
@@ -219,7 +224,7 @@ export function AuthModal() {
               type="button"
               className="text-muted-foreground text-sm hover:text-foreground"
             >
-              Close
+              {t("authModal.close")}
             </button>
           </DrawerClose>
         ) : null}
@@ -228,27 +233,31 @@ export function AuthModal() {
       {authMode === "login" ? (
         <form className="flex flex-col gap-4" onSubmit={handleLogin}>
           <div className="space-y-2">
-            <Label htmlFor="login-email">Email</Label>
+            <Label htmlFor="login-email">
+              {t("authModal.login.emailLabel")}
+            </Label>
             <Input
               id="login-email"
               type="email"
               value={loginEmail}
               onChange={(event) => setLoginEmail(event.target.value)}
               autoComplete="email"
-              placeholder="you@email.com"
+              placeholder={t("authModal.login.emailPlaceholder")}
               className="h-11 rounded-full bg-muted/60"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="login-password">Password</Label>
+            <Label htmlFor="login-password">
+              {t("authModal.login.passwordLabel")}
+            </Label>
             <Input
               id="login-password"
               type="password"
               value={loginPassword}
               onChange={(event) => setLoginPassword(event.target.value)}
               autoComplete="current-password"
-              placeholder="••••••••"
+              placeholder={t("authModal.login.passwordPlaceholder")}
               className="h-11 rounded-full bg-muted/60"
               required
             />
@@ -270,45 +279,51 @@ export function AuthModal() {
             className="h-11 rounded-full bg-[#ff2566] text-white hover:bg-[#e0205a]"
             disabled={isSubmitting}
           >
-            Log In
+            {t("authModal.login.submit")}
           </Button>
         </form>
       ) : (
         <form className="flex flex-col gap-4" onSubmit={handleSignup}>
           <div className="space-y-2">
-            <Label htmlFor="signup-name">Name</Label>
+            <Label htmlFor="signup-name">
+              {t("authModal.signup.nameLabel")}
+            </Label>
             <Input
               id="signup-name"
               type="text"
               value={signupName}
               onChange={(event) => setSignupName(event.target.value)}
-              placeholder="Your name"
+              placeholder={t("authModal.signup.namePlaceholder")}
               className="h-11 rounded-full bg-muted/60"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="signup-email">Email</Label>
+            <Label htmlFor="signup-email">
+              {t("authModal.signup.emailLabel")}
+            </Label>
             <Input
               id="signup-email"
               type="email"
               value={signupEmail}
               onChange={(event) => setSignupEmail(event.target.value)}
               autoComplete="email"
-              placeholder="you@email.com"
+              placeholder={t("authModal.signup.emailPlaceholder")}
               className="h-11 rounded-full bg-muted/60"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="signup-password">Password</Label>
+            <Label htmlFor="signup-password">
+              {t("authModal.signup.passwordLabel")}
+            </Label>
             <Input
               id="signup-password"
               type="password"
               value={signupPassword}
               onChange={(event) => setSignupPassword(event.target.value)}
               autoComplete="new-password"
-              placeholder="Create a password"
+              placeholder={t("authModal.signup.passwordPlaceholder")}
               className="h-11 rounded-full bg-muted/60"
               required
             />
@@ -330,27 +345,31 @@ export function AuthModal() {
             className="h-11 rounded-full bg-[#ff2566] text-white hover:bg-[#e0205a]"
             disabled={isSubmitting}
           >
-            Create account
+            {t("authModal.signup.submit")}
           </Button>
         </form>
       )}
 
       <p className="text-center text-sm text-muted-foreground">
         {authMode === "login"
-          ? "Don’t have an account?"
-          : "Already have an account?"}{" "}
+          ? t("authModal.login.switchPrompt")
+          : t("authModal.signup.switchPrompt")}{" "}
         <button
           type="button"
           onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
           className="font-semibold text-foreground hover:text-[#ff2566]"
         >
-          {authMode === "login" ? "Sign Up" : "Log In"}
+          {authMode === "login"
+            ? t("authModal.login.switchAction")
+            : t("authModal.signup.switchAction")}
         </button>
       </p>
 
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">Or continue with</span>
+        <span className="text-xs text-muted-foreground">
+          {t("authModal.orContinueWith")}
+        </span>
         <Separator className="flex-1" />
       </div>
 
@@ -361,7 +380,7 @@ export function AuthModal() {
         className="h-11 rounded-full border border-input"
         disabled={isSubmitting}
       >
-        Continue with Google
+        {t("authModal.continueWithGoogle")}
       </Button>
       <Button
         type="button"
@@ -370,20 +389,23 @@ export function AuthModal() {
         disabled={isSubmitting}
       >
         <AppleLogo className="mr-2 h-4 w-4" />
-        Sign in with Apple
+        {t("authModal.continueWithApple")}
       </Button>
 
       <p className="text-center text-xs leading-6 text-muted-foreground">
-        By continuing, you agree to our{" "}
-        <Link href="/terms" className="font-medium text-foreground hover:text-primary">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
+        {t("authModal.legalPrefix")}{" "}
         <Link
-          href="/privacy"
+          href={localizeHref("/terms", pathname)}
           className="font-medium text-foreground hover:text-primary"
         >
-          Privacy Policy
+          {t("authModal.legalTerms")}
+        </Link>{" "}
+        {t("authModal.legalAnd")}{" "}
+        <Link
+          href={localizeHref("/privacy", pathname)}
+          className="font-medium text-foreground hover:text-primary"
+        >
+          {t("authModal.legalPrivacy")}
         </Link>
         .
       </p>

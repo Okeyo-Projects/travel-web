@@ -1,0 +1,230 @@
+{
+  "app": {
+    "name": "Okeyo Travel"
+  },
+  "header": {
+    "home": "الرئيسية",
+    "explore": "استكشف",
+    "assistant": "المساعد الذكي",
+    "dashboard": "لوحة التحكم",
+    "experiences": "التجارب",
+    "availability": "التوفر",
+    "profile": "الملف الشخصي",
+    "bookings": "حجوزاتي",
+    "settings": "الإعدادات",
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "conversations": "المحادثات",
+    "homeAria": "الصفحة الرئيسية لـ Okeyo Travel",
+    "userMenu": "قائمة المستخدم",
+    "hostMode": "وضع المضيف",
+    "travelerMode": "وضع المسافر",
+    "switchToTraveler": "التبديل إلى وضع المسافر",
+    "switchToHost": "التبديل إلى وضع المضيف"
+  },
+  "language": {
+    "label": "اللغة",
+    "options": {
+      "fr": "الفرنسية",
+      "en": "الإنجليزية",
+      "ar": "العربية"
+    }
+  },
+  "notifications": {
+    "view": "عرض الإشعارات",
+    "unread": "{count} إشعارات غير مقروءة"
+  },
+  "floatingChat": {
+    "open": "فتح محادثة المساعد الذكي"
+  },
+  "authModal": {
+    "close": "إغلاق",
+    "orContinueWith": "أو المتابعة عبر",
+    "continueWithGoogle": "المتابعة عبر Google",
+    "continueWithApple": "تسجيل الدخول عبر Apple",
+    "legalPrefix": "بالمتابعة فإنك توافق على",
+    "legalTerms": "شروط الاستخدام",
+    "legalAnd": "و",
+    "legalPrivacy": "سياسة الخصوصية",
+    "messages": {
+      "nameRequired": "يرجى إدخال اسمك.",
+      "emailConfirmation": "تحقق من بريدك الإلكتروني لتأكيد حسابك.",
+      "oauthCancelled": "تم إلغاء تسجيل الدخول. يرجى المحاولة مرة أخرى."
+    },
+    "login": {
+      "title": "سجّل الدخول",
+      "description": "مرحبًا بعودتك. أدخل بياناتك للمتابعة.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "you@email.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "••••••••",
+      "submit": "تسجيل الدخول",
+      "switchPrompt": "ليس لديك حساب؟",
+      "switchAction": "إنشاء حساب"
+    },
+    "signup": {
+      "title": "أنشئ حسابك",
+      "description": "انضم إلى Okeyo Travel في خطوات قليلة.",
+      "nameLabel": "الاسم",
+      "namePlaceholder": "اسمك",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "you@email.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "أنشئ كلمة مرور",
+      "submit": "إنشاء حساب",
+      "switchPrompt": "لديك حساب بالفعل؟",
+      "switchAction": "سجّل الدخول"
+    }
+  },
+  "common": {
+    "close": "إغلاق",
+    "open": "فتح",
+    "loading": "جارٍ التحميل",
+    "previous": "السابق",
+    "next": "التالي"
+  },
+  "home": {
+    "hero": {
+      "lead": "دع",
+      "words": {
+        "one": "مزاجك،",
+        "two": "رغبتك،",
+        "three": "شغفك،"
+      },
+      "trailing": "ونحن نتكفل بالباقي",
+      "description": "في دقيقتين، يعثر ذكاء Okeyo الاصطناعي على التجربة التي تناسبك.",
+      "cta": "ابدأ رحلتك"
+    },
+    "ai": {
+      "title": "صف رحلتك المثالية وسيتولى الذكاء الاصطناعي الباقي.",
+      "placeholder": "صف رحلتك المثالية...",
+      "add": "إضافة",
+      "send": "إرسال",
+      "howItWorks": "كيف يعمل",
+      "subtitle": "الذكاء الاصطناعي يبني رحلتك على مقاسك",
+      "playDemo": "تشغيل العرض التوضيحي للذكاء الاصطناعي",
+      "prompts": {
+        "one": "أريد نزلًا هادئًا بإطلالة على الجبال، مناسبًا للعمل عن بُعد والتعرف على مسافرين آخرين، بميزانية لا تتجاوز 400 درهم لليلة.",
+        "two": "ابحث لي عن رياض أصيل في مراكش لشخصين مع مسبح وقريب من المدينة القديمة لعطلة نهاية أسبوع رومانسية.",
+        "three": "أبحث عن إقامة على البحر في أكادير تناسب عائلة مع طفلين، مع مطبخ، وبأقل من 800 درهم لليلة."
+      }
+    },
+    "explore": {
+      "eyebrow": "كيف يعمل",
+      "title": {
+        "lineOne": "رفيقك",
+        "lineTwo": "الذكي في السفر"
+      },
+      "description": "ننتقي لك تجارب فريدة بعناية.",
+      "cta": "احجز مكاني"
+    },
+    "testimonials": {
+      "eyebrow": "آراء المسافرين",
+      "title": "ماذا يقول مسافرونا",
+      "items": {
+        "one": {
+          "quote": "بفضل Okeyo اكتشفت رياضًا أصيلًا في مراكش يطابق ما أريده تمامًا. كانت توصية الذكاء الاصطناعي مثالية.",
+          "name": "كاميل مرسييه",
+          "role": "مسافرة"
+        },
+        "two": {
+          "quote": "في دقيقتين اقترح عليّ المساعد إقامة على البحر تناسب ميزانية عائلتنا تمامًا. لم أكن لأجد أفضل منها وحدي.",
+          "name": "توماس لوفيفر",
+          "role": "مسافر مع العائلة"
+        },
+        "three": {
+          "quote": "تجربة الحجز سلسة والاقتراحات شخصية فعلًا. لقد غيّر Okeyo طريقة تخطيطي لرحلاتي.",
+          "name": "صوفيا بنعلي",
+          "role": "رحالة رقمية"
+        }
+      }
+    },
+    "footer": {
+      "tagline": "رفيقك الذكي في السفر، بدعم من الذكاء الاصطناعي.",
+      "usefulLinks": "روابط مفيدة",
+      "newsletterTitle": "انضم إلى نشرتنا البريدية",
+      "newsletterDescription": "احصل كل أسبوع على آخر الأخبار والعروض ونصائح السفر.",
+      "emailPlaceholder": "عنوان بريدك الإلكتروني",
+      "subscribe": "اشتراك",
+      "contact": "تواصل",
+      "social": {
+        "facebook": "فيسبوك",
+        "instagram": "إنستغرام",
+        "twitter": "إكس"
+      },
+      "links": {
+        "explore": "استكشف",
+        "privacy": "سياسة الخصوصية",
+        "terms": "شروط الاستخدام",
+        "support": "الدعم"
+      },
+      "payzone": {
+        "title": "شريك الدفع",
+        "description": "تتم معالجة المعاملات على Okeyo Travel بشكل آمن عبر Payzone."
+      }
+    }
+  },
+  "collections": {
+    "title": "مجموعاتنا",
+    "subtitle": "استكشف مجموعاتنا المختارة حسب الموضوع للعثور على الإلهام.",
+    "empty": "لا توجد مجموعات متاحة حاليًا."
+  },
+  "seo": {
+    "layout": {
+      "title": "Okeyo Travel — دع مزاجك يقود الرحلة",
+      "description": "في دقيقتين، تقترح OKEYO المكان الأنسب لما تبحث عنه.",
+      "organizationDescription": "في دقيقتين، تقترح OKEYO الوجهة الأنسب لرغباتك بفضل الذكاء الاصطناعي."
+    },
+    "home": {
+      "title": "Okeyo Travel — اعثر على وجهتك حسب مزاجك",
+      "description": "في دقيقتين، أخبرنا عن مزاجك وسيقترح Okeyo الوجهة المثالية. تخطيط سفر مخصص بالذكاء الاصطناعي.",
+      "serviceName": "توصيات السفر بالذكاء الاصطناعي — Okeyo Travel",
+      "serviceDescription": "في دقيقتين، يحلل ذكاؤنا الاصطناعي ما تبحث عنه ويقترح الوجهة وتجربة السفر المثالية."
+    },
+    "chat": {
+      "title": "مساعد السفر الذكي — Okeyo Travel",
+      "description": "تحدث مع مساعدنا الذكي لتخطيط رحلتك المخصصة خلال دقائق."
+    },
+    "chatConversation": {
+      "title": "المحادثة — Okeyo Travel",
+      "description": "تابع محادثتك مع مساعدنا."
+    },
+    "collections": {
+      "title": "مجموعات السفر — Okeyo Travel",
+      "description": "اكتشف مجموعاتنا من الوجهات المصنفة حسب الموضوع: المغامرة، الاسترخاء، الثقافة وغير ذلك."
+    },
+    "explore": {
+      "title": "استكشف الوجهات — Okeyo Travel",
+      "description": "صفِّ حسب النشاط والموضوع والتواريخ للعثور على رحلتك القادمة. توصيات مخصصة بناءً على ما تبحث عنه."
+    },
+    "category": {
+      "title": "استكشف حسب الفئة — Okeyo Travel",
+      "description": "تصفح التجارب حسب الفئة واعثر على المغامرة التي تناسب ما تبحث عنه.",
+      "descriptionPattern": "اكتشف تجارب فئة {title} على Okeyo Travel."
+    },
+    "experience": {
+      "fallbackTitle": "تجربة سفر — Okeyo Travel",
+      "fallbackDescription": "اكتشف تجربة السفر الفريدة هذه على Okeyo Travel.",
+      "descriptionPattern": "اكتشف تجربة \"{title}\" على Okeyo Travel.",
+      "label": "تجربة"
+    },
+    "support": {
+      "title": "المساعدة والدعم — Okeyo Travel",
+      "description": "اعثر على إجابات للأسئلة الشائعة وتواصل مع فريق الدعم لدينا."
+    },
+    "preorder": {
+      "title": "الطلب المسبق — Okeyo Travel",
+      "description": "كن من أوائل المستفيدين من Okeyo Travel. احجز وصولك المبكر الآن."
+    },
+    "terms": {
+      "title": "شروط الاستخدام | Okeyo Travel",
+      "description": "اطلع على شروط استخدام Okeyo Travel للمسافرين ومقدمي الخدمات."
+    },
+    "privacy": {
+      "title": "سياسة الخصوصية | Okeyo Travel",
+      "description": "اطلع على سياسة خصوصية Okeyo Travel وكيفية استخدام بياناتك وحمايتها."
+    }
+  }
+}

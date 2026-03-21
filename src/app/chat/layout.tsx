@@ -1,7 +1,13 @@
 "use client";
 
+import { MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
+import { LanguageSwitcher } from "@/components/site/LanguageSwitcher";
 import { NotificationBell } from "@/components/site/NotificationBell";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { UserMenu } from "@/components/site/UserMenu";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,15 +19,12 @@ import { ChatProvider } from "@/contexts/ChatContext";
 import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useViewMode } from "@/providers/view-mode-provider";
-import { MessageSquare } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   const { user, loading, openAuthModal } = useAuth();
   const { mode } = useViewMode();
   const pathname = usePathname();
+  const { t } = useSiteI18n();
   const isHostMode = Boolean(user && mode === "host");
 
   return (
@@ -33,7 +36,9 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
             <div className="flex min-w-0 items-center gap-1.5 sm:gap-2 text-sm text-muted-foreground">
               <SidebarTrigger className="size-8" />
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Conversations</span>
+              <span className="hidden sm:inline">
+                {t("header.conversations")}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="hidden items-center gap-2 md:flex">
@@ -41,17 +46,17 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                   <>
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/host", pathname)}>
-                        Dashboard
+                        {t("header.dashboard")}
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/host/experiences", pathname)}>
-                        Experiences
+                        {t("header.experiences")}
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/host/availability", pathname)}>
-                        Availability
+                        {t("header.availability")}
                       </Link>
                     </Button>
                   </>
@@ -59,17 +64,18 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                   <>
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/", pathname)}>
-                        Home
+                        {t("header.home")}
                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="sm">
                       <Link href={localizeHref("/explore", pathname)}>
-                        Explore
+                        {t("header.explore")}
                       </Link>
                     </Button>
                   </>
                 )}
               </div>
+              <LanguageSwitcher variant="light" />
               {user ? (
                 <>
                   <NotificationBell variant="light" />
@@ -82,7 +88,7 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                   disabled={loading}
                   onClick={() => openAuthModal({ mode: "login" })}
                 >
-                  Login
+                  {t("header.login")}
                 </Button>
               )}
             </div>

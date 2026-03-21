@@ -1,9 +1,8 @@
 "use client";
 
-import Hls from "hls.js";
 import { formatDistanceToNow } from "date-fns";
+import Hls from "hls.js";
 import {
-  Bookmark,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -21,13 +20,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "@/hooks/use-booking";
-import { useRequiredAuth } from "@/hooks/use-required-auth";
-import { useExperienceSocial } from "@/hooks/use-social";
 import { useExperienceDetail } from "@/hooks/use-experience-detail";
+import { useRequiredAuth } from "@/hooks/use-required-auth";
+import { useShare } from "@/hooks/use-share";
+import { useExperienceSocial } from "@/hooks/use-social";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
@@ -116,7 +115,8 @@ export function ExperienceDetailModal({
     if (currentExperience.video_url || currentExperience.video_hls_url) {
       items.push({
         type: "video",
-        src: currentExperience.video_url ?? currentExperience.video_hls_url ?? "",
+        src:
+          currentExperience.video_url ?? currentExperience.video_hls_url ?? "",
       });
     }
 
@@ -139,12 +139,14 @@ export function ExperienceDetailModal({
   }, [currentExperience]);
 
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  /* biome-ignore lint/correctness/useExhaustiveDependencies: Reset the media carousel when the selected experience changes. */
   useEffect(() => {
     setActiveMediaIndex(0);
   }, [currentExperience?.id]);
 
   const currentMedia = mediaItems[activeMediaIndex];
 
+  /* biome-ignore lint/correctness/useExhaustiveDependencies: Re-run the entrance animation when the active experience changes. */
   useEffect(() => {
     if (!open) return;
     setIsExperienceVisible(false);
@@ -157,6 +159,7 @@ export function ExperienceDetailModal({
     };
   }, [open, activeIndex]);
 
+  /* biome-ignore lint/correctness/useExhaustiveDependencies: Re-run the media transition when the displayed asset changes. */
   useEffect(() => {
     if (!open) return;
     setIsMediaVisible(false);
@@ -207,6 +210,32 @@ export function ExperienceDetailModal({
   }, [currentMedia]);
 
   const social = useExperienceSocial(currentExperience?.id ?? null);
+  const locationLabel = currentExperience
+    ? currentExperience.region
+      ? `${currentExperience.city}, ${currentExperience.region}`
+      : currentExperience.city
+    : null;
+  const slug = currentExperience
+    ? buildExperienceSlug({
+        title: currentExperience.title,
+        id: currentExperience.id,
+      })
+    : "";
+  const detailsHref = currentExperience
+    ? localizeHref(`/experience/${slug}`, pathname)
+    : "";
+  const sharePreviewImageUrl = currentExperience?.thumbnail_url
+    ? getImageUrl(currentExperience.thumbnail_url)
+    : null;
+  const share = useShare({
+    title: currentExperience?.title ?? "",
+    url: detailsHref,
+    description: currentExperience?.short_description ?? "",
+    locationLabel,
+    previewImageUrl: sharePreviewImageUrl,
+    experienceId: currentExperience?.id ?? null,
+    source: "experience_detail_modal",
+  });
 
   useEffect(() => {
     if (!open || !currentExperience) return;
@@ -220,32 +249,11 @@ export function ExperienceDetailModal({
   if (!open || !currentExperience) {
     return null;
   }
-
-  const slug = buildExperienceSlug({
-    title: currentExperience.title,
-    id: currentExperience.id,
-  });
-  const detailsHref = localizeHref(`/experience/${slug}`, pathname);
-
-  const locationLabel = currentExperience.region
-    ? `${currentExperience.city}, ${currentExperience.region}`
-    : currentExperience.city;
   const likesCount = social.likesCount;
   const reviewText =
     currentExperience.avg_rating != null
       ? `${currentExperience.avg_rating.toFixed(1)}${currentExperience.reviews_count ? ` (${currentExperience.reviews_count})` : ""}`
       : "Nouveau";
-
-  const handleShare = async () => {
-    const url = typeof window !== "undefined" ? `${window.location.origin}${detailsHref}` : detailsHref;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Lien copié");
-      void social.trackShare.mutateAsync("link").catch(() => undefined);
-    } catch {
-      toast.error("Impossible de copier le lien");
-    }
-  };
 
   const handleNextExperience = () => {
     setActiveIndex((value) => Math.min(experiences.length - 1, value + 1));
@@ -319,10 +327,10 @@ export function ExperienceDetailModal({
                     muted
                     loop
                     playsInline
-                    aria-hidden="true"
                     className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl pointer-events-none"
                   />
                   {/* Main video */}
+                  {/* biome-ignore lint/a11y/useMediaCaption: Experience videos are ambient previews and do not ship caption tracks. */}
                   <video
                     ref={videoRef}
                     key={currentMedia.src}
@@ -419,7 +427,7 @@ export function ExperienceDetailModal({
                   </p>
                 </div>
 
-                <div className="mt-5 grid grid-cols-4 gap-2">
+                <div className="mt-5 grid grid-cols-3 gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -433,7 +441,7 @@ export function ExperienceDetailModal({
                     }
                   >
                     <Heart
-                    className={cn(
+                      className={cn(
                         "h-4 w-4 transition-transform duration-200",
                         social.likedByUser &&
                           "fill-rose-500 text-rose-500 scale-110",
@@ -449,30 +457,10 @@ export function ExperienceDetailModal({
                     type="button"
                     variant="outline"
                     className="gap-2"
-                    onClick={handleShare}
+                    onClick={share.openShare}
                   >
                     <Share2 className="h-4 w-4" />
                     <span>Share</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() =>
-                      requireAuth(
-                        async () =>
-                          social.toggleSave.mutateAsync(social.savedByUser),
-                        { mode: "login" },
-                      )
-                    }
-                  >
-                    <Bookmark
-                      className={cn(
-                        "h-4 w-4 transition-colors duration-200",
-                        social.savedByUser && "fill-gray-900 text-gray-900",
-                      )}
-                    />
-                    <span>Save</span>
                   </Button>
                 </div>
 
@@ -507,7 +495,9 @@ export function ExperienceDetailModal({
                   </h3>
                   <div className="mt-3 space-y-3">
                     {social.commentsLoading ? (
-                      <p className="text-sm text-gray-500">Loading comments...</p>
+                      <p className="text-sm text-gray-500">
+                        Loading comments...
+                      </p>
                     ) : social.comments.length === 0 ? (
                       <p className="text-sm text-gray-500">
                         No comments yet. Start the conversation.
@@ -520,7 +510,9 @@ export function ExperienceDetailModal({
                         >
                           <div className="mb-2 flex items-center gap-2">
                             <Avatar className="h-7 w-7">
-                              <AvatarImage src={item.author?.avatar_url ?? undefined} />
+                              <AvatarImage
+                                src={item.author?.avatar_url ?? undefined}
+                              />
                               <AvatarFallback>
                                 {(item.author?.display_name ?? "U").slice(0, 1)}
                               </AvatarFallback>
@@ -592,6 +584,7 @@ export function ExperienceDetailModal({
         </div>
       </div>
       <BookingModal />
+      {share.shareDialog}
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
+
 type LocalizedTitle =
   | string
   | {
@@ -27,6 +29,24 @@ function resolveTitle(title: LocalizedTitle | null | undefined): string {
   }
 
   return title.fr ?? title.en ?? title.ar ?? "";
+}
+
+export function resolveLocalizedTitle(
+  title: LocalizedTitle | null | undefined,
+  locale: AppLocale,
+  fallback: AppLocale = DEFAULT_LOCALE,
+): string {
+  if (!title) {
+    return "";
+  }
+
+  if (typeof title === "string") {
+    return title;
+  }
+
+  return (
+    title[locale] ?? title[fallback] ?? title.fr ?? title.en ?? title.ar ?? ""
+  );
 }
 
 export function slugify(value: string): string {

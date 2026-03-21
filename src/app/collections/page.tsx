@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { CollectionCard } from "@/components/collection-card";
-import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
+import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildCategorySlug } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
@@ -9,10 +9,9 @@ import { resolveStorageUrl } from "@/utils/functions";
 export const revalidate = 3600; // ISR: revalidate every hour
 
 export default async function CollectionsPage() {
-  // Derive locale the same way the root layout does
   const requestHeaders = await headers();
-  const headerLocale = requestHeaders.get("x-locale");
-  const locale = isSupportedLocale(headerLocale) ? headerLocale : DEFAULT_LOCALE;
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
 
   // Fetch categories server-side so crawlers see content in initial HTML
   let categories: Array<{
@@ -44,9 +43,9 @@ export default async function CollectionsPage() {
       ) ?? [],
     );
 
-    categories = (
-      (allCategories as typeof categories | null) ?? []
-    ).filter((c) => usedIds.has(c.id));
+    categories = ((allCategories as typeof categories | null) ?? []).filter(
+      (c) => usedIds.has(c.id),
+    );
   } catch {
     // Supabase unavailable — render empty state rather than crashing
   }
@@ -54,22 +53,26 @@ export default async function CollectionsPage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <div className="flex flex-col space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">Nos Collections</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("collections.title")}
+        </h1>
         <p className="text-muted-foreground max-w-2xl">
-          Explorez nos sélections thématiques pour trouver l&apos;inspiration.
+          {t("collections.subtitle")}
         </p>
       </div>
 
       {categories.length === 0 ? (
         <div className="text-center py-24 text-muted-foreground">
-          Aucune collection disponible pour le moment.
+          {t("collections.empty")}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {categories.map((category) => (
             <CollectionCard
               key={category.id}
-              title={category.title.fr || category.title.en}
+              title={
+                category.title[locale] || category.title.fr || category.title.en
+              }
               description={category.description ?? undefined}
               imageUrl={resolveStorageUrl(category.asset)}
               href={localizeHref(

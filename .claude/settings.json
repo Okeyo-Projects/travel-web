@@ -26,7 +26,9 @@
       "Bash(wc -l /Users/naimabdelkerim/Code/travel-web/src/app/experience/[id]/page.tsx)",
       "Bash(git push:*)",
       "Bash(gh pr:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(find /Users/naimabdelkerim/Code/travel-web/src/components/explore -name *.tsx)",
+      "Bash(pnpm build:*)"
     ],
     "additionalDirectories": [
       "/Users/naimabdelkerim/Code"

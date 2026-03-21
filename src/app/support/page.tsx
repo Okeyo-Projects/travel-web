@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   ArrowRight,
   Clock3,
@@ -7,11 +6,15 @@ import {
   MessageCircleMore,
   PhoneCall,
 } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { FooterSection } from "@/components/home/FooterSection";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { ReportIssueForm } from "@/components/support/ReportIssueForm";
 import { SupportFaq } from "@/components/support/SupportFaq";
 import { Button } from "@/components/ui/button";
+import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 import {
   SUPPORT_EMAIL,
   SUPPORT_PHONE_NUMBER,
@@ -44,18 +47,22 @@ const CONTACT_CARDS = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: "Aide & Support — Okeyo Travel",
-  description:
-    "Retrouvez toutes nos réponses aux questions fréquentes et contactez notre équipe d'assistance.",
-  alternates: { canonical: "/support" },
-  openGraph: {
-    title: "Aide & Support — Okeyo Travel",
-    description:
-      "Retrouvez toutes nos réponses aux questions fréquentes et contactez notre équipe d'assistance.",
-    url: "/support",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
+
+  return {
+    title: t("seo.support.title"),
+    description: t("seo.support.description"),
+    alternates: buildLocaleAlternates("/support", locale),
+    openGraph: {
+      title: t("seo.support.title"),
+      description: t("seo.support.description"),
+      url: localizeHref("/support", locale),
+    },
+  };
+}
 
 export default function SupportPage() {
   return (

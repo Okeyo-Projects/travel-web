@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
-import { createClient } from "@/lib/supabase/server";
 import { JsonLd } from "@/components/seo/json-ld";
+import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 1800; // ISR: revalidate every 30 minutes
 
@@ -15,17 +18,18 @@ export async function generateStaticParams(): Promise<{ id: string }[]> {
       .eq("status" as never, "published")
       .is("deleted_at" as never, null);
 
-    return ((data ?? []) as Array<{ id: string; title: string }>).map((exp) => ({
-      id: buildExperienceSlug({ title: exp.title, id: exp.id }),
-    }));
+    return ((data ?? []) as Array<{ id: string; title: string }>).map(
+      (exp) => ({
+        id: buildExperienceSlug({ title: exp.title, id: exp.id }),
+      }),
+    );
   } catch {
     // Supabase unavailable at build time — fall back to dynamic rendering
     return [];
   }
 }
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,7 +50,8 @@ async function fetchExperienceMeta(
         .eq("status" as never, "published")
         .is("deleted_at" as never, null)
         .maybeSingle<{ title: string; short_description: string | null }>();
-      if (data) return { title: data.title, description: data.short_description ?? "" };
+      if (data)
+        return { title: data.title, description: data.short_description ?? "" };
     }
 
     // 2. Slug column match
@@ -57,7 +62,11 @@ async function fetchExperienceMeta(
       .eq("status" as never, "published")
       .is("deleted_at" as never, null)
       .maybeSingle<{ title: string; short_description: string | null }>();
-    if (bySlug) return { title: bySlug.title, description: bySlug.short_description ?? "" };
+    if (bySlug)
+      return {
+        title: bySlug.title,
+        description: bySlug.short_description ?? "",
+      };
 
     // 3. Composite slug — last segment is a short ID prefix (first 8 chars of UUID)
     const lastSegment = normalized.split("-").pop() ?? "";
@@ -69,8 +78,15 @@ async function fetchExperienceMeta(
         .eq("status" as never, "published")
         .is("deleted_at" as never, null)
         .limit(5);
-      const hit = (candidates as Array<{ id: string; title: string; short_description: string | null }> | null)?.[0];
-      if (hit) return { title: hit.title, description: hit.short_description ?? "" };
+      const hit = (
+        candidates as Array<{
+          id: string;
+          title: string;
+          short_description: string | null;
+        }> | null
+      )?.[0];
+      if (hit)
+        return { title: hit.title, description: hit.short_description ?? "" };
     }
 
     return null;
@@ -85,24 +101,38 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
   const meta = await fetchExperienceMeta(id);
+  const href = `/experience/${id}`;
 
   if (!meta) {
     return {
-      title: "Expérience de voyage — Okeyo Travel",
-      description: "Découvrez cette expérience de voyage unique sur Okeyo Travel.",
+      title: t("seo.experience.fallbackTitle"),
+      description: t("seo.experience.fallbackDescription"),
+      alternates: buildLocaleAlternates(href, locale),
+      openGraph: {
+        title: t("seo.experience.fallbackTitle"),
+        description: t("seo.experience.fallbackDescription"),
+        url: localizeHref(href, locale),
+      },
     };
   }
 
+  const description =
+    locale === "fr" && meta.description
+      ? meta.description
+      : t("seo.experience.descriptionPattern", { title: meta.title });
+
   return {
     title: `${meta.title} — Okeyo Travel`,
-    description:
-      meta.description ||
-      `Découvrez l'expérience "${meta.title}" sur Okeyo Travel.`,
+    description,
+    alternates: buildLocaleAlternates(href, locale),
     openGraph: {
       title: `${meta.title} — Okeyo Travel`,
-      description: meta.description || undefined,
-      url: `${SITE_URL}/experience/${id}`,
+      description,
+      url: localizeHref(href, locale),
     },
   };
 }
@@ -115,8 +145,18 @@ export default async function ExperienceLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
   const meta = await fetchExperienceMeta(id);
-  const experienceUrl = `${SITE_URL}/experience/${id}`;
+  const description =
+    locale === "fr" && meta?.description
+      ? meta.description
+      : meta
+        ? t("seo.experience.descriptionPattern", { title: meta.title })
+        : t("seo.experience.fallbackDescription");
+  const experiencePath = `/experience/${id}`;
+  const experienceUrl = `${SITE_URL}${localizeHref(experiencePath, locale)}`;
 
   return (
     <>
@@ -129,19 +169,19 @@ export default async function ExperienceLayout({
               {
                 "@type": "ListItem",
                 position: 1,
-                name: "Accueil",
-                item: SITE_URL,
+                name: t("header.home"),
+                item: `${SITE_URL}${localizeHref("/", locale)}`,
               },
               {
                 "@type": "ListItem",
                 position: 2,
-                name: "Explorer",
-                item: `${SITE_URL}/explore`,
+                name: t("header.explore"),
+                item: `${SITE_URL}${localizeHref("/explore", locale)}`,
               },
               {
                 "@type": "ListItem",
                 position: 3,
-                name: meta?.title ?? "Expérience",
+                name: meta?.title ?? t("seo.experience.label"),
                 item: experienceUrl,
               },
             ],
@@ -152,10 +192,10 @@ export default async function ExperienceLayout({
                   "@context": "https://schema.org",
                   "@type": "TouristAttraction",
                   name: meta.title,
-                  description: meta.description || undefined,
+                  description,
                   url: experienceUrl,
                   touristType: "leisure",
-                  availableLanguage: "French",
+                  availableLanguage: locale,
                 },
               ]
             : []),

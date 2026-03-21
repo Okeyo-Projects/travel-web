@@ -1,63 +1,58 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { LOCALES } from "@/lib/i18n";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { buildCategorySlug, buildExperienceSlug } from "@/lib/routing/slugs";
+import { createClient } from "@/lib/supabase/server";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: SITE_URL,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 1.0,
-    },
-    {
-      url: `${SITE_URL}/explore`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.9,
-    },
-    {
-      url: `${SITE_URL}/collections`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${SITE_URL}/chat`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/preorder`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${SITE_URL}/support`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${SITE_URL}/terms`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${SITE_URL}/privacy`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
+  const staticPaths = [
+    "/",
+    "/explore",
+    "/collections",
+    "/chat",
+    "/preorder",
+    "/support",
+    "/terms",
+    "/privacy",
   ];
+
+  const staticRoutes: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
+    LOCALES.map((locale) => ({
+      url: `${SITE_URL}${localizeHref(path, locale)}`,
+      lastModified: now,
+      changeFrequency:
+        path === "/"
+          ? ("weekly" as const)
+          : path === "/explore"
+            ? ("daily" as const)
+            : path === "/collections"
+              ? ("weekly" as const)
+              : path === "/chat"
+                ? ("monthly" as const)
+                : path === "/preorder"
+                  ? ("monthly" as const)
+                  : path === "/support"
+                    ? ("monthly" as const)
+                    : ("yearly" as const),
+      priority:
+        path === "/"
+          ? 1.0
+          : path === "/explore"
+            ? 0.9
+            : path === "/collections"
+              ? 0.8
+              : path === "/chat"
+                ? 0.7
+                : path === "/preorder"
+                  ? 0.6
+                  : path === "/support"
+                    ? 0.5
+                    : 0.3,
+    })),
+  );
 
   let categoryRoutes: MetadataRoute.Sitemap = [];
   let experienceRoutes: MetadataRoute.Sitemap = [];
@@ -89,19 +84,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       updated_at: string;
     }>;
 
-    categoryRoutes = categories.map((cat) => ({
-      url: `${SITE_URL}/explore/category/${encodeURIComponent(buildCategorySlug({ title: cat.title, slug: cat.slug }))}`,
-      lastModified: new Date(cat.updated_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }));
+    categoryRoutes = categories.flatMap((cat) => {
+      const path = `/explore/category/${encodeURIComponent(
+        buildCategorySlug({ title: cat.title, slug: cat.slug }),
+      )}`;
 
-    experienceRoutes = experiences.map((exp) => ({
-      url: `${SITE_URL}/experience/${buildExperienceSlug({ title: exp.title, id: exp.id })}`,
-      lastModified: new Date(exp.updated_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }));
+      return LOCALES.map((locale) => ({
+        url: `${SITE_URL}${localizeHref(path, locale)}`,
+        lastModified: new Date(cat.updated_at),
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }));
+    });
+
+    experienceRoutes = experiences.flatMap((exp) => {
+      const path = `/experience/${buildExperienceSlug({
+        title: exp.title,
+        id: exp.id,
+      })}`;
+
+      return LOCALES.map((locale) => ({
+        url: `${SITE_URL}${localizeHref(path, locale)}`,
+        lastModified: new Date(exp.updated_at),
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      }));
+    });
   } catch {
     // Supabase unavailable at build time — static routes still served
   }

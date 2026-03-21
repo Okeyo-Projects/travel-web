@@ -1,35 +1,50 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { BookingChat } from "@/components/chat/BookingChat";
 import { JsonLd } from "@/components/seo/json-ld";
+import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
-export const metadata: Metadata = {
-  title: "Assistant voyage IA — Okeyo Travel",
-  description:
-    "Discutez avec notre assistant IA pour planifier votre voyage sur mesure en quelques minutes.",
-  alternates: { canonical: "/chat" },
-  openGraph: {
-    title: "Assistant voyage IA — Okeyo Travel",
-    description:
-      "Discutez avec notre assistant IA pour planifier votre voyage sur mesure en quelques minutes.",
-    url: "/chat",
-  },
-};
+async function getRequestTranslator() {
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
 
-export default function ChatPage() {
+  return {
+    locale,
+    t: createTranslator(locale),
+  };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale, t } = await getRequestTranslator();
+
+  return {
+    title: t("seo.chat.title"),
+    description: t("seo.chat.description"),
+    alternates: buildLocaleAlternates("/chat", locale),
+    openGraph: {
+      title: t("seo.chat.title"),
+      description: t("seo.chat.description"),
+      url: localizeHref("/chat", locale),
+    },
+  };
+}
+
+export default async function ChatPage() {
+  const { locale, t } = await getRequestTranslator();
+
   return (
     <>
       <JsonLd
         schema={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: "Assistant voyage IA — Okeyo Travel",
-          description:
-            "Discutez avec notre assistant IA pour planifier votre voyage sur mesure en quelques minutes.",
-          url: `${SITE_URL}/chat`,
-          inLanguage: "fr",
+          name: t("seo.chat.title"),
+          description: t("seo.chat.description"),
+          url: `${SITE_URL}${localizeHref("/chat", locale)}`,
+          inLanguage: locale,
         }}
       />
       <BookingChat />
