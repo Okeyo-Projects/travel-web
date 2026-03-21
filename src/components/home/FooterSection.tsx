@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const COMPANY_LINKS = [
-  { label: "Explore", href: "/explore" },
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Service", href: "/terms" },
+  { label: "Explorer", href: "/explore" },
+  { label: "Politique de confidentialité", href: "/privacy" },
+  { label: "Conditions d'utilisation", href: "/terms" },
   { label: "Support", href: "/support" },
 ];
 
@@ -33,7 +33,7 @@ export function FooterSection() {
               className="h-auto w-[130px] sm:w-[200px]"
             />
             <p className="mt-4 max-w-[230px] text-xl leading-relaxed text-white/90">
-              Enjoy the touring with Saly
+              Votre compagnon de voyage intelligent, propulsé par l&apos;IA.
             </p>
 
             <div className="mt-6 flex items-center gap-3">
@@ -62,7 +62,7 @@ export function FooterSection() {
           </div>
 
           <div>
-            <h3 className="text-4xl font-black">Company</h3>
+            <h3 className="text-4xl font-black">Liens utiles</h3>
             <ul className="mt-5 space-y-3 text-xl text-white/90">
               {COMPANY_LINKS.map((item) => (
                 <li key={item.label}>
@@ -78,15 +78,15 @@ export function FooterSection() {
           </div>
 
           <div>
-            <h3 className="text-4xl font-black">Sign up to our newsletter</h3>
+            <h3 className="text-4xl font-black">Rejoignez notre newsletter</h3>
             <p className="mt-4 max-w-[560px] text-xl leading-relaxed text-white/85">
-              Reciv latest news, update, and many other things every week.
+              Recevez nos dernières actualités, offres et conseils voyage chaque semaine.
             </p>
 
             <form className="mt-7 flex items-center rounded-full bg-white p-2">
               <input
                 type="email"
-                placeholder="Enter Your email address"
+                placeholder="Votre adresse e-mail"
                 className="h-12 flex-1 border-none bg-transparent px-4 text-lg text-black outline-none placeholder:text-[#b9b9b9]"
               />
               <button
@@ -97,6 +97,15 @@ export function FooterSection() {
                 <Send className="h-5 w-5" />
               </button>
             </form>
+            <p className="mt-5 text-sm text-white/60">
+              Contact :{" "}
+              <a
+                href="mailto:contact@okeyotravel.com"
+                className="underline hover:text-white/90 transition-colors"
+              >
+                contact@okeyotravel.com
+              </a>
+            </p>
             <div className="w-full flex justify-end mt-4">
               <PayzoneBadge
                 className="mt-6 border-white/10 bg-white/5"

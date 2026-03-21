@@ -31,7 +31,7 @@ export function HeroSection() {
               <span className="relative inline-flex h-[1em] w-[7ch] items-center justify-center align-baseline text-primary">
                 <span className="word-swap word-1">Mood,</span>
                 <span className="word-swap word-2">Envie,</span>
-                <span className="word-swap word-3">Desire,</span>
+                <span className="word-swap word-3">Désir,</span>
               </span>
               <br />
               nous nous occupons du reste
@@ -47,7 +47,7 @@ export function HeroSection() {
           type="button"
           className="mx-auto flex flex-col items-center gap-1 text-lg font-medium text-white/95 transition-opacity hover:opacity-80"
         >
-          <span>Start your journey</span>
+          <span>Commencer votre voyage</span>
           <ChevronDown className="h-7 w-7 animate-bounce" />
         </button>
       </div>
