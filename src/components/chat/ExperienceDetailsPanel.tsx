@@ -1,8 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import type { ReactNode } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getIntlLocale } from "@/lib/i18n";
 import { getImageUrl } from "@/utils/functions";
 
 type Primitive = string | number | boolean | null | undefined;
@@ -96,63 +99,13 @@ export interface ExperienceDetailsData {
   promotion_info?: Record<string, unknown> | null;
 }
 
-const EXPERIENCE_TYPE_LABEL: Record<string, string> = {
-  lodging: "Hébergement",
-  trip: "Voyage",
-  activity: "Activité",
-};
-
-function formatDateTime(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleString("fr-FR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
 function toDisplayLabel(input: string): string {
   return input
     .replaceAll("_", " ")
     .replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
-function formatPrimitiveValue(value: Primitive): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "boolean") return value ? "Oui" : "Non";
-  return String(value);
-}
-
-function getDetailEntries(
-  source: Record<string, unknown> | null | undefined,
-  ignoredKeys: string[] = [],
-) {
-  if (!source) return [];
-  const ignored = new Set(ignoredKeys);
-
-  return Object.entries(source)
-    .filter(([key, value]) => {
-      if (ignored.has(key)) return false;
-      if (value === null || value === undefined) return false;
-      if (typeof value === "object") return false;
-      return true;
-    })
-    .map(([key, value]) => ({
-      key,
-      label: toDisplayLabel(key),
-      value: formatPrimitiveValue(value as Primitive),
-    }))
-    .filter((entry) => entry.value.length > 0);
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
       <h4 className="text-sm font-semibold">{title}</h4>
@@ -190,9 +143,69 @@ export function ExperienceDetailsPanel({
 }: {
   details: ExperienceDetailsData;
 }) {
+  const { locale, t } = useSiteI18n();
+  const intlLocale = getIntlLocale(locale);
+
+  const formatDateTime = (value: string | null | undefined): string | null => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString(intlLocale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
+  const formatMad = (value: number | null | undefined) => {
+    if (typeof value !== "number") return null;
+    return new Intl.NumberFormat(intlLocale, {
+      style: "currency",
+      currency: "MAD",
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatPrimitiveValue = (value: Primitive): string => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "boolean") {
+      return value
+        ? t("chat.experienceDetails.boolean.yes")
+        : t("chat.experienceDetails.boolean.no");
+    }
+    return String(value);
+  };
+
+  const getDetailEntries = (
+    source: Record<string, unknown> | null | undefined,
+    ignoredKeys: string[] = [],
+  ) => {
+    if (!source) return [];
+    const ignored = new Set(ignoredKeys);
+
+    return Object.entries(source)
+      .filter(([key, value]) => {
+        if (ignored.has(key)) return false;
+        if (value === null || value === undefined) return false;
+        if (typeof value === "object") return false;
+        return true;
+      })
+      .map(([key, value]) => ({
+        key,
+        label: toDisplayLabel(key),
+        value: formatPrimitiveValue(value as Primitive),
+      }))
+      .filter((entry) => entry.value.length > 0);
+  };
+
   const experience = details.experience;
   const experienceType =
-    EXPERIENCE_TYPE_LABEL[experience.type] || experience.type;
+    experience.type === "lodging"
+      ? t("chat.experienceDetails.type.lodging")
+      : experience.type === "trip"
+        ? t("chat.experienceDetails.type.trip")
+        : experience.type === "activity"
+          ? t("chat.experienceDetails.type.activity")
+          : experience.type;
   const imageUrl = getImageUrl(experience.thumbnail_url || undefined);
   const location = [experience.city, experience.region]
     .filter(
@@ -219,7 +232,6 @@ export function ExperienceDetailsPanel({
     "created_at",
     "updated_at",
   ]);
-
   const promotionEntries = getDetailEntries(details.promotion_info, []);
 
   return (
@@ -243,13 +255,17 @@ export function ExperienceDetailsPanel({
               <Badge variant="outline">
                 {experience.avg_rating.toFixed(1)} / 5
                 {experience.reviews_count
-                  ? ` (${experience.reviews_count} avis)`
+                  ? ` ${t("chat.experienceDetails.reviewCount", {
+                      count: experience.reviews_count,
+                    })}`
                   : ""}
               </Badge>
             ) : null}
             {typeof experience.bookings_count === "number" ? (
               <Badge variant="outline">
-                {experience.bookings_count} réservations
+                {t("chat.experienceDetails.bookingsCount", {
+                  count: experience.bookings_count,
+                })}
               </Badge>
             ) : null}
           </div>
@@ -258,7 +274,6 @@ export function ExperienceDetailsPanel({
           {location ? (
             <p className="text-sm text-muted-foreground">{location}</p>
           ) : null}
-
           {experience.short_description ? (
             <p className="text-sm">{experience.short_description}</p>
           ) : null}
@@ -291,17 +306,21 @@ export function ExperienceDetailsPanel({
         </div>
 
         {details.host?.name ? (
-          <Section title="Hôte">
+          <Section title={t("chat.experienceDetails.host.title")}>
             <div className="rounded-md border bg-background/60 px-3 py-2 space-y-1">
               <p className="font-medium">{details.host.name}</p>
               {typeof details.host.avg_rating === "number" ? (
                 <p className="text-xs text-muted-foreground">
-                  Note hôte: {details.host.avg_rating.toFixed(1)} / 5
+                  {t("chat.experienceDetails.host.rating", {
+                    value: details.host.avg_rating.toFixed(1),
+                  })}
                 </p>
               ) : null}
               {typeof details.host.total_bookings === "number" ? (
                 <p className="text-xs text-muted-foreground">
-                  Réservations hôte: {details.host.total_bookings}
+                  {t("chat.experienceDetails.host.bookings", {
+                    count: details.host.total_bookings,
+                  })}
                 </p>
               ) : null}
               {details.host.bio ? (
@@ -314,7 +333,7 @@ export function ExperienceDetailsPanel({
         ) : null}
 
         {Array.isArray(details.amenities) && details.amenities.length > 0 ? (
-          <Section title="Équipements">
+          <Section title={t("chat.experienceDetails.amenities")}>
             <div className="flex flex-wrap gap-1">
               {details.amenities.map((amenity) => {
                 const label = amenity.label_fr || amenity.key;
@@ -334,7 +353,7 @@ export function ExperienceDetailsPanel({
 
         {Array.isArray(details.services_included) &&
         details.services_included.length > 0 ? (
-          <Section title="Services inclus">
+          <Section title={t("chat.experienceDetails.servicesIncluded")}>
             <div className="space-y-1">
               {details.services_included.map((service) => (
                 <p
@@ -351,7 +370,7 @@ export function ExperienceDetailsPanel({
 
         {Array.isArray(details.services_excluded) &&
         details.services_excluded.length > 0 ? (
-          <Section title="Services exclus">
+          <Section title={t("chat.experienceDetails.servicesExcluded")}>
             <div className="space-y-1">
               {details.services_excluded.map((service) => (
                 <p
@@ -367,7 +386,7 @@ export function ExperienceDetailsPanel({
         ) : null}
 
         {experience.type === "lodging" ? (
-          <Section title="Chambres">
+          <Section title={t("chat.experienceDetails.rooms")}>
             {Array.isArray(details.room_types) &&
             details.room_types.length > 0 ? (
               <div className="space-y-2">
@@ -378,11 +397,14 @@ export function ExperienceDetailsPanel({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-medium">
-                        {room.name || room.type || "Chambre"}
+                        {room.name ||
+                          room.type ||
+                          t("chat.experienceDetails.roomFallback")}
                       </p>
                       {typeof room.price_mad === "number" ? (
                         <Badge variant="outline">
-                          {room.price_mad} MAD / nuit
+                          {formatMad(room.price_mad)} ·{" "}
+                          {t("chat.experienceDetails.roomPricePerNight")}
                         </Badge>
                       ) : null}
                     </div>
@@ -393,10 +415,18 @@ export function ExperienceDetailsPanel({
                     ) : null}
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-3">
                       {typeof room.max_persons === "number" ? (
-                        <span>Max: {room.max_persons} pers.</span>
+                        <span>
+                          {t("chat.experienceDetails.roomMaxGuests", {
+                            count: room.max_persons,
+                          })}
+                        </span>
                       ) : null}
                       {typeof room.capacity_beds === "number" ? (
-                        <span>{room.capacity_beds} lits</span>
+                        <span>
+                          {t("chat.experienceDetails.roomBeds", {
+                            count: room.capacity_beds,
+                          })}
+                        </span>
                       ) : null}
                     </div>
                     {Array.isArray(room.equipments) &&
@@ -417,7 +447,7 @@ export function ExperienceDetailsPanel({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Aucune chambre configurée.
+                {t("chat.experienceDetails.noRooms")}
               </p>
             )}
             <KeyValueGrid entries={lodgingEntries} />
@@ -425,20 +455,27 @@ export function ExperienceDetailsPanel({
         ) : null}
 
         {experience.type === "trip" ? (
-          <Section title="Voyage">
+          <Section title={t("chat.experienceDetails.trip")}>
             <KeyValueGrid entries={tripEntries} />
 
             {Array.isArray(details.itinerary) &&
             details.itinerary.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Itinéraire</p>
+                <p className="text-sm font-medium">
+                  {t("chat.experienceDetails.itinerary")}
+                </p>
                 {details.itinerary.map((item) => (
                   <div
                     key={`${item.day_number ?? "day"}-${item.title ?? "step"}-${item.location_name ?? ""}`}
                     className="rounded-md border bg-background/60 px-3 py-2"
                   >
                     <p className="text-sm font-medium">
-                      Jour {item.day_number || "?"}: {item.title || "Étape"}
+                      {t("chat.experienceDetails.dayTitle", {
+                        day: item.day_number || "?",
+                        title:
+                          item.title ||
+                          t("chat.experienceDetails.stepFallback"),
+                      })}
                     </p>
                     {item.location_name ? (
                       <p className="text-xs text-muted-foreground">
@@ -452,7 +489,9 @@ export function ExperienceDetailsPanel({
                     ) : null}
                     {typeof item.duration_minutes === "number" ? (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Durée: {item.duration_minutes} min
+                        {t("chat.experienceDetails.durationMinutes", {
+                          count: item.duration_minutes,
+                        })}
                       </p>
                     ) : null}
                   </div>
@@ -463,7 +502,9 @@ export function ExperienceDetailsPanel({
             {Array.isArray(details.upcoming_departures) &&
             details.upcoming_departures.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Prochains départs</p>
+                <p className="text-sm font-medium">
+                  {t("chat.experienceDetails.upcomingDepartures")}
+                </p>
                 {details.upcoming_departures.map((departure) => (
                   <div
                     key={departure.id}
@@ -474,12 +515,16 @@ export function ExperienceDetailsPanel({
                         departure.depart_at}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Places: {departure.seats_available ?? "?"}/
-                      {departure.seats_total ?? "?"}
+                      {t("chat.experienceDetails.seats", {
+                        available: departure.seats_available ?? "?",
+                        total: departure.seats_total ?? "?",
+                      })}
                     </p>
                     {typeof departure.price_override_mad === "number" ? (
                       <p className="text-xs text-muted-foreground">
-                        Prix: {departure.price_override_mad} MAD
+                        {t("chat.experienceDetails.price", {
+                          value: formatMad(departure.price_override_mad) ?? "",
+                        })}
                       </p>
                     ) : null}
                   </div>
@@ -490,12 +535,14 @@ export function ExperienceDetailsPanel({
         ) : null}
 
         {experience.type === "activity" ? (
-          <Section title="Activité">
+          <Section title={t("chat.experienceDetails.activity")}>
             <KeyValueGrid entries={activityEntries} />
             {Array.isArray(details.upcoming_sessions) &&
             details.upcoming_sessions.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Prochaines sessions</p>
+                <p className="text-sm font-medium">
+                  {t("chat.experienceDetails.upcomingSessions")}
+                </p>
                 {details.upcoming_sessions.map((session) => (
                   <div
                     key={session.id}
@@ -506,16 +553,23 @@ export function ExperienceDetailsPanel({
                     </p>
                     {session.end_at ? (
                       <p className="text-xs text-muted-foreground">
-                        Fin: {formatDateTime(session.end_at) || session.end_at}
+                        {t("chat.experienceDetails.end", {
+                          value:
+                            formatDateTime(session.end_at) || session.end_at,
+                        })}
                       </p>
                     ) : null}
                     <p className="text-xs text-muted-foreground">
-                      Capacite: {session.capacity_available ?? "?"}/
-                      {session.capacity_total ?? "?"}
+                      {t("chat.experienceDetails.capacity", {
+                        available: session.capacity_available ?? "?",
+                        total: session.capacity_total ?? "?",
+                      })}
                     </p>
                     {typeof session.price_override_mad === "number" ? (
                       <p className="text-xs text-muted-foreground">
-                        Prix: {session.price_override_mad} MAD
+                        {t("chat.experienceDetails.price", {
+                          value: formatMad(session.price_override_mad) ?? "",
+                        })}
                       </p>
                     ) : null}
                   </div>
@@ -526,14 +580,14 @@ export function ExperienceDetailsPanel({
         ) : null}
 
         {promotionEntries.length > 0 ? (
-          <Section title="Promotions">
+          <Section title={t("chat.experienceDetails.promotions")}>
             <KeyValueGrid entries={promotionEntries} />
           </Section>
         ) : null}
 
         {Array.isArray(details.recent_reviews) &&
         details.recent_reviews.length > 0 ? (
-          <Section title="Avis récents">
+          <Section title={t("chat.experienceDetails.recentReviews")}>
             <div className="space-y-2">
               {details.recent_reviews.map((review) => (
                 <div
@@ -542,7 +596,8 @@ export function ExperienceDetailsPanel({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">
-                      {review.user?.full_name || "Voyageur"}
+                      {review.user?.full_name ||
+                        t("chat.experienceDetails.travelerFallback")}
                     </p>
                     {typeof review.rating === "number" ? (
                       <Badge variant="outline">{review.rating}/5</Badge>

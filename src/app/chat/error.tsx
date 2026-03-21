@@ -1,8 +1,9 @@
 "use client";
 
 import { AlertCircle, RefreshCw } from "lucide-react";
-import { useEffect } from "react";
 import posthog from "posthog-js";
+import { useEffect } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 
 export default function ChatError({
@@ -12,6 +13,8 @@ export default function ChatError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useSiteI18n();
+
   useEffect(() => {
     posthog.capture("$exception", {
       $exception_message: error.message,
@@ -28,15 +31,13 @@ export default function ChatError({
         <div className="flex justify-center mb-4">
           <AlertCircle className="size-12 text-destructive" />
         </div>
-        <h1 className="text-2xl font-semibold mb-2">
-          Impossible de charger le chat
-        </h1>
+        <h1 className="text-2xl font-semibold mb-2">{t("chat.error.title")}</h1>
         <p className="text-muted-foreground mb-6">
-          Une erreur est survenue. Veuillez réessayer.
+          {t("chat.error.description")}
         </p>
         <Button onClick={reset} className="gap-2">
           <RefreshCw className="size-4" />
-          Réessayer
+          {t("chat.error.retry")}
         </Button>
       </div>
     </div>

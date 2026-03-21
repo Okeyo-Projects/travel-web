@@ -1,61 +1,19 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getIntlLocale } from "@/lib/i18n";
 
-const EQUIPMENT_LABELS: Record<string, string> = {
-  comfort_wi_fi: "Wi-Fi",
-  comfort_air_conditioning: "Climatisation",
-  comfort_heating: "Chauffage",
-  comfort_television: "Télévision",
-  comfort_netflix_smart_tv: "Netflix / Smart TV",
-  comfort_private_bathroom: "Salle de bain privée",
-  comfort_shower: "Douche",
-  comfort_bathtub: "Baignoire",
-  comfort_hot_water: "Eau chaude",
-  comfort_king_size_bed: "Lit king size",
-  comfort_queen_size_bed: "Lit queen size",
-  comfort_bed_linens: "Linge de lit",
-  comfort_towels: "Serviettes",
-  comfort_hair_dryer: "Sèche-cheveux",
-  comfort_iron: "Fer à repasser",
-  comfort_wardrobe: "Armoire",
-  comfort_desk: "Bureau",
-  comfort_living_area: "Coin salon",
-  comfort_fireplace: "Cheminée",
-  kitchen_equipped_kitchen: "Cuisine équipée",
-  kitchen_kitchenware: "Ustensiles de cuisine",
-  kitchen_oven: "Four",
-  kitchen_microwave: "Micro-ondes",
-  kitchen_refrigerator: "Réfrigérateur",
-  kitchen_freezer: "Congélateur",
-  kitchen_coffee_machine: "Machine à café",
-  kitchen_kettle: "Bouilloire",
-  kitchen_breakfast_included: "Petit-déjeuner inclus",
-  kitchen_half_board: "Demi-pension",
-  kitchen_full_board: "Pension complète",
-  kitchen_room_service: "Service de chambre",
-  parking_free_parking: "Parking gratuit",
-  parking_secure_parking: "Parking sécurisé",
-  parking_wheelchair_access: "Accès PMR",
-  parking_elevator: "Ascenseur",
-  outdoor_swimming_pool: "Piscine",
-  outdoor_heated_pool: "Piscine chauffée",
-  outdoor_jacuzzi: "Jacuzzi",
-  outdoor_hammam: "Hammam",
-  outdoor_spa: "Spa",
-  outdoor_gym: "Salle de sport",
-  outdoor_garden: "Jardin",
-  outdoor_terrace: "Terrasse",
-  outdoor_sea_view: "Vue sur mer",
-  outdoor_mountain_view: "Vue sur montagne",
-  outdoor_panoramic_view: "Vue panoramique",
-  outdoor_kids_playground: "Aire de jeux",
-  outdoor_barbecue: "Barbecue",
-};
+function toDisplayLabel(input: string): string {
+  return input
+    .replace(/^[^_]+_/, "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
 
 function getEquipmentLabel(key: string): string {
-  return EQUIPMENT_LABELS[key] ?? key;
+  return toDisplayLabel(key);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -75,17 +33,6 @@ function asStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-function formatDateTime(value: unknown): string | null {
-  if (typeof value !== "string" || value.length === 0) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleString("fr-FR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
 export interface ExperienceOptionDetailsData {
   option_type: "room" | "departure" | "session" | string;
   experience: {
@@ -100,9 +47,40 @@ export interface ExperienceOptionDetailsData {
   message?: string | null;
 }
 
-function renderRoom(option: Record<string, unknown>) {
+function createDateFormatter(locale: string) {
+  return (value: unknown): string | null => {
+    if (typeof value !== "string" || value.length === 0) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleString(locale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+}
+
+function createPriceFormatter(locale: string) {
+  return (value: number | null) => {
+    if (value === null) return null;
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "MAD",
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+}
+
+function renderRoom(
+  option: Record<string, unknown>,
+  t: (key: string, values?: Record<string, string | number>) => string,
+  formatMad: (value: number | null) => string | null,
+) {
   const id = asString(option.id) || "room";
-  const name = asString(option.name) || asString(option.room_type) || "Room";
+  const name =
+    asString(option.name) ||
+    asString(option.room_type) ||
+    t("chat.experienceDetails.roomFallback");
   const roomType = asString(option.room_type);
   const description = asString(option.description);
   const priceMad = asNumber(option.price_mad);
@@ -120,23 +98,36 @@ function renderRoom(option: Record<string, unknown>) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium">{name}</p>
         {priceMad !== null ? (
-          <Badge variant="outline">{priceMad} MAD / nuit</Badge>
+          <Badge variant="outline">
+            {formatMad(priceMad)} · {t("chat.optionDetails.room.pricePerNight")}
+          </Badge>
         ) : null}
       </div>
 
       {roomType ? (
-        <p className="text-xs text-muted-foreground">Type: {roomType}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.room.type", { value: roomType })}
+        </p>
       ) : null}
       {description ? (
         <p className="text-sm text-muted-foreground">{description}</p>
       ) : null}
 
       <div className="text-xs text-muted-foreground flex flex-wrap gap-3">
-        {maxPersons !== null ? <span>Max: {maxPersons} pers.</span> : null}
-        {beds !== null ? <span>{beds} lits</span> : null}
+        {maxPersons !== null ? (
+          <span>
+            {t("chat.optionDetails.room.maxGuests", { count: maxPersons })}
+          </span>
+        ) : null}
+        {beds !== null ? (
+          <span>{t("chat.optionDetails.room.beds", { count: beds })}</span>
+        ) : null}
         {totalRooms !== null ? (
           <span>
-            Stock: {availableRooms ?? "?"}/{totalRooms}
+            {t("chat.optionDetails.room.stock", {
+              available: availableRooms ?? "?",
+              total: totalRooms,
+            })}
           </span>
         ) : null}
       </div>
@@ -154,7 +145,12 @@ function renderRoom(option: Record<string, unknown>) {
   );
 }
 
-function renderDeparture(option: Record<string, unknown>) {
+function renderDeparture(
+  option: Record<string, unknown>,
+  t: (key: string, values?: Record<string, string | number>) => string,
+  formatDateTime: (value: unknown) => string | null,
+  formatMad: (value: number | null) => string | null,
+) {
   const id = asString(option.id) || "departure";
   const departAt =
     formatDateTime(option.depart_at) || asString(option.depart_at) || "-";
@@ -171,25 +167,43 @@ function renderDeparture(option: Record<string, unknown>) {
       key={id}
       className="rounded-md border bg-background/60 px-3 py-3 space-y-1"
     >
-      <p className="text-sm font-medium">Depart: {departAt}</p>
+      <p className="text-sm font-medium">
+        {t("chat.optionDetails.departure.depart", { value: departAt })}
+      </p>
       {returnAt ? (
-        <p className="text-xs text-muted-foreground">Retour: {returnAt}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.departure.return", { value: returnAt })}
+        </p>
       ) : null}
       <p className="text-xs text-muted-foreground">
-        Places: {seatsAvailable ?? "?"}/{seatsTotal ?? "?"}
+        {t("chat.optionDetails.departure.seats", {
+          available: seatsAvailable ?? "?",
+          total: seatsTotal ?? "?",
+        })}
       </p>
       {priceMad !== null ? (
-        <p className="text-xs text-muted-foreground">Prix: {priceMad} MAD</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.departure.price", {
+            value: formatMad(priceMad) ?? "",
+          })}
+        </p>
       ) : null}
       {status ? (
-        <p className="text-xs text-muted-foreground">Statut: {status}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.departure.status", { value: status })}
+        </p>
       ) : null}
       {notes ? <p className="text-sm text-muted-foreground">{notes}</p> : null}
     </div>
   );
 }
 
-function renderSession(option: Record<string, unknown>) {
+function renderSession(
+  option: Record<string, unknown>,
+  t: (key: string, values?: Record<string, string | number>) => string,
+  formatDateTime: (value: unknown) => string | null,
+  formatMad: (value: number | null) => string | null,
+) {
   const id = asString(option.id) || "session";
   const startAt =
     formatDateTime(option.start_at) || asString(option.start_at) || "-";
@@ -205,18 +219,31 @@ function renderSession(option: Record<string, unknown>) {
       key={id}
       className="rounded-md border bg-background/60 px-3 py-3 space-y-1"
     >
-      <p className="text-sm font-medium">Session: {startAt}</p>
+      <p className="text-sm font-medium">
+        {t("chat.optionDetails.session.start", { value: startAt })}
+      </p>
       {endAt ? (
-        <p className="text-xs text-muted-foreground">Fin: {endAt}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.session.end", { value: endAt })}
+        </p>
       ) : null}
       <p className="text-xs text-muted-foreground">
-        Capacite: {capacityAvailable ?? "?"}/{capacityTotal ?? "?"}
+        {t("chat.optionDetails.session.capacity", {
+          available: capacityAvailable ?? "?",
+          total: capacityTotal ?? "?",
+        })}
       </p>
       {priceMad !== null ? (
-        <p className="text-xs text-muted-foreground">Prix: {priceMad} MAD</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.session.price", {
+            value: formatMad(priceMad) ?? "",
+          })}
+        </p>
       ) : null}
       {status ? (
-        <p className="text-xs text-muted-foreground">Statut: {status}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.optionDetails.session.status", { value: status })}
+        </p>
       ) : null}
       {notes ? <p className="text-sm text-muted-foreground">{notes}</p> : null}
     </div>
@@ -228,6 +255,11 @@ export function ExperienceOptionDetailsPanel({
 }: {
   details: ExperienceOptionDetailsData;
 }) {
+  const { locale, t } = useSiteI18n();
+  const intlLocale = getIntlLocale(locale);
+  const formatDateTime = createDateFormatter(intlLocale);
+  const formatMad = createPriceFormatter(intlLocale);
+
   const location = [details.experience.city, details.experience.region]
     .filter(
       (value): value is string => typeof value === "string" && value.length > 0,
@@ -236,12 +268,12 @@ export function ExperienceOptionDetailsPanel({
 
   const optionTypeLabel =
     details.option_type === "room"
-      ? "Details chambre"
+      ? t("chat.optionDetails.type.room")
       : details.option_type === "departure"
-        ? "Details depart"
+        ? t("chat.optionDetails.type.departure")
         : details.option_type === "session"
-          ? "Details session"
-          : "Details option";
+          ? t("chat.optionDetails.type.session")
+          : t("chat.optionDetails.type.option");
 
   const options = Array.isArray(details.options)
     ? details.options.filter((item): item is Record<string, unknown> =>
@@ -262,22 +294,26 @@ export function ExperienceOptionDetailsPanel({
           ) : null}
           {details.query ? (
             <p className="text-xs text-muted-foreground">
-              Filtre: "{details.query}"
+              {t("chat.optionDetails.filter", { query: details.query })}
             </p>
           ) : null}
         </div>
 
         {options.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {details.message || "Aucun detail trouve pour cette demande."}
+            {details.message || t("chat.optionDetails.empty")}
           </p>
         ) : (
           <div className="space-y-2">
             {details.option_type === "room"
-              ? options.map((option) => renderRoom(option))
+              ? options.map((option) => renderRoom(option, t, formatMad))
               : details.option_type === "departure"
-                ? options.map((option) => renderDeparture(option))
-                : options.map((option) => renderSession(option))}
+                ? options.map((option) =>
+                    renderDeparture(option, t, formatDateTime, formatMad),
+                  )
+                : options.map((option) =>
+                    renderSession(option, t, formatDateTime, formatMad),
+                  )}
           </div>
         )}
       </CardContent>

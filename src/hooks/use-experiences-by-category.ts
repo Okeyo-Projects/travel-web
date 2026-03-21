@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
+import { resolveLocalizedTitle } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/client";
 import type { ExperienceListItem } from "@/types/experience";
 import { resolveStorageUrl } from "@/utils/functions";
@@ -11,15 +13,78 @@ interface ExperiencesByCategory {
 }
 
 type RoomListItem = NonNullable<ExperienceListItem["rooms"]>[number];
+type LocalizedCategoryTitle =
+  | string
+  | {
+      fr?: string | null;
+      en?: string | null;
+      ar?: string | null;
+    };
 
-export function transformExperience(exp: any): ExperienceListItem {
+type RawRoom = {
+  id: string;
+  name?: string | null;
+  price_cents?: number | null;
+  currency?: string | null;
+  max_persons?: number | null;
+  total_rooms?: number | null;
+  photos?: string[] | null;
+};
+
+type RawVideo = {
+  path?: string | null;
+  hls_playlist_url?: string | null;
+  bucket?: string | null;
+};
+
+type RawHost = {
+  id: string;
+  name: string;
+  avatar_url?: string | null;
+  verified?: boolean | null;
+};
+
+type RawTrip = NonNullable<ExperienceListItem["trip"]>;
+type RawLodging = Pick<
+  NonNullable<ExperienceListItem["lodging"]>,
+  "min_stay_nights"
+>;
+
+type RawExperience = {
+  id: string;
+  title: string;
+  short_description: string;
+  city: string;
+  region: string | null;
+  type: ExperienceListItem["type"];
+  thumbnail_url?: string | null;
+  avg_rating: number | null;
+  reviews_count: number | null;
+  host?: RawHost | null;
+  trip?: RawTrip | RawTrip[] | null;
+  lodging?: RawLodging | RawLodging[] | null;
+  rooms?: RawRoom[] | null;
+  video?: RawVideo | RawVideo[] | null;
+};
+
+type ExperienceCategoryRow = {
+  experience: RawExperience;
+};
+
+type CategoryGroupRow = {
+  id: string;
+  title: LocalizedCategoryTitle | null;
+  asset: string | null;
+};
+
+export function transformExperience(exp: RawExperience): ExperienceListItem {
   // Extract lodging data and calculate minimum room price
   const lodgingData = Array.isArray(exp.lodging)
     ? exp.lodging[0] || null
-    : exp.lodging;
+    : (exp.lodging ?? null);
   const rooms = Array.isArray(exp.rooms) ? exp.rooms : [];
   const mappedRooms: RoomListItem[] = rooms
-    .map((room: any) => ({
+    .map((room) => ({
       id: room.id,
       name: room.name ?? null,
       price_cents: room.price_cents ?? null,
@@ -49,16 +114,20 @@ export function transformExperience(exp: any): ExperienceListItem {
         }, null)
       : null;
 
-  const tripData = Array.isArray(exp.trip) ? exp.trip[0] || null : exp.trip;
-  const videoData = Array.isArray(exp.video) ? exp.video[0] || null : exp.video;
+  const tripData = Array.isArray(exp.trip)
+    ? exp.trip[0] || null
+    : (exp.trip ?? null);
+  const videoData = Array.isArray(exp.video)
+    ? exp.video[0] || null
+    : (exp.video ?? null);
   const videoBucket = videoData?.bucket || "media";
   const videoUrl = videoData?.path
-    ? resolveStorageUrl(videoData.path, videoBucket)
+    ? resolveStorageUrl(videoData.path ?? null, videoBucket)
     : null;
   const videoHlsUrl = videoData?.hls_playlist_url
-    ? resolveStorageUrl(videoData.hls_playlist_url, videoBucket)
+    ? resolveStorageUrl(videoData.hls_playlist_url ?? null, videoBucket)
     : null;
-  const thumbnailUrl = resolveStorageUrl(exp.thumbnail_url);
+  const thumbnailUrl = resolveStorageUrl(exp.thumbnail_url ?? null);
 
   return {
     id: exp.id,
@@ -76,10 +145,11 @@ export function transformExperience(exp: any): ExperienceListItem {
     host: exp.host
       ? {
           ...exp.host,
-          avatar_url: resolveStorageUrl(exp.host.avatar_url),
+          avatar_url: resolveStorageUrl(exp.host.avatar_url ?? null),
+          verified: exp.host.verified ?? null,
         }
       : null,
-    trip: tripData,
+    trip: tripData ?? null,
     lodging: lodgingData
       ? {
           ...lodgingData,
@@ -101,8 +171,8 @@ export function useExperiencesByCategory(
 
       const supabase = createClient();
 
-      let query = (supabase as any)
-        .from("experience_categories")
+      let query = supabase
+        .from("experience_categories" as never)
         .select(`
           experience:experiences!inner(
             id,
@@ -145,9 +215,9 @@ export function useExperiencesByCategory(
             )
           )
         `)
-        .eq("category_id", categoryId)
-        .eq("experience.status", "published")
-        .is("experience.deleted_at", null);
+        .eq("category_id" as never, categoryId)
+        .eq("experience.status" as never, "published")
+        .is("experience.deleted_at" as never, null);
 
       if (typeof limit === "number" && limit > 0) {
         query = query.limit(limit);
@@ -161,7 +231,7 @@ export function useExperiencesByCategory(
       }
 
       // Transform the data
-      return (data || []).map((item: any) =>
+      return ((data || []) as ExperienceCategoryRow[]).map((item) =>
         transformExperience(item.experience),
       );
     },
@@ -170,17 +240,18 @@ export function useExperiencesByCategory(
   });
 }
 
-export function useAllCategoryGroups(limitPerCategory = 10) {
+export function useAllCategoryGroups(
+  limitPerCategory = 10,
+  locale: AppLocale = DEFAULT_LOCALE,
+) {
   return useQuery<ExperiencesByCategory[]>({
-    queryKey: ["all-category-groups", limitPerCategory],
+    queryKey: ["all-category-groups", limitPerCategory, locale],
     queryFn: async () => {
       const supabase = createClient();
 
       // First get all active categories that have experiences
-      const { data: categories, error: categoriesError } = await (
-        supabase as any
-      )
-        .from("categories")
+      const { data: categories, error: categoriesError } = await supabase
+        .from("categories" as never)
         .select(`
           id,
           title,
@@ -189,8 +260,8 @@ export function useAllCategoryGroups(limitPerCategory = 10) {
             experience:experiences!inner(id)
           )
         `)
-        .eq("is_active", true)
-        .eq("experience_categories.experiences.status", "published")
+        .eq("is_active" as never, true)
+        .eq("experience_categories.experiences.status" as never, "published")
         .limit(6);
 
       if (categoriesError) {
@@ -204,9 +275,9 @@ export function useAllCategoryGroups(limitPerCategory = 10) {
       // For each category, fetch its experiences
       const results: ExperiencesByCategory[] = [];
 
-      for (const category of categories || []) {
-        const { data: expData, error: expError } = await (supabase as any)
-          .from("experience_categories")
+      for (const category of (categories || []) as CategoryGroupRow[]) {
+        const { data: expData, error: expError } = await supabase
+          .from("experience_categories" as never)
           .select(`
             experience:experiences!inner(
               id,
@@ -249,9 +320,9 @@ export function useAllCategoryGroups(limitPerCategory = 10) {
               )
             )
           `)
-          .eq("category_id", category.id)
-          .eq("experience.status", "published")
-          .is("experience.deleted_at", null)
+          .eq("category_id" as never, category.id)
+          .eq("experience.status" as never, "published")
+          .is("experience.deleted_at" as never, null)
           .limit(limitPerCategory);
 
         if (expError) {
@@ -262,15 +333,15 @@ export function useAllCategoryGroups(limitPerCategory = 10) {
           continue;
         }
 
-        const experiences: ExperienceListItem[] = (expData || []).map(
-          (item: any) => transformExperience(item.experience),
-        );
+        const experiences: ExperienceListItem[] = (
+          (expData || []) as ExperienceCategoryRow[]
+        ).map((item) => transformExperience(item.experience));
 
         if (experiences.length > 0) {
           results.push({
             categoryId: category.id,
             categoryTitle:
-              category.title?.fr || category.title?.en || "Category",
+              resolveLocalizedTitle(category.title, locale) || "Category",
             categoryAsset: category.asset,
             experiences,
           });

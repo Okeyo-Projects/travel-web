@@ -3,6 +3,7 @@
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +39,7 @@ function createInitialValues(email?: string | null): SupportIssueFormValues {
 }
 
 export function ReportIssueForm() {
+  const { t } = useSiteI18n();
   const { user } = useAuth();
   const createTicketMutation = useCreateSupportTicket();
   const [values, setValues] = useState<SupportIssueFormValues>(() =>
@@ -58,9 +60,9 @@ export function ReportIssueForm() {
 
   const helperCopy = useMemo(() => {
     return user
-      ? "Your account is linked, so the team can match this report to your activity faster."
-      : "You can send a report without logging in. Add an email if you want a reply.";
-  }, [user]);
+      ? t("support.form.linkedHelper")
+      : t("support.form.guestHelper");
+  }, [t, user]);
 
   const handleFieldChange = <K extends keyof SupportIssueFormValues>(
     field: K,
@@ -80,20 +82,18 @@ export function ReportIssueForm() {
     const nextErrors: FormErrors = {};
 
     if (values.subject.trim().length < 6) {
-      nextErrors.subject = "Use a short subject with at least 6 characters.";
+      nextErrors.subject = t("support.form.fields.subject.error");
     }
 
     if (values.description.trim().length < 20) {
-      nextErrors.description =
-        "Describe the problem in at least 20 characters so support can help.";
+      nextErrors.description = t("support.form.fields.description.error");
     }
 
     if (
       values.contactEmail.trim().length > 0 &&
       !EMAIL_PATTERN.test(values.contactEmail.trim())
     ) {
-      nextErrors.contactEmail =
-        "Enter a valid email address or leave it blank.";
+      nextErrors.contactEmail = t("support.form.fields.email.error");
     }
 
     setErrors(nextErrors);
@@ -112,12 +112,12 @@ export function ReportIssueForm() {
       setSubmittedTicket(result);
       setValues(createInitialValues(user?.email));
       setErrors({});
-      toast.success("Issue report sent");
+      toast.success(t("support.form.success.toast"));
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "We could not send your report right now. Please try again.";
+          : t("support.form.error.submitFallback");
       toast.error(message);
     }
   };
@@ -131,17 +131,17 @@ export function ReportIssueForm() {
           </div>
           <div className="space-y-3">
             <h3 className="text-2xl font-semibold tracking-tight text-emerald-950">
-              Report received
+              {t("support.form.success.title")}
             </h3>
             <p className="max-w-xl text-sm leading-6 text-emerald-900/80">
-              Thanks. The support team now has your report and will follow up if
-              more context is needed.
+              {t("support.form.success.description")}
             </p>
             <div className="inline-flex rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-900">
-              Ticket reference: {submittedTicket.reference}
+              {t("support.form.success.referenceLabel")}{" "}
+              {submittedTicket.reference}
             </div>
             <div className="text-sm text-emerald-900/75">
-              Prefer email instead? Reach us directly at{" "}
+              {t("support.form.success.emailPrefix")}{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
                 className="font-semibold underline underline-offset-4"
@@ -156,7 +156,7 @@ export function ReportIssueForm() {
               className="mt-2 rounded-full border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"
               onClick={() => setSubmittedTicket(null)}
             >
-              Send another report
+              {t("support.form.success.reset")}
             </Button>
           </div>
         </div>
@@ -172,21 +172,23 @@ export function ReportIssueForm() {
     >
       <div className="space-y-2">
         <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
-          Report an issue
+          {t("support.form.title")}
         </h2>
         <p className="text-sm leading-6 text-slate-600">{helperCopy}</p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="support-subject">Subject</Label>
+          <Label htmlFor="support-subject">
+            {t("support.form.fields.subject.label")}
+          </Label>
           <Input
             id="support-subject"
             value={values.subject}
             onChange={(event) =>
               handleFieldChange("subject", event.target.value)
             }
-            placeholder="Example: Payment confirmed but booking missing"
+            placeholder={t("support.form.fields.subject.placeholder")}
             className={cn(
               "h-12 rounded-2xl border-slate-200 bg-slate-50",
               errors.subject &&
@@ -199,7 +201,9 @@ export function ReportIssueForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="support-type">Category</Label>
+          <Label htmlFor="support-type">
+            {t("support.form.fields.type.label")}
+          </Label>
           <Select
             value={values.type}
             onValueChange={(value) =>
@@ -210,27 +214,27 @@ export function ReportIssueForm() {
               id="support-type"
               className="h-12 rounded-2xl border-slate-200 bg-slate-50"
             >
-              <SelectValue placeholder="Select a category" />
+              <SelectValue
+                placeholder={t("support.form.fields.type.placeholder")}
+              />
             </SelectTrigger>
             <SelectContent>
               {SUPPORT_ISSUE_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`support.form.issueTypes.${option.value}.label`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <p className="text-sm leading-6 text-slate-500">
-            {
-              SUPPORT_ISSUE_OPTIONS.find(
-                (option) => option.value === values.type,
-              )?.description
-            }
+            {t(`support.form.issueTypes.${values.type}.description`)}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="support-email">Email (optional)</Label>
+          <Label htmlFor="support-email">
+            {t("support.form.fields.email.label")}
+          </Label>
           <Input
             id="support-email"
             type="email"
@@ -238,7 +242,7 @@ export function ReportIssueForm() {
             onChange={(event) =>
               handleFieldChange("contactEmail", event.target.value)
             }
-            placeholder="you@example.com"
+            placeholder={t("support.form.fields.email.placeholder")}
             className={cn(
               "h-12 rounded-2xl border-slate-200 bg-slate-50",
               errors.contactEmail &&
@@ -249,21 +253,23 @@ export function ReportIssueForm() {
             <p className="text-sm text-destructive">{errors.contactEmail}</p>
           ) : (
             <p className="text-sm leading-6 text-slate-500">
-              Leave blank if you do not need a direct reply.
+              {t("support.form.fields.email.hint")}
             </p>
           )}
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="support-description">Description</Label>
+        <Label htmlFor="support-description">
+          {t("support.form.fields.description.label")}
+        </Label>
         <Textarea
           id="support-description"
           value={values.description}
           onChange={(event) =>
             handleFieldChange("description", event.target.value)
           }
-          placeholder="Tell us what happened, what you expected, and how we can reproduce it."
+          placeholder={t("support.form.fields.description.placeholder")}
           className={cn(
             "min-h-36 rounded-[24px] border-slate-200 bg-slate-50 px-4 py-3",
             errors.description &&
@@ -274,7 +280,7 @@ export function ReportIssueForm() {
           <p className="text-sm text-destructive">{errors.description}</p>
         ) : (
           <p className="text-sm leading-6 text-slate-500">
-            Add screenshots, dates, and booking references when relevant.
+            {t("support.form.fields.description.hint")}
           </p>
         )}
       </div>
@@ -287,12 +293,12 @@ export function ReportIssueForm() {
         {createTicketMutation.isPending ? (
           <>
             <Loader2 className="mr-2 size-4 animate-spin" />
-            Sending report...
+            {t("support.form.submit.loading")}
           </>
         ) : (
           <>
             <Send className="mr-2 size-4" />
-            Submit report
+            {t("support.form.submit.idle")}
           </>
         )}
       </Button>

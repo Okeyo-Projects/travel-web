@@ -21,32 +21,6 @@ import {
   SUPPORT_WHATSAPP_URL,
 } from "@/types/support";
 
-const CONTACT_CARDS = [
-  {
-    title: "Email support",
-    description:
-      "Best for detailed issues, screenshots, and booking references.",
-    value: SUPPORT_EMAIL,
-    href: `mailto:${SUPPORT_EMAIL}`,
-    icon: Mail,
-  },
-  {
-    title: "Phone or WhatsApp",
-    description: "Use urgent channels for time-sensitive travel changes.",
-    value: SUPPORT_PHONE_NUMBER,
-    href: SUPPORT_WHATSAPP_URL,
-    icon: PhoneCall,
-  },
-  {
-    title: "Typical response time",
-    description:
-      "Most tickets receive a first response within one business day.",
-    value: "Within 24 hours",
-    href: "#report-an-issue",
-    icon: Clock3,
-  },
-];
-
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
@@ -64,7 +38,34 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
+  const contactCards = [
+    {
+      title: t("support.page.cards.email.title"),
+      description: t("support.page.cards.email.description"),
+      value: SUPPORT_EMAIL,
+      href: `mailto:${SUPPORT_EMAIL}`,
+      icon: Mail,
+    },
+    {
+      title: t("support.page.cards.phone.title"),
+      description: t("support.page.cards.phone.description"),
+      value: SUPPORT_PHONE_NUMBER,
+      href: SUPPORT_WHATSAPP_URL,
+      icon: PhoneCall,
+    },
+    {
+      title: t("support.page.cards.responseTime.title"),
+      description: t("support.page.cards.responseTime.description"),
+      value: t("support.page.cards.responseTime.value"),
+      href: "#report-an-issue",
+      icon: Clock3,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-[#f5f7fb]">
       <section className="bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_35%),linear-gradient(135deg,#08090d_0%,#141a26_52%,#57132b_100%)] px-6 pb-12 pt-6">
@@ -74,16 +75,15 @@ export default function SupportPage() {
           <div className="space-y-6 text-white">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-white/80">
               <LifeBuoy className="size-3.5" />
-              Support center
+              {t("support.page.hero.eyebrow")}
             </div>
 
             <div className="space-y-4">
               <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-                Help for travelers and hosts, without the dead ends.
+                {t("support.page.hero.title")}
               </h1>
               <p className="max-w-xl text-base leading-7 text-white/75">
-                Search the help center, send a detailed issue report, or jump to
-                direct contact options when the situation is urgent.
+                {t("support.page.hero.description")}
               </p>
             </div>
 
@@ -93,7 +93,7 @@ export default function SupportPage() {
                 className="h-12 rounded-full bg-white px-6 text-slate-950 hover:bg-white/90"
               >
                 <a href="#report-an-issue">
-                  Report an issue
+                  {t("support.page.hero.primaryCta")}
                   <ArrowRight className="ml-2 size-4" />
                 </a>
               </Button>
@@ -102,13 +102,13 @@ export default function SupportPage() {
                 variant="outline"
                 className="h-12 rounded-full border-white/20 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
               >
-                <a href="#faq">Browse FAQs</a>
+                <a href="#faq">{t("support.page.hero.secondaryCta")}</a>
               </Button>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-            {CONTACT_CARDS.map((card) => {
+            {contactCards.map((card) => {
               const Icon = card.icon;
 
               return (
@@ -151,43 +151,42 @@ export default function SupportPage() {
             <div className="space-y-3">
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-[#d12d61]">
                 <MessageCircleMore className="size-3.5" />
-                Escalate a case
+                {t("support.page.escalation.eyebrow")}
               </span>
               <h2 className="text-3xl font-semibold tracking-tight text-slate-950">
-                Can't find what you're looking for?
+                {t("support.page.escalation.title")}
               </h2>
               <p className="text-sm leading-6 text-slate-600">
-                Send a report with enough context for the support team to act on
-                it quickly.
+                {t("support.page.escalation.description")}
               </p>
             </div>
 
             <div className="rounded-[24px] border border-white bg-white p-5">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
-                Include these details
+                {t("support.page.escalation.checklist.title")}
               </p>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                 <li className="list-disc pl-1 ml-5">
-                  Booking reference, experience name, or host name
+                  {t("support.page.escalation.checklist.reference")}
                 </li>
                 <li className="list-disc pl-1 ml-5">
-                  What happened, what you expected, and when it occurred
+                  {t("support.page.escalation.checklist.timeline")}
                 </li>
                 <li className="list-disc pl-1 ml-5">
-                  Screenshots or payment details when applicable
+                  {t("support.page.escalation.checklist.evidence")}
                 </li>
               </ul>
             </div>
 
             <div className="rounded-[24px] border border-dashed border-slate-300 bg-white/70 p-5 text-sm leading-6 text-slate-600">
-              Emergency travel issue? Call or message{" "}
+              {t("support.page.escalation.whatsappPrefix")}{" "}
               <a
                 href={SUPPORT_WHATSAPP_URL}
                 className="font-semibold text-[#d12d61] underline underline-offset-4"
               >
-                support on WhatsApp
+                {t("support.page.escalation.whatsappLink")}
               </a>{" "}
-              for the fastest response.
+              {t("support.page.escalation.whatsappSuffix")}
             </div>
           </div>
 

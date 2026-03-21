@@ -4,6 +4,7 @@ import type { UIMessage } from "ai";
 import { motion } from "framer-motion";
 import { Compass } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { AuthRequiredCard } from "./AuthRequiredCard";
 import {
@@ -27,7 +28,7 @@ import { LocationRequest } from "./LocationRequest";
 import { QuickReplies } from "./QuickReplies";
 import { type RoomTypeOptionItem, RoomTypeSelector } from "./RoomTypeSelector";
 
-type Message = UIMessage & { content?: string };
+type Message = UIMessage & { content?: string | null };
 type ExperienceResult = Record<string, unknown>;
 type UIData = unknown;
 
@@ -227,14 +228,14 @@ function extractSearchResults(output: unknown): ExperienceResult[] | null {
 }
 
 function extractLocationReason(output: unknown): string {
-  if (!isRecord(output)) return "pour trouver des expériences près de vous";
+  if (!isRecord(output)) return "";
 
   const reason = output.reason ?? output.message;
   if (typeof reason === "string" && reason.trim()) {
     return reason;
   }
 
-  return "pour trouver des expériences près de vous";
+  return "";
 }
 
 function extractAuthRequiredReason(output: unknown): string | null {
@@ -244,7 +245,7 @@ function extractAuthRequiredReason(output: unknown): string | null {
     return output.error;
   }
 
-  return "Vous devez être connecté pour réserver.";
+  return "";
 }
 
 function extractBookingIntent(output: unknown): BookingIntentSummary | null {
@@ -584,6 +585,7 @@ export function MessageList({
   lockedBookingId,
   isConversationLocked = false,
 }: MessageListProps) {
+  const { t } = useSiteI18n();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -612,7 +614,7 @@ export function MessageList({
             <Compass className="w-4 h-4 text-primary" />
           </div>
           <div className="rounded-2xl bg-muted/40 px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-muted-foreground animate-pulse">
-            Je réfléchis à votre demande...
+            {t("chat.results.loadingThinking")}
           </div>
         </div>
       )}
@@ -1056,6 +1058,8 @@ function UIBlock({
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
 }) {
+  const { t } = useSiteI18n();
+
   switch (component) {
     case "experience_cards":
       if (!isExperienceCardsData(data)) return null;
@@ -1135,7 +1139,9 @@ function UIBlock({
     default:
       return (
         <div className="border rounded-lg p-4 bg-muted/50 font-mono text-xs">
-          <p className="font-semibold mb-2">Debug UI Component: {component}</p>
+          <p className="font-semibold mb-2">
+            {t("chat.debug.component", { component })}
+          </p>
           <pre className="overflow-auto max-h-40">
             {JSON.stringify(data, null, 2)}
           </pre>

@@ -226,5 +226,514 @@
       "title": "Politique de confidentialité | Okeyo Travel",
       "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
     }
+  },
+  "support": {
+    "page": {
+      "hero": {
+        "eyebrow": "Centre d’aide",
+        "title": "De l’aide pour les voyageurs et les hôtes, sans impasse.",
+        "description": "Parcourez le centre d’aide, envoyez un signalement détaillé ou passez directement aux contacts urgents si la situation l’exige.",
+        "primaryCta": "Signaler un problème",
+        "secondaryCta": "Parcourir les FAQ"
+      },
+      "cards": {
+        "email": {
+          "title": "Support par e-mail",
+          "description": "Idéal pour les problèmes détaillés, les captures d’écran et les références de réservation."
+        },
+        "phone": {
+          "title": "Téléphone ou WhatsApp",
+          "description": "Utilisez ces canaux pour les changements urgents liés au voyage."
+        },
+        "responseTime": {
+          "title": "Délai de réponse habituel",
+          "description": "La plupart des tickets reçoivent une première réponse sous un jour ouvré.",
+          "value": "Sous 24 heures"
+        }
+      },
+      "escalation": {
+        "eyebrow": "Escalader un cas",
+        "title": "Vous ne trouvez pas ce que vous cherchez ?",
+        "description": "Envoyez un signalement avec suffisamment de contexte pour que l’équipe support puisse agir rapidement.",
+        "checklist": {
+          "title": "Inclure ces éléments",
+          "reference": "Référence de réservation, nom de l’expérience ou nom de l’hôte",
+          "timeline": "Ce qui s’est passé, ce que vous attendiez et quand cela s’est produit",
+          "evidence": "Captures d’écran ou détails de paiement si nécessaire"
+        },
+        "whatsappPrefix": "Problème de voyage urgent ? Appelez ou envoyez un message au",
+        "whatsappLink": "support sur WhatsApp",
+        "whatsappSuffix": "pour obtenir la réponse la plus rapide."
+      }
+    },
+    "faq": {
+      "eyebrow": "Centre d’aide",
+      "title": "Rechercher dans les questions fréquentes",
+      "description": "Commencez par les réponses les plus demandées par les voyageurs et les hôtes. Si vous avez encore besoin d’aide, passez directement au formulaire ci-dessous.",
+      "searchPlaceholder": "Rechercher des réservations, paiements, hôtes...",
+      "results": {
+        "one": "{count} réponse trouvée",
+        "other": "{count} réponses trouvées"
+      },
+      "emptyTitle": "Aucune FAQ ne correspond à votre recherche",
+      "emptyDescription": "Essayez un terme plus large ou envoyez un signalement détaillé à notre équipe.",
+      "emptyCta": "Signaler un problème",
+      "categories": {
+        "all": "Tous les sujets",
+        "general": "Général",
+        "booking": "Réservation",
+        "payments": "Paiements",
+        "account": "Compte",
+        "host": "Hôte"
+      },
+      "items": {
+        "general-response-times": {
+          "question": "En combien de temps l’équipe support répond-elle ?",
+          "answer": "Nous répondons en général sous **24 heures** les jours ouvrés.\n\n- Les urgences liées aux réservations et aux paiements sont traitées en priorité.\n- Ajoutez des captures d’écran, des dates et des références de réservation pour accélérer le traitement.",
+          "keywords": {
+            "one": "réponse",
+            "two": "délai",
+            "three": "urgence"
+          }
+        },
+        "general-contact-options": {
+          "question": "Quel est le moyen le plus rapide de contacter Okeyo Travel ?",
+          "answer": "Pour les questions courantes, l’e-mail reste le meilleur point de départ.\n\n- Écrivez-nous à `support@okeyotravel.com`.\n- Utilisez WhatsApp ou le téléphone pour les urgences sensibles au temps.",
+          "keywords": {
+            "one": "contact",
+            "two": "email",
+            "three": "whatsapp"
+          }
+        },
+        "booking-modify": {
+          "question": "Puis-je modifier une réservation déjà confirmée ?",
+          "answer": "Les modifications dépendent de la disponibilité de l’hôte et des règles d’annulation.\n\n1. Ouvrez la page de détail de votre réservation.\n2. Consultez la politique de l’expérience.\n3. Contactez le support si le changement ne peut pas être géré directement.",
+          "keywords": {
+            "one": "modifier",
+            "two": "changer",
+            "three": "confirmée"
+          }
+        },
+        "booking-cancel": {
+          "question": "Comment fonctionnent les annulations et remboursements ?",
+          "answer": "Les remboursements suivent la politique d’annulation liée à la réservation.\n\n- Les expériences flexibles remboursent généralement davantage quand l’annulation intervient tôt.\n- Certains frais peuvent devenir non remboursables après la fenêtre d’annulation gratuite.",
+          "keywords": {
+            "one": "annulation",
+            "two": "remboursement",
+            "three": "politique"
+          }
+        },
+        "payments-charge": {
+          "question": "J’ai été débité sans recevoir de confirmation. Que faire ?",
+          "answer": "Commencez par vérifier votre page de réservations et votre boîte mail pour repérer une confirmation en attente.\n\nSi rien n’apparaît après quelques minutes, envoyez-nous :\n- la date du paiement\n- le montant débité\n- les 4 derniers chiffres de la carte",
+          "keywords": {
+            "one": "paiement",
+            "two": "débit",
+            "three": "carte"
+          }
+        },
+        "payments-refund-time": {
+          "question": "Combien de temps faut-il pour qu’un remboursement apparaisse ?",
+          "answer": "La plupart des remboursements apparaissent sous **5 à 10 jours ouvrés**, selon votre banque.\n\nCertaines banques affichent l’annulation plus vite, d’autres laissent la transaction en attente plus longtemps.",
+          "keywords": {
+            "one": "remboursement",
+            "two": "banque",
+            "three": "jours"
+          }
+        },
+        "account-login": {
+          "question": "Je n’arrive pas à me connecter à mon compte. Que puis-je faire ?",
+          "answer": "Commencez par les vérifications de base :\n\n- assurez-vous d’utiliser le même e-mail que lors de l’inscription\n- réessayez après avoir vidé l’état d’authentification en cache\n- utilisez le bon fournisseur si vous vous êtes inscrit avec Google ou Apple",
+          "keywords": {
+            "one": "connexion",
+            "two": "mot de passe",
+            "three": "google"
+          }
+        },
+        "account-profile": {
+          "question": "Puis-je mettre à jour mon profil et mes préférences de langue ?",
+          "answer": "Oui. Rendez-vous dans **Paramètres** pour modifier votre langue préférée, puis ouvrez **Profil** pour vos informations personnelles comme votre nom affiché et votre bio.",
+          "keywords": {
+            "one": "profil",
+            "two": "langue",
+            "three": "paramètres"
+          }
+        },
+        "host-visibility": {
+          "question": "Pourquoi mon expérience n’est-elle pas visible pour les voyageurs ?",
+          "answer": "Une expérience peut être masquée si elle est encore en revue, enregistrée en brouillon ou dépubliée manuellement.\n\nConsultez la page de visibilité hôte pour vérifier le statut de l’annonce avant de contacter le support.",
+          "keywords": {
+            "one": "hôte",
+            "two": "publiée",
+            "three": "brouillon"
+          }
+        },
+        "host-booking-issues": {
+          "question": "Que doivent inclure les hôtes lorsqu’ils signalent un problème ?",
+          "answer": "Ajoutez le nom de l’expérience, la réservation concernée ou la date de départ ainsi que des captures d’écran.\n\nPlus le signalement est précis, plus nous pourrons reproduire et résoudre le problème rapidement.",
+          "keywords": {
+            "one": "hôte",
+            "two": "capture",
+            "three": "réservation"
+          }
+        }
+      }
+    },
+    "form": {
+      "linkedHelper": "Votre compte est lié, ce qui permet à l’équipe de retrouver plus vite votre activité.",
+      "guestHelper": "Vous pouvez envoyer un signalement sans vous connecter. Ajoutez un e-mail si vous souhaitez une réponse.",
+      "success": {
+        "toast": "Signalement envoyé",
+        "title": "Signalement reçu",
+        "description": "Merci. L’équipe support a bien reçu votre signalement et reviendra vers vous si un complément est nécessaire.",
+        "referenceLabel": "Référence du ticket :",
+        "emailPrefix": "Vous préférez l’e-mail ? Contactez-nous directement à",
+        "reset": "Envoyer un autre signalement"
+      },
+      "error": {
+        "submitFallback": "Nous ne pouvons pas envoyer votre signalement pour le moment. Veuillez réessayer."
+      },
+      "title": "Signaler un problème",
+      "fields": {
+        "subject": {
+          "label": "Sujet",
+          "placeholder": "Exemple : paiement confirmé mais réservation absente",
+          "error": "Utilisez un sujet court d’au moins 6 caractères."
+        },
+        "type": {
+          "label": "Catégorie",
+          "placeholder": "Choisir une catégorie"
+        },
+        "email": {
+          "label": "E-mail (optionnel)",
+          "placeholder": "vous@exemple.com",
+          "hint": "Laissez vide si vous n’avez pas besoin d’une réponse directe.",
+          "error": "Saisissez une adresse e-mail valide ou laissez ce champ vide."
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Expliquez ce qui s’est passé, ce que vous attendiez et comment reproduire le problème.",
+          "hint": "Ajoutez des captures d’écran, des dates et des références de réservation si nécessaire.",
+          "error": "Décrivez le problème en au moins 20 caractères pour que le support puisse vous aider."
+        }
+      },
+      "issueTypes": {
+        "bug": {
+          "label": "Bug",
+          "description": "Quelque chose est cassé ou se comporte de façon inattendue."
+        },
+        "feature_request": {
+          "label": "Demande de fonctionnalité",
+          "description": "Proposez une amélioration ou une capacité manquante."
+        },
+        "payment_issue": {
+          "label": "Problème de paiement",
+          "description": "Questions sur les débits, remboursements, factures ou versements."
+        },
+        "account_issue": {
+          "label": "Problème de compte",
+          "description": "Difficultés de connexion, profil, vérification ou accès."
+        },
+        "other": {
+          "label": "Autre",
+          "description": "Tout ce qui ne correspond pas aux catégories ci-dessus."
+        }
+      },
+      "submit": {
+        "idle": "Envoyer le signalement",
+        "loading": "Envoi en cours..."
+      }
+    }
+  },
+  "explore": {
+    "hero": {
+      "title": "Voyagez avec un service pensé pour vous",
+      "description": "Recherchez par lieu, type de séjour, dates et voyageurs pour trouver la bonne escapade au Maroc.",
+      "imageAlt": "Aperçu d’une destination de voyage"
+    },
+    "filters": {
+      "location": {
+        "label": "Lieu",
+        "placeholder": "Rechercher des lieux..."
+      },
+      "activity": {
+        "label": "Expérience",
+        "options": {
+          "all": "Toutes les expériences",
+          "lodging": "Hébergement"
+        }
+      },
+      "date": {
+        "label": "Quand",
+        "empty": "Choisir des dates",
+        "clear": "Effacer"
+      },
+      "guests": {
+        "label": "Voyageurs",
+        "title": "Voyageurs",
+        "hint": "Utilisé pour filtrer selon la capacité",
+        "countOne": "{count} voyageur",
+        "countOther": "{count} voyageurs"
+      }
+    },
+    "results": {
+      "titleWithQuery": "Résultats pour \"{query}\"",
+      "titleFiltered": "Résultats filtrés",
+      "clearSearch": "Effacer la recherche",
+      "error": "Une erreur est survenue pendant la recherche.",
+      "empty": "Aucun résultat ne correspond à votre recherche.",
+      "reset": "Réinitialiser la recherche",
+      "loadMore": "Voir plus",
+      "loadingMore": "Chargement..."
+    },
+    "browse": {
+      "groupSubtitle": {
+        "one": "{count} expérience",
+        "other": "{count} expériences"
+      },
+      "empty": "Aucune expérience disponible pour le moment."
+    },
+    "category": {
+      "back": "Retour à l’exploration",
+      "notFoundTitle": "Catégorie introuvable",
+      "notFoundCta": "Voir toutes les catégories",
+      "empty": "Aucune expérience disponible dans cette catégorie."
+    },
+    "error": {
+      "title": "Impossible de charger les expériences",
+      "description": "Une erreur est survenue lors du chargement. Veuillez réessayer.",
+      "retry": "Réessayer"
+    }
+  },
+  "chat": {
+    "error": {
+      "title": "Impossible de charger le chat",
+      "description": "Une erreur est survenue. Veuillez réessayer.",
+      "retry": "Réessayer"
+    },
+    "sidebar": {
+      "homeAria": "Aller à l’accueil",
+      "newConversation": "Nouvelle conversation",
+      "loading": "Chargement...",
+      "empty": "Aucune conversation",
+      "untitledConversation": "Nouvelle conversation"
+    },
+    "input": {
+      "placeholder": "Posez votre question...",
+      "locationEnabled": "Position activée",
+      "shareLocation": "Partager ma position",
+      "disclaimer": "L’IA peut faire des erreurs. Vérifiez les informations importantes."
+    },
+    "welcome": {
+      "defaultTitle": "Bonjour, je suis votre assistant voyage",
+      "defaultDescription": "Je peux vous aider à trouver le bon séjour au Maroc, comparer les chambres et préparer votre réservation.",
+      "suggestionLabel": "Suggestion {count}",
+      "suggestions": {
+        "one": {
+          "title": "Riad romantique",
+          "prompt": "Je cherche un riad romantique à Marrakech pour ce week-end."
+        },
+        "two": {
+          "title": "Lodge calme dans l’Atlas",
+          "prompt": "Je cherche un lodge calme dans l’Atlas pour 2 nuits."
+        },
+        "three": {
+          "title": "Piscine et détente",
+          "prompt": "Montre-moi un hébergement avec piscine et hammam près de Marrakech."
+        },
+        "four": {
+          "title": "Petit budget",
+          "prompt": "Je veux une maison d’hôtes petit budget à Chefchaouen."
+        }
+      }
+    },
+    "locked": {
+      "title": "Réservation envoyée",
+      "description": "Cette conversation est terminée.",
+      "newConversation": "Nouvelle conversation"
+    },
+    "authRequired": {
+      "fallbackReason": "Vous devez être connecté pour réserver.",
+      "login": "Se connecter"
+    },
+    "bookingConfirm": {
+      "errorConfirm": "Impossible de confirmer la réservation.",
+      "modal": {
+        "title": "Finaliser la réservation",
+        "successHeading": "Réservation envoyée !",
+        "successTitle": "Demande envoyée",
+        "successDescription": "L’hôte va examiner votre demande et vous répondre sous peu."
+      },
+      "labels": {
+        "total": "Total",
+        "night": {
+          "one": "{count} nuit",
+          "other": "{count} nuits"
+        },
+        "adult": {
+          "one": "{count} adulte",
+          "other": "{count} adultes"
+        },
+        "child": {
+          "one": "{count} enfant",
+          "other": "{count} enfants"
+        },
+        "infant": {
+          "one": "{count} bébé",
+          "other": "{count} bébés"
+        },
+        "traveler": {
+          "one": "{count} voyageur",
+          "other": "{count} voyageurs"
+        }
+      },
+      "notice": "Votre demande sera envoyée à l’hôte pour approbation. Aucun paiement ne sera prélevé maintenant.",
+      "back": "Retour",
+      "confirm": "Confirmer",
+      "persistLockWarning": "La réservation a été confirmée, mais la fermeture de la conversation n’a pas pu être sauvegardée.",
+      "cta": "Finaliser la réservation"
+    },
+    "location": {
+      "title": "Accès à votre position",
+      "description": "Nous utilisons votre position pour trouver les hébergements et activités les plus pertinents autour de vous.",
+      "errors": {
+        "unsupported": "La géolocalisation n’est pas supportée par votre navigateur.",
+        "unavailable": "Impossible d’obtenir votre position.",
+        "permissionDenied": "La permission de géolocalisation a été refusée.",
+        "timeout": "La demande de position a expiré."
+      },
+      "loading": "Localisation...",
+      "share": "Partager ma position"
+    },
+    "results": {
+      "loadingThinking": "Je réfléchis à votre demande...",
+      "count": {
+        "one": "{count} résultat",
+        "other": "{count} résultats"
+      },
+      "promoCount": "{count} en promo"
+    },
+    "quickReplies": {
+      "freeText": "Vous pouvez aussi répondre librement."
+    },
+    "dateOptions": {
+      "freeText": "Vous pouvez aussi écrire vos dates exactes."
+    },
+    "experienceCard": {
+      "type": {
+        "lodging": "Hébergement",
+        "trip": "Voyage",
+        "activity": "Activité"
+      },
+      "captionsLabel": "Sous-titres",
+      "pauseVideo": "Mettre la vidéo en pause",
+      "openGalleryImage": "Ouvrir l’image {count} pour {title}",
+      "openRoomPhoto": "Ouvrir la photo de {room}",
+      "noImage": "Pas d’image",
+      "galleryAlt": "Image {count} de {title}",
+      "hostPrefix": "Par {host}",
+      "roomTypesCount": {
+        "one": "{count} type de chambre",
+        "other": "{count} types de chambre"
+      },
+      "guestAbbr": "pers.",
+      "pricePerNight": "par nuit",
+      "pricePerPerson": "par personne",
+      "details": "Détails",
+      "book": "Réserver"
+    },
+    "roomSelector": {
+      "room": {
+        "one": "chambre",
+        "other": "chambres"
+      },
+      "joiner": " et ",
+      "message": {
+        "withExperience": "Je veux réserver {selection} pour {experience}.",
+        "withoutExperience": "Je veux réserver {selection}."
+      },
+      "pricePerNight": "par nuit",
+      "guestAbbr": "pers.",
+      "beds": "lits",
+      "counterLabel": "Nombre de chambres",
+      "book": "Réserver",
+      "freeText": "Vous pouvez aussi indiquer un autre choix manuellement."
+    },
+    "optionDetails": {
+      "type": {
+        "room": "Détails chambre",
+        "departure": "Détails départ",
+        "session": "Détails session",
+        "option": "Détails option"
+      },
+      "filter": "Filtre : \"{query}\"",
+      "empty": "Aucun détail trouvé pour cette demande.",
+      "room": {
+        "type": "Type : {value}",
+        "maxGuests": "Max : {count} pers.",
+        "beds": "{count} lits",
+        "stock": "Stock : {available}/{total}",
+        "pricePerNight": "par nuit"
+      },
+      "departure": {
+        "depart": "Départ : {value}",
+        "return": "Retour : {value}",
+        "seats": "Places : {available}/{total}",
+        "price": "Prix : {value}",
+        "status": "Statut : {value}"
+      },
+      "session": {
+        "start": "Session : {value}",
+        "end": "Fin : {value}",
+        "capacity": "Capacité : {available}/{total}",
+        "price": "Prix : {value}",
+        "status": "Statut : {value}"
+      }
+    },
+    "experienceDetails": {
+      "boolean": {
+        "yes": "Oui",
+        "no": "Non"
+      },
+      "type": {
+        "lodging": "Hébergement",
+        "trip": "Voyage",
+        "activity": "Activité"
+      },
+      "reviewCount": "({count} avis)",
+      "bookingsCount": "{count} réservations",
+      "host": {
+        "title": "Hôte",
+        "rating": "Note hôte : {value} / 5",
+        "bookings": "Réservations hôte : {count}"
+      },
+      "amenities": "Équipements",
+      "servicesIncluded": "Services inclus",
+      "servicesExcluded": "Services exclus",
+      "rooms": "Chambres",
+      "roomFallback": "Chambre",
+      "roomPricePerNight": "par nuit",
+      "roomMaxGuests": "Max : {count} pers.",
+      "roomBeds": "{count} lits",
+      "noRooms": "Aucune chambre configurée.",
+      "trip": "Voyage",
+      "itinerary": "Itinéraire",
+      "stepFallback": "Étape",
+      "dayTitle": "Jour {day} : {title}",
+      "durationMinutes": "Durée : {count} min",
+      "upcomingDepartures": "Prochains départs",
+      "seats": "Places : {available}/{total}",
+      "price": "Prix : {value}",
+      "activity": "Activité",
+      "upcomingSessions": "Prochaines sessions",
+      "end": "Fin : {value}",
+      "capacity": "Capacité : {available}/{total}",
+      "promotions": "Promotions",
+      "recentReviews": "Avis récents",
+      "travelerFallback": "Voyageur"
+    },
+    "debug": {
+      "component": "Composant UI de debug : {component}"
+    }
   }
 }

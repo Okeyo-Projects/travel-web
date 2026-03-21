@@ -10,10 +10,12 @@ import {
   type ChangeEvent,
   type FormEvent,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { useChatContext } from "@/contexts/ChatContext";
 import {
   useConversation,
@@ -29,6 +31,7 @@ import { MessageList } from "./MessageList";
 
 interface BookingChatProps {
   initialConversationId?: string | null;
+  initialMessage?: string;
 }
 
 interface PublicAgentConfigResponse {
@@ -47,6 +50,10 @@ interface PublicAgentConfigResponse {
 
 type StoredConversationMessage = Pick<UIMessage, "id" | "role" | "parts"> & {
   content?: string | null;
+};
+
+type ChatMessage = UIMessage & {
+  content?: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -117,10 +124,9 @@ function hasRenderableAssistantContent(
 }
 
 function shouldPersistMessage(
-  message: UIMessage,
+  message: ChatMessage,
   status: "submitted" | "streaming" | "ready" | "error",
 ): boolean {
-  const messageAny = message as any;
   if (message.role !== "assistant") return true;
   if (status !== "ready") return false;
 
@@ -128,17 +134,15 @@ function shouldPersistMessage(
     return false;
   }
 
-  const content =
-    typeof messageAny.content === "string" ? messageAny.content : "";
+  const content = typeof message.content === "string" ? message.content : "";
   const sanitizedParts = sanitizeMessageParts(message.parts);
   return hasRenderableAssistantContent(content, sanitizedParts);
 }
 
-function buildPersistedMessagePayload(message: UIMessage) {
-  const messageAny = message as any;
+function buildPersistedMessagePayload(message: ChatMessage) {
   const sanitizedParts = sanitizeMessageParts(message.parts);
   const contentFromMessage =
-    typeof messageAny.content === "string" ? messageAny.content.trim() : "";
+    typeof message.content === "string" ? message.content.trim() : "";
   const contentFromParts = extractTextFromParts(sanitizedParts);
   const content = contentFromMessage || contentFromParts;
 
@@ -149,7 +153,11 @@ function buildPersistedMessagePayload(message: UIMessage) {
   };
 }
 
-export function BookingChat({ initialConversationId }: BookingChatProps) {
+export function BookingChat({
+  initialConversationId,
+  initialMessage,
+}: BookingChatProps) {
+  const { locale, t } = useSiteI18n();
   const {
     userLocation,
     setUserLocation,
@@ -195,9 +203,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     [],
   );
 
-  const { messages, status, sendMessage, setMessages } = (useChat as any)({
+  const { messages, status, sendMessage, setMessages } = useChat<ChatMessage>({
     transport,
-    initialMessages: [],
+    messages: [],
   });
 
   const browserLanguage = useMemo(() => {
@@ -268,7 +276,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
   useEffect(() => {
     if (!conversationData) return;
 
-    const loadedMessages = (conversationData.messages || []).map(
+    const loadedMessages: ChatMessage[] = (conversationData.messages || []).map(
       (msg: StoredConversationMessage) => ({
         id: msg.id,
         role: msg.role,
@@ -282,7 +290,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     persistingMessageIds.current.clear();
 
     // Mark loaded messages as already persisted
-    loadedMessages.forEach((msg: any) => {
+    loadedMessages.forEach((msg: ChatMessage) => {
       persistedMessageIds.current.add(msg.id);
     });
   }, [conversationData, setMessages]);
@@ -357,6 +365,18 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     setMounted(true);
   }, []);
 
+  // Auto-send initial message from home page input
+  const hasSentInitialMessage = useRef(false);
+  const sendInitialMessage = useEffectEvent((message: string) => {
+    void sendUserMessage(message);
+  });
+
+  useEffect(() => {
+    if (!mounted || !initialMessage || hasSentInitialMessage.current) return;
+    hasSentInitialMessage.current = true;
+    sendInitialMessage(initialMessage);
+  }, [mounted, initialMessage, sendInitialMessage]);
+
   // Load public agent config for welcome messages and suggestions
   useEffect(() => {
     let isCancelled = false;
@@ -389,7 +409,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     if (!activeConversationId || messages.length === 0) return;
 
     // Find messages that haven't been persisted yet
-    const messagesToPersist = messages.filter((message: any) => {
+    const messagesToPersist = messages.filter((message) => {
       if (persistedMessageIds.current.has(message.id)) return false;
       if (persistingMessageIds.current.has(message.id)) return false;
       return shouldPersistMessage(message, status);
@@ -398,7 +418,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     if (messagesToPersist.length === 0) return;
 
     // Persist each new message
-    messagesToPersist.forEach((message: any) => {
+    messagesToPersist.forEach((message) => {
       const payload = buildPersistedMessagePayload(message);
       persistingMessageIds.current.add(message.id);
 
@@ -556,8 +576,9 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
     supportedLanguagesRaw.length > 0
       ? supportedLanguagesRaw
       : ["fr", "en", "ar"];
-  const effectiveLanguage =
-    browserLanguage && supportedLanguages.includes(browserLanguage)
+  const effectiveLanguage = supportedLanguages.includes(locale)
+    ? locale
+    : browserLanguage && supportedLanguages.includes(browserLanguage)
       ? browserLanguage
       : fallbackLanguage;
 
@@ -621,10 +642,10 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                  Réservation envoyée
+                  {t("chat.locked.title")}
                 </p>
                 <p className="text-xs text-emerald-700/70 dark:text-emerald-400/70 mt-0.5">
-                  Cette conversation est terminée.
+                  {t("chat.locked.description")}
                 </p>
               </div>
               <button
@@ -633,7 +654,7 @@ export function BookingChat({ initialConversationId }: BookingChatProps) {
                 className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 transition-colors shrink-0"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
-                Nouvelle conversation
+                {t("chat.locked.newConversation")}
               </button>
             </div>
           </div>

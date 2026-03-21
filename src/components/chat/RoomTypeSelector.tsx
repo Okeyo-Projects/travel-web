@@ -2,12 +2,11 @@
 
 import { BedDouble, Minus, Plus, Users } from "lucide-react";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { useImageViewer } from "@/hooks/use-image-viewer";
-import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
-import { getLocaleFromPathname } from "@/lib/routing/locale-path";
+import { getIntlLocale } from "@/lib/i18n";
 
 export interface RoomTypeOptionItem {
   room_type_id: string;
@@ -31,99 +30,45 @@ interface RoomTypeSelectorProps {
   onSelect?: (replyText: string) => void;
 }
 
-const COPY: Record<
-  AppLocale,
-  {
-    book: string;
-    room: string;
-    rooms: string;
-    freeText: string;
-    counterLabel: string;
-  }
-> = {
-  fr: {
-    book: "Reserver",
-    room: "chambre",
-    rooms: "chambres",
-    freeText: "Vous pouvez aussi indiquer un autre choix manuellement.",
-    counterLabel: "Nombre de chambres",
-  },
-  en: {
-    book: "Book",
-    room: "room",
-    rooms: "rooms",
-    freeText: "You can also type a different room choice.",
-    counterLabel: "Number of rooms",
-  },
-  ar: {
-    book: "احجز",
-    room: "غرفة",
-    rooms: "غرف",
-    freeText: "يمكنك ايضا كتابة اختيار مختلف للغرفة.",
-    counterLabel: "عدد الغرف",
-  },
-};
-
-function getLocaleLabel(locale: AppLocale, quantity: number): string {
-  if (locale === "ar") {
-    return quantity <= 1 ? COPY.ar.room : COPY.ar.rooms;
-  }
-
-  if (locale === "en") {
-    return quantity === 1 ? COPY.en.room : COPY.en.rooms;
-  }
-
-  return quantity === 1 ? COPY.fr.room : COPY.fr.rooms;
+function getRoomLabel(
+  t: (key: string, values?: Record<string, string | number>) => string,
+  quantity: number,
+) {
+  return quantity === 1
+    ? t("chat.roomSelector.room.one", { count: quantity })
+    : t("chat.roomSelector.room.other", { count: quantity });
 }
 
-function joinSelectionParts(locale: AppLocale, parts: string[]) {
+function joinSelectionParts(
+  t: (key: string, values?: Record<string, string | number>) => string,
+  parts: string[],
+) {
   if (parts.length === 0) return "";
   if (parts.length === 1) return parts[0];
-
-  if (locale === "ar") {
-    return parts.join(" وايضا ");
-  }
-
-  if (locale === "en") {
-    return parts.join(" and also ");
-  }
-
-  return parts.join(" et aussi ");
+  return parts.join(t("chat.roomSelector.joiner"));
 }
 
 function buildBookingMessage(
-  locale: AppLocale,
+  t: (key: string, values?: Record<string, string | number>) => string,
   experienceTitle: string | undefined,
   selections: Array<{ name: string; quantity: number }>,
 ) {
   const parts = selections.map(({ name, quantity }) => {
-    const roomLabel = getLocaleLabel(locale, quantity);
-
-    if (locale === "ar") {
-      return `${quantity} ${roomLabel} "${name}"`;
-    }
-
+    const roomLabel = getRoomLabel(t, quantity);
     return `${quantity} ${roomLabel} "${name}"`;
   });
 
-  const summary = joinSelectionParts(locale, parts);
+  const summary = joinSelectionParts(t, parts);
   if (!summary) return "";
 
-  if (locale === "ar") {
-    return experienceTitle
-      ? `اريد حجز ${summary} في ${experienceTitle}.`
-      : `اريد حجز ${summary}.`;
-  }
-
-  if (locale === "en") {
-    return experienceTitle
-      ? `I want to book ${summary} at ${experienceTitle}.`
-      : `I want to book ${summary}.`;
-  }
-
   return experienceTitle
-    ? `Je veux reserver ${summary} pour ${experienceTitle}.`
-    : `Je veux reserver ${summary}.`;
+    ? t("chat.roomSelector.message.withExperience", {
+        selection: summary,
+        experience: experienceTitle,
+      })
+    : t("chat.roomSelector.message.withoutExperience", {
+        selection: summary,
+      });
 }
 
 export function RoomTypeSelector({
@@ -134,16 +79,18 @@ export function RoomTypeSelector({
   disabled = false,
   onSelect,
 }: RoomTypeSelectorProps) {
+  const { locale, t } = useSiteI18n();
   const { openImageViewer, Viewer } = useImageViewer();
-  const pathname = usePathname();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-
-  const locale = useMemo(
-    () => getLocaleFromPathname(pathname, DEFAULT_LOCALE),
-    [pathname],
-  );
-  const copy = COPY[locale];
   const isDisabled = disabled || !onSelect;
+  const intlLocale = getIntlLocale(locale);
+
+  const formatMad = (value: number) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: "currency",
+      currency: "MAD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
   if (!question || rooms.length === 0) return null;
 
@@ -177,7 +124,7 @@ export function RoomTypeSelector({
       }))
       .filter((room) => room.quantity > 0);
 
-    const message = buildBookingMessage(locale, experienceTitle, selections);
+    const message = buildBookingMessage(t, experienceTitle, selections);
     if (!message) return;
 
     onSelect(message);
@@ -195,7 +142,7 @@ export function RoomTypeSelector({
       <div className="space-y-2">
         {rooms.map((room) => {
           const quantity = quantities[room.room_type_id] ?? 0;
-          const roomCountLabel = getLocaleLabel(locale, quantity || 1);
+          const roomCountLabel = getRoomLabel(t, quantity || 1);
           const photos = room.photos ?? [];
 
           return (
@@ -222,18 +169,21 @@ export function RoomTypeSelector({
                   <p className="text-sm font-medium truncate">{room.name}</p>
                   <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
                     {typeof room.price_mad === "number" ? (
-                      <span>{room.price_mad} MAD / nuit</span>
+                      <span>
+                        {formatMad(room.price_mad)} ·{" "}
+                        {t("chat.roomSelector.pricePerNight")}
+                      </span>
                     ) : null}
                     {typeof room.max_persons === "number" ? (
                       <span className="inline-flex items-center gap-1">
                         <Users className="h-3 w-3" />
-                        {room.max_persons} pers.
+                        {room.max_persons} {t("chat.roomSelector.guestAbbr")}
                       </span>
                     ) : null}
                     {typeof room.capacity_beds === "number" ? (
                       <span className="inline-flex items-center gap-1">
                         <BedDouble className="h-3 w-3" />
-                        {room.capacity_beds} lits
+                        {room.capacity_beds} {t("chat.roomSelector.beds")}
                       </span>
                     ) : null}
                   </div>
@@ -249,7 +199,7 @@ export function RoomTypeSelector({
                   onClick={() =>
                     handleQuantityChange(room.room_type_id, quantity - 1)
                   }
-                  aria-label={`-${copy.counterLabel}`}
+                  aria-label={`-${t("chat.roomSelector.counterLabel")}`}
                   className="h-9 w-9 rounded-full"
                 >
                   <Minus className="h-4 w-4" />
@@ -272,7 +222,7 @@ export function RoomTypeSelector({
                   onClick={() =>
                     handleQuantityChange(room.room_type_id, quantity + 1)
                   }
-                  aria-label={`+${copy.counterLabel}`}
+                  aria-label={`+${t("chat.roomSelector.counterLabel")}`}
                   className="h-9 w-9 rounded-full"
                 >
                   <Plus className="h-4 w-4" />
@@ -286,13 +236,15 @@ export function RoomTypeSelector({
       {totalSelectedRooms > 0 ? (
         <div className="flex justify-end">
           <Button type="button" disabled={isDisabled} onClick={handleBook}>
-            {copy.book}
+            {t("chat.roomSelector.book")}
           </Button>
         </div>
       ) : null}
 
       {allowFreeText && (
-        <p className="text-xs text-muted-foreground">{copy.freeText}</p>
+        <p className="text-xs text-muted-foreground">
+          {t("chat.roomSelector.freeText")}
+        </p>
       )}
       {Viewer}
     </div>

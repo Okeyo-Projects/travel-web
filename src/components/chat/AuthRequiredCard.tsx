@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock } from "lucide-react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -9,6 +10,7 @@ interface AuthRequiredCardProps {
 }
 
 export function AuthRequiredCard({ reason }: AuthRequiredCardProps) {
+  const { t } = useSiteI18n();
   const { loading, openAuthModal } = useAuth();
 
   return (
@@ -19,7 +21,7 @@ export function AuthRequiredCard({ reason }: AuthRequiredCardProps) {
         </div>
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            {reason || "Vous devez être connecté pour réserver."}
+            {reason || t("chat.authRequired.fallbackReason")}
           </p>
           <Button
             type="button"
@@ -27,7 +29,7 @@ export function AuthRequiredCard({ reason }: AuthRequiredCardProps) {
             disabled={loading}
             onClick={() => openAuthModal({ mode: "login" })}
           >
-            Se connecter
+            {t("chat.authRequired.login")}
           </Button>
         </div>
       </div>

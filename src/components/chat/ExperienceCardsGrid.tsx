@@ -1,5 +1,6 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { ExperienceCard } from "./ExperienceCard";
 
 interface RoomInfo {
@@ -41,6 +42,7 @@ export function ExperienceCardsGrid({
   onSelectExperience,
   onBookExperience,
 }: ExperienceCardsGridProps) {
+  const { t } = useSiteI18n();
   if (!experiences || experiences.length === 0) {
     return null;
   }
@@ -52,10 +54,12 @@ export function ExperienceCardsGrid({
     <div className="space-y-4">
       {!isSingle && (
         <div className="text-sm text-muted-foreground">
-          {experiences.length} résultat{experiences.length > 1 ? "s" : ""}
+          {experiences.length === 1
+            ? t("chat.results.count.one", { count: experiences.length })
+            : t("chat.results.count.other", { count: experiences.length })}
           {promoCount > 0 && (
             <span className="ml-2 text-orange-500 font-medium">
-              ({promoCount} en promo)
+              ({t("chat.results.promoCount", { count: promoCount })})
             </span>
           )}
         </div>

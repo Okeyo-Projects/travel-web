@@ -2,6 +2,7 @@
 
 import { MapPin, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useChatContext } from "@/contexts/ChatContext";
@@ -24,6 +25,7 @@ export function ChatInput({
   isLoading,
   onRequestLocation,
 }: ChatInputProps) {
+  const { t } = useSiteI18n();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { userLocation } = useChatContext();
   const [isFocused, setIsFocused] = useState(false);
@@ -63,7 +65,7 @@ export function ChatInput({
             onKeyDown={onKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder="Posez votre question..."
+            placeholder={t("chat.input.placeholder")}
             className="min-h-[50px] sm:min-h-[56px] max-h-[140px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-base"
             rows={1}
           />
@@ -80,7 +82,9 @@ export function ChatInput({
                 )}
                 onClick={onRequestLocation}
                 title={
-                  userLocation ? "Position activée" : "Partager ma position"
+                  userLocation
+                    ? t("chat.input.locationEnabled")
+                    : t("chat.input.shareLocation")
                 }
               >
                 <MapPin className="h-4 w-4" />
@@ -104,7 +108,7 @@ export function ChatInput({
         </form>
       </div>
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground mt-2">
-        L'IA peut faire des erreurs. Vérifiez les informations importantes.
+        {t("chat.input.disclaimer")}
       </p>
     </div>
   );

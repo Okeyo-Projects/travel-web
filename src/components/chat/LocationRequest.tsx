@@ -2,6 +2,7 @@
 
 import { Loader2, MapPin, X } from "lucide-react";
 import { useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useChatContext } from "@/contexts/ChatContext";
@@ -17,6 +18,7 @@ export function LocationRequest({
   onLocationReceived,
   onDeclined,
 }: LocationRequestProps) {
+  const { t } = useSiteI18n();
   const { setUserLocation } = useChatContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export function LocationRequest({
     setError(null);
 
     if (!navigator.geolocation) {
-      setError("La géolocalisation n'est pas supportée par votre navigateur");
+      setError(t("chat.location.errors.unsupported"));
       setIsLoading(false);
       return;
     }
@@ -48,17 +50,17 @@ export function LocationRequest({
         setIsLoading(false);
       },
       (error) => {
-        let errorMessage = "Impossible d'obtenir votre position";
+        let errorMessage = t("chat.location.errors.unavailable");
 
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = "Permission de géolocalisation refusée";
+            errorMessage = t("chat.location.errors.permissionDenied");
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = "Position non disponible";
+            errorMessage = t("chat.location.errors.unavailable");
             break;
           case error.TIMEOUT:
-            errorMessage = "La demande de position a expiré";
+            errorMessage = t("chat.location.errors.timeout");
             break;
         }
 
@@ -77,14 +79,18 @@ export function LocationRequest({
     onDeclined?.();
   };
 
+  const resolvedReason = reason || t("chat.location.description");
+
   return (
     <Card className="border-primary/50">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start gap-3">
           <MapPin className="w-5 h-5 text-primary mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Accès à votre position</p>
-            <p className="text-sm text-muted-foreground mt-1">{reason}</p>
+            <p className="text-sm font-medium">{t("chat.location.title")}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {resolvedReason}
+            </p>
           </div>
         </div>
 
@@ -103,12 +109,12 @@ export function LocationRequest({
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Localisation...
+                {t("chat.location.loading")}
               </>
             ) : (
               <>
                 <MapPin className="w-4 h-4 mr-2" />
-                Partager ma position
+                {t("chat.location.share")}
               </>
             )}
           </Button>

@@ -2,7 +2,9 @@
 
 import { Play, Plus, Send } from "lucide-react";
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { useT } from "@/providers/translations-provider";
 
 const TYPING_SPEED = 30;
@@ -12,6 +14,8 @@ const PAUSE_AFTER_DELETE = 400;
 
 export function AISection() {
   const t = useT();
+  const router = useRouter();
+  const pathname = usePathname();
   const prompts = useMemo(
     () => [
       t("home.ai.prompts.one"),
@@ -57,6 +61,13 @@ export function AISection() {
 
     return () => clearTimeout(timeout);
   }, [displayedText, isDeleting, promptIndex, prompts]);
+
+  const handleSend = () => {
+    const text = userInput.trim();
+    if (!text) return;
+    const href = localizeHref(`/chat?q=${encodeURIComponent(text)}`, pathname);
+    router.push(href);
+  };
 
   const handlePlay = () => {
     if (!videoRef.current) return;
@@ -116,6 +127,7 @@ export function AISection() {
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_30px_rgba(255,37,102,0.55)] transition-transform hover:scale-105 sm:h-12 sm:w-12"
+                onClick={handleSend}
                 aria-label={t("home.ai.send")}
               >
                 <Send className="h-5 w-5" />

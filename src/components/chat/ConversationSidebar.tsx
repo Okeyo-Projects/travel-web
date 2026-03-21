@@ -1,11 +1,12 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arSA, enUS, fr } from "date-fns/locale";
 import { CheckCircle2, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import {
   Sidebar,
   SidebarContent,
@@ -19,12 +20,14 @@ import {
 } from "@/components/ui/sidebar";
 import { useChatContext } from "@/contexts/ChatContext";
 import {
+  type Conversation,
   useArchiveConversation,
   useConversations,
 } from "@/hooks/use-conversations";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 
 export function ConversationSidebar() {
+  const { locale, t } = useSiteI18n();
   const { data: conversations = [], isLoading } = useConversations();
   const archiveConversation = useArchiveConversation();
   const { conversationId, startNewConversation } = useChatContext();
@@ -55,12 +58,14 @@ export function ConversationSidebar() {
     }
   };
 
+  const distanceLocale = locale === "en" ? enUS : locale === "ar" ? arSA : fr;
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4 gap-3 pt-[calc(1rem+env(safe-area-inset-top))]">
         <Link
           href={localizeHref("/", pathname)}
-          aria-label="Go to home page"
+          aria-label={t("chat.sidebar.homeAria")}
           className="inline-flex w-fit rounded-md px-1 py-1 hover:bg-muted"
         >
           <Image
@@ -79,7 +84,9 @@ export function ConversationSidebar() {
           variant="outline"
         >
           <Plus className="w-5 h-5" />
-          <span className="font-semibold">Nouvelle conversation</span>
+          <span className="font-semibold">
+            {t("chat.sidebar.newConversation")}
+          </span>
         </SidebarMenuButton>
       </SidebarHeader>
 
@@ -89,19 +96,20 @@ export function ConversationSidebar() {
             <SidebarMenu>
               {isLoading ? (
                 <div className="p-4 text-sm text-muted-foreground">
-                  Chargement...
+                  {t("chat.sidebar.loading")}
                 </div>
               ) : conversations.length === 0 ? (
                 <div className="p-4 text-sm text-muted-foreground">
-                  Aucune conversation
+                  {t("chat.sidebar.empty")}
                 </div>
               ) : (
-                conversations.map((conv: any) => {
+                conversations.map((conv: Conversation) => {
                   const normalizedPathname = stripLocalePrefix(pathname);
                   const isActive =
                     normalizedPathname === `/chat/${conv.id}` ||
                     conversationId === conv.id;
-                  const title = conv.title || "Nouvelle conversation";
+                  const title =
+                    conv.title || t("chat.sidebar.untitledConversation");
                   const summary =
                     typeof conv.summary === "string" ? conv.summary.trim() : "";
                   const hasSummary =
@@ -114,7 +122,7 @@ export function ConversationSidebar() {
                     new Date(conv.updated_at),
                     {
                       addSuffix: true,
-                      locale: fr,
+                      locale: distanceLocale,
                     },
                   );
 

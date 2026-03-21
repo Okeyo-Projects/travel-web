@@ -1,15 +1,17 @@
 import { BedDouble, DoorOpen, MapPin, Play, Star, Users } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useRef, useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { useEffect, useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useImageViewer } from "@/hooks/use-image-viewer";
-import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
+import { getIntlLocale } from "@/lib/i18n";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { cn } from "@/lib/utils";
+import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface RoomInfo {
   name: string;
@@ -45,30 +47,43 @@ interface ExperienceCardProps {
   onBook?: () => void;
 }
 
-const typeLabels = {
-  lodging: "Hébergement",
-  trip: "Voyage",
-  activity: "Activité",
-};
-
 export function ExperienceCard({
   experience,
   onSelect,
   onBook,
 }: ExperienceCardProps) {
+  const { locale, t } = useSiteI18n();
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { openImageViewer, Viewer } = useImageViewer();
   const router = useRouter();
   const pathname = usePathname();
-  const experienceHref = localizeHref(`/experience/${buildExperienceSlug({ title: experience.title, id: experience.id })}`, pathname);
+  const experienceHref = localizeHref(
+    `/experience/${buildExperienceSlug({ title: experience.title, id: experience.id })}`,
+    pathname,
+  );
+  const intlLocale = getIntlLocale(locale);
+  const galleryImages = experience.gallery ?? [];
+  const thumbnailSrc = experience.thumbnail_url
+    ? getImageUrl(experience.thumbnail_url)
+    : null;
+  const typeLabels = {
+    lodging: t("chat.experienceCard.type.lodging"),
+    trip: t("chat.experienceCard.type.trip"),
+    activity: t("chat.experienceCard.type.activity"),
+  };
+  const formatMad = (value: number) =>
+    new Intl.NumberFormat(intlLocale, {
+      style: "currency",
+      currency: "MAD",
+      maximumFractionDigits: 0,
+    }).format(value);
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setIsPlaying((prev) => !prev);
   };
-
 
   useEffect(() => {
     const video = videoRef.current;
@@ -85,7 +100,9 @@ export function ExperienceCard({
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className={`mx-auto sm:mx-4 rounded-t-lg sm:rounded-sm overflow-hidden relative w-[50vw] sm:w-[300px] group bg-muted ${experience.video_url ? "aspect-[9/16]" : "aspect-video"}`}>
+      <div
+        className={`mx-auto sm:mx-4 rounded-t-lg sm:rounded-sm overflow-hidden relative w-[50vw] sm:w-[300px] group bg-muted ${experience.video_url ? "aspect-[9/16]" : "aspect-video"}`}
+      >
         {experience.video_url && (
           <video
             ref={videoRef}
@@ -97,7 +114,11 @@ export function ExperienceCard({
             playsInline
             loop
           >
-            <track kind="captions" srcLang="fr" label="French captions" />
+            <track
+              kind="captions"
+              srcLang={locale}
+              label={t("chat.experienceCard.captionsLabel")}
+            />
           </video>
         )}
         <div
@@ -106,9 +127,9 @@ export function ExperienceCard({
             isPlaying ? "opacity-0" : "opacity-100",
           )}
         >
-          {experience.thumbnail_url ? (
+          {thumbnailSrc ? (
             <Image
-              src={getImageUrl(experience.thumbnail_url)!}
+              src={thumbnailSrc}
               alt={experience.title}
               fill
               placeholder="blur"
@@ -117,7 +138,9 @@ export function ExperienceCard({
             />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
-              <span className="text-muted-foreground">Pas d'image</span>
+              <span className="text-muted-foreground">
+                {t("chat.experienceCard.noImage")}
+              </span>
             </div>
           )}
         </div>
@@ -136,8 +159,10 @@ export function ExperienceCard({
 
         {/* Click area to toggle video playback when playing */}
         {isPlaying && (
-          <div 
+          <button
+            type="button"
             className="absolute inset-0 z-10 cursor-pointer"
+            aria-label={t("chat.experienceCard.pauseVideo")}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -158,21 +183,29 @@ export function ExperienceCard({
       </div>
 
       {/* Horizontal Gallery */}
-      {experience.gallery && experience.gallery.length > 0 && (
+      {galleryImages.length > 0 && (
         <div className="flex gap-2 p-4 pb-0 overflow-x-auto snap-x scrollbar-hide">
-          {experience.gallery.map((imgUrl, i) => (
-            <div
-              key={i}
+          {galleryImages.map((imgUrl, i) => (
+            <button
+              type="button"
+              key={`${experience.id}-${imgUrl}`}
               className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 snap-start bg-muted cursor-pointer"
-              onClick={() => openImageViewer(experience.gallery!, i)}
+              aria-label={t("chat.experienceCard.openGalleryImage", {
+                title: experience.title,
+                count: i + 1,
+              })}
+              onClick={() => openImageViewer(galleryImages, i)}
             >
               <Image
                 src={imgUrl}
-                alt={`${experience.title} image ${i + 1}`}
+                alt={t("chat.experienceCard.galleryAlt", {
+                  title: experience.title,
+                  count: i + 1,
+                })}
                 fill
                 className="object-cover"
               />
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -216,7 +249,9 @@ export function ExperienceCard({
 
         {experience.host_name && (
           <p className="text-xs text-muted-foreground">
-            Par {experience.host_name}
+            {t("chat.experienceCard.hostPrefix", {
+              host: experience.host_name,
+            })}
           </p>
         )}
 
@@ -226,43 +261,68 @@ export function ExperienceCard({
             <div className="border-t pt-2 space-y-1">
               <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                 <DoorOpen className="w-3 h-3" />
-                {experience.rooms.length} type
-                {experience.rooms.length > 1 ? "s" : ""} de chambre
+                {experience.rooms.length === 1
+                  ? t("chat.experienceCard.roomTypesCount.one", {
+                      count: experience.rooms.length,
+                    })
+                  : t("chat.experienceCard.roomTypesCount.other", {
+                      count: experience.rooms.length,
+                    })}
               </p>
-              {experience.rooms.slice(0, 3).map((room) => (
-                <div
-                  key={`${room.name}-${room.type ?? "room"}`}
-                  className="flex items-center justify-between gap-2 text-xs"
-                >
-                  <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-                    {room.photos && room.photos.length > 0 ? (
-                      <div
-                        className="relative w-8 h-8 flex-shrink-0 rounded overflow-hidden bg-muted cursor-pointer"
-                        onClick={() => openImageViewer(room.photos!, 0)}
-                      >
-                        <Image src={room.photos[0]} alt={room.name} fill className="object-cover" />
-                      </div>
-                    ) : (
-                      <BedDouble className="w-4 h-4 flex-shrink-0" />
-                    )}
-                    <span className="truncate flex-1">{room.name}</span>
-                    {room.max_persons && (
-                      <span className="text-[10px] flex-shrink-0">
-                        ({room.max_persons} pers.)
-                      </span>
-                    )}
+              {experience.rooms.slice(0, 3).map((room) => {
+                const roomPhotos = room.photos ?? [];
+
+                return (
+                  <div
+                    key={`${room.name}-${room.type ?? "room"}`}
+                    className="flex items-center justify-between gap-2 text-xs"
+                  >
+                    <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                      {roomPhotos.length > 0 ? (
+                        <button
+                          type="button"
+                          className="relative w-8 h-8 flex-shrink-0 rounded overflow-hidden bg-muted cursor-pointer"
+                          aria-label={t("chat.experienceCard.openRoomPhoto", {
+                            room: room.name,
+                          })}
+                          onClick={() => openImageViewer(roomPhotos, 0)}
+                        >
+                          <Image
+                            src={roomPhotos[0]}
+                            alt={room.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </button>
+                      ) : (
+                        <BedDouble className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      <span className="truncate flex-1">{room.name}</span>
+                      {room.max_persons && (
+                        <span className="text-[10px] flex-shrink-0">
+                          ({room.max_persons}{" "}
+                          {t("chat.experienceCard.guestAbbr")})
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-medium flex-shrink-0">
+                      {formatMad(room.price_mad)}
+                    </span>
                   </div>
-                  <span className="font-medium flex-shrink-0">{room.price_mad} MAD</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xl sm:text-2xl font-bold">{experience.price_mad} MAD</p>
+            <p className="text-xl sm:text-2xl font-bold">
+              {formatMad(experience.price_mad)}
+            </p>
             <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {experience.type === "lodging" ? "par nuit" : "par personne"}
+              {experience.type === "lodging"
+                ? t("chat.experienceCard.pricePerNight")
+                : t("chat.experienceCard.pricePerPerson")}
             </p>
           </div>
 
@@ -280,7 +340,7 @@ export function ExperienceCard({
               }}
               className="flex-1 sm:flex-none"
             >
-              Détails
+              {t("chat.experienceCard.details")}
             </Button>
             {onBook && (
               <Button
@@ -291,7 +351,7 @@ export function ExperienceCard({
                 }}
                 className="flex-1 sm:flex-none"
               >
-                Réserver
+                {t("chat.experienceCard.book")}
               </Button>
             )}
           </div>

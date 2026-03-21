@@ -226,5 +226,514 @@
       "title": "Privacy Policy | Okeyo Travel",
       "description": "Review Okeyo Travel's privacy policy and how your data is used and protected."
     }
+  },
+  "support": {
+    "page": {
+      "hero": {
+        "eyebrow": "Support center",
+        "title": "Help for travelers and hosts, without the dead ends.",
+        "description": "Search the help center, send a detailed issue report, or jump to direct contact options when the situation is urgent.",
+        "primaryCta": "Report an issue",
+        "secondaryCta": "Browse FAQs"
+      },
+      "cards": {
+        "email": {
+          "title": "Email support",
+          "description": "Best for detailed issues, screenshots, and booking references."
+        },
+        "phone": {
+          "title": "Phone or WhatsApp",
+          "description": "Use urgent channels for time-sensitive travel changes."
+        },
+        "responseTime": {
+          "title": "Typical response time",
+          "description": "Most tickets receive a first response within one business day.",
+          "value": "Within 24 hours"
+        }
+      },
+      "escalation": {
+        "eyebrow": "Escalate a case",
+        "title": "Can't find what you're looking for?",
+        "description": "Send a report with enough context for the support team to act on it quickly.",
+        "checklist": {
+          "title": "Include these details",
+          "reference": "Booking reference, experience name, or host name",
+          "timeline": "What happened, what you expected, and when it occurred",
+          "evidence": "Screenshots or payment details when applicable"
+        },
+        "whatsappPrefix": "Emergency travel issue? Call or message",
+        "whatsappLink": "support on WhatsApp",
+        "whatsappSuffix": "for the fastest response."
+      }
+    },
+    "faq": {
+      "eyebrow": "Help center",
+      "title": "Search frequently asked questions",
+      "description": "Start with the answers travelers and hosts ask most often. If you still need help, jump straight to the report form below.",
+      "searchPlaceholder": "Search bookings, payments, hosts...",
+      "results": {
+        "one": "{count} answer found",
+        "other": "{count} answers found"
+      },
+      "emptyTitle": "No FAQ matched your search",
+      "emptyDescription": "Try a broader term or send the team a detailed issue report.",
+      "emptyCta": "Report an issue",
+      "categories": {
+        "all": "All topics",
+        "general": "General",
+        "booking": "Booking",
+        "payments": "Payments",
+        "account": "Account",
+        "host": "Host"
+      },
+      "items": {
+        "general-response-times": {
+          "question": "How quickly does the support team reply?",
+          "answer": "We usually reply within **24 hours** on business days.\n\n- Urgent booking and payment issues are prioritized first.\n- Include screenshots, dates, and booking references to speed things up.",
+          "keywords": {
+            "one": "reply",
+            "two": "response",
+            "three": "urgent"
+          }
+        },
+        "general-contact-options": {
+          "question": "What is the fastest way to contact Okeyo Travel?",
+          "answer": "For routine questions, email support is the best starting point.\n\n- Email us at `support@okeyotravel.com`.\n- Use WhatsApp or phone for urgent, time-sensitive travel issues.",
+          "keywords": {
+            "one": "contact",
+            "two": "email",
+            "three": "whatsapp"
+          }
+        },
+        "booking-modify": {
+          "question": "Can I change a booking after it has been confirmed?",
+          "answer": "Booking changes depend on the host's availability and cancellation rules.\n\n1. Open your booking details page.\n2. Review the experience policy.\n3. Contact support if the change cannot be handled directly.",
+          "keywords": {
+            "one": "change",
+            "two": "modify",
+            "three": "confirmed"
+          }
+        },
+        "booking-cancel": {
+          "question": "How do cancellations and refunds work?",
+          "answer": "Refunds follow the cancellation policy attached to the booking.\n\n- Flexible experiences usually refund more when cancelled early.\n- Some fees may be non-refundable after the free-cancellation window closes.",
+          "keywords": {
+            "one": "cancel",
+            "two": "refund",
+            "three": "policy"
+          }
+        },
+        "payments-charge": {
+          "question": "I was charged but did not receive a confirmation. What should I do?",
+          "answer": "Start by checking your bookings page and inbox for a pending confirmation.\n\nIf nothing appears within a few minutes, send us:\n- the payment date\n- the amount charged\n- the last 4 digits of the card",
+          "keywords": {
+            "one": "charged",
+            "two": "payment",
+            "three": "card"
+          }
+        },
+        "payments-refund-time": {
+          "question": "How long do refunds take to appear?",
+          "answer": "Most refunds appear within **5 to 10 business days**, depending on your bank.\n\nSome banks display the reversal faster, while others keep the transaction pending longer.",
+          "keywords": {
+            "one": "refund",
+            "two": "bank",
+            "three": "days"
+          }
+        },
+        "account-login": {
+          "question": "I cannot log in to my account. What can I do?",
+          "answer": "Try the basics first:\n\n- confirm you are using the same email you signed up with\n- retry after clearing cached auth state\n- use the correct sign-in provider if you registered with Google or Apple",
+          "keywords": {
+            "one": "login",
+            "two": "password",
+            "three": "google"
+          }
+        },
+        "account-profile": {
+          "question": "Can I update my profile details and language preferences?",
+          "answer": "Yes. Visit **Settings** to update your preferred language, then open **Profile** for personal details like your display name and bio.",
+          "keywords": {
+            "one": "profile",
+            "two": "language",
+            "three": "settings"
+          }
+        },
+        "host-visibility": {
+          "question": "Why is my experience not visible to travelers?",
+          "answer": "Experiences can be hidden when they are still in review, saved as draft, or manually unpublished.\n\nCheck the host visibility page to confirm the listing status before contacting support.",
+          "keywords": {
+            "one": "host",
+            "two": "published",
+            "three": "draft"
+          }
+        },
+        "host-booking-issues": {
+          "question": "What should hosts include when reporting an issue?",
+          "answer": "Include the experience name, the affected booking or departure date, and any screenshots.\n\nThe more specific the report, the faster we can reproduce and resolve it.",
+          "keywords": {
+            "one": "host",
+            "two": "screenshots",
+            "three": "booking"
+          }
+        }
+      }
+    },
+    "form": {
+      "linkedHelper": "Your account is linked, so the team can match this report to your activity faster.",
+      "guestHelper": "You can send a report without logging in. Add an email if you want a reply.",
+      "success": {
+        "toast": "Issue report sent",
+        "title": "Report received",
+        "description": "Thanks. The support team now has your report and will follow up if more context is needed.",
+        "referenceLabel": "Ticket reference:",
+        "emailPrefix": "Prefer email instead? Reach us directly at",
+        "reset": "Send another report"
+      },
+      "error": {
+        "submitFallback": "We could not send your report right now. Please try again."
+      },
+      "title": "Report an issue",
+      "fields": {
+        "subject": {
+          "label": "Subject",
+          "placeholder": "Example: Payment confirmed but booking missing",
+          "error": "Use a short subject with at least 6 characters."
+        },
+        "type": {
+          "label": "Category",
+          "placeholder": "Select a category"
+        },
+        "email": {
+          "label": "Email (optional)",
+          "placeholder": "you@example.com",
+          "hint": "Leave blank if you do not need a direct reply.",
+          "error": "Enter a valid email address or leave it blank."
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Tell us what happened, what you expected, and how we can reproduce it.",
+          "hint": "Add screenshots, dates, and booking references when relevant.",
+          "error": "Describe the problem in at least 20 characters so support can help."
+        }
+      },
+      "issueTypes": {
+        "bug": {
+          "label": "Bug",
+          "description": "Something is broken or behaving unexpectedly."
+        },
+        "feature_request": {
+          "label": "Feature request",
+          "description": "Suggest an improvement or a missing capability."
+        },
+        "payment_issue": {
+          "label": "Payment issue",
+          "description": "Charges, refunds, invoices, or payout questions."
+        },
+        "account_issue": {
+          "label": "Account issue",
+          "description": "Login, profile, verification, or access problems."
+        },
+        "other": {
+          "label": "Other",
+          "description": "Anything that does not fit the categories above."
+        }
+      },
+      "submit": {
+        "idle": "Submit report",
+        "loading": "Sending report..."
+      }
+    }
+  },
+  "explore": {
+    "hero": {
+      "title": "Travel with a service shaped around you",
+      "description": "Search by place, stay type, dates, and guests to discover the right Moroccan escape for your next trip.",
+      "imageAlt": "Travel destination preview"
+    },
+    "filters": {
+      "location": {
+        "label": "Location",
+        "placeholder": "Search for places..."
+      },
+      "activity": {
+        "label": "Experience",
+        "options": {
+          "all": "All experiences",
+          "lodging": "Lodging"
+        }
+      },
+      "date": {
+        "label": "When",
+        "empty": "Choose dates",
+        "clear": "Clear"
+      },
+      "guests": {
+        "label": "Guests",
+        "title": "Guests",
+        "hint": "Used for capacity filtering",
+        "countOne": "{count} guest",
+        "countOther": "{count} guests"
+      }
+    },
+    "results": {
+      "titleWithQuery": "Results for \"{query}\"",
+      "titleFiltered": "Filtered results",
+      "clearSearch": "Clear search",
+      "error": "Something went wrong while searching.",
+      "empty": "No results matched your search.",
+      "reset": "Reset search",
+      "loadMore": "Load more",
+      "loadingMore": "Loading..."
+    },
+    "browse": {
+      "groupSubtitle": {
+        "one": "{count} experience",
+        "other": "{count} experiences"
+      },
+      "empty": "No experiences are available right now."
+    },
+    "category": {
+      "back": "Back to explore",
+      "notFoundTitle": "Category not found",
+      "notFoundCta": "View all categories",
+      "empty": "No experiences are available in this category."
+    },
+    "error": {
+      "title": "Unable to load experiences",
+      "description": "An error occurred while loading the page. Please try again.",
+      "retry": "Retry"
+    }
+  },
+  "chat": {
+    "error": {
+      "title": "Unable to load chat",
+      "description": "Something went wrong. Please try again.",
+      "retry": "Retry"
+    },
+    "sidebar": {
+      "homeAria": "Go to home page",
+      "newConversation": "New conversation",
+      "loading": "Loading...",
+      "empty": "No conversations yet",
+      "untitledConversation": "New conversation"
+    },
+    "input": {
+      "placeholder": "Ask your question...",
+      "locationEnabled": "Location enabled",
+      "shareLocation": "Share my location",
+      "disclaimer": "AI can make mistakes. Please verify important details."
+    },
+    "welcome": {
+      "defaultTitle": "Hello, I am your travel assistant",
+      "defaultDescription": "I can help you find the right stay in Morocco, compare rooms, and prepare your booking.",
+      "suggestionLabel": "Suggestion {count}",
+      "suggestions": {
+        "one": {
+          "title": "Romantic riad",
+          "prompt": "I am looking for a romantic riad in Marrakech for this weekend."
+        },
+        "two": {
+          "title": "Quiet Atlas lodge",
+          "prompt": "I am looking for a quiet lodge in the Atlas for 2 nights."
+        },
+        "three": {
+          "title": "Pool and relaxation",
+          "prompt": "Show me a stay with a pool and hammam near Marrakech."
+        },
+        "four": {
+          "title": "Budget stay",
+          "prompt": "I want a budget guesthouse in Chefchaouen."
+        }
+      }
+    },
+    "locked": {
+      "title": "Booking sent",
+      "description": "This conversation is finished.",
+      "newConversation": "New conversation"
+    },
+    "authRequired": {
+      "fallbackReason": "You need to be signed in to book.",
+      "login": "Sign in"
+    },
+    "bookingConfirm": {
+      "errorConfirm": "We could not confirm the booking.",
+      "modal": {
+        "title": "Complete the booking",
+        "successHeading": "Booking sent!",
+        "successTitle": "Request sent",
+        "successDescription": "The host will review your request and reply shortly."
+      },
+      "labels": {
+        "total": "Total",
+        "night": {
+          "one": "{count} night",
+          "other": "{count} nights"
+        },
+        "adult": {
+          "one": "{count} adult",
+          "other": "{count} adults"
+        },
+        "child": {
+          "one": "{count} child",
+          "other": "{count} children"
+        },
+        "infant": {
+          "one": "{count} infant",
+          "other": "{count} infants"
+        },
+        "traveler": {
+          "one": "{count} traveler",
+          "other": "{count} travelers"
+        }
+      },
+      "notice": "Your booking request will be sent to the host for approval. No payment will be charged right now.",
+      "back": "Back",
+      "confirm": "Confirm",
+      "persistLockWarning": "The booking was confirmed, but we could not save the conversation closure state.",
+      "cta": "Complete booking"
+    },
+    "location": {
+      "title": "Access to your location",
+      "description": "We use your location to find the most relevant stays and activities nearby.",
+      "errors": {
+        "unsupported": "Geolocation is not supported by your browser.",
+        "unavailable": "We could not retrieve your location.",
+        "permissionDenied": "Location permission was denied.",
+        "timeout": "The location request timed out."
+      },
+      "loading": "Locating...",
+      "share": "Share my location"
+    },
+    "results": {
+      "loadingThinking": "I am thinking about your request...",
+      "count": {
+        "one": "{count} result",
+        "other": "{count} results"
+      },
+      "promoCount": "{count} on promo"
+    },
+    "quickReplies": {
+      "freeText": "You can also answer freely."
+    },
+    "dateOptions": {
+      "freeText": "You can also write your exact dates."
+    },
+    "experienceCard": {
+      "type": {
+        "lodging": "Stay",
+        "trip": "Trip",
+        "activity": "Activity"
+      },
+      "captionsLabel": "Captions",
+      "pauseVideo": "Pause video",
+      "openGalleryImage": "Open image {count} for {title}",
+      "openRoomPhoto": "Open photo for {room}",
+      "noImage": "No image",
+      "galleryAlt": "{title} image {count}",
+      "hostPrefix": "Hosted by {host}",
+      "roomTypesCount": {
+        "one": "{count} room type",
+        "other": "{count} room types"
+      },
+      "guestAbbr": "guests",
+      "pricePerNight": "per night",
+      "pricePerPerson": "per person",
+      "details": "Details",
+      "book": "Book"
+    },
+    "roomSelector": {
+      "room": {
+        "one": "room",
+        "other": "rooms"
+      },
+      "joiner": " and ",
+      "message": {
+        "withExperience": "I want to book {selection} for {experience}.",
+        "withoutExperience": "I want to book {selection}."
+      },
+      "pricePerNight": "per night",
+      "guestAbbr": "guests",
+      "beds": "beds",
+      "counterLabel": "Number of rooms",
+      "book": "Book",
+      "freeText": "You can also type a different room choice."
+    },
+    "optionDetails": {
+      "type": {
+        "room": "Room details",
+        "departure": "Departure details",
+        "session": "Session details",
+        "option": "Option details"
+      },
+      "filter": "Filter: \"{query}\"",
+      "empty": "No details were found for this request.",
+      "room": {
+        "type": "Type: {value}",
+        "maxGuests": "Max: {count} guests",
+        "beds": "{count} beds",
+        "stock": "Stock: {available}/{total}",
+        "pricePerNight": "per night"
+      },
+      "departure": {
+        "depart": "Departure: {value}",
+        "return": "Return: {value}",
+        "seats": "Seats: {available}/{total}",
+        "price": "Price: {value}",
+        "status": "Status: {value}"
+      },
+      "session": {
+        "start": "Session: {value}",
+        "end": "End: {value}",
+        "capacity": "Capacity: {available}/{total}",
+        "price": "Price: {value}",
+        "status": "Status: {value}"
+      }
+    },
+    "experienceDetails": {
+      "boolean": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "type": {
+        "lodging": "Stay",
+        "trip": "Trip",
+        "activity": "Activity"
+      },
+      "reviewCount": "({count} reviews)",
+      "bookingsCount": "{count} bookings",
+      "host": {
+        "title": "Host",
+        "rating": "Host rating: {value} / 5",
+        "bookings": "Host bookings: {count}"
+      },
+      "amenities": "Amenities",
+      "servicesIncluded": "Included services",
+      "servicesExcluded": "Excluded services",
+      "rooms": "Rooms",
+      "roomFallback": "Room",
+      "roomPricePerNight": "per night",
+      "roomMaxGuests": "Max: {count} guests",
+      "roomBeds": "{count} beds",
+      "noRooms": "No rooms are configured.",
+      "trip": "Trip",
+      "itinerary": "Itinerary",
+      "stepFallback": "Step",
+      "dayTitle": "Day {day}: {title}",
+      "durationMinutes": "Duration: {count} min",
+      "upcomingDepartures": "Upcoming departures",
+      "seats": "Seats: {available}/{total}",
+      "price": "Price: {value}",
+      "activity": "Activity",
+      "upcomingSessions": "Upcoming sessions",
+      "end": "End: {value}",
+      "capacity": "Capacity: {available}/{total}",
+      "promotions": "Promotions",
+      "recentReviews": "Recent reviews",
+      "travelerFallback": "Traveler"
+    },
+    "debug": {
+      "component": "Debug UI component: {component}"
+    }
   }
 }

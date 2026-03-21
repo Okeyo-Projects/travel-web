@@ -8,10 +8,12 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 // Track which booking IDs have already had their modal auto-opened,
 // so remounts don't re-trigger the loop.
 const autoOpenedBookingIds = new Set<string>();
+
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useChatContext } from "@/contexts/ChatContext";
+import { getIntlLocale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 
 export interface BookingIntentSummary {
@@ -48,20 +51,30 @@ interface BookingConfirmCardProps {
   conversationId?: string | null;
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("fr-FR", {
+function formatDate(dateStr: string, locale: string) {
+  return new Date(dateStr).toLocaleDateString(locale, {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 }
 
-function formatPrice(cents: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
+function formatPrice(cents: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(cents / 100);
+}
+
+function getCountLabel(
+  t: (key: string, values?: Record<string, string | number>) => string,
+  key: string,
+  count: number,
+) {
+  return count === 1
+    ? t(`${key}.one`, { count })
+    : t(`${key}.other`, { count });
 }
 
 function BookingCheckoutModal({
@@ -75,6 +88,8 @@ function BookingCheckoutModal({
   onOpenChange: (open: boolean) => void;
   onConfirmed: () => void;
 }) {
+  const { locale, t } = useSiteI18n();
+  const intlLocale = getIntlLocale(locale);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -99,7 +114,7 @@ function BookingCheckoutModal({
       const message =
         err instanceof Error
           ? err.message
-          : "Impossible de confirmer la réservation.";
+          : t("chat.bookingConfirm.errorConfirm");
       toast.error(message);
     } finally {
       setIsConfirming(false);
@@ -111,7 +126,9 @@ function BookingCheckoutModal({
       <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full">
         <DialogHeader>
           <DialogTitle className="text-lg">
-            {confirmed ? "Réservation envoyée !" : "Finaliser la réservation"}
+            {confirmed
+              ? t("chat.bookingConfirm.modal.successHeading")
+              : t("chat.bookingConfirm.modal.title")}
           </DialogTitle>
         </DialogHeader>
 
@@ -119,9 +136,11 @@ function BookingCheckoutModal({
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <CheckCircle2 className="w-12 h-12 text-emerald-500" />
             <div>
-              <p className="font-semibold text-base">Demande envoyée</p>
+              <p className="font-semibold text-base">
+                {t("chat.bookingConfirm.modal.successTitle")}
+              </p>
               <p className="text-sm text-muted-foreground mt-1">
-                L'hôte va examiner votre demande et vous répondre sous peu.
+                {t("chat.bookingConfirm.modal.successDescription")}
               </p>
             </div>
           </div>
@@ -146,11 +165,11 @@ function BookingCheckoutModal({
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <CalendarDays className="w-4 h-4 shrink-0" />
                   <span>
-                    {formatDate(item.from_date)}
+                    {formatDate(item.from_date, intlLocale)}
                     {" → "}
-                    {formatDate(item.to_date)}
+                    {formatDate(item.to_date, intlLocale)}
                     {item.nights
-                      ? ` (${item.nights} nuit${item.nights > 1 ? "s" : ""})`
+                      ? ` (${getCountLabel(t, "chat.bookingConfirm.labels.night", item.nights)})`
                       : ""}
                   </span>
                 </div>
@@ -158,12 +177,24 @@ function BookingCheckoutModal({
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="w-4 h-4 shrink-0" />
                   <span>
-                    {item.adults} adulte{item.adults > 1 ? "s" : ""}
+                    {getCountLabel(
+                      t,
+                      "chat.bookingConfirm.labels.adult",
+                      item.adults,
+                    )}
                     {(item.children ?? 0) > 0
-                      ? `, ${item.children} enfant${(item.children ?? 0) > 1 ? "s" : ""}`
+                      ? `, ${getCountLabel(
+                          t,
+                          "chat.bookingConfirm.labels.child",
+                          item.children ?? 0,
+                        )}`
                       : ""}
                     {(item.infants ?? 0) > 0
-                      ? `, ${item.infants} bébé${(item.infants ?? 0) > 1 ? "s" : ""}`
+                      ? `, ${getCountLabel(
+                          t,
+                          "chat.bookingConfirm.labels.infant",
+                          item.infants ?? 0,
+                        )}`
                       : ""}
                   </span>
                 </div>
@@ -173,13 +204,14 @@ function BookingCheckoutModal({
             <Separator />
 
             <div className="flex justify-between items-center font-semibold text-base">
-              <span>Total</span>
-              <span>{formatPrice(summary.total_cents, summary.currency)}</span>
+              <span>{t("chat.bookingConfirm.labels.total")}</span>
+              <span>
+                {formatPrice(summary.total_cents, summary.currency, intlLocale)}
+              </span>
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Votre réservation sera envoyée à l'hôte pour approbation. Aucun
-              paiement ne sera prélevé maintenant.
+              {t("chat.bookingConfirm.notice")}
             </p>
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
@@ -188,7 +220,7 @@ function BookingCheckoutModal({
                 className="flex-1"
                 onClick={() => onOpenChange(false)}
               >
-                Retour
+                {t("chat.bookingConfirm.back")}
               </Button>
               <Button
                 className="flex-1"
@@ -198,7 +230,7 @@ function BookingCheckoutModal({
                 {isConfirming ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Confirmer
+                {t("chat.bookingConfirm.confirm")}
               </Button>
             </div>
           </div>
@@ -212,6 +244,8 @@ export function BookingConfirmCard({
   summary,
   conversationId,
 }: BookingConfirmCardProps) {
+  const { locale, t } = useSiteI18n();
+  const intlLocale = getIntlLocale(locale);
   const [modalOpen, setModalOpen] = useState(false);
   const {
     conversationId: contextConversationId,
@@ -259,9 +293,7 @@ export function BookingConfirmCard({
         }
       } catch (error) {
         console.error("Failed to persist conversation lock:", error);
-        toast.warning(
-          "Réservation confirmée, mais la fermeture de conversation n'a pas été sauvegardée.",
-        );
+        toast.warning(t("chat.bookingConfirm.persistLockWarning"));
       }
     }
 
@@ -292,7 +324,7 @@ export function BookingConfirmCard({
             )}
           </div>
           <span className="text-sm font-semibold text-primary shrink-0">
-            {formatPrice(summary.total_cents, summary.currency)}
+            {formatPrice(summary.total_cents, summary.currency, intlLocale)}
           </span>
         </div>
 
@@ -300,23 +332,32 @@ export function BookingConfirmCard({
           <div className="flex items-center gap-2">
             <CalendarDays className="w-3.5 h-3.5 shrink-0" />
             <span>
-              {formatDate(mainItem.from_date)} → {formatDate(mainItem.to_date)}
+              {formatDate(mainItem.from_date, intlLocale)} →{" "}
+              {formatDate(mainItem.to_date, intlLocale)}
               {mainItem.nights
-                ? ` · ${mainItem.nights} nuit${mainItem.nights > 1 ? "s" : ""}`
+                ? ` · ${getCountLabel(
+                    t,
+                    "chat.bookingConfirm.labels.night",
+                    mainItem.nights,
+                  )}`
                 : ""}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-3.5 h-3.5 shrink-0" />
             <span>
-              {totalGuests} voyageur{totalGuests > 1 ? "s" : ""}
+              {getCountLabel(
+                t,
+                "chat.bookingConfirm.labels.traveler",
+                totalGuests,
+              )}
             </span>
           </div>
         </div>
 
         <div className="px-4 pb-4">
           <Button className="w-full gap-2" onClick={() => setModalOpen(true)}>
-            Finaliser la réservation
+            {t("chat.bookingConfirm.cta")}
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

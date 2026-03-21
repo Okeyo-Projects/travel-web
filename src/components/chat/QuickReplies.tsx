@@ -1,5 +1,6 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 
 interface QuickRepliesProps {
@@ -15,6 +16,7 @@ export function QuickReplies({
   disabled = false,
   onSelect,
 }: QuickRepliesProps) {
+  const { t } = useSiteI18n();
   if (options.length === 0) return null;
 
   return (
@@ -37,7 +39,7 @@ export function QuickReplies({
 
       {allowFreeText && (
         <p className="text-xs text-muted-foreground">
-          Vous pouvez aussi répondre librement.
+          {t("chat.quickReplies.freeText")}
         </p>
       )}
     </div>

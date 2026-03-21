@@ -32,8 +32,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ChatPage() {
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { locale, t } = await getRequestTranslator();
+  const { q } = await searchParams;
 
   return (
     <>
@@ -47,7 +52,7 @@ export default async function ChatPage() {
           inLanguage: locale,
         }}
       />
-      <BookingChat />
+      <BookingChat initialMessage={q} />
     </>
   );
 }

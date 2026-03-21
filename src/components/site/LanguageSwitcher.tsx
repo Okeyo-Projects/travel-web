@@ -1,10 +1,10 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { type AppLocale, LOCALES } from "@/lib/i18n";
+import { LOCALES, type AppLocale } from "@/lib/i18n";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSiteI18n } from "./site-i18n";
 
 interface LanguageSwitcherProps {
@@ -69,7 +69,7 @@ export function LanguageSwitcher({
             aria-label={t(`language.options.${option}`)}
             title={t(`language.options.${option}`)}
             className={cn(
-              "h-8 min-w-0 rounded-full px-3 text-xs font-semibold tracking-[0.22em] transition-colors",
+              "h-7 min-w-0 rounded-full px-3 text-xs font-semibold tracking-[0.22em] transition-colors",
               active
                 ? isDark
                   ? "bg-white text-slate-950 hover:bg-white hover:text-slate-950"

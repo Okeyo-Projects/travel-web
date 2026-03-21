@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Compass, Hotel, Map as MapIcon, Tag } from "lucide-react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 interface ChatWelcomeProps {
   onSelectSuggestion: (suggestion: string) => void;
@@ -18,30 +19,30 @@ export function ChatWelcome({
   welcomeDescription,
   suggestedPrompts,
 }: ChatWelcomeProps) {
+  const { t } = useSiteI18n();
   const defaultSuggestions = [
     {
       icon: Hotel,
-      title: "Riad Romantique",
-      prompt: "Je cherche un riad romantique à Marrakech pour ce weekend.",
+      title: t("chat.welcome.suggestions.one.title"),
+      prompt: t("chat.welcome.suggestions.one.prompt"),
       color: "text-rose-500 bg-rose-500/10",
     },
     {
       icon: MapIcon,
-      title: "Lodge Calme Atlas",
-      prompt: "Je cherche un lodge calme dans l'Atlas pour 2 nuits.",
+      title: t("chat.welcome.suggestions.two.title"),
+      prompt: t("chat.welcome.suggestions.two.prompt"),
       color: "text-emerald-500 bg-emerald-500/10",
     },
     {
       icon: Compass,
-      title: "Piscine & Détente",
-      prompt:
-        "Montre-moi un hébergement avec piscine et hammam près de Marrakech.",
+      title: t("chat.welcome.suggestions.three.title"),
+      prompt: t("chat.welcome.suggestions.three.prompt"),
       color: "text-blue-500 bg-blue-500/10",
     },
     {
       icon: Tag,
-      title: "Petit Budget",
-      prompt: "Je veux une maison d'hôtes petit budget à Chefchaouen.",
+      title: t("chat.welcome.suggestions.four.title"),
+      prompt: t("chat.welcome.suggestions.four.prompt"),
       color: "text-amber-500 bg-amber-500/10",
     },
   ];
@@ -58,16 +59,15 @@ export function ChatWelcome({
     Array.isArray(suggestedPrompts) && suggestedPrompts.length > 0
       ? suggestedPrompts.slice(0, 4).map((prompt, index) => ({
           icon: iconPalette[index % iconPalette.length],
-          title: `Suggestion ${index + 1}`,
+          title: t("chat.welcome.suggestionLabel", { count: index + 1 }),
           prompt,
           color: colorPalette[index % colorPalette.length],
         }))
       : defaultSuggestions;
 
-  const title = welcomeTitle || "Bonjour, je suis votre Assistant Voyage";
+  const title = welcomeTitle || t("chat.welcome.defaultTitle");
   const description =
-    welcomeDescription ||
-    "Je peux vous aider à trouver le lodge idéal au Maroc, comparer les chambres et préparer votre réservation.";
+    welcomeDescription || t("chat.welcome.defaultDescription");
 
   const container = {
     hidden: { opacity: 0 },

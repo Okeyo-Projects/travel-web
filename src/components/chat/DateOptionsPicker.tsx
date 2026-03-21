@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarDays } from "lucide-react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 
 export interface DateOptionItem {
@@ -27,6 +28,7 @@ export function DateOptionsPicker({
   disabled = false,
   onSelect,
 }: DateOptionsPickerProps) {
+  const { t } = useSiteI18n();
   if (!question || options.length === 0) return null;
 
   return (
@@ -54,7 +56,7 @@ export function DateOptionsPicker({
 
       {allowFreeText && (
         <p className="text-xs text-muted-foreground">
-          Vous pouvez aussi écrire vos dates exactes.
+          {t("chat.dateOptions.freeText")}
         </p>
       )}
     </div>
