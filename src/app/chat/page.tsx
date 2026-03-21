@@ -2,8 +2,16 @@ import type { Metadata } from "next";
 import { BookingChat } from "@/components/chat/BookingChat";
 
 export const metadata: Metadata = {
-  title: "Chat AI | Morocco Experiences",
-  description: "Discutez avec notre assistant pour planifier votre voyage.",
+  title: "Assistant voyage IA — Okeyo Travel",
+  description:
+    "Discutez avec notre assistant IA pour planifier votre voyage sur mesure en quelques minutes.",
+  alternates: { canonical: "/chat" },
+  openGraph: {
+    title: "Assistant voyage IA — Okeyo Travel",
+    description:
+      "Discutez avec notre assistant IA pour planifier votre voyage sur mesure en quelques minutes.",
+    url: "/chat",
+  },
 };
 
 export default function ChatPage() {

@@ -4,17 +4,17 @@ title: "Add Apple Sign-In to Auth Modal"
 status: review
 priority: high
 created: 2026-03-07
-updated: 2026-03-08
+updated: 2026-03-18
 assigned: codex
 branch: task/006-social-login
 pr: null
 attempts: 0
 depends_on: []
 progress: 100
+status_source: task_file
 ---
 
 ## Description
-
 The auth modal (`auth-modal.tsx`) currently supports email/password login and Google OAuth. Add Apple Sign-In as an additional social login option.
 
 **Changes needed:**
@@ -28,7 +28,6 @@ The button should appear on both login and signup views of the auth modal.
 Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding Service ID, Key ID, etc.) -- document what needs to be configured but the code should be ready.
 
 ## Acceptance Criteria
-
 - [ ] "Sign in with Apple" button appears in auth modal (login and signup)
 - [ ] Button follows Apple's branding guidelines (black background, Apple logo, white text)
 - [ ] Clicking triggers Supabase OAuth flow with Apple provider
@@ -38,7 +37,6 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 - [ ] Works on both desktop and mobile layouts
 
 ## Context
-
 - Auth modal: `src/components/auth/auth-modal.tsx`
 - Auth provider: `src/providers/auth-provider.tsx`
 - Auth hook: `src/hooks/use-auth.ts`
@@ -46,7 +44,6 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 - Mobile reference: `/Users/naimabdelkerim/Code/travel/apps/mobile/app/(auth)/login.tsx`
 
 ## Checklist
-
 - [x] Read current auth modal implementation
 - [x] Read auth provider for OAuth flow pattern (Google)
 - [x] Add Apple logo icon + Apple sign-in button under Google
@@ -64,7 +61,6 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
   - Ensure the production domain is listed in Apple Sign-In configuration.
 
 ## Agent Log
-
 ### 2026-03-08
 - Started task on branch `task/006-social-login`.
 - Reviewed auth modal/provider flow, relevant profile/auth schema and RLS migrations, and mobile login screen reference.
@@ -75,3 +71,6 @@ Note: Apple Sign-In configuration in Supabase dashboard is a manual step (adding
 - Validation blocked by environment: `pnpm tsc --noEmit` fails (`Command "tsc" not found`) and `pnpm lint` fails (`biome: command not found`) because `node_modules` is missing.
 - Marked task ready for review with manual dependency install + runtime OAuth validation pending.
 - Appended task `006` commands to `PLAN/pending-push.sh`; push/PR/merge remains pending manual execution.
+- 2026-03-18: Task status changed from review to in progress from the command palette.
+- 2026-03-18: Task status changed from in progress to review from the command palette.
+- 2026-03-18: Task status changed from in progress to review from the command palette.

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   ArrowRight,
   Clock3,
@@ -42,6 +43,19 @@ const CONTACT_CARDS = [
     icon: Clock3,
   },
 ];
+
+export const metadata: Metadata = {
+  title: "Aide & Support — Okeyo Travel",
+  description:
+    "Retrouvez toutes nos réponses aux questions fréquentes et contactez notre équipe d'assistance.",
+  alternates: { canonical: "/support" },
+  openGraph: {
+    title: "Aide & Support — Okeyo Travel",
+    description:
+      "Retrouvez toutes nos réponses aux questions fréquentes et contactez notre équipe d'assistance.",
+    url: "/support",
+  },
+};
 
 export default function SupportPage() {
   return (

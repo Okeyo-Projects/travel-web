@@ -2,9 +2,9 @@
 id: "002"
 title: "Implement Reviews System on Experience Detail"
 status: done
-priority: high
+priority: medium
 created: 2026-03-07
-updated: 2026-03-08
+updated: 2026-03-18
 assigned: codex
 branch: null
 pr: null
@@ -14,7 +14,6 @@ progress: 100
 ---
 
 ## Description
-
 Replace the "coming soon" placeholder in the Reviews tab on the experience detail page with a fully functional reviews display. The database already has a reviews system (tables: `reviews`, `review_requests`). This task is read-only display -- no review submission form (that comes from the booking detail after completion).
 
 Build an Airbnb-quality reviews section:
@@ -32,7 +31,6 @@ Also add a review submission flow accessible from the booking detail page when a
 - Success confirmation
 
 ## Acceptance Criteria
-
 - [x] Reviews tab shows average rating with star visualization
 - [x] Rating breakdown chart (5 to 1 stars with bar percentages)
 - [x] Review cards show avatar, name, date, rating, text
@@ -44,7 +42,6 @@ Also add a review submission flow accessible from the booking detail page when a
 - [x] Matches Airbnb/Booking.com review section quality
 
 ## Context
-
 - Schema: `web/supabase/migrations/20251221000000_create_review_system.sql`
 - Schema: `web/supabase/migrations/20251221000002_fix_review_requests_function.sql`
 - Current placeholder: Reviews tab in `src/app/experience/[id]/page.tsx`
@@ -53,7 +50,6 @@ Also add a review submission flow accessible from the booking detail page when a
 - Mobile reference: `/Users/naimabdelkerim/Code/travel/apps/mobile/app/experience/[experienceId]/index.tsx` (Reviews tab)
 
 ## Checklist
-
 - [x] Read review system migrations and understand schema
 - [x] Read mobile app review display for design reference
 - [x] Create review types in `web/src/types/`

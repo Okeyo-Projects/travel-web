@@ -26,10 +26,35 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+
 export const metadata: Metadata = {
-  title: "Okeyo Travel - Laissez parler votre mood",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Okeyo Travel — Laissez parler votre mood",
+    template: "%s",
+  },
   description:
     "En 2 minutes, OKEYO vous recommande l'endroit le plus adapté à vos envies.",
+  robots: process.env.NEXT_PUBLIC_NOINDEX === "true"
+    ? { index: false, follow: false }
+    : { index: true, follow: true },
+  openGraph: {
+    siteName: "Okeyo Travel",
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@okeyotravel",
+  },
+  alternates: {
+    languages: {
+      fr: SITE_URL,
+      "x-default": SITE_URL,
+    },
+  },
 };
 
 import type { ReactNode } from "react";
