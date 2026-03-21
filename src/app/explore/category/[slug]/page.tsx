@@ -1,14 +1,14 @@
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
-import { headers } from "next/headers";
 import { ExperienceCard } from "@/components/experience-card";
 import { CategoryAnalytics } from "@/components/explore/CategoryAnalytics";
 import { Button } from "@/components/ui/button";
 import { transformExperience } from "@/hooks/use-experiences-by-category";
 import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
-import { buildCategorySlug, categoryMatchesSlug } from "@/lib/routing/slugs";
+import { categoryMatchesSlug } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
+import { ChevronLeft } from "lucide-react";
+import { headers } from "next/headers";
+import Link from "next/link";
 
 export const revalidate = 1800; // ISR: revalidate every 30 minutes
 
@@ -61,7 +61,7 @@ export default async function ExploreCategoryPage({
       const { data: rows } = await (supabase as any)
         .from("experience_categories")
         .select(`experience:experiences!inner(${EXPERIENCE_SELECT})`)
-        .eq("category_id", category.id)
+        .eq("category_id", (category as any)?.id as string)
         .eq("experience.status", "published")
         .is("experience.deleted_at", null);
 
@@ -94,7 +94,7 @@ export default async function ExploreCategoryPage({
 
   return (
     <div className="min-h-screen bg-white">
-      <CategoryAnalytics categoryId={category.id} categorySlug={routeSlug} />
+      <CategoryAnalytics categoryId={(category as any)?.id as string} categorySlug={routeSlug} />
       <div className="container mx-auto px-4 py-8 space-y-8">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" className="px-2">
@@ -107,11 +107,11 @@ export default async function ExploreCategoryPage({
 
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">
-            {category.title.fr || category.title.en}
+            {(category as any)?.title.fr || (category as any)?.en}
           </h1>
-          {category.description ? (
+          {(category as any)?.description ? ( 
             <p className="text-muted-foreground max-w-2xl">
-              {category.description}
+              {(category as any)?.description}
             </p>
           ) : null}
         </div>
