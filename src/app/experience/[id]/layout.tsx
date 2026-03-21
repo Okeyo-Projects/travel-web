@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { JsonLd } from "@/components/seo/json-ld";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
@@ -85,10 +86,61 @@ export async function generateMetadata({
   };
 }
 
-export default function ExperienceLayout({
+export default async function ExperienceLayout({
   children,
+  params,
 }: {
   children: ReactNode;
+  params: Promise<{ id: string }>;
 }) {
-  return <>{children}</>;
+  const { id } = await params;
+  const meta = await fetchExperienceMeta(id);
+  const experienceUrl = `${SITE_URL}/experience/${id}`;
+
+  return (
+    <>
+      <JsonLd
+        schema={[
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Accueil",
+                item: SITE_URL,
+              },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Explorer",
+                item: `${SITE_URL}/explore`,
+              },
+              {
+                "@type": "ListItem",
+                position: 3,
+                name: meta?.title ?? "Expérience",
+                item: experienceUrl,
+              },
+            ],
+          },
+          ...(meta
+            ? [
+                {
+                  "@context": "https://schema.org",
+                  "@type": "TouristAttraction",
+                  name: meta.title,
+                  description: meta.description || undefined,
+                  url: experienceUrl,
+                  touristType: "leisure",
+                  availableLanguage: "French",
+                },
+              ]
+            : []),
+        ]}
+      />
+      {children}
+    </>
+  );
 }

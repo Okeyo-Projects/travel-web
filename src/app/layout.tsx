@@ -59,6 +59,7 @@ export const metadata: Metadata = {
 
 import type { ReactNode } from "react";
 import { PostHogPageView } from "@/components/analytics/posthog-pageview";
+import { JsonLd } from "@/components/seo/json-ld";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthProvider } from "@/providers/auth-provider";
 import { PostHogProvider } from "@/providers/posthog-provider";
@@ -82,6 +83,40 @@ export default async function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://connect.facebook.net" />
+        <JsonLd
+          schema={[
+            {
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Okeyo Travel",
+              url: SITE_URL,
+              logo: `${SITE_URL}/logo_white.png`,
+              description:
+                "En 2 minutes, OKEYO vous recommande la destination la plus adaptée à vos envies grâce à l'IA.",
+              sameAs: ["https://www.instagram.com/okeyotravel"],
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer service",
+                availableLanguage: "French",
+              },
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Okeyo Travel",
+              url: SITE_URL,
+              inLanguage: "fr",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: `${SITE_URL}/explore?q={search_term_string}`,
+                },
+                "query-input": "required name=search_term_string",
+              },
+            },
+          ]}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-[100dvh] flex flex-col bg-white`}
