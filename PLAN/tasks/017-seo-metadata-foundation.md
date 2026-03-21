@@ -1,16 +1,16 @@
 ---
 id: "017"
 title: "SEO Foundation: robots.txt, sitemap, per-page metadata, canonical, OG tags"
-status: in_progress
+status: done
 priority: urgent
 created: 2026-03-21
 updated: 2026-03-21
 assigned: codex
-branch: null
+branch: task/017-seo-metadata-foundation
 pr: null
-attempts: 0
+attempts: 1
 depends_on: []
-progress: 0
+progress: 100
 ---
 
 ## Description
@@ -86,21 +86,33 @@ The site has no `robots.txt`, no `sitemap.xml`, duplicate/missing metadata on al
 
 ## Checklist
 
-- [ ] Step 1: Read `src/app/layout.tsx` to understand current metadata setup
-- [ ] Step 2: Create `src/app/robots.ts`
-- [ ] Step 3: Create `src/app/sitemap.ts` with static routes
-- [ ] Step 4: Extend sitemap with dynamic experience and category routes from Supabase
-- [ ] Step 5: Add unique `metadata` / `generateMetadata()` to homepage
-- [ ] Step 6: Add metadata to `/explore` and `/explore/category/[slug]`
-- [ ] Step 7: Add metadata to `/collections`, `/chat`, `/preorder`, `/support`
-- [ ] Step 8: Add `generateMetadata()` to `/experience/[id]` using DB fields
-- [ ] Step 9: Add canonical tags to all pages via `alternates.canonical`
-- [ ] Step 10: Add OG + Twitter Card tags to all pages
-- [ ] Step 11: Create or source a default OG image (`public/og-default.png`)
-- [ ] Step 12: Add noindex conditional to root layout via env var
-- [ ] Step 13: Add hreflang to root layout metadata
-- [ ] Step 14: Verify no duplicate titles remain
+- [x] Step 1: Read `src/app/layout.tsx` to understand current metadata setup
+- [x] Step 2: Create `src/app/robots.ts`
+- [x] Step 3: Create `src/app/sitemap.ts` with static routes
+- [x] Step 4: Extend sitemap with dynamic experience and category routes from Supabase
+- [x] Step 5: Add unique `metadata` / `generateMetadata()` to homepage
+- [x] Step 6: Add metadata to `/explore` and `/explore/category/[slug]`
+- [x] Step 7: Add metadata to `/collections`, `/chat`, `/preorder`, `/support`
+- [x] Step 8: Add `generateMetadata()` to `/experience/[id]` using DB fields
+- [x] Step 9: Add canonical tags to all pages via `alternates.canonical`
+- [x] Step 10: Add OG + Twitter Card tags to all pages
+- [x] Step 11: Created `src/app/opengraph-image.tsx` (edge-rendered default OG image 1200×630)
+- [x] Step 12: Add noindex conditional to root layout via env var
+- [x] Step 13: Add hreflang to root layout metadata
+- [x] Step 14: Verify no duplicate titles remain
 
 ## Review Notes
 
 ## Agent Log
+
+### 2026-03-21
+- Created `src/app/robots.ts` — allows all public paths, disallows `/api/`, `/admin/`, `/agent/`, `/host/`, `/bookings/`, `/profile/`, `/notifications/`, `/settings/`; allows AI crawlers (GPTBot, ClaudeBot, CCBot, Google-Extended); references sitemap URL.
+- Created `src/app/sitemap.ts` — 8 static routes with priority/changeFrequency; dynamic routes for all published experiences and active categories fetched from Supabase server client; graceful fallback if DB unavailable at build time.
+- Added unique `metadata` exports to all public pages: homepage (`page.tsx`), chat (`chat/page.tsx`), support (`support/page.tsx`).
+- Created layout files with metadata for client-component pages: `explore/layout.tsx`, `collections/layout.tsx`, `preorder/layout.tsx`, `explore/category/layout.tsx`.
+- Created `experience/[id]/layout.tsx` with `generateMetadata` — resolves experience by UUID, slug, or composite slug prefix; returns dynamic title/description from DB; graceful fallback.
+- Added canonical `alternates.canonical` and `openGraph` url/title/description to all public page metadata exports.
+- Updated root `layout.tsx` metadata: added `metadataBase`, title template, `robots` env-var-driven noindex, default `openGraph` site config, `twitter` card defaults, and `alternates.languages` hreflang (fr + x-default).
+- Created `src/app/opengraph-image.tsx` — edge-rendered 1200×630 default OG image in brand colours (dark background, purple accent, French headline).
+- Fixed stale chat page title ("Chat AI | Morocco Experiences" → "Assistant voyage IA — Okeyo Travel").
+- Verified no duplicate titles remain across all public pages.
