@@ -9,6 +9,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 import type { HostExperience } from "@/types/host-experiences";
 
 type HostExperienceCardProps = {
@@ -80,6 +81,8 @@ export function HostExperienceCard({
             src={experience.thumbnailUrl}
             alt={experience.title}
             fill
+            placeholder="blur"
+            blurDataURL={IMAGE_BLUR_DATA_URL}
             className="object-cover"
             sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
           />

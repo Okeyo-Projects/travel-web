@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useImageViewer } from "@/hooks/use-image-viewer";
-import { getImageUrl } from "@/utils/functions";
+import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
 
 interface RoomInfo {
   name: string;
@@ -111,6 +111,8 @@ export function ExperienceCard({
               src={getImageUrl(experience.thumbnail_url)!}
               alt={experience.title}
               fill
+              placeholder="blur"
+              blurDataURL={IMAGE_BLUR_DATA_URL}
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (

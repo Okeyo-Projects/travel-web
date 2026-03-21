@@ -1,7 +1,7 @@
 ---
 id: "025"
 title: "Enforce Content Security Policy headers (upgrade from report-only)"
-status: todo
+status: done
 priority: high
 created: 2026-03-21
 updated: 2026-03-21

@@ -1,7 +1,7 @@
 ---
 id: "024"
 title: "Migrate key pages from client to server components for smaller bundles"
-status: todo
+status: done
 priority: high
 created: 2026-03-21
 updated: 2026-03-21

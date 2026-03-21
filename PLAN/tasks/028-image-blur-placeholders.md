@@ -1,7 +1,7 @@
 ---
 id: "028"
 title: "Add blur placeholders to images to prevent CLS"
-status: todo
+status: done
 priority: medium
 created: 2026-03-21
 updated: 2026-03-21

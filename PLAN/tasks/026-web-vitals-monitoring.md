@@ -1,7 +1,7 @@
 ---
 id: "026"
 title: "Add Core Web Vitals monitoring and reporting to PostHog"
-status: todo
+status: done
 priority: high
 created: 2026-03-21
 updated: 2026-03-21

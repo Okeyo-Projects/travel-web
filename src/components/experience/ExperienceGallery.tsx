@@ -1,9 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Camera } from "lucide-react";
 import { useImageViewer } from "@/hooks/use-image-viewer";
 import { Button } from "@/components/ui/button";
-import { CustomVideoPlayer } from "./CustomVideoPlayer";
+
+const CustomVideoPlayer = dynamic(
+  () => import("./CustomVideoPlayer").then((m) => m.CustomVideoPlayer),
+  { ssr: false },
+);
 
 interface ExperienceGalleryProps {
   images: string[];

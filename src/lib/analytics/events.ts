@@ -37,6 +37,8 @@ export const ANALYTICS_EVENT = {
   // Server-side
   PREORDER_SUBMITTED: "preorder_submitted",
   AI_CHAT_COMPLETED: "ai_chat_completed",
+  // Performance
+  WEB_VITALS: "web_vitals",
 } as const;
 
 export type AnalyticsEventName =

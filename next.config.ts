@@ -8,21 +8,7 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
-  // Report-only CSP — observe violations without breaking the app.
-  // Move to Content-Security-Policy once violations are resolved.
-  {
-    key: "Content-Security-Policy-Report-Only",
-    value: [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net",
-      "media-src 'self' blob:",
-      "frame-ancestors 'none'",
-    ].join("; "),
-  },
+  // CSP is enforced per-request with nonces via src/middleware.ts.
 ];
 
 const nextConfig: NextConfig = {

@@ -11,7 +11,7 @@ import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
-import { getImageUrl } from "@/utils/functions";
+import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
 
 interface CompactExperienceCardProps {
   experience: ExperienceListItem;
@@ -126,6 +126,8 @@ export function CompactExperienceCard({
                   src={thumbnailUrl}
                   alt={experience.title}
                   fill
+                  placeholder="blur"
+                  blurDataURL={IMAGE_BLUR_DATA_URL}
                   className="object-cover transition-transform duration-500 group-hover/card:scale-105"
                 />
               ) : (

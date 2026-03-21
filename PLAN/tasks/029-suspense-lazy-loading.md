@@ -1,7 +1,7 @@
 ---
 id: "029"
 title: "Add Suspense boundaries and lazy loading for heavy components"
-status: todo
+status: done
 priority: medium
 created: 2026-03-21
 updated: 2026-03-21

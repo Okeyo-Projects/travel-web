@@ -2,12 +2,23 @@
 
 import { AlertCircle, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
-import { BookingsChart } from "@/components/host/bookings-chart";
-import { ExperienceBreakdownChart } from "@/components/host/experience-breakdown-chart";
 import { RecentBookingsList } from "@/components/host/recent-bookings-list";
 import { StatisticsCards } from "@/components/host/statistics-cards";
-import { StatusBreakdownChart } from "@/components/host/status-breakdown-chart";
+
+const BookingsChart = dynamic(
+  () => import("@/components/host/bookings-chart").then((m) => m.BookingsChart),
+  { ssr: false, loading: () => <Skeleton className="h-[340px] w-full rounded-xl" /> },
+);
+const StatusBreakdownChart = dynamic(
+  () => import("@/components/host/status-breakdown-chart").then((m) => m.StatusBreakdownChart),
+  { ssr: false, loading: () => <Skeleton className="h-[340px] w-full rounded-xl" /> },
+);
+const ExperienceBreakdownChart = dynamic(
+  () => import("@/components/host/experience-breakdown-chart").then((m) => m.ExperienceBreakdownChart),
+  { ssr: false, loading: () => <Skeleton className="h-[320px] w-full rounded-xl" /> },
+);
 import { TimePeriodSelector } from "@/components/host/time-period-selector";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

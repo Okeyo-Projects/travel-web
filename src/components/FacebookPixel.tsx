@@ -8,7 +8,7 @@ type FacebookWindow = Window & {
   fbq?: (...args: unknown[]) => void;
 };
 
-export default function FacebookPixel() {
+export default function FacebookPixel({ nonce }: { nonce?: string }) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -24,7 +24,8 @@ export default function FacebookPixel() {
   return (
     <Script
       id="fb-pixel"
-      strategy="afterInteractive"
+      strategy="lazyOnload"
+      nonce={nonce}
       // biome-ignore lint/security/noDangerouslySetInnerHtml: Required inline bootstrap snippet for Facebook Pixel.
       dangerouslySetInnerHTML={{
         __html: `

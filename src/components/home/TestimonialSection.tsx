@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { IMAGE_BLUR_DATA_URL } from '@/utils/functions'
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -171,6 +172,8 @@ export function TestimonialSection() {
                   alt={item.name}
                   width={48}
                   height={48}
+                  placeholder="blur"
+                  blurDataURL={IMAGE_BLUR_DATA_URL}
                   className='h-12 w-12 rounded-full object-cover'
                 />
                 <div>

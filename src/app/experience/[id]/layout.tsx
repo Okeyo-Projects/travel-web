@@ -2,6 +2,27 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { JsonLd } from "@/components/seo/json-ld";
+import { buildExperienceSlug } from "@/lib/routing/slugs";
+
+export const revalidate = 1800; // ISR: revalidate every 30 minutes
+
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("experiences" as never)
+      .select("id, title")
+      .eq("status" as never, "published")
+      .is("deleted_at" as never, null);
+
+    return ((data ?? []) as Array<{ id: string; title: string }>).map((exp) => ({
+      id: buildExperienceSlug({ title: exp.title, id: exp.id }),
+    }));
+  } catch {
+    // Supabase unavailable at build time — fall back to dynamic rendering
+    return [];
+  }
+}
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";

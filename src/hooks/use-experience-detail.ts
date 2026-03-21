@@ -18,7 +18,7 @@ import type {
 } from "@/types/experience-detail";
 import { resolveStorageUrl } from "@/utils/functions";
 
-const SELECT_EXPERIENCE_DETAIL = `
+export const SELECT_EXPERIENCE_DETAIL = `
   id,
   title,
   short_description,
@@ -418,7 +418,7 @@ function parseTrip(
   };
 }
 
-function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
+export function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
   const gallery = parseMedia(record.media);
   const videoMedia = record.video
     ? {
@@ -587,7 +587,10 @@ async function fetchExperienceDetail(
   };
 }
 
-export function useExperienceDetail(experienceId: string | null | undefined) {
+export function useExperienceDetail(
+  experienceId: string | null | undefined,
+  options?: { initialData?: ExperienceDetailResponse },
+) {
   return useQuery<ExperienceDetailResponse>({
     queryKey: ["experience-detail", experienceId],
     queryFn: async () => {
@@ -598,5 +601,6 @@ export function useExperienceDetail(experienceId: string | null | undefined) {
     },
     enabled: !!experienceId,
     staleTime: 1000 * 60 * 5,
+    initialData: options?.initialData,
   });
 }

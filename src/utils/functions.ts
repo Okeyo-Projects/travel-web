@@ -88,3 +88,8 @@ export function resolveStorageUrl(
 
 export const getImageUrl = (path?: string, bucket?: string) =>
   resolveStorageUrl(path ?? null, bucket);
+
+// Tiny 16×9 gray JPEG data URI used as a blur placeholder for remote images.
+// Prevents layout shift while the real image loads.
+export const IMAGE_BLUR_DATA_URL =
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAJABADASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABgUEB//EACIQAAIBBAIDAQAAAAAAAAAAAAECAwQREiExQWGB/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AMpTR3VZUexbvGq+KSXBLkr6dN5Nqb29I3hNnbvhqpILekMhUOHY5C3VJvBXCq/jGBj2AFB//9k=";

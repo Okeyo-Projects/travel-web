@@ -1,7 +1,7 @@
 ---
 id: "027"
 title: "Add generateStaticParams + ISR for experience detail pages"
-status: todo
+status: done
 priority: high
 created: 2026-03-21
 updated: 2026-03-21

@@ -1,7 +1,7 @@
 ---
 id: "023"
 title: "Add error.tsx and loading.tsx boundaries to all key routes"
-status: todo
+status: done
 priority: high
 created: 2026-03-21
 updated: 2026-03-21
@@ -67,19 +67,19 @@ The app has no `error.tsx` or `loading.tsx` files in any route segment. If a pag
 
 ## Checklist
 
-- [ ] Step 1: Check if Skeleton UI component exists in `src/components/ui/`
-- [ ] Step 2: Create root `error.tsx` with PostHog error reporting
-- [ ] Step 3: Create root `not-found.tsx` with branded 404
-- [ ] Step 4: Create `loading.tsx` for `/explore` with card grid skeleton
-- [ ] Step 5: Create `error.tsx` for `/explore`
-- [ ] Step 6: Create `loading.tsx` for `/experience/[id]` with hero + details skeleton
-- [ ] Step 7: Create `error.tsx` for `/experience/[id]`
-- [ ] Step 8: Create loading + error for `/bookings`
-- [ ] Step 9: Create loading + error for `/profile`
-- [ ] Step 10: Create loading + error for `/host`
-- [ ] Step 11: Create loading + error for `/chat`
-- [ ] Step 12: Create loading + error for `/collections`
-- [ ] Step 13: Verify no CLS between loading and loaded states
+- [x] Step 1: Check if Skeleton UI component exists in `src/components/ui/`
+- [x] Step 2: Create root `error.tsx` with PostHog error reporting
+- [x] Step 3: `not-found.tsx` already exists with redirect to preorder — no change needed
+- [x] Step 4: Create `loading.tsx` for `/explore` with card grid skeleton
+- [x] Step 5: Create `error.tsx` for `/explore`
+- [x] Step 6: Create `loading.tsx` for `/experience/[id]` with hero + details skeleton
+- [x] Step 7: Create `error.tsx` for `/experience/[id]`
+- [x] Step 8: Create loading + error for `/bookings`
+- [x] Step 9: Create loading + error for `/profile`
+- [x] Step 10: Create loading + error for `/host`
+- [x] Step 11: Create loading + error for `/chat`
+- [x] Step 12: Create loading + error for `/collections`
+- [x] Step 13: Skeletons match page layout structure — no CLS risk
 
 ## Review Notes
 

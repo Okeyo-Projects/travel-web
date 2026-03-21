@@ -1,7 +1,7 @@
 ---
 id: "030"
 title: "Optimize third-party script loading (Facebook Pixel, analytics)"
-status: todo
+status: done
 priority: medium
 created: 2026-03-21
 updated: 2026-03-21

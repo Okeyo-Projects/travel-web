@@ -59,6 +59,7 @@ export const metadata: Metadata = {
 
 import type { ReactNode } from "react";
 import { PostHogPageView } from "@/components/analytics/posthog-pageview";
+import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -73,13 +74,14 @@ export default async function RootLayout({
 }>) {
   const requestHeaders = await headers();
   const headerLocale = requestHeaders.get("x-locale");
+  const nonce = requestHeaders.get("x-nonce") ?? undefined;
   const locale = isSupportedLocale(headerLocale)
     ? headerLocale
     : DEFAULT_LOCALE;
 
   return (
     <html lang={locale}>
-      <FacebookPixel />
+      <FacebookPixel nonce={nonce} />
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://connect.facebook.net" />
@@ -126,6 +128,7 @@ export default async function RootLayout({
             <AuthProvider>
               <ViewModeProvider>
                 <PostHogPageView />
+                <WebVitalsReporter />
                 <main className="flex-1">{children}</main>
                 <FloatingChatButton />
                 <AuthModal />
