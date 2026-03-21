@@ -19,34 +19,34 @@ const WEBSITE_TESTIMONIALS_BUCKET = 'website-testimonials'
 
 const FALLBACK_TESTIMONIALS: TestimonialItem[] = [
   {
-    id: 'savannah-1',
+    id: 'fallback-1',
     quote:
-      'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.',
-    name: 'Savannah Nguyen',
-    role: 'Traveler',
+      "Grâce à Okeyo, j'ai découvert un riad authentique à Marrakech qui correspondait exactement à mes envies. La recommandation de l'IA était parfaite !",
+    name: 'Camille Mercier',
+    role: 'Voyageuse',
     avatar:
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80',
-    rate: 4,
+    rate: 5,
   },
   {
-    id: 'savannah-2',
+    id: 'fallback-2',
     quote:
-      'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.',
-    name: 'Savannah Nguyen',
-    role: 'Traveler',
+      "En deux minutes, l'assistant m'a proposé un séjour en bord de mer parfaitement adapté à notre budget famille. Je n'aurais pas trouvé mieux tout seul.",
+    name: 'Thomas Lefebvre',
+    role: 'Voyageur en famille',
     avatar:
-      'https://images.unsplash.com/photo-1529665253569-6d01c0eaf7b6?auto=format&fit=crop&w=180&q=80',
-    rate: 4,
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&q=80',
+    rate: 5,
   },
   {
-    id: 'savannah-3',
+    id: 'fallback-3',
     quote:
-      'Amet minim mollit non deserunt ullamco est sit aliqua dolor do amet sint. Velit officia consequat duis enim velit mollit.',
-    name: 'Savannah Nguyen',
-    role: 'Traveler',
+      "L'expérience de réservation est fluide et les suggestions sont vraiment personnalisées. Okeyo a changé ma façon de planifier mes voyages.",
+    name: 'Sofia Benali',
+    role: 'Digital nomade',
     avatar:
       'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80',
-    rate: 4,
+    rate: 5,
   },
 ]
 
@@ -142,10 +142,10 @@ export function TestimonialSection() {
 
       <div className='relative z-10 mx-auto max-w-[1380px]'>
         <p className='text-center text-2xl text-primary'>
-          Clients Testimonials
+          Avis de nos voyageurs
         </p>
         <h2 className='mt-3 text-center text-4xl font-black leading-tight text-black sm:text-5xl'>
-          What Our Travelers Say
+          Ce que disent nos voyageurs
         </h2>
 
         <div className='mt-14 grid gap-10 md:grid-cols-2 xl:grid-cols-3'>

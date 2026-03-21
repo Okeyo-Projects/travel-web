@@ -53,20 +53,20 @@ export function ExploreSection() {
         {/* Header: text left, nav buttons right */}
         <div className="flex items-end justify-between gap-6 mb-10">
           <div className="max-w-[480px]">
-            <p className="text-2xl text-primary">How It Works</p>
+            <p className="text-2xl text-primary">Comment ça marche</p>
             <h2 className="mt-4 text-4xl font-black leading-[1.05] text-[#050505] sm:text-5xl lg:text-6xl">
-              Not Your Boring
+              Votre compagnon de
               <br />
-              Travel Agent
+              voyage intelligent
             </h2>
             <p className="mt-5 text-xl leading-relaxed text-[#2b2b2f] sm:text-2xl">
-              We plan chill, curated trips with good vibes and better people.
+              Nous sélectionnons des expériences uniques, soigneusement choisies pour vous.
             </p>
             <a
               href="/explore"
               className="mt-9 inline-flex rounded-full bg-primary px-9 py-3 text-xl font-bold text-white shadow-[0_10px_24px_rgba(255,37,102,0.4)] transition-transform hover:scale-105"
             >
-              Book a Seat
+              Réserver ma place
             </a>
           </div>
 

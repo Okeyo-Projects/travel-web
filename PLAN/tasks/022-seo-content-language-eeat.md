@@ -1,16 +1,16 @@
 ---
 id: "022"
 title: "SEO Content: French headings, placeholder replacement, E-E-A-T signals"
-status: todo
+status: in_progress
 priority: medium
 created: 2026-03-21
 updated: 2026-03-21
 assigned: codex
-branch: null
+branch: task/022-seo-content-language-eeat
 pr: null
-attempts: 0
+attempts: 1
 depends_on: []
-progress: 0
+progress: 10
 ---
 
 ## Description
