@@ -1,16 +1,16 @@
 ---
 id: "021"
 title: "SEO SSR: Server-render collections and explore pages so crawlers see content"
-status: todo
+status: done
 priority: high
 created: 2026-03-21
 updated: 2026-03-21
 assigned: codex
-branch: null
-pr: null
-attempts: 0
+branch: task/021-seo-ssr-collections-explore
+pr: "10"
+attempts: 1
 depends_on: []
-progress: 0
+progress: 100
 ---
 
 ## Description
