@@ -142,7 +142,7 @@ export function ExploreSection() {
                 (key) => (
                   <div
                     key={key}
-                    className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px] flex-shrink-0 [scroll-snap-align:start]"
+                    className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
                   >
                     <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200 animate-pulse" />
                     <div className="mt-3 h-5 w-3/4 rounded bg-gray-200 animate-pulse" />
@@ -154,7 +154,7 @@ export function ExploreSection() {
                 <CompactExperienceCard
                   key={experience.id}
                   experience={experience}
-                  className="min-w-[280px] sm:min-w-[320px] md:min-w-[360px] flex-shrink-0 [scroll-snap-align:start]"
+                  className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
                 />
               ))}
         </div>

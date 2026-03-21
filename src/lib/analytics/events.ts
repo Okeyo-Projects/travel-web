@@ -13,6 +13,7 @@ export const ANALYTICS_EVENT = {
   BOOKING_SUBMITTED: "booking_submitted",
   BOOKING_CANCELLED: "booking_cancelled",
   PAYMENT_INITIATED: "payment_initiated",
+  PAYMENT_COMPLETED: "payment_completed",
   CHAT_STARTED: "chat_started",
   CHAT_MESSAGE_SENT: "chat_message_sent",
   CHAT_BOOKING_CREATED: "chat_booking_created",

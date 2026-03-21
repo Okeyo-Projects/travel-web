@@ -307,6 +307,10 @@ export default function BookingDetailPage() {
     () => `payzone:pending-payment:${bookingId}`,
     [bookingId],
   );
+  const completedPaymentStorageKey = useMemo(
+    () => `analytics:payment-completed:${bookingId}`,
+    [bookingId],
+  );
 
   const {
     data: booking,
@@ -373,6 +377,22 @@ export default function BookingDetailPage() {
     }
     setLastPaymentId(null);
   }, [pendingPaymentStorageKey]);
+
+  const hasTrackedCompletedPayment = useCallback(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.sessionStorage.getItem(completedPaymentStorageKey) === "true";
+  }, [completedPaymentStorageKey]);
+
+  const markCompletedPaymentTracked = useCallback(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.sessionStorage.setItem(completedPaymentStorageKey, "true");
+  }, [completedPaymentStorageKey]);
 
   const handleCheckPaymentStatus = useCallback(
     async (
@@ -496,6 +516,34 @@ export default function BookingDetailPage() {
     searchParams,
   ]);
 
+  const guests = booking
+    ? booking.adults + (booking.children ?? 0) + (booking.infants ?? 0)
+    : 0;
+
+  useEffect(() => {
+    if (!booking) return;
+    if (booking.status !== "confirmed" && booking.status !== "completed")
+      return;
+    if (hasTrackedCompletedPayment()) return;
+
+    captureEvent(ANALYTICS_EVENT.PAYMENT_COMPLETED, {
+      booking_id: booking.id,
+      currency: booking.currency,
+      experience_id: booking.experience?.id ?? null,
+      experience_title: booking.experience?.title ?? null,
+      experience_type: booking.experience?.type ?? null,
+      guest_count: guests,
+      method: "payzone",
+      total_price: booking.price_total_cents,
+    });
+    markCompletedPaymentTracked();
+  }, [
+    booking,
+    guests,
+    hasTrackedCompletedPayment,
+    markCompletedPaymentTracked,
+  ]);
+
   if (!authLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -517,10 +565,6 @@ export default function BookingDetailPage() {
   }
 
   const statusMeta = getStatusBadge(booking?.status ?? null);
-  const guests = booking
-    ? booking.adults + (booking.children ?? 0) + (booking.infants ?? 0)
-    : 0;
-
   const canPay = booking?.status === "approved";
   const canCancel = booking?.status
     ? CANCELLABLE_STATUSES.includes(booking.status)
@@ -575,7 +619,13 @@ export default function BookingDetailPage() {
       persistPendingPaymentId(session.paymentId);
       captureEvent(ANALYTICS_EVENT.PAYMENT_INITIATED, {
         booking_id: booking.id,
+        currency: booking.currency,
+        experience_id: booking.experience?.id ?? null,
+        experience_title: booking.experience?.title ?? null,
+        experience_type: booking.experience?.type ?? null,
+        guest_count: guests,
         method: "payzone",
+        total_price: booking.price_total_cents,
       });
       openPayzonePaywall(session, payzoneWindow ? payzoneWindowName : "_self");
       toast.success(
@@ -732,7 +782,9 @@ export default function BookingDetailPage() {
         {cancellationPolicyInfo && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Annulation et remboursement</CardTitle>
+              <CardTitle className="text-base">
+                Annulation et remboursement
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">

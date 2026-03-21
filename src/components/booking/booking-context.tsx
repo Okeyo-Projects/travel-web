@@ -110,6 +110,8 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
       setIsOpen(true);
       captureEvent(ANALYTICS_EVENT.BOOKING_STARTED, {
         experience_id: exp.id,
+        experience_title: exp.title,
+        experience_type: exp.type,
       });
 
       // Reset form
@@ -190,7 +192,8 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           setQuote(null);
           captureEvent(ANALYTICS_EVENT.BOOKING_QUOTE_FAILED, {
-            error_message: error instanceof Error ? error.message : String(error),
+            error_message:
+              error instanceof Error ? error.message : String(error),
           });
         }
       } else {

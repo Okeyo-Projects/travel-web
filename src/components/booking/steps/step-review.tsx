@@ -114,7 +114,10 @@ export function StepReview() {
 
       captureEvent(ANALYTICS_EVENT.BOOKING_SUBMITTED, {
         booking_id: booking?.id ?? null,
+        currency: quote.currency,
         experience_id: experience.id,
+        experience_title: experience.title,
+        experience_type: experience.type,
         total_price: quote.total_cents,
         guest_count: adults + children + infants,
       });

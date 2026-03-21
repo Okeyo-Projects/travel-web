@@ -28,7 +28,9 @@
       "Bash(gh pr:*)",
       "Bash(git stash:*)",
       "Bash(find /Users/naimabdelkerim/Code/travel-web/src/components/explore -name *.tsx)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(ffmpeg -i /Users/naimabdelkerim/Code/travel-web/public/hero-video.mp4 -vframes 1 -vcodec libwebp /Users/naimabdelkerim/Code/travel-web/public/hero-video-poster.webp -y)",
+      "Bash(ffmpeg -i /Users/naimabdelkerim/Code/travel-web/public/hero-video.mp4 -vframes 1 /Users/naimabdelkerim/Code/travel-web/public/hero-video-poster.jpg -y)"
     ],
     "additionalDirectories": [
       "/Users/naimabdelkerim/Code"

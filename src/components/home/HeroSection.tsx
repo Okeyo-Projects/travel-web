@@ -20,7 +20,7 @@ export async function HeroSection() {
         loop
         playsInline
         preload="none"
-        poster="/hero-video-poster.webp"
+        poster="/hero-video-poster.jpg"
       >
         <source
           media="(max-width: 768px)"
