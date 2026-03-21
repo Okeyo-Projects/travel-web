@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -165,9 +166,11 @@ export function TestimonialSection() {
               </div>
 
               <div className='flex items-center gap-4'>
-                <img
+                <Image
                   src={item.avatar}
                   alt={item.name}
+                  width={48}
+                  height={48}
                   className='h-12 w-12 rounded-full object-cover'
                 />
                 <div>

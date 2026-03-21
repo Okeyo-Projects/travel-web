@@ -80,10 +80,8 @@ export default async function RootLayout({
     <html lang={locale}>
       <FacebookPixel />
       <head>
-        <link
-          href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
-          rel="stylesheet"
-        />
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="preconnect" href="https://connect.facebook.net" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-[100dvh] flex flex-col bg-white`}

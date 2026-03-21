@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Play, Plus, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -59,11 +60,14 @@ export function AISection() {
   return (
     <section className="bg-[#08090d] px-4 pb-16 pt-2 sm:px-6 sm:pb-24 m-8">
       <div className="relative mx-auto max-w-[1380px] overflow-hidden rounded-[26px] border border-white/10 bg-gradient-to-br from-[#20131d] via-[#60163d] to-[#a1084e] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-[34px]">
-        <img
+        <Image
           src="/ai-pattern.png"
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-0 h-auto w-full opacity-40"
+          fill
+          sizes="100vw"
+          className="pointer-events-none object-cover opacity-40"
+          priority={false}
         />
 
         <div className="relative z-10 px-4 pb-10 pt-10 sm:px-8 sm:pb-14 sm:pt-14 lg:px-20 lg:pb-16 lg:pt-16 xl:px-24">

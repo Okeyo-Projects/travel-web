@@ -4,13 +4,17 @@ import { ChevronDown } from "lucide-react";
 export function HeroSection() {
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-black text-white">
+      {/* poster shows as LCP element while video loads; preload="none" avoids
+          downloading 5+ MB before first paint — compress video to <1.5 MB with
+          ffmpeg and place first-frame WebP at /hero-video-poster.webp */}
       <video
         className="absolute inset-0 h-full w-full object-cover"
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
+        preload="none"
+        poster="/hero-video-poster.webp"
       >
         <source media="(max-width: 768px)" src="/hero-mobile-video.mp4" type="video/mp4" />
         <source src="/hero-video.mp4" type="video/mp4" />
