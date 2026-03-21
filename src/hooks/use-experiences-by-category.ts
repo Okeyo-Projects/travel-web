@@ -12,7 +12,7 @@ interface ExperiencesByCategory {
 
 type RoomListItem = NonNullable<ExperienceListItem["rooms"]>[number];
 
-function transformExperience(exp: any): ExperienceListItem {
+export function transformExperience(exp: any): ExperienceListItem {
   // Extract lodging data and calculate minimum room price
   const lodgingData = Array.isArray(exp.lodging)
     ? exp.lodging[0] || null

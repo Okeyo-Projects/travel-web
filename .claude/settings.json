@@ -13,7 +13,20 @@
       "Bash(git rev-list --left-right --count main...task/002-reviews-system-2)",
       "Bash(git rev-list --left-right --count main...task-002-reviews-system)",
       "Bash(git rev-list --left-right --count main...task/003-social-feed-reels)",
-      "Bash(ls /Users/naimabdelkerim/Code/travel-web/PLAN/tasks/01[7-9]*.md /Users/naimabdelkerim/Code/travel-web/PLAN/tasks/02[0-2]*.md)"
+      "Bash(ls /Users/naimabdelkerim/Code/travel-web/PLAN/tasks/01[7-9]*.md /Users/naimabdelkerim/Code/travel-web/PLAN/tasks/02[0-2]*.md)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(cat /Users/naimabdelkerim/Code/travel-web/src/app/experience/[id]/page.tsx)",
+      "Bash(cat /Users/naimabdelkerim/Code/travel-web/src/app/explore/category/[slug]/page.tsx)",
+      "Bash(find /Users/naimabdelkerim/Code/travel-web/src -name i18n* -o -name locale*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(wc -l /Users/naimabdelkerim/Code/travel-web/src/app/experience/[id]/page.tsx)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)",
+      "Bash(git stash:*)"
     ],
     "additionalDirectories": [
       "/Users/naimabdelkerim/Code"
