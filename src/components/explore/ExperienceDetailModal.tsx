@@ -1,5 +1,6 @@
 "use client";
 
+import Hls from "hls.js";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bookmark,
@@ -63,6 +64,7 @@ export function ExperienceDetailModal({
   const [isExperienceVisible, setIsExperienceVisible] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const blurVideoRef = useRef<HTMLVideoElement>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const pathname = usePathname();
   const { requireAuth } = useRequiredAuth();
@@ -156,6 +158,43 @@ export function ExperienceDetailModal({
       window.cancelAnimationFrame(frame);
     };
   }, [open, currentMedia?.src]);
+
+  // Attach HLS or set src directly whenever the active video changes
+  useEffect(() => {
+    const src = currentMedia?.type === "video" ? currentMedia.src : null;
+    const video = videoRef.current;
+    const blurVideo = blurVideoRef.current;
+    if (!src || !video) return;
+
+    let hlsMain: Hls | null = null;
+    let hlsBlur: Hls | null = null;
+
+    const attach = (el: HTMLVideoElement): Hls | null => {
+      if (src.includes(".m3u8")) {
+        if (el.canPlayType("application/vnd.apple.mpegurl")) {
+          el.src = src;
+          return null;
+        }
+        if (Hls.isSupported()) {
+          const h = new Hls();
+          h.loadSource(src);
+          h.attachMedia(el);
+          return h;
+        }
+        return null;
+      }
+      el.src = src;
+      return null;
+    };
+
+    hlsMain = attach(video);
+    if (blurVideo) hlsBlur = attach(blurVideo);
+
+    return () => {
+      hlsMain?.destroy();
+      hlsBlur?.destroy();
+    };
+  }, [currentMedia]);
 
   const social = useExperienceSocial(currentExperience?.id ?? null);
 
@@ -260,18 +299,29 @@ export function ExperienceDetailModal({
           </button>
 
           <div className="grid h-full grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]">
-            <div className="relative flex h-[42vh] items-center justify-center bg-black md:h-full">
+            <div className="relative flex h-[42vh] items-center justify-center overflow-hidden bg-black md:h-full">
               {currentMedia?.type === "video" ? (
                 <>
+                  {/* Blurred background fill */}
+                  <video
+                    ref={blurVideoRef}
+                    key={`blur-${currentMedia.src}`}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl pointer-events-none"
+                  />
+                  {/* Main video */}
                   <video
                     ref={videoRef}
                     key={currentMedia.src}
-                    src={currentMedia.src}
                     autoPlay
                     loop
                     playsInline
                     className={cn(
-                      "h-full w-full object-contain transition-opacity duration-300 md:object-contain",
+                      "relative h-full w-full object-contain transition-opacity duration-300 cursor-pointer",
                       isMediaVisible ? "opacity-100" : "opacity-0",
                     )}
                     onClick={() => {

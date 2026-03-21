@@ -220,16 +220,13 @@ export function CompactExperienceCard({
               </p>
             </div>
             <div className="flex justify-end w-full">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCardClick();
-                }}
+              <Link
+                href={href}
+                onClick={(e) => e.stopPropagation()}
                 className="mt-1 inline-flex items-center justify-center rounded-full bg-primary px-10 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/80"
               >
                 Details
-              </button>
+              </Link>
             </div>
           </div>
         </div>
