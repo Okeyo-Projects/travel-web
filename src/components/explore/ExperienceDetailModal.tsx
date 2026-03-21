@@ -4,8 +4,10 @@ import Hls from "hls.js";
 import { formatDistanceToNow } from "date-fns";
 import {
   Bookmark,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Heart,
   MapPin,
   MessageCircle,
@@ -22,8 +24,10 @@ import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useBooking } from "@/hooks/use-booking";
 import { useRequiredAuth } from "@/hooks/use-required-auth";
 import { useExperienceSocial } from "@/hooks/use-social";
+import { useExperienceDetail } from "@/hooks/use-experience-detail";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
@@ -68,6 +72,12 @@ export function ExperienceDetailModal({
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const pathname = usePathname();
   const { requireAuth } = useRequiredAuth();
+  const { openBooking, BookingModal } = useBooking();
+
+  // Prefetch full experience detail in the background so booking is instant
+  const { data: fullExperienceData } = useExperienceDetail(
+    open ? (experiences[activeIndex]?.id ?? null) : null,
+  );
 
   useEffect(() => {
     if (open) {
@@ -216,7 +226,6 @@ export function ExperienceDetailModal({
     id: currentExperience.id,
   });
   const detailsHref = localizeHref(`/experience/${slug}`, pathname);
-  const bookingHref = localizeHref(`/experience/${slug}?booking=1`, pathname);
 
   const locationLabel = currentExperience.region
     ? `${currentExperience.city}, ${currentExperience.region}`
@@ -475,8 +484,16 @@ export function ExperienceDetailModal({
                     </span>
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <Button asChild className="flex-1">
-                      <Link href={bookingHref}>Book now</Link>
+                    <Button
+                      className="flex-1"
+                      onClick={() => {
+                        if (fullExperienceData?.transformed) {
+                          openBooking(fullExperienceData.transformed);
+                        }
+                      }}
+                      disabled={!fullExperienceData?.transformed}
+                    >
+                      Book now
                     </Button>
                     <Button asChild variant="outline" className="flex-1">
                       <Link href={detailsHref}>View details</Link>
@@ -558,22 +575,23 @@ export function ExperienceDetailModal({
             type="button"
             onClick={handlePreviousExperience}
             disabled={activeIndex === 0}
-            className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
+            className="absolute left-1/2 top-4 hidden -translate-x-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
             aria-label="Previous experience"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronUp className="h-6 w-6" />
           </button>
           <button
             type="button"
             onClick={handleNextExperience}
             disabled={activeIndex === experiences.length - 1}
-            className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
+            className="absolute bottom-4 left-1/2 hidden -translate-x-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
             aria-label="Next experience"
           >
-            <ChevronRight className="h-6 w-6" />
+            <ChevronDown className="h-6 w-6" />
           </button>
         </div>
       </div>
+      <BookingModal />
     </div>
   );
 }
