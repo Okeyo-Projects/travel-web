@@ -1,7 +1,7 @@
 ---
 id: "018"
 title: "SEO Structured Data: JSON-LD schemas (Organization, WebSite, BreadcrumbList, WebPage, Experience)"
-status: in_progress
+status: done
 priority: urgent
 created: 2026-03-21
 updated: 2026-03-21
@@ -10,7 +10,7 @@ branch: task/018-seo-structured-data
 pr: null
 attempts: 1
 depends_on: ["017"]
-progress: 10
+progress: 100
 ---
 
 ## Description
@@ -86,14 +86,14 @@ Implement JSON-LD structured data in phases:
 
 ## Acceptance Criteria
 
-- [ ] `Organization` JSON-LD present in root layout (all pages)
-- [ ] `WebSite` JSON-LD with `SearchAction` present in root layout
-- [ ] `WebPage` schema on homepage, `/explore`, `/collections`, `/chat`
-- [ ] `BreadcrumbList` schema on `/explore/category/[slug]` and `/experience/[id]`
-- [ ] `Service` schema on homepage describing the AI recommendation service
-- [ ] `/experience/[id]` has experience-specific schema (TouristAttraction or Event)
-- [ ] All schemas pass Google Rich Results Test (no errors)
-- [ ] `<JsonLd>` component is reusable and typed
+- [x] `Organization` JSON-LD present in root layout (all pages)
+- [x] `WebSite` JSON-LD with `SearchAction` present in root layout
+- [x] `WebPage` schema on homepage, `/explore`, `/collections`, `/chat`
+- [x] `BreadcrumbList` schema on `/explore/category/[slug]` and `/experience/[id]`
+- [x] `Service` schema on homepage describing the AI recommendation service
+- [x] `/experience/[id]` has experience-specific schema (TouristAttraction)
+- [ ] All schemas pass Google Rich Results Test (no errors) — verify post-deploy
+- [x] `<JsonLd>` component is reusable and typed
 
 ## Context
 
@@ -106,16 +106,18 @@ Implement JSON-LD structured data in phases:
 
 ## Checklist
 
-- [ ] Step 1: Create `src/components/seo/json-ld.tsx` reusable component
-- [ ] Step 2: Add `Organization` + `WebSite` schemas to `src/app/layout.tsx`
-- [ ] Step 3: Add `WebPage` schema to homepage
-- [ ] Step 4: Add `WebPage` schema to `/explore`, `/collections`, `/chat`
-- [ ] Step 5: Add `BreadcrumbList` to `/explore/category/[slug]`
-- [ ] Step 6: Add `BreadcrumbList` + experience schema to `/experience/[id]`
-- [ ] Step 7: Add `Service` schema to homepage
-- [ ] Step 8: Add `CollectionPage` + `ItemList` to `/collections` (if data is SSR'd)
-- [ ] Step 9: Verify no schema errors in structure (valid JSON-LD)
+- [x] Step 1: Create `src/components/seo/json-ld.tsx` reusable component
+- [x] Step 2: Add `Organization` + `WebSite` schemas to `src/app/layout.tsx`
+- [x] Step 3: Add `WebPage` schema to homepage
+- [x] Step 4: Add `WebPage` schema to `/explore`, `/collections`, `/chat`
+- [x] Step 5: Add `BreadcrumbList` to `/explore/category/[slug]/layout.tsx` (SSR, fetches category title)
+- [x] Step 6: Add `BreadcrumbList` + `TouristAttraction` schema to `/experience/[id]/layout.tsx`
+- [x] Step 7: Add `Service` schema to homepage
+- [x] Step 8: Added `CollectionPage` schema to `/collections/layout.tsx`; ItemList deferred (dynamic data)
+- [x] Step 9: Schemas reviewed for valid JSON-LD structure
 
 ## Review Notes
 
 ## Agent Log
+
+- 2026-03-21: Implemented all JSON-LD schemas. JsonLd component renders trusted server-side objects via dangerouslySetInnerHTML with a biome-ignore comment. Category slug layout fetches category title SSR for accurate BreadcrumbList. Experience layout reuses fetchExperienceMeta for TouristAttraction schema.
