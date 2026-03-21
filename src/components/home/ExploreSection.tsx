@@ -36,6 +36,21 @@ export function ExploreSection() {
     };
   }, [checkScroll]);
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver(() => {
+      checkScroll();
+    });
+
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [checkScroll]);
+
   const experienceCount = experiences?.length ?? 0;
 
   useEffect(() => {
@@ -65,8 +80,7 @@ export function ExploreSection() {
       />
 
       <div className="relative z-10 mx-auto max-w-[1380px]">
-        {/* Header: text left, nav buttons right */}
-        <div className="flex items-end justify-between gap-6 mb-10">
+        <div className="grid gap-10 lg:grid-cols-[minmax(320px,440px)_minmax(0,1fr)] lg:items-start xl:gap-14">
           <div className="max-w-[480px]">
             <p className="text-2xl text-primary">{t("home.explore.eyebrow")}</p>
             <h2 className="mt-4 text-4xl font-black leading-[1.05] text-[#050505] sm:text-5xl lg:text-6xl">
@@ -85,78 +99,78 @@ export function ExploreSection() {
             </Link>
           </div>
 
-          {/* Nav buttons — in normal flow, no absolute positioning */}
-          <div className="flex shrink-0 gap-2 pb-1">
-            <button
-              type="button"
-              onClick={() => handleScroll("prev")}
-              disabled={!canPrev}
-              aria-label={t("common.previous")}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition-opacity disabled:opacity-30 hover:bg-gray-50"
+          <div className="min-w-0">
+            <div
+              ref={scrollRef}
+              className="flex gap-5 overflow-x-auto pb-4 [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
-              <svg
-                aria-hidden="true"
-                focusable="false"
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleScroll("next")}
-              disabled={!canNext}
-              aria-label={t("common.next")}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition-opacity disabled:opacity-30 hover:bg-gray-50"
-            >
-              <svg
-                aria-hidden="true"
-                focusable="false"
-                viewBox="0 0 24 24"
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          </div>
-        </div>
+              {isLoading
+                ? ["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4"].map(
+                    (key) => (
+                      <div
+                        key={key}
+                        className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
+                      >
+                        <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200 animate-pulse" />
+                        <div className="mt-3 h-5 w-3/4 rounded bg-gray-200 animate-pulse" />
+                        <div className="mt-2 h-4 w-1/2 rounded bg-gray-200 animate-pulse" />
+                      </div>
+                    ),
+                  )
+                : (experiences ?? []).map((experience) => (
+                    <CompactExperienceCard
+                      key={experience.id}
+                      experience={experience}
+                      className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
+                    />
+                  ))}
+            </div>
 
-        {/* Full-width scroll rail */}
-        <div
-          ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-4 [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-        >
-          {isLoading
-            ? ["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4"].map(
-                (key) => (
-                  <div
-                    key={key}
-                    className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
-                  >
-                    <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200 animate-pulse" />
-                    <div className="mt-3 h-5 w-3/4 rounded bg-gray-200 animate-pulse" />
-                    <div className="mt-2 h-4 w-1/2 rounded bg-gray-200 animate-pulse" />
-                  </div>
-                ),
-              )
-            : (experiences ?? []).map((experience) => (
-                <CompactExperienceCard
-                  key={experience.id}
-                  experience={experience}
-                  className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
-                />
-              ))}
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => handleScroll("prev")}
+                disabled={!canPrev}
+                aria-label={t("common.previous")}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition-opacity hover:bg-gray-50 disabled:opacity-30"
+              >
+                <svg
+                  aria-hidden="true"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScroll("next")}
+                disabled={!canNext}
+                aria-label={t("common.next")}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition-opacity hover:bg-gray-50 disabled:opacity-30"
+              >
+                <svg
+                  aria-hidden="true"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
