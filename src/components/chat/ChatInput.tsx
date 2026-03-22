@@ -13,6 +13,7 @@ interface ChatInputProps {
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onSubmitMessage: () => void | Promise<void>;
+  onInputFocus?: () => void;
   isLoading: boolean;
   onRequestLocation: () => void;
 }
@@ -22,6 +23,7 @@ export function ChatInput({
   handleInputChange,
   handleSubmit,
   onSubmitMessage,
+  onInputFocus,
   isLoading,
   onRequestLocation,
 }: ChatInputProps) {
@@ -63,7 +65,10 @@ export function ChatInput({
             value={input}
             onChange={handleInputChange}
             onKeyDown={onKeyDown}
-            onFocus={() => setIsFocused(true)}
+            onFocus={() => {
+              setIsFocused(true);
+              onInputFocus?.();
+            }}
             onBlur={() => setIsFocused(false)}
             placeholder={t("chat.input.placeholder")}
             className="min-h-[50px] sm:min-h-[56px] max-h-[140px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-base"

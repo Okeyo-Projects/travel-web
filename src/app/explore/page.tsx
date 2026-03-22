@@ -174,6 +174,7 @@ export default function ExplorePage() {
       localizeHref(
         `/explore/category/${buildCategorySlug({
           title: category.title,
+          slug: category.slug,
         })}`,
         pathname,
       ),
@@ -537,6 +538,7 @@ export default function ExplorePage() {
                       localizeHref(
                         `/explore/category/${buildCategorySlug({
                           title: group.categoryTitle,
+                          slug: group.categorySlug,
                         })}`,
                         pathname,
                       ),

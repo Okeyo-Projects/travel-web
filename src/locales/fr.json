@@ -616,6 +616,12 @@
     "quickReplies": {
       "freeText": "Vous pouvez aussi répondre librement."
     },
+    "feedback": {
+      "label": "Cette réponse vous a-t-elle aidé ?",
+      "helpful": "Réponse utile",
+      "notHelpful": "Réponse peu utile",
+      "thanks": "Merci pour votre retour."
+    },
     "dateOptions": {
       "freeText": "Vous pouvez aussi écrire vos dates exactes."
     },

@@ -7,6 +7,8 @@ import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
+export const dynamic = "force-dynamic";
+
 async function getRequestTranslator() {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));

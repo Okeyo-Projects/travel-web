@@ -1,6 +1,7 @@
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { ensureProfileExistsForUser } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClientOrThrow } from "@/lib/supabase/service-role";
 
 type LooseQueryResult<T = unknown> = Promise<{ data: T; error: unknown }>;
 type LooseQueryPayload = { data: unknown; error: unknown };
@@ -24,17 +25,6 @@ type LooseSupabaseClient = {
 
 function asLooseSupabaseClient(client: unknown): LooseSupabaseClient {
   return client as LooseSupabaseClient;
-}
-
-function createServiceRoleClientOrThrow() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing Supabase service role environment variables");
-  }
-
-  return createServiceClient(supabaseUrl, serviceRoleKey);
 }
 
 async function claimAnonymousConversationsForUser(
@@ -66,6 +56,8 @@ export async function POST(req: NextRequest) {
     } = await userClient.auth.getUser();
 
     if (user) {
+      await ensureProfileExistsForUser(user);
+
       if (typeof clientId === "string" && clientId.trim().length > 0) {
         await claimAnonymousConversationsForUser(user.id, clientId);
       }
@@ -131,6 +123,8 @@ export async function GET(req: NextRequest) {
 
     // For authenticated users, query by user_id
     if (user) {
+      await ensureProfileExistsForUser(user);
+
       if (clientId && clientId.trim().length > 0) {
         await claimAnonymousConversationsForUser(user.id, clientId);
       }

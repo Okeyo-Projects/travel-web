@@ -2,10 +2,12 @@
 
 import type { UIMessage } from "ai";
 import { motion } from "framer-motion";
-import { Compass } from "lucide-react";
+import { Compass, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
+import { Button } from "@/components/ui/button";
 import { parseMessageContent } from "@/lib/chat/parse-message";
+import { cn } from "@/lib/utils";
 import { AuthRequiredCard } from "./AuthRequiredCard";
 import {
   BookingConfirmCard,
@@ -36,10 +38,17 @@ type ParsedBlock =
   | { key: string; type: "text"; content: string }
   | { key: string; type: "ui"; content: { component: string; data: UIData } };
 
+export type AssistantFeedbackValue = "positive" | "negative";
+
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
   onQuickReply?: (reply: string) => void;
+  messageFeedbackById?: Partial<Record<string, AssistantFeedbackValue>>;
+  onAssistantFeedback?: (
+    messageId: string,
+    value: AssistantFeedbackValue,
+  ) => void;
   activeConversationId?: string | null;
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
@@ -581,6 +590,8 @@ export function MessageList({
   messages,
   isLoading,
   onQuickReply,
+  messageFeedbackById,
+  onAssistantFeedback,
   activeConversationId,
   lockedBookingId,
   isConversationLocked = false,
@@ -602,6 +613,8 @@ export function MessageList({
           isLastMessage={message.id === messages.at(-1)?.id}
           isLoading={isLoading}
           onQuickReply={onQuickReply}
+          messageFeedback={messageFeedbackById?.[message.id]}
+          onAssistantFeedback={onAssistantFeedback}
           activeConversationId={activeConversationId}
           lockedBookingId={lockedBookingId}
           isConversationLocked={isConversationLocked}
@@ -629,6 +642,8 @@ function MessageItem({
   isLastMessage,
   isLoading,
   onQuickReply,
+  messageFeedback,
+  onAssistantFeedback,
   activeConversationId,
   lockedBookingId,
   isConversationLocked = false,
@@ -637,11 +652,17 @@ function MessageItem({
   isLastMessage: boolean;
   isLoading: boolean;
   onQuickReply?: (reply: string) => void;
+  messageFeedback?: AssistantFeedbackValue;
+  onAssistantFeedback?: (
+    messageId: string,
+    value: AssistantFeedbackValue,
+  ) => void;
   activeConversationId?: string | null;
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
 }) {
   const isUser = message.role === "user";
+  const { t } = useSiteI18n();
 
   if (isUser) {
     const text = extractUserMessageText(message);
@@ -664,6 +685,7 @@ function MessageItem({
 
   const parsedContent = extractAssistantBlocks(message);
   if (parsedContent.length === 0) return null;
+  const canSubmitFeedback = !isLoading || !isLastMessage;
   const beforeMessageComponents = new Set<string>([
     "experience_cards",
     "experience_details",
@@ -738,6 +760,48 @@ function MessageItem({
             </div>
           );
         })}
+
+        {onAssistantFeedback && canSubmitFeedback ? (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs text-muted-foreground">
+              {messageFeedback
+                ? t("chat.feedback.thanks")
+                : t("chat.feedback.label")}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("chat.feedback.helpful")}
+              aria-pressed={messageFeedback === "positive"}
+              title={t("chat.feedback.helpful")}
+              onClick={() => onAssistantFeedback(message.id, "positive")}
+              className={cn(
+                "h-8 w-8 rounded-full text-muted-foreground",
+                messageFeedback === "positive" &&
+                  "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+              )}
+            >
+              <ThumbsUp className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("chat.feedback.notHelpful")}
+              aria-pressed={messageFeedback === "negative"}
+              title={t("chat.feedback.notHelpful")}
+              onClick={() => onAssistantFeedback(message.id, "negative")}
+              className={cn(
+                "h-8 w-8 rounded-full text-muted-foreground",
+                messageFeedback === "negative" &&
+                  "bg-rose-100 text-rose-700 hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-950/50 dark:text-rose-300",
+              )}
+            >
+              <ThumbsDown className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : null}
       </div>
     </motion.div>
   );

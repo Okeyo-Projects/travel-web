@@ -7,6 +7,7 @@ import { resolveStorageUrl } from "@/utils/functions";
 
 interface ExperiencesByCategory {
   categoryId: string;
+  categorySlug: string | null;
   categoryTitle: string;
   categoryAsset: string | null;
   experiences: ExperienceListItem[];
@@ -74,6 +75,7 @@ type ExperienceCategoryRow = {
 type CategoryGroupRow = {
   id: string;
   title: LocalizedCategoryTitle | null;
+  slug: string | null;
   asset: string | null;
 };
 
@@ -249,19 +251,10 @@ export function useAllCategoryGroups(
     queryFn: async () => {
       const supabase = createClient();
 
-      // First get all active categories that have experiences
-      const { data: categories, error: categoriesError } = await supabase
+      const { data: allCategories, error: categoriesError } = await supabase
         .from("categories" as never)
-        .select(`
-          id,
-          title,
-          asset,
-          experience_categories!inner(
-            experience:experiences!inner(id)
-          )
-        `)
+        .select("*")
         .eq("is_active" as never, true)
-        .eq("experience_categories.experiences.status" as never, "published")
         .limit(6);
 
       if (categoriesError) {
@@ -272,10 +265,38 @@ export function useAllCategoryGroups(
         throw categoriesError;
       }
 
+      const { data: usedCategoriesData, error: usedCategoriesError } =
+        await supabase
+          .from("experience_categories" as never)
+          .select(`
+            category_id,
+            experience:experiences!inner(id, status, deleted_at)
+          `)
+          .eq("experience.status" as never, "published")
+          .is("experience.deleted_at" as never, null);
+
+      if (usedCategoriesError) {
+        console.error(
+          "[useAllCategoryGroups] Used categories error:",
+          usedCategoriesError,
+        );
+        throw usedCategoriesError;
+      }
+
+      const usedCategoryIds = new Set(
+        ((usedCategoriesData ?? []) as Array<{ category_id: string }>).map(
+          (item) => item.category_id,
+        ),
+      );
+
+      const categories = ((allCategories ?? []) as CategoryGroupRow[]).filter(
+        (category) => usedCategoryIds.has(category.id),
+      );
+
       // For each category, fetch its experiences
       const results: ExperiencesByCategory[] = [];
 
-      for (const category of (categories || []) as CategoryGroupRow[]) {
+      for (const category of categories) {
         const { data: expData, error: expError } = await supabase
           .from("experience_categories" as never)
           .select(`
@@ -340,6 +361,7 @@ export function useAllCategoryGroups(
         if (experiences.length > 0) {
           results.push({
             categoryId: category.id,
+            categorySlug: category.slug,
             categoryTitle:
               resolveLocalizedTitle(category.title, locale) || "Category",
             categoryAsset: category.asset,

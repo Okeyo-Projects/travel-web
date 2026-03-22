@@ -72,13 +72,44 @@ export function buildCategorySlug(input: {
   title?: LocalizedTitle | null;
   slug?: string | null;
 }): string {
+  if (input.slug) {
+    return slugify(input.slug) || "category";
+  }
+
   const title = resolveTitle(input.title);
   return slugify(title) || "category";
 }
 
 export function categoryMatchesSlug(
-  category: { title?: LocalizedTitle | null; slug?: string | null },
+  category: {
+    id?: string | null;
+    title?: LocalizedTitle | null;
+    slug?: string | null;
+  },
   slug: string,
 ): boolean {
-  return buildCategorySlug(category) === slugify(slug);
+  const normalizedSlug = slugify(slug);
+  if (!normalizedSlug) {
+    return false;
+  }
+
+  if (category.id && category.id === slug) {
+    return true;
+  }
+
+  if (category.slug && slugify(category.slug) === normalizedSlug) {
+    return true;
+  }
+
+  if (typeof category.title === "string") {
+    return slugify(category.title) === normalizedSlug;
+  }
+
+  if (!category.title) {
+    return false;
+  }
+
+  return [category.title.fr, category.title.en, category.title.ar].some(
+    (value) => Boolean(value) && slugify(value as string) === normalizedSlug,
+  );
 }

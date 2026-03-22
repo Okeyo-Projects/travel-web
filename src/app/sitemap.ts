@@ -64,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [categoriesResult, experiencesResult] = await Promise.all([
       supabase
         .from("categories" as never)
-        .select("title, slug, updated_at")
+        .select("*")
         .eq("is_active" as never, true),
       supabase
         .from("experiences" as never)
@@ -74,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const categories = (categoriesResult.data ?? []) as Array<{
       title: { fr?: string; en?: string; ar?: string } | string;
-      slug: string | null;
+      slug?: string | null;
       updated_at: string;
     }>;
 

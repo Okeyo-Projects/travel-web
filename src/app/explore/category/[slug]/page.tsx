@@ -1,8 +1,9 @@
 import { ChevronLeft } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ExperienceCard } from "@/components/experience-card";
 import { CategoryAnalytics } from "@/components/explore/CategoryAnalytics";
+import { FooterSection } from "@/components/home/FooterSection";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Button } from "@/components/ui/button";
 import { transformExperience } from "@/hooks/use-experiences-by-category";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
@@ -12,8 +13,7 @@ import {
   resolveLocalizedTitle,
 } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
-
-export const revalidate = 1800; // ISR: revalidate every 30 minutes
+import { CategoryExperienceGrid } from "./CategoryExperienceGrid";
 
 type CategoryRecord = {
   id: string;
@@ -66,7 +66,7 @@ export default async function ExploreCategoryPage({
 
     const { data: allCategories } = await supabase
       .from("categories" as never)
-      .select("id, title, description, slug")
+      .select("*")
       .eq("is_active" as never, true);
 
     category =
@@ -93,20 +93,36 @@ export default async function ExploreCategoryPage({
     // Supabase unavailable — render empty state
   }
 
+  const categoryTitle = category
+    ? resolveLocalizedTitle(category.title, locale)
+    : null;
+
   if (!category) {
     return (
       <div className="min-h-screen bg-white">
-        <div className="container mx-auto px-4 py-8 space-y-8">
-          <Button asChild variant="ghost" className="px-2">
-            <Link href={backToExploreHref}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              {t("explore.category.back")}
-            </Link>
-          </Button>
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#121419] via-[#191a1f] to-[#670833] text-white">
+          <div className="mx-auto flex min-h-[280px] w-full max-w-[1280px] flex-col px-5 pt-5 sm:px-8 sm:pt-8">
+            <MarketingHeader />
+            <div className="flex flex-1 flex-col justify-center py-12">
+              <Button
+                asChild
+                variant="ghost"
+                className="mb-6 w-fit px-2 text-white hover:bg-white/10 hover:text-white"
+              >
+                <Link href={backToExploreHref}>
+                  <ChevronLeft className="mr-1 h-4 w-4" />
+                  {t("explore.category.back")}
+                </Link>
+              </Button>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                {t("explore.category.notFoundTitle")}
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-16">
           <div className="text-center py-24 space-y-4">
-            <h1 className="text-2xl font-bold">
-              {t("explore.category.notFoundTitle")}
-            </h1>
             <Button asChild>
               <Link href={backToExploreHref}>
                 {t("explore.category.notFoundCta")}
@@ -114,6 +130,8 @@ export default async function ExploreCategoryPage({
             </Button>
           </div>
         </div>
+
+        <FooterSection />
       </div>
     );
   }
@@ -121,43 +139,46 @@ export default async function ExploreCategoryPage({
   return (
     <div className="min-h-screen bg-white">
       <CategoryAnalytics categoryId={category.id} categorySlug={routeSlug} />
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="flex items-center justify-between gap-3">
-          <Button asChild variant="ghost" className="px-2">
-            <Link href={backToExploreHref}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              {t("explore.category.back")}
-            </Link>
-          </Button>
-        </div>
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#121419] via-[#191a1f] to-[#670833] text-white">
+        <div className="mx-auto flex min-h-[320px] w-full max-w-[1280px] flex-col px-5 pt-5 sm:px-8 sm:pt-8">
+          <MarketingHeader />
+          <div className="flex flex-1 flex-col justify-center py-12">
+            <Button
+              asChild
+              variant="ghost"
+              className="mb-6 w-fit px-2 text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href={backToExploreHref}>
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                {t("explore.category.back")}
+              </Link>
+            </Button>
 
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {resolveLocalizedTitle(category.title, locale)}
-          </h1>
-          {category.description ? (
-            <p className="text-muted-foreground max-w-2xl">
-              {category.description}
-            </p>
-          ) : null}
+            <div className="space-y-3">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+                {categoryTitle}
+              </h1>
+              {category.description ? (
+                <p className="max-w-2xl text-sm text-white/75 sm:text-base">
+                  {category.description}
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
+      </div>
 
+      <div className="container mx-auto px-4 py-10">
         {experiences.length === 0 ? (
-          <div className="text-center py-24 text-muted-foreground">
+          <div className="py-24 text-center text-muted-foreground">
             {t("explore.category.empty")}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {experiences.map((experience) => (
-              <ExperienceCard
-                key={experience.id}
-                experience={experience}
-                source="category"
-              />
-            ))}
-          </div>
+          <CategoryExperienceGrid experiences={experiences} />
         )}
       </div>
+
+      <FooterSection />
     </div>
   );
 }

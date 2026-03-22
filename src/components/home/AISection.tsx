@@ -4,6 +4,8 @@ import { Play, Plus, Send } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useT } from "@/providers/translations-provider";
 
@@ -65,6 +67,12 @@ export function AISection() {
   const handleSend = () => {
     const text = userInput.trim();
     if (!text) return;
+
+    captureEvent(ANALYTICS_EVENT.HOME_AI_PROMPT_SUBMITTED, {
+      prompt_length: text.length,
+      source: "home_ai_section",
+    });
+
     const href = localizeHref(`/chat?q=${encodeURIComponent(text)}`, pathname);
     router.push(href);
   };

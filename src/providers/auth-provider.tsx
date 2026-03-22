@@ -41,6 +41,69 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const SUPPORTED_LANGUAGES = new Set(["fr", "ar", "en"]);
+
+type ProfileSnapshot = {
+  is_host: boolean | null;
+  preferred_language: string | null;
+  created_at: string | null;
+};
+
+function getFallbackDisplayName(user: User) {
+  const candidates = [
+    user.user_metadata?.display_name,
+    user.user_metadata?.full_name,
+    user.user_metadata?.name,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate.trim();
+    }
+  }
+
+  const emailPrefix = user.email?.split("@")[0]?.trim();
+  return emailPrefix && emailPrefix.length > 0 ? emailPrefix : "Explorer";
+}
+
+function getFallbackPreferredLanguage(user: User) {
+  const profileLanguage = user.user_metadata?.preferred_language;
+
+  if (
+    typeof profileLanguage === "string" &&
+    SUPPORTED_LANGUAGES.has(profileLanguage)
+  ) {
+    return profileLanguage;
+  }
+
+  if (typeof document !== "undefined") {
+    const documentLanguage = document.documentElement.lang
+      ?.toLowerCase()
+      .split("-")[0];
+    if (documentLanguage && SUPPORTED_LANGUAGES.has(documentLanguage)) {
+      return documentLanguage;
+    }
+  }
+
+  return "fr";
+}
+
+function normalizeProfileSnapshot(
+  profile: {
+    is_host: boolean | null;
+    preferred_language: string | null;
+    created_at: string;
+  } | null,
+): ProfileSnapshot | null {
+  if (!profile) return null;
+
+  return {
+    is_host: profile.is_host ?? null,
+    preferred_language: profile.preferred_language ?? null,
+    created_at: profile.created_at ?? null,
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
   const [session, setSession] = useState<Session | null>(null);
@@ -52,11 +115,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const identifyUser = useCallback(
     async (nextSession: Session) => {
       const user = nextSession.user;
-      const { data: profile } = await supabase
+      const { data: fetchedProfile } = await supabase
         .from("profiles")
         .select("is_host, preferred_language, created_at")
         .eq("id", user.id)
         .maybeSingle();
+      let profile = normalizeProfileSnapshot(fetchedProfile);
+
+      if (!profile) {
+        const { data: createdProfile, error } = await supabase
+          .from("profiles")
+          .upsert(
+            {
+              id: user.id,
+              display_name: getFallbackDisplayName(user),
+              preferred_language: getFallbackPreferredLanguage(user),
+              currency: "MAD",
+              metadata: {
+                onboarding_complete: false,
+              },
+            },
+            { onConflict: "id" },
+          )
+          .select("is_host, preferred_language, created_at")
+          .maybeSingle();
+
+        if (error) {
+          console.error("Failed to ensure user profile", error);
+        } else {
+          profile = normalizeProfileSnapshot(createdProfile);
+        }
+      }
 
       identifyAnalyticsUser(user.id, {
         role: profile?.is_host ? "host" : "traveler",
@@ -78,6 +167,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(({ data }) => {
         if (!isActive) return;
         setSession(data.session ?? null);
+        if (data.session?.user) {
+          void identifyUser(data.session);
+        }
         setLoading(false);
       })
       .catch(() => {
@@ -118,18 +210,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthModeState(mode);
   }, []);
 
-  const openAuthModal = useCallback((options?: AuthModalOptions) => {
-    if (options?.onAuthed) {
-      pendingActionRef.current = options.onAuthed;
-    }
-    if (options?.mode) {
-      setAuthModeState(options.mode);
-    }
-    captureEvent(ANALYTICS_EVENT.AUTH_MODAL_OPENED, {
-      mode: options?.mode ?? authMode,
-    });
-    setAuthModalOpen(true);
-  }, [authMode]);
+  const openAuthModal = useCallback(
+    (options?: AuthModalOptions) => {
+      if (options?.onAuthed) {
+        pendingActionRef.current = options.onAuthed;
+      }
+      if (options?.mode) {
+        setAuthModeState(options.mode);
+      }
+      captureEvent(ANALYTICS_EVENT.AUTH_MODAL_OPENED, {
+        mode: options?.mode ?? authMode,
+      });
+      setAuthModalOpen(true);
+    },
+    [authMode],
+  );
 
   const closeAuthModal = useCallback(() => {
     pendingActionRef.current = null;

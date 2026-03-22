@@ -6,8 +6,6 @@ import { buildCategorySlug } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
 import { resolveStorageUrl } from "@/utils/functions";
 
-export const revalidate = 3600; // ISR: revalidate every hour
-
 export default async function CollectionsPage() {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
@@ -27,7 +25,7 @@ export default async function CollectionsPage() {
 
     const { data: allCategories } = await supabase
       .from("categories" as never)
-      .select("id, title, description, asset, slug")
+      .select("*")
       .eq("is_active" as never, true)
       .order("created_at" as never, { ascending: false });
 

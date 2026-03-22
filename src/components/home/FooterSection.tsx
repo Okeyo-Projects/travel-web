@@ -1,12 +1,12 @@
 "use client";
 
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { useT } from "@/providers/translations-provider";
 import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { useT } from "@/providers/translations-provider";
 
 export function FooterSection() {
   const pathname = usePathname();
@@ -120,8 +120,6 @@ export function FooterSection() {
             <div className="w-full flex justify-end mt-4">
               <PayzoneBadge
                 className="mt-6 border-white/10 bg-white/5"
-                title={t("home.footer.payzone.title")}
-                description={t("home.footer.payzone.description")}
                 titleClassName="text-white"
                 descriptionClassName="text-white/70"
                 imageWrapperClassName=""

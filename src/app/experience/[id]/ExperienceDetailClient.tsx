@@ -1,25 +1,10 @@
 "use client";
 
-import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
-import { ReviewList } from "@/components/experience/ReviewList";
-import { MarketingHeader } from "@/components/site/MarketingHeader";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBooking } from "@/hooks/use-booking";
-import { useExperienceDetail, type ExperienceDetailResponse } from "@/hooks/use-experience-detail";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
 import {
   BedDouble,
   Check,
   ChevronLeft,
   Clock3,
-  Heart,
   Loader2,
   MapPin,
   Minus,
@@ -30,9 +15,32 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
+import { ReviewList } from "@/components/experience/ReviewList";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBooking } from "@/hooks/use-booking";
+import {
+  type ExperienceDetailResponse,
+  useExperienceDetail,
+} from "@/hooks/use-experience-detail";
+import { useShare } from "@/hooks/use-share";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { buildExperienceSlug } from "@/lib/routing/slugs";
 
 function formatMoney(cents: number | null | undefined, currency = "MAD") {
   if (typeof cents !== "number") {
@@ -56,17 +64,6 @@ function formatDuration(days: number | null, hours: number | null) {
   return "Flexible";
 }
 
-function formatDate(date: string | null | undefined) {
-  if (!date) {
-    return "--/--";
-  }
-
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-  }).format(new Date(date));
-}
-
 function buildMapLinks(
   latitude: number | null,
   longitude: number | null,
@@ -75,7 +72,8 @@ function buildMapLinks(
   if (typeof latitude !== "number" || typeof longitude !== "number") {
     const encodedQuery = encodeURIComponent(locationLabel);
     return {
-      embedUrl: "https://www.openstreetmap.org/export/embed.html?bbox=-10.5%2C27.5%2C-0.5%2C36.5&layer=mapnik",
+      embedUrl:
+        "https://www.openstreetmap.org/export/embed.html?bbox=-10.5%2C27.5%2C-0.5%2C36.5&layer=mapnik",
       externalUrl: `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`,
     };
   }
@@ -100,11 +98,36 @@ export function ExperienceDetailClient({
   initialData?: ExperienceDetailResponse;
 }) {
   const identifier = experienceId;
-  const { data, isLoading, isError } = useExperienceDetail(identifier, { initialData });
+  const { data, isLoading, isError } = useExperienceDetail(identifier, {
+    initialData,
+  });
   const { openBooking, BookingModal } = useBooking();
+  const pathname = usePathname();
 
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+
+  const shareExperience = data?.transformed;
+  const shareLocationLabel = shareExperience
+    ? [shareExperience.city, shareExperience.region, shareExperience.country]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+  const shareSlug = shareExperience
+    ? buildExperienceSlug({
+        title: shareExperience.title,
+        id: shareExperience.id,
+      })
+    : identifier;
+  const shareHref = localizeHref(`/experience/${shareSlug}`, pathname);
+  const share = useShare({
+    title: shareExperience?.title ?? "",
+    url: shareHref,
+    description: shareExperience?.shortDescription ?? "",
+    locationLabel: shareLocationLabel,
+    previewImageUrl: shareExperience?.thumbnailUrl ?? null,
+    experienceId: shareExperience?.id ?? null,
+    source: "experience_detail_page",
+  });
 
   useEffect(() => {
     if (!data) return;
@@ -112,7 +135,7 @@ export function ExperienceDetailClient({
       experience_id: data.transformed.id,
       type: data.transformed.type,
     });
-  }, [data?.transformed.id, data?.transformed.type]);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -125,7 +148,9 @@ export function ExperienceDetailClient({
   if (isError || !data) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
-        <p className="text-center text-lg font-medium text-destructive">Une erreur est survenue</p>
+        <p className="text-center text-lg font-medium text-destructive">
+          Une erreur est survenue
+        </p>
         <Button variant="outline" onClick={() => window.location.reload()}>
           Recharger
         </Button>
@@ -140,7 +165,10 @@ export function ExperienceDetailClient({
     .map((item) => item.url)
     .filter((item): item is string => Boolean(item));
 
-  if (experience.thumbnailUrl && !heroImages.includes(experience.thumbnailUrl)) {
+  if (
+    experience.thumbnailUrl &&
+    !heroImages.includes(experience.thumbnailUrl)
+  ) {
     heroImages.unshift(experience.thumbnailUrl);
   }
 
@@ -150,16 +178,20 @@ export function ExperienceDetailClient({
 
   const latitude = experience.location?.latitude ?? null;
   const longitude = experience.location?.longitude ?? null;
-  const mapLinks = buildMapLinks(latitude, longitude, locationLabel || "Morocco");
+  const mapLinks = buildMapLinks(
+    latitude,
+    longitude,
+    locationLabel || "Morocco",
+  );
 
   const nightsLabel = trip ? "pers." : "nuit";
   const basePrice =
     trip?.price_cents ??
-    lodging?.rooms.find((room) => typeof room.price_cents === "number")?.price_cents ??
+    lodging?.rooms.find((room) => typeof room.price_cents === "number")
+      ?.price_cents ??
     null;
   const baseCurrency = trip?.currency ?? lodging?.rooms[0]?.currency ?? "MAD";
   const formattedPrice = formatMoney(basePrice, baseCurrency);
-  const nextDeparture = trip?.departures?.[0]?.depart_at;
 
   const capacity = trip?.group_size_max
     ? trip.group_size_max
@@ -169,11 +201,17 @@ export function ExperienceDetailClient({
 
   const description = experience.longDescription || experience.shortDescription;
   const showReadMore = description.length > 280;
-  const visibleDescription = showReadMore && !descriptionExpanded ? `${description.slice(0, 280)}...` : description;
+  const visibleDescription =
+    showReadMore && !descriptionExpanded
+      ? `${description.slice(0, 280)}...`
+      : description;
 
   const itineraryByDay = (() => {
     if (!trip?.itinerary?.length) {
-      return [] as Array<{ day: number; items: NonNullable<typeof trip>["itinerary"] }>;
+      return [] as Array<{
+        day: number;
+        items: NonNullable<typeof trip>["itinerary"];
+      }>;
     }
 
     const grouped = new Map<number, typeof trip.itinerary>();
@@ -203,39 +241,16 @@ export function ExperienceDetailClient({
 
       <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.history.back()}
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={async () => {
-                await navigator.clipboard.writeText(window.location.href);
-                captureEvent(ANALYTICS_EVENT.EXPERIENCE_SHARED, {
-                  experience_id: experience.id,
-                  method: "clipboard",
-                });
-                toast.success("Lien copié");
-              }}
-            >
+            <Button variant="ghost" size="icon" onClick={share.openShare}>
               <Share2 className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setIsSaved((previous) => !previous);
-                captureEvent(
-                  isSaved
-                    ? ANALYTICS_EVENT.EXPERIENCE_UNLIKED
-                    : ANALYTICS_EVENT.EXPERIENCE_LIKED,
-                  { experience_id: experience.id, source: "detail_page" },
-                );
-                toast.success(isSaved ? "Retiré des favoris" : "Ajouté aux favoris");
-              }}
-            >
-              <Heart className={`h-5 w-5 ${isSaved ? "fill-current text-rose-500" : ""}`} />
             </Button>
           </div>
         </div>
@@ -243,7 +258,11 @@ export function ExperienceDetailClient({
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="hidden items-center justify-between lg:flex">
-          <Button variant="ghost" className="gap-2" onClick={() => window.history.back()}>
+          <Button
+            variant="ghost"
+            className="gap-2"
+            onClick={() => window.history.back()}
+          >
             <ChevronLeft className="h-4 w-4" />
             Retour
           </Button>
@@ -251,34 +270,10 @@ export function ExperienceDetailClient({
             <Button
               variant="outline"
               className="gap-2"
-              onClick={async () => {
-                await navigator.clipboard.writeText(window.location.href);
-                captureEvent(ANALYTICS_EVENT.EXPERIENCE_SHARED, {
-                  experience_id: experience.id,
-                  method: "clipboard",
-                });
-                toast.success("Lien copié");
-              }}
+              onClick={share.openShare}
             >
               <Share2 className="h-4 w-4" />
               Partager
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={() => {
-                setIsSaved((previous) => !previous);
-                captureEvent(
-                  isSaved
-                    ? ANALYTICS_EVENT.EXPERIENCE_UNLIKED
-                    : ANALYTICS_EVENT.EXPERIENCE_LIKED,
-                  { experience_id: experience.id, source: "detail_page" },
-                );
-                toast.success(isSaved ? "Retiré des favoris" : "Ajouté aux favoris");
-              }}
-            >
-              <Heart className={`h-4 w-4 ${isSaved ? "fill-current text-rose-500" : ""}`} />
-              {isSaved ? "Enregistré" : "Enregistrer"}
             </Button>
           </div>
         </div>
@@ -288,7 +283,10 @@ export function ExperienceDetailClient({
           {/* LEFT COLUMN — Video + Photos (sticky) */}
           <div className="lg:col-span-5">
             <div className="sticky top-24 space-y-4">
-              <ExperienceGallery images={heroImages} videoUrl={experience.video?.url} />
+              <ExperienceGallery
+                images={heroImages}
+                videoUrl={experience.video?.url}
+              />
             </div>
           </div>
 
@@ -304,14 +302,20 @@ export function ExperienceDetailClient({
                 ))}
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{experience.title}</h1>
+              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                {experience.title}
+              </h1>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1 text-foreground">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold">{experience.metrics.rating?.toFixed(1) ?? "Nouveau"}</span>
+                  <span className="font-semibold">
+                    {experience.metrics.rating?.toFixed(1) ?? "Nouveau"}
+                  </span>
                   {experience.metrics.reviews > 0 && (
-                    <span className="underline underline-offset-2">({experience.metrics.reviews} avis)</span>
+                    <span className="underline underline-offset-2">
+                      ({experience.metrics.reviews} avis)
+                    </span>
                   )}
                 </div>
                 <span className="flex items-center gap-1">
@@ -358,8 +362,12 @@ export function ExperienceDetailClient({
                       {trip ? "Prochain départ" : "Tarif à partir de"}
                     </p>
                     <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-3xl font-bold tracking-tight text-foreground">{formattedPrice}</span>
-                      <span className="text-sm font-medium text-muted-foreground">/ {nightsLabel}</span>
+                      <span className="text-3xl font-bold tracking-tight text-foreground">
+                        {formattedPrice}
+                      </span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        / {nightsLabel}
+                      </span>
                     </div>
                   </div>
                   <Button
@@ -428,7 +436,12 @@ export function ExperienceDetailClient({
                       <Clock3 className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-xs text-muted-foreground">Durée</p>
-                        <p className="font-medium">{formatDuration(trip?.duration_days ?? null, trip?.duration_hours ?? null)}</p>
+                        <p className="font-medium">
+                          {formatDuration(
+                            trip?.duration_days ?? null,
+                            trip?.duration_hours ?? null,
+                          )}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
@@ -436,27 +449,38 @@ export function ExperienceDetailClient({
                     <CardContent className="flex items-center gap-3 p-4">
                       <Users className="h-5 w-5 text-primary" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Capacité max</p>
+                        <p className="text-xs text-muted-foreground">
+                          Capacité max
+                        </p>
                         <p className="font-medium">{capacity ?? "Flexible"}</p>
                       </div>
                     </CardContent>
                   </Card>
                   <Card className="rounded-2xl border-muted">
                     <CardContent className="flex items-center gap-3 p-4">
-                      <Badge className="h-6 rounded-full px-2 text-xs" variant="secondary">
+                      <Badge
+                        className="h-6 rounded-full px-2 text-xs"
+                        variant="secondary"
+                      >
                         {experience.type}
                       </Badge>
                       <div>
                         <p className="text-xs text-muted-foreground">Type</p>
-                        <p className="font-medium capitalize">{experience.type}</p>
+                        <p className="font-medium capitalize">
+                          {experience.type}
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
                 <div className="space-y-2">
-                  <h2 className="text-xl font-semibold">À propos de cette expérience</h2>
-                  <p className="leading-relaxed text-muted-foreground">{visibleDescription}</p>
+                  <h2 className="text-xl font-semibold">
+                    À propos de cette expérience
+                  </h2>
+                  <p className="leading-relaxed text-muted-foreground">
+                    {visibleDescription}
+                  </p>
                   {showReadMore ? (
                     <Button
                       variant="link"
@@ -472,30 +496,43 @@ export function ExperienceDetailClient({
                   <h3 className="text-lg font-semibold">Équipements</h3>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {experience.amenities.map((amenity) => (
-                      <div key={amenity.key} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                      <div
+                        key={amenity.key}
+                        className="flex items-center gap-3 rounded-xl border bg-card p-3"
+                      >
                         <Check className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">{amenity.label}</span>
+                        <span className="text-sm font-medium">
+                          {amenity.label}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {experience.servicesIncluded.length || experience.servicesExcluded.length ? (
+                {experience.servicesIncluded.length ||
+                experience.servicesExcluded.length ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Card className="rounded-2xl">
                       <CardHeader>
-                        <CardTitle className="text-base">Ce qui est inclus</CardTitle>
+                        <CardTitle className="text-base">
+                          Ce qui est inclus
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm">
                         {experience.servicesIncluded.length ? (
                           experience.servicesIncluded.map((service) => (
-                            <p key={service.key} className="flex items-center gap-2">
+                            <p
+                              key={service.key}
+                              className="flex items-center gap-2"
+                            >
                               <Check className="h-4 w-4 text-emerald-600" />
                               {service.label}
                             </p>
                           ))
                         ) : (
-                          <p className="text-muted-foreground">Aucun détail fourni</p>
+                          <p className="text-muted-foreground">
+                            Aucun détail fourni
+                          </p>
                         )}
                       </CardContent>
                     </Card>
@@ -506,13 +543,18 @@ export function ExperienceDetailClient({
                       <CardContent className="space-y-2 text-sm">
                         {experience.servicesExcluded.length ? (
                           experience.servicesExcluded.map((service) => (
-                            <p key={service.key} className="flex items-center gap-2">
+                            <p
+                              key={service.key}
+                              className="flex items-center gap-2"
+                            >
                               <Minus className="h-4 w-4 text-amber-600" />
                               {service.label}
                             </p>
                           ))
                         ) : (
-                          <p className="text-muted-foreground">Aucun détail fourni</p>
+                          <p className="text-muted-foreground">
+                            Aucun détail fourni
+                          </p>
                         )}
                       </CardContent>
                     </Card>
@@ -529,10 +571,17 @@ export function ExperienceDetailClient({
                       </CardHeader>
                       <CardContent className="space-y-3">
                         {items.map((item) => (
-                          <div key={item.id} className="rounded-xl border bg-muted/20 p-3">
+                          <div
+                            key={item.id}
+                            className="rounded-xl border bg-muted/20 p-3"
+                          >
                             <p className="font-medium">{item.title}</p>
-                            <p className="mt-1 text-sm text-muted-foreground">{item.details}</p>
-                            <p className="mt-2 text-xs text-muted-foreground">{item.location_name ?? "Lieu à confirmer"}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {item.details}
+                            </p>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {item.location_name ?? "Lieu à confirmer"}
+                            </p>
                           </div>
                         ))}
                       </CardContent>
@@ -540,7 +589,8 @@ export function ExperienceDetailClient({
                   ))
                 ) : (
                   <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                    Détails d&apos;itinéraire indisponibles pour cette expérience.
+                    Détails d&apos;itinéraire indisponibles pour cette
+                    expérience.
                   </div>
                 )}
               </TabsContent>
@@ -550,38 +600,64 @@ export function ExperienceDetailClient({
                   <>
                     <Card className="rounded-2xl">
                       <CardHeader>
-                        <CardTitle className="text-base">Règles de la maison</CardTitle>
+                        <CardTitle className="text-base">
+                          Règles de la maison
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm text-muted-foreground">
                         <p className="flex items-center gap-2">
-                          {lodging.non_fumeur ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-rose-600" />}
+                          {lodging.non_fumeur ? (
+                            <Check className="h-4 w-4 text-emerald-600" />
+                          ) : (
+                            <X className="h-4 w-4 text-rose-600" />
+                          )}
                           Non-fumeur
                         </p>
                         <p className="flex items-center gap-2">
-                          {lodging.animaux_acceptes ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-rose-600" />}
+                          {lodging.animaux_acceptes ? (
+                            <Check className="h-4 w-4 text-emerald-600" />
+                          ) : (
+                            <X className="h-4 w-4 text-rose-600" />
+                          )}
                           Animaux acceptés
                         </p>
                         <p>
-                          <span className="font-medium text-foreground">Séjour minimum:</span>{" "}
+                          <span className="font-medium text-foreground">
+                            Séjour minimum:
+                          </span>{" "}
                           {lodging.min_stay_nights ?? 1} nuit(s)
                         </p>
-                        <p>{lodging.house_rules ?? "Règles supplémentaires à confirmer avec l&apos;hôte."}</p>
+                        <p>
+                          {lodging.house_rules ??
+                            "Règles supplémentaires à confirmer avec l&apos;hôte."}
+                        </p>
                       </CardContent>
                     </Card>
 
                     <Card className="rounded-2xl">
                       <CardHeader>
-                        <CardTitle className="text-base">Horaires et annulation</CardTitle>
+                        <CardTitle className="text-base">
+                          Horaires et annulation
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2 text-sm text-muted-foreground">
                         <p>
-                          Check-in: <span className="font-medium text-foreground">{lodging.check_in_time ?? "Flexible"}</span>
+                          Check-in:{" "}
+                          <span className="font-medium text-foreground">
+                            {lodging.check_in_time ?? "Flexible"}
+                          </span>
                         </p>
                         <p>
-                          Check-out: <span className="font-medium text-foreground">{lodging.check_out_time ?? "Flexible"}</span>
+                          Check-out:{" "}
+                          <span className="font-medium text-foreground">
+                            {lodging.check_out_time ?? "Flexible"}
+                          </span>
                         </p>
                         <p>
-                          Politique d&apos;annulation: <span className="font-medium capitalize text-foreground">{experience.cancellationPolicy}</span>
+                          Politique d&apos;annulation:{" "}
+                          <span className="font-medium capitalize text-foreground">
+                            {experience.cancellationPolicy}
+                          </span>
                         </p>
                       </CardContent>
                     </Card>
@@ -600,12 +676,22 @@ export function ExperienceDetailClient({
                       <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
                         <div className="bg-muted/30 p-2">
                           {room.photoUrls.length ? (
-                            <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
+                            <Carousel
+                              opts={{ loop: room.photoUrls.length > 1 }}
+                            >
                               <CarouselContent className="ml-0">
                                 {room.photoUrls.map((photoUrl, index) => (
-                                  <CarouselItem key={`${room.id}-${index}`} className="pl-0">
+                                  <CarouselItem
+                                    key={`${room.id}-${index}`}
+                                    className="pl-0"
+                                  >
                                     <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                                      <Image src={photoUrl} alt={room.name || "Room"} fill className="object-cover" />
+                                      <Image
+                                        src={photoUrl}
+                                        alt={room.name || "Room"}
+                                        fill
+                                        className="object-cover"
+                                      />
                                     </div>
                                   </CarouselItem>
                                 ))}
@@ -618,8 +704,12 @@ export function ExperienceDetailClient({
                           )}
                         </div>
                         <div className="space-y-3 p-4">
-                          <h3 className="text-lg font-semibold">{room.name ?? "Chambre"}</h3>
-                          <p className="text-sm text-muted-foreground">{room.description ?? "Description non renseignée."}</p>
+                          <h3 className="text-lg font-semibold">
+                            {room.name ?? "Chambre"}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {room.description ?? "Description non renseignée."}
+                          </p>
                           <div className="flex flex-wrap gap-2 text-xs">
                             <Badge variant="secondary" className="gap-1">
                               <Users className="h-3 w-3" />
@@ -632,7 +722,10 @@ export function ExperienceDetailClient({
                           </div>
                           <Separator />
                           <div className="flex items-center justify-between">
-                            <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                            <p className="text-lg font-semibold">
+                              {formatMoney(room.price_cents, room.currency)} /
+                              nuit
+                            </p>
                             <Button
                               size="sm"
                               className="rounded-xl"
@@ -668,8 +761,16 @@ export function ExperienceDetailClient({
                         referrerPolicy="no-referrer-when-downgrade"
                       />
                     </div>
-                    <Button asChild variant="outline" className="w-full sm:w-auto">
-                      <a href={mapLinks.externalUrl} target="_blank" rel="noreferrer">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
+                      <a
+                        href={mapLinks.externalUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Ouvrir dans Maps
                       </a>
                     </Button>
@@ -701,14 +802,20 @@ export function ExperienceDetailClient({
                 ))}
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">{experience.title}</h1>
+              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+                {experience.title}
+              </h1>
 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1 text-foreground">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold">{experience.metrics.rating?.toFixed(1) ?? "Nouveau"}</span>
+                  <span className="font-semibold">
+                    {experience.metrics.rating?.toFixed(1) ?? "Nouveau"}
+                  </span>
                   {experience.metrics.reviews > 0 && (
-                    <span className="underline underline-offset-2">({experience.metrics.reviews} avis)</span>
+                    <span className="underline underline-offset-2">
+                      ({experience.metrics.reviews} avis)
+                    </span>
                   )}
                 </div>
                 <span className="flex items-center gap-1">
@@ -718,7 +825,10 @@ export function ExperienceDetailClient({
               </div>
             </div>
 
-            <ExperienceGallery images={heroImages} videoUrl={experience.video?.url} />
+            <ExperienceGallery
+              images={heroImages}
+              videoUrl={experience.video?.url}
+            />
           </section>
 
           {host ? (
@@ -740,7 +850,9 @@ export function ExperienceDetailClient({
                         </span>
                       ) : null}
                       <span>{host.responseRate ?? "-"}% taux de réponse</span>
-                      <span>{host.responseTimeHours ?? "-"}h temps de réponse</span>
+                      <span>
+                        {host.responseTimeHours ?? "-"}h temps de réponse
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -803,7 +915,12 @@ export function ExperienceDetailClient({
                     <Clock3 className="h-5 w-5 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground">Durée</p>
-                      <p className="font-medium">{formatDuration(trip?.duration_days ?? null, trip?.duration_hours ?? null)}</p>
+                      <p className="font-medium">
+                        {formatDuration(
+                          trip?.duration_days ?? null,
+                          trip?.duration_hours ?? null,
+                        )}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -811,27 +928,38 @@ export function ExperienceDetailClient({
                   <CardContent className="flex items-center gap-3 p-4">
                     <Users className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Capacité max</p>
+                      <p className="text-xs text-muted-foreground">
+                        Capacité max
+                      </p>
                       <p className="font-medium">{capacity ?? "Flexible"}</p>
                     </div>
                   </CardContent>
                 </Card>
                 <Card className="rounded-2xl border-muted">
                   <CardContent className="flex items-center gap-3 p-4">
-                    <Badge className="h-6 rounded-full px-2 text-xs" variant="secondary">
+                    <Badge
+                      className="h-6 rounded-full px-2 text-xs"
+                      variant="secondary"
+                    >
                       {experience.type}
                     </Badge>
                     <div>
                       <p className="text-xs text-muted-foreground">Type</p>
-                      <p className="font-medium capitalize">{experience.type}</p>
+                      <p className="font-medium capitalize">
+                        {experience.type}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold">À propos de cette expérience</h2>
-                <p className="leading-relaxed text-muted-foreground">{visibleDescription}</p>
+                <h2 className="text-xl font-semibold">
+                  À propos de cette expérience
+                </h2>
+                <p className="leading-relaxed text-muted-foreground">
+                  {visibleDescription}
+                </p>
                 {showReadMore ? (
                   <Button
                     variant="link"
@@ -847,30 +975,43 @@ export function ExperienceDetailClient({
                 <h3 className="text-lg font-semibold">Équipements</h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {experience.amenities.map((amenity) => (
-                    <div key={amenity.key} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                    <div
+                      key={amenity.key}
+                      className="flex items-center gap-3 rounded-xl border bg-card p-3"
+                    >
                       <Check className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">{amenity.label}</span>
+                      <span className="text-sm font-medium">
+                        {amenity.label}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {experience.servicesIncluded.length || experience.servicesExcluded.length ? (
+              {experience.servicesIncluded.length ||
+              experience.servicesExcluded.length ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Card className="rounded-2xl">
                     <CardHeader>
-                      <CardTitle className="text-base">Ce qui est inclus</CardTitle>
+                      <CardTitle className="text-base">
+                        Ce qui est inclus
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       {experience.servicesIncluded.length ? (
                         experience.servicesIncluded.map((service) => (
-                          <p key={service.key} className="flex items-center gap-2">
+                          <p
+                            key={service.key}
+                            className="flex items-center gap-2"
+                          >
                             <Check className="h-4 w-4 text-emerald-600" />
                             {service.label}
                           </p>
                         ))
                       ) : (
-                        <p className="text-muted-foreground">Aucun détail fourni</p>
+                        <p className="text-muted-foreground">
+                          Aucun détail fourni
+                        </p>
                       )}
                     </CardContent>
                   </Card>
@@ -881,13 +1022,18 @@ export function ExperienceDetailClient({
                     <CardContent className="space-y-2 text-sm">
                       {experience.servicesExcluded.length ? (
                         experience.servicesExcluded.map((service) => (
-                          <p key={service.key} className="flex items-center gap-2">
+                          <p
+                            key={service.key}
+                            className="flex items-center gap-2"
+                          >
                             <Minus className="h-4 w-4 text-amber-600" />
                             {service.label}
                           </p>
                         ))
                       ) : (
-                        <p className="text-muted-foreground">Aucun détail fourni</p>
+                        <p className="text-muted-foreground">
+                          Aucun détail fourni
+                        </p>
                       )}
                     </CardContent>
                   </Card>
@@ -904,10 +1050,17 @@ export function ExperienceDetailClient({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {items.map((item) => (
-                        <div key={item.id} className="rounded-xl border bg-muted/20 p-3">
+                        <div
+                          key={item.id}
+                          className="rounded-xl border bg-muted/20 p-3"
+                        >
                           <p className="font-medium">{item.title}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">{item.details}</p>
-                          <p className="mt-2 text-xs text-muted-foreground">{item.location_name ?? "Lieu à confirmer"}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {item.details}
+                          </p>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {item.location_name ?? "Lieu à confirmer"}
+                          </p>
                         </div>
                       ))}
                     </CardContent>
@@ -925,38 +1078,64 @@ export function ExperienceDetailClient({
                 <>
                   <Card className="rounded-2xl">
                     <CardHeader>
-                      <CardTitle className="text-base">Règles de la maison</CardTitle>
+                      <CardTitle className="text-base">
+                        Règles de la maison
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm text-muted-foreground">
                       <p className="flex items-center gap-2">
-                        {lodging.non_fumeur ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-rose-600" />}
+                        {lodging.non_fumeur ? (
+                          <Check className="h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <X className="h-4 w-4 text-rose-600" />
+                        )}
                         Non-fumeur
                       </p>
                       <p className="flex items-center gap-2">
-                        {lodging.animaux_acceptes ? <Check className="h-4 w-4 text-emerald-600" /> : <X className="h-4 w-4 text-rose-600" />}
+                        {lodging.animaux_acceptes ? (
+                          <Check className="h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <X className="h-4 w-4 text-rose-600" />
+                        )}
                         Animaux acceptés
                       </p>
                       <p>
-                        <span className="font-medium text-foreground">Séjour minimum:</span>{" "}
+                        <span className="font-medium text-foreground">
+                          Séjour minimum:
+                        </span>{" "}
                         {lodging.min_stay_nights ?? 1} nuit(s)
                       </p>
-                      <p>{lodging.house_rules ?? "Règles supplémentaires à confirmer avec l&apos;hôte."}</p>
+                      <p>
+                        {lodging.house_rules ??
+                          "Règles supplémentaires à confirmer avec l&apos;hôte."}
+                      </p>
                     </CardContent>
                   </Card>
 
                   <Card className="rounded-2xl">
                     <CardHeader>
-                      <CardTitle className="text-base">Horaires et annulation</CardTitle>
+                      <CardTitle className="text-base">
+                        Horaires et annulation
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm text-muted-foreground">
                       <p>
-                        Check-in: <span className="font-medium text-foreground">{lodging.check_in_time ?? "Flexible"}</span>
+                        Check-in:{" "}
+                        <span className="font-medium text-foreground">
+                          {lodging.check_in_time ?? "Flexible"}
+                        </span>
                       </p>
                       <p>
-                        Check-out: <span className="font-medium text-foreground">{lodging.check_out_time ?? "Flexible"}</span>
+                        Check-out:{" "}
+                        <span className="font-medium text-foreground">
+                          {lodging.check_out_time ?? "Flexible"}
+                        </span>
                       </p>
                       <p>
-                        Politique d&apos;annulation: <span className="font-medium capitalize text-foreground">{experience.cancellationPolicy}</span>
+                        Politique d&apos;annulation:{" "}
+                        <span className="font-medium capitalize text-foreground">
+                          {experience.cancellationPolicy}
+                        </span>
                       </p>
                     </CardContent>
                   </Card>
@@ -978,9 +1157,17 @@ export function ExperienceDetailClient({
                           <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
                             <CarouselContent className="ml-0">
                               {room.photoUrls.map((photoUrl, index) => (
-                                <CarouselItem key={`${room.id}-${index}`} className="pl-0">
+                                <CarouselItem
+                                  key={`${room.id}-${index}`}
+                                  className="pl-0"
+                                >
                                   <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                                    <Image src={photoUrl} alt={room.name || "Room"} fill className="object-cover" />
+                                    <Image
+                                      src={photoUrl}
+                                      alt={room.name || "Room"}
+                                      fill
+                                      className="object-cover"
+                                    />
                                   </div>
                                 </CarouselItem>
                               ))}
@@ -993,8 +1180,12 @@ export function ExperienceDetailClient({
                         )}
                       </div>
                       <div className="space-y-3 p-4">
-                        <h3 className="text-lg font-semibold">{room.name ?? "Chambre"}</h3>
-                        <p className="text-sm text-muted-foreground">{room.description ?? "Description non renseignée."}</p>
+                        <h3 className="text-lg font-semibold">
+                          {room.name ?? "Chambre"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {room.description ?? "Description non renseignée."}
+                        </p>
                         <div className="flex flex-wrap gap-2 text-xs">
                           <Badge variant="secondary" className="gap-1">
                             <Users className="h-3 w-3" />
@@ -1007,7 +1198,10 @@ export function ExperienceDetailClient({
                         </div>
                         <Separator />
                         <div className="flex items-center justify-between">
-                          <p className="text-lg font-semibold">{formatMoney(room.price_cents, room.currency)} / nuit</p>
+                          <p className="text-lg font-semibold">
+                            {formatMoney(room.price_cents, room.currency)} /
+                            nuit
+                          </p>
                           <Button
                             size="sm"
                             className="rounded-xl"
@@ -1043,8 +1237,16 @@ export function ExperienceDetailClient({
                       referrerPolicy="no-referrer-when-downgrade"
                     />
                   </div>
-                  <Button asChild variant="outline" className="w-full sm:w-auto">
-                    <a href={mapLinks.externalUrl} target="_blank" rel="noreferrer">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                  >
+                    <a
+                      href={mapLinks.externalUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       Ouvrir dans Maps
                     </a>
                   </Button>
@@ -1067,16 +1269,22 @@ export function ExperienceDetailClient({
       <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 p-4 backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>
-            <p className="text-xs uppercase text-muted-foreground">À partir de</p>
+            <p className="text-xs uppercase text-muted-foreground">
+              À partir de
+            </p>
             <p className="text-lg font-semibold">{formattedPrice}</p>
           </div>
-          <Button className="h-11 rounded-full px-8" onClick={() => openBooking(experience)}>
+          <Button
+            className="h-11 rounded-full px-8"
+            onClick={() => openBooking(experience)}
+          >
             Réserver
           </Button>
         </div>
       </div>
 
       <BookingModal />
+      {share.shareDialog}
     </div>
   );
 }

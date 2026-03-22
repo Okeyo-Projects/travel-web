@@ -45,6 +45,10 @@ export function CompactExperienceCard({
   const handleVideoClick = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    if (onOpenDetails) {
+      handleCardClick();
+      return;
+    }
     setIsPlaying((prev) => !prev);
   };
 
@@ -61,7 +65,7 @@ export function CompactExperienceCard({
   // Attach HLS or set src directly
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoUrl) return;
+    if (!video || !videoUrl || onOpenDetails) return;
 
     let hls: Hls | null = null;
 
@@ -80,7 +84,7 @@ export function CompactExperienceCard({
     return () => {
       hls?.destroy();
     };
-  }, [videoUrl]);
+  }, [videoUrl, onOpenDetails]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -98,7 +102,7 @@ export function CompactExperienceCard({
   const cardBody = (
     <>
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
-        {videoUrl && (
+        {videoUrl && !onOpenDetails && (
           <video
             ref={videoRef}
             className={cn(
@@ -156,7 +160,7 @@ export function CompactExperienceCard({
           </div>
         )}
 
-        {isPlaying && (
+        {isPlaying && !onOpenDetails && (
           <button
             type="button"
             className="absolute inset-0 z-10 cursor-pointer"

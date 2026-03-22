@@ -1,6 +1,7 @@
-import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { ensureProfileExistsForUser } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClientOrThrow } from "@/lib/supabase/service-role";
 
 type LooseQueryResult<T = unknown> = Promise<{ data: T; error: unknown }>;
 type LooseQueryPayload = { data: unknown; error: unknown };
@@ -20,17 +21,6 @@ type LooseSupabaseClient = {
 
 function asLooseSupabaseClient(client: unknown): LooseSupabaseClient {
   return client as LooseSupabaseClient;
-}
-
-function createServiceRoleClientOrThrow() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing Supabase service role environment variables");
-  }
-
-  return createServiceClient(supabaseUrl, serviceRoleKey);
 }
 
 async function claimConversationForUser(
@@ -125,6 +115,10 @@ export async function GET(
       data: { user },
     } = await userClient.auth.getUser();
 
+    if (user) {
+      await ensureProfileExistsForUser(user);
+    }
+
     const authorized = await resolveAuthorizedConversation(
       req,
       conversationId,
@@ -178,6 +172,10 @@ export async function PATCH(
       data: { user },
     } = await userClient.auth.getUser();
 
+    if (user) {
+      await ensureProfileExistsForUser(user);
+    }
+
     const authorized = await resolveAuthorizedConversation(
       req,
       conversationId,
@@ -225,6 +223,10 @@ export async function DELETE(
     const {
       data: { user },
     } = await userClient.auth.getUser();
+
+    if (user) {
+      await ensureProfileExistsForUser(user);
+    }
 
     const authorized = await resolveAuthorizedConversation(
       req,

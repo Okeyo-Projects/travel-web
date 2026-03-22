@@ -12,6 +12,8 @@ import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
+export const dynamic = "force-dynamic";
+
 async function fetchCategoryTitle(
   routeSlug: string,
   locale: "fr" | "en" | "ar",
@@ -20,7 +22,7 @@ async function fetchCategoryTitle(
     const supabase = await createClient();
     const { data } = await supabase
       .from("categories" as never)
-      .select("id, title, slug")
+      .select("*")
       .eq("is_active" as never, true);
     const category = (
       data as Array<{

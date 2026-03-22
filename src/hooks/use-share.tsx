@@ -80,9 +80,9 @@ function ShareDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="overflow-hidden border-0 p-0 shadow-2xl sm:max-w-xl"
+        className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden border-0 p-0 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-xl"
       >
-        <div className="relative overflow-hidden bg-slate-950 px-5 pb-5 pt-5 text-white">
+        <div className="relative shrink-0 overflow-hidden bg-slate-950 px-4 pb-4 pt-4 text-white sm:px-5 sm:pb-5 sm:pt-5">
           {previewImageUrl ? (
             <Image
               src={previewImageUrl}
@@ -96,7 +96,7 @@ function ShareDialog({
 
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950/95 via-slate-950/80 to-rose-950/60" />
 
-          <div className="relative flex items-start justify-between gap-4">
+          <div className="relative flex items-start justify-between gap-3 sm:gap-4">
             <div className="flex min-w-0 items-start gap-4">
               <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-[20px] border border-white/15 bg-white/10">
                 {previewImageUrl ? (
@@ -113,11 +113,11 @@ function ShareDialog({
                 )}
               </div>
 
-              <div className="min-w-0 space-y-2">
+              <div className="min-w-0 space-y-2 pr-1">
                 <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-white/55">
                   Share Experience
                 </p>
-                <DialogTitle className="line-clamp-2 text-2xl leading-tight font-semibold text-white">
+                <DialogTitle className="line-clamp-2 text-xl leading-tight font-semibold text-white sm:text-2xl">
                   {title}
                 </DialogTitle>
                 {locationLabel ? (
@@ -136,7 +136,7 @@ function ShareDialog({
           </div>
         </div>
 
-        <div className="space-y-5 p-5">
+        <div className="min-h-0 space-y-5 overflow-y-auto p-4 sm:p-5">
           <div className="space-y-1">
             <DialogDescription className="text-sm leading-6 text-slate-500">
               {description?.trim()
@@ -176,12 +176,12 @@ function ShareDialog({
             })}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 pb-1">
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm font-medium text-slate-700">
                 Direct link
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="hidden text-xs text-slate-400 sm:inline">
                 Anyone with the link can view it
               </span>
             </div>

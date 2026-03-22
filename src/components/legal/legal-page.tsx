@@ -92,8 +92,6 @@ export function LegalPage({
             </div>
 
             <PayzoneBadge
-              title="Paiement partenaire"
-              description="Les transactions sur okeyo travel sont traitees de maniere securisee via Payzone."
               className="mt-6 border-slate-200 bg-slate-50 print:hidden"
               titleClassName="text-slate-900"
               descriptionClassName="text-slate-600"

@@ -4,30 +4,9 @@ import type { ReactNode } from "react";
 import { JsonLd } from "@/components/seo/json-ld";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
 
-export const revalidate = 1800; // ISR: revalidate every 30 minutes
-
-export async function generateStaticParams(): Promise<{ id: string }[]> {
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("experiences" as never)
-      .select("id, title")
-      .eq("status" as never, "published")
-      .is("deleted_at" as never, null);
-
-    return ((data ?? []) as Array<{ id: string; title: string }>).map(
-      (exp) => ({
-        id: buildExperienceSlug({ title: exp.title, id: exp.id }),
-      }),
-    );
-  } catch {
-    // Supabase unavailable at build time — fall back to dynamic rendering
-    return [];
-  }
-}
+export const dynamic = "force-dynamic";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 

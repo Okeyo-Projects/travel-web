@@ -24,10 +24,11 @@ import {
 } from "@/hooks/use-conversations";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { parseMessageContent } from "@/lib/chat/parse-message";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { ChatInput } from "./ChatInput";
 import { ChatWelcome } from "./ChatWelcome";
-import { MessageList } from "./MessageList";
+import { type AssistantFeedbackValue, MessageList } from "./MessageList";
 
 interface BookingChatProps {
   initialConversationId?: string | null;
@@ -48,12 +49,23 @@ interface PublicAgentConfigResponse {
   suggested_prompts: Record<string, string[]>;
 }
 
+type ChatSendSource =
+  | "typed"
+  | "welcome_suggestion"
+  | "quick_reply"
+  | "initial_prompt";
+
 type StoredConversationMessage = Pick<UIMessage, "id" | "role" | "parts"> & {
   content?: string | null;
 };
 
 type ChatMessage = UIMessage & {
   content?: string;
+};
+
+type AssistantResponseAnalyticsContext = {
+  source: ChatSendSource | "unknown";
+  latencyMs: number | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -98,6 +110,102 @@ function extractTextFromParts(parts: unknown): string {
     .filter((value) => value.trim().length > 0)
     .join("\n")
     .trim();
+}
+
+function extractToolNames(parts: unknown): string[] {
+  if (!Array.isArray(parts)) return [];
+
+  const toolNames = new Set<string>();
+
+  for (const part of parts) {
+    if (!isRecord(part)) continue;
+
+    const type = part.type;
+    if (typeof type !== "string" || !type.startsWith("tool-")) continue;
+
+    const toolName = type.slice(5).trim();
+    if (toolName.length > 0) {
+      toolNames.add(toolName);
+    }
+  }
+
+  return Array.from(toolNames);
+}
+
+function extractUiComponentNames(message: ChatMessage): string[] {
+  const componentNames = new Set<string>();
+
+  if (Array.isArray(message.parts)) {
+    for (const part of message.parts) {
+      if (!isRecord(part)) continue;
+
+      const recordPart = part as Record<string, unknown>;
+      const state = recordPart.state;
+      if (state !== "output-available") continue;
+
+      switch (recordPart.type) {
+        case "tool-searchExperiences":
+          componentNames.add("experience_cards");
+          break;
+        case "tool-requestUserLocation":
+          componentNames.add("location_request");
+          break;
+        case "tool-offerQuickReplies":
+          componentNames.add("quick_replies");
+          break;
+        case "tool-suggestDateOptions":
+          componentNames.add("date_options");
+          break;
+        case "tool-selectRoomType":
+          componentNames.add("room_type_selector");
+          break;
+        case "tool-getExperienceDetails":
+          componentNames.add("experience_details");
+          break;
+        case "tool-getExperienceOptionDetails":
+          componentNames.add("option_details");
+          break;
+        case "tool-createBookingIntent":
+          if (
+            isRecord(recordPart.output) &&
+            recordPart.output.requires_auth === true
+          ) {
+            componentNames.add("auth_required");
+          } else if (
+            isRecord(recordPart.output) &&
+            recordPart.output.success === true &&
+            typeof recordPart.output.booking_id === "string"
+          ) {
+            componentNames.add("booking_confirm");
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  if (typeof message.content === "string" && message.content.trim()) {
+    const parsedContent = parseMessageContent(message.content);
+    for (const block of parsedContent) {
+      if (
+        block.type === "ui" &&
+        isRecord(block.content) &&
+        typeof block.content.component === "string"
+      ) {
+        componentNames.add(block.content.component);
+      }
+    }
+  }
+
+  return Array.from(componentNames);
+}
+
+function truncateAnalyticsText(text: string, maxLength = 140): string | null {
+  const normalized = text.replaceAll(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
 function hasRenderableAssistantContent(
@@ -175,6 +283,9 @@ export function BookingChat({
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [messageFeedbackById, setMessageFeedbackById] = useState<
+    Partial<Record<string, AssistantFeedbackValue>>
+  >({});
   const [publicAgentConfig, setPublicAgentConfig] =
     useState<PublicAgentConfigResponse | null>(null);
   const pathname = usePathname();
@@ -182,7 +293,16 @@ export function BookingChat({
   const inFlightTextRef = useRef<string | null>(null);
   const persistedMessageIds = useRef(new Set<string>());
   const persistingMessageIds = useRef(new Set<string>());
+  const trackedResponseMessageIds = useRef(new Set<string>());
+  const assistantResponseContextRef = useRef(
+    new Map<string, AssistantResponseAnalyticsContext>(),
+  );
   const hasTrackedBookingCreatedRef = useRef(false);
+  const hasTrackedInputFocusRef = useRef(false);
+  const pendingResponseRef = useRef<{
+    source: ChatSendSource;
+    startedAt: number;
+  } | null>(null);
   const previousPathname = useRef(pathname);
   const activeConversationId = initialConversationId || conversationId;
   const isConversationLocked =
@@ -288,10 +408,14 @@ export function BookingChat({
     setMessages(loadedMessages);
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
+    trackedResponseMessageIds.current.clear();
+    assistantResponseContextRef.current.clear();
+    setMessageFeedbackById({});
 
     // Mark loaded messages as already persisted
     loadedMessages.forEach((msg: ChatMessage) => {
       persistedMessageIds.current.add(msg.id);
+      trackedResponseMessageIds.current.add(msg.id);
     });
   }, [conversationData, setMessages]);
 
@@ -306,6 +430,8 @@ export function BookingChat({
         setMessages([]);
         persistedMessageIds.current.clear();
         persistingMessageIds.current.clear();
+        assistantResponseContextRef.current.clear();
+        setMessageFeedbackById({});
       }
     }
   }, [
@@ -327,6 +453,11 @@ export function BookingChat({
     inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
+    trackedResponseMessageIds.current.clear();
+    assistantResponseContextRef.current.clear();
+    hasTrackedInputFocusRef.current = false;
+    pendingResponseRef.current = null;
+    setMessageFeedbackById({});
   }, [newConversationNonce, setMessages]);
 
   // Reset when navigating from /chat/:id -> /chat (e.g., navbar click)
@@ -352,6 +483,11 @@ export function BookingChat({
     inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
+    trackedResponseMessageIds.current.clear();
+    assistantResponseContextRef.current.clear();
+    hasTrackedInputFocusRef.current = false;
+    pendingResponseRef.current = null;
+    setMessageFeedbackById({});
   }, [
     pathname,
     setConversationId,
@@ -368,7 +504,7 @@ export function BookingChat({
   // Auto-send initial message from home page input
   const hasSentInitialMessage = useRef(false);
   const sendInitialMessage = useEffectEvent((message: string) => {
-    void sendUserMessage(message);
+    void sendUserMessage(message, "initial_prompt");
   });
 
   useEffect(() => {
@@ -403,6 +539,12 @@ export function BookingChat({
       isCancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!activeConversationId) {
+      hasTrackedInputFocusRef.current = false;
+    }
+  }, [activeConversationId]);
 
   // Persist new messages to database
   useEffect(() => {
@@ -440,7 +582,57 @@ export function BookingChat({
     });
   }, [activeConversationId, messages, saveMessage, status]);
 
-  const sendUserMessage = async (text: string) => {
+  useEffect(() => {
+    const assistantMessages = messages.filter((message) => {
+      if (message.role !== "assistant") return false;
+      if (trackedResponseMessageIds.current.has(message.id)) return false;
+      return shouldPersistMessage(message, status);
+    });
+
+    if (assistantMessages.length === 0) return;
+
+    const pendingResponse = pendingResponseRef.current;
+    const latencyMs = pendingResponse
+      ? Math.max(0, Math.round(performance.now() - pendingResponse.startedAt))
+      : null;
+
+    for (const message of assistantMessages) {
+      const payload = buildPersistedMessagePayload(message);
+      const responseText = payload.content ?? "";
+      const toolNames = extractToolNames(message.parts);
+
+      captureEvent(ANALYTICS_EVENT.AI_RESPONSE_RECEIVED, {
+        conversation_id: activeConversationId,
+        has_tool_call: toolNames.length > 0,
+        latency_ms: latencyMs,
+        response_length: responseText.length,
+        source: pendingResponse?.source ?? "unknown",
+        tool_count: toolNames.length,
+      });
+
+      assistantResponseContextRef.current.set(message.id, {
+        source: pendingResponse?.source ?? "unknown",
+        latencyMs,
+      });
+
+      for (const toolName of toolNames) {
+        captureEvent(ANALYTICS_EVENT.AI_TOOL_USED, {
+          conversation_id: activeConversationId,
+          source: pendingResponse?.source ?? "unknown",
+          tool_name: toolName,
+        });
+      }
+
+      trackedResponseMessageIds.current.add(message.id);
+    }
+
+    pendingResponseRef.current = null;
+  }, [activeConversationId, messages, status]);
+
+  const sendUserMessage = async (
+    text: string,
+    source: ChatSendSource = "typed",
+  ) => {
     const normalizedText = text.trim();
     if (
       !normalizedText ||
@@ -456,6 +648,10 @@ export function BookingChat({
     let currentConvId = activeConversationId;
     isSendingRef.current = true;
     inFlightTextRef.current = normalizedText;
+    pendingResponseRef.current = {
+      source,
+      startedAt: performance.now(),
+    };
 
     try {
       // Create conversation if this is the first message
@@ -469,6 +665,7 @@ export function BookingChat({
         currentConvId = result.conversation.id;
         captureEvent(ANALYTICS_EVENT.CHAT_STARTED, {
           conversation_id: currentConvId,
+          source,
         });
         setConversationId(currentConvId);
 
@@ -482,8 +679,10 @@ export function BookingChat({
 
       setInput("");
       captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
-        message_length: normalizedText.length,
+        conversation_id: currentConvId,
         has_tool_call: false,
+        message_length: normalizedText.length,
+        source,
       });
       await sendMessage(
         { text: normalizedText },
@@ -501,9 +700,11 @@ export function BookingChat({
       console.error("Failed to send message:", error);
       captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_FAILED, {
         error_message: error instanceof Error ? error.message : String(error),
+        source,
       });
       isSendingRef.current = false;
       inFlightTextRef.current = null;
+      pendingResponseRef.current = null;
     } finally {
       setIsCreatingConversation(false);
     }
@@ -515,7 +716,10 @@ export function BookingChat({
   };
 
   const handleSuggestionClick = async (prompt: string) => {
-    await sendUserMessage(prompt);
+    captureEvent(ANALYTICS_EVENT.CHAT_SUGGESTION_CLICKED, {
+      prompt_length: prompt.length,
+    });
+    await sendUserMessage(prompt, "welcome_suggestion");
   };
 
   const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -523,11 +727,18 @@ export function BookingChat({
   };
 
   const handleRequestLocation = () => {
+    captureEvent(ANALYTICS_EVENT.CHAT_LOCATION_REQUESTED, {
+      conversation_id: activeConversationId,
+    });
+
     if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        captureEvent(ANALYTICS_EVENT.CHAT_LOCATION_GRANTED, {
+          conversation_id: activeConversationId,
+        });
         setUserLocation({
           lat: latitude,
           lng: longitude,
@@ -536,8 +747,93 @@ export function BookingChat({
       },
       (error) => {
         console.error("Error getting location:", error);
+        captureEvent(ANALYTICS_EVENT.CHAT_LOCATION_DENIED, {
+          conversation_id: activeConversationId,
+          error_code: error.code,
+        });
       },
     );
+  };
+
+  const handleInputFocus = () => {
+    if (hasTrackedInputFocusRef.current) return;
+
+    captureEvent(ANALYTICS_EVENT.CHAT_INPUT_FOCUSED, {
+      conversation_id: activeConversationId,
+      has_messages: messages.length > 0,
+    });
+    hasTrackedInputFocusRef.current = true;
+  };
+
+  const handleQuickReply = async (reply: string) => {
+    captureEvent(ANALYTICS_EVENT.CHAT_QUICK_REPLY_SELECTED, {
+      conversation_id: activeConversationId,
+      reply_length: reply.length,
+    });
+    await sendUserMessage(reply, "quick_reply");
+  };
+
+  const handleAssistantFeedback = (
+    messageId: string,
+    feedbackValue: AssistantFeedbackValue,
+  ) => {
+    const currentFeedback = messageFeedbackById[messageId];
+    if (currentFeedback === feedbackValue) return;
+
+    const messageIndex = messages.findIndex(
+      (message) => message.id === messageId,
+    );
+    if (messageIndex === -1) return;
+
+    const message = messages[messageIndex];
+    if (message.role !== "assistant") return;
+
+    const payload = buildPersistedMessagePayload(message);
+    const responseText = payload.content ?? "";
+    const responsePreview = truncateAnalyticsText(responseText);
+    const toolNames = extractToolNames(message.parts);
+    const uiComponents = extractUiComponentNames(message);
+    const responseIndex = messages
+      .slice(0, messageIndex + 1)
+      .filter((entry) => entry.role === "assistant").length;
+    const previousUserMessage = messages
+      .slice(0, messageIndex)
+      .toReversed()
+      .find((entry) => entry.role === "user");
+    const previousUserPayload = previousUserMessage
+      ? buildPersistedMessagePayload(previousUserMessage)
+      : null;
+    const previousUserText = previousUserPayload?.content ?? "";
+    const previousUserPreview = truncateAnalyticsText(previousUserText);
+    const responseContext = assistantResponseContextRef.current.get(messageId);
+
+    captureEvent(ANALYTICS_EVENT.AI_RESPONSE_FEEDBACK_SUBMITTED, {
+      conversation_id: activeConversationId,
+      message_id: messageId,
+      feedback_value: feedbackValue,
+      feedback_changed: typeof currentFeedback === "string",
+      source: responseContext?.source ?? "unknown",
+      latency_ms: responseContext?.latencyMs ?? null,
+      response_index: responseIndex,
+      total_messages: messages.length,
+      has_user_location: !!userLocation,
+      is_conversation_locked: isConversationLocked,
+      booking_id: lockedBookingId,
+      preceding_user_message_length: previousUserText.length || null,
+      preceding_user_message_preview: previousUserPreview,
+      response_length: responseText.length,
+      response_preview: responsePreview,
+      tool_count: toolNames.length,
+      tool_names: toolNames.length > 0 ? toolNames.join(",") : null,
+      ui_component_count: uiComponents.length,
+      ui_components: uiComponents.length > 0 ? uiComponents.join(",") : null,
+      has_tool_call: toolNames.length > 0,
+    });
+
+    setMessageFeedbackById((current) => ({
+      ...current,
+      [messageId]: feedbackValue,
+    }));
   };
 
   useEffect(() => {
@@ -621,7 +917,9 @@ export function BookingChat({
               <MessageList
                 messages={messages}
                 isLoading={isLoading}
-                onQuickReply={(reply) => void sendUserMessage(reply)}
+                onQuickReply={(reply) => void handleQuickReply(reply)}
+                messageFeedbackById={messageFeedbackById}
+                onAssistantFeedback={handleAssistantFeedback}
                 activeConversationId={activeConversationId}
                 lockedBookingId={isConversationLocked ? lockedBookingId : null}
                 isConversationLocked={isConversationLocked}
@@ -664,6 +962,7 @@ export function BookingChat({
             handleInputChange={handleInputChange}
             handleSubmit={handleSubmit}
             onSubmitMessage={() => void sendUserMessage(input)}
+            onInputFocus={handleInputFocus}
             isLoading={isLoading}
             onRequestLocation={handleRequestLocation}
           />

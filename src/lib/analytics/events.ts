@@ -4,6 +4,7 @@ export const ANALYTICS_EVENT = {
   AUTH_LOGIN_FAILED: "auth_login_failed",
   AUTH_SIGNUP_SUCCESS: "auth_signup_success",
   AUTH_LOGOUT: "auth_logout",
+  HOME_AI_PROMPT_SUBMITTED: "home_ai_prompt_submitted",
   EXPERIENCE_VIEWED: "experience_viewed",
   EXPERIENCE_SEARCH: "experience_search",
   EXPERIENCE_CARD_CLICKED: "experience_card_clicked",
@@ -15,8 +16,14 @@ export const ANALYTICS_EVENT = {
   PAYMENT_INITIATED: "payment_initiated",
   PAYMENT_COMPLETED: "payment_completed",
   CHAT_STARTED: "chat_started",
+  CHAT_INPUT_FOCUSED: "chat_input_focused",
   CHAT_MESSAGE_SENT: "chat_message_sent",
   CHAT_BOOKING_CREATED: "chat_booking_created",
+  CHAT_SUGGESTION_CLICKED: "chat_suggestion_clicked",
+  CHAT_QUICK_REPLY_SELECTED: "chat_quick_reply_selected",
+  CHAT_LOCATION_REQUESTED: "chat_location_requested",
+  CHAT_LOCATION_GRANTED: "chat_location_granted",
+  CHAT_LOCATION_DENIED: "chat_location_denied",
   EXPERIENCE_LIKED: "experience_liked",
   EXPERIENCE_UNLIKED: "experience_unliked",
   COMMENT_ADDED: "comment_added",
@@ -38,6 +45,9 @@ export const ANALYTICS_EVENT = {
   // Server-side
   PREORDER_SUBMITTED: "preorder_submitted",
   AI_CHAT_COMPLETED: "ai_chat_completed",
+  AI_RESPONSE_RECEIVED: "ai_response_received",
+  AI_RESPONSE_FEEDBACK_SUBMITTED: "ai_response_feedback_submitted",
+  AI_TOOL_USED: "ai_tool_used",
   // Performance
   WEB_VITALS: "web_vitals",
 } as const;
