@@ -34,9 +34,13 @@ export function middleware(request: NextRequest) {
     crypto.getRandomValues(new Uint8Array(16)),
   ).toString("base64");
   const csp = buildCsp(nonce);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
 
   if (shouldBypass(pathname)) {
-    const response = NextResponse.next();
+    const response = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
     response.headers.set("Content-Security-Policy", csp);
     return response;
   }
@@ -48,10 +52,7 @@ export function middleware(request: NextRequest) {
       pathname.replace(new RegExp(`^/${firstSegment}`), "") || "/";
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = rewrittenPath;
-
-    const requestHeaders = new Headers(request.headers);
     requestHeaders.set("x-locale", firstSegment);
-    requestHeaders.set("x-nonce", nonce);
 
     const response = NextResponse.rewrite(rewriteUrl, {
       request: { headers: requestHeaders },
@@ -60,8 +61,13 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
+  if (request.headers.get("x-locale")) {
+    const response = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
+  }
 
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.pathname =

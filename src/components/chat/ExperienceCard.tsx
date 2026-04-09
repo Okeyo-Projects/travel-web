@@ -52,7 +52,8 @@ export function ExperienceCard({
   onSelect,
   onBook,
 }: ExperienceCardProps) {
-  const { locale, t } = useSiteI18n();
+  const { locale, t, dir } = useSiteI18n();
+  const isRtl = dir === "rtl";
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { openImageViewer, Viewer } = useImageViewer();
@@ -152,7 +153,9 @@ export function ExperienceCard({
               onClick={handlePlay}
               className="pointer-events-auto w-16 h-16 rounded-full flex items-center justify-center bg-background/30 backdrop-blur-md border border-white/30 text-white hover:scale-110 transition-transform duration-300 hover:bg-background/40"
             >
-              <Play className="w-8 h-8 fill-white ml-1" />
+              <Play
+                className={cn("w-8 h-8 fill-white", isRtl ? "mr-1" : "ml-1")}
+              />
             </button>
           </div>
         )}
@@ -172,12 +175,22 @@ export function ExperienceCard({
         )}
 
         {experience.has_promo && experience.promo_badge && (
-          <Badge className="absolute top-2 right-2 bg-orange-500 hover:bg-orange-600 z-20">
+          <Badge
+            className={cn(
+              "absolute top-2 bg-orange-500 hover:bg-orange-600 z-20",
+              isRtl ? "left-2" : "right-2",
+            )}
+          >
             {experience.promo_badge}
           </Badge>
         )}
 
-        <Badge className="absolute top-2 left-2 bg-background/80 backdrop-blur-sm text-foreground z-20">
+        <Badge
+          className={cn(
+            "absolute top-2 bg-background/80 backdrop-blur-sm text-foreground z-20",
+            isRtl ? "right-2" : "left-2",
+          )}
+        >
           {typeLabels[experience.type]}
         </Badge>
       </div>

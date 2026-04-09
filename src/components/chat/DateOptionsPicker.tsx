@@ -28,14 +28,19 @@ export function DateOptionsPicker({
   disabled = false,
   onSelect,
 }: DateOptionsPickerProps) {
-  const { t } = useSiteI18n();
+  const { t, dir } = useSiteI18n();
   if (!question || options.length === 0) return null;
 
   return (
-    <div className="rounded-xl border bg-muted/30 p-3 sm:p-4 space-y-3">
+    <div
+      dir={dir}
+      className="rounded-xl border bg-muted/30 p-3 sm:p-4 space-y-3"
+    >
       <div className="flex items-start gap-2">
         <CalendarDays className="h-4 w-4 text-primary mt-0.5" />
-        <p className="text-sm text-foreground">{question}</p>
+        <p dir="auto" className="text-sm text-foreground [text-align:start]">
+          {question}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -45,9 +50,10 @@ export function DateOptionsPicker({
             type="button"
             variant="outline"
             size="sm"
+            dir="auto"
             disabled={disabled || !onSelect}
             onClick={() => onSelect?.(option.reply_text)}
-            className="h-auto whitespace-normal text-left leading-snug py-1.5 rounded-2xl"
+            className="h-auto whitespace-normal [text-align:start] leading-snug py-1.5 rounded-2xl"
           >
             {option.label}
           </Button>
@@ -55,7 +61,7 @@ export function DateOptionsPicker({
       </div>
 
       {allowFreeText && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground [text-align:start]">
           {t("chat.dateOptions.freeText")}
         </p>
       )}

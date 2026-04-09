@@ -11,7 +11,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths = [
     "/",
     "/explore",
-    "/collections",
     "/about",
     "/support",
     "/terms",
@@ -27,25 +26,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           ? ("weekly" as const)
           : path === "/explore"
             ? ("daily" as const)
-            : path === "/collections"
-              ? ("weekly" as const)
-              : path === "/about"
+            : path === "/about"
+              ? ("monthly" as const)
+              : path === "/support"
                 ? ("monthly" as const)
-                : path === "/support"
-                  ? ("monthly" as const)
-                  : ("yearly" as const),
+                : ("yearly" as const),
       priority:
         path === "/"
           ? 1.0
           : path === "/explore"
             ? 0.9
-            : path === "/collections"
-              ? 0.8
-              : path === "/about"
-                ? 0.7
-                : path === "/support"
-                  ? 0.5
-                  : 0.3,
+            : path === "/about"
+              ? 0.7
+              : path === "/support"
+                ? 0.5
+                : 0.3,
     })),
   );
 

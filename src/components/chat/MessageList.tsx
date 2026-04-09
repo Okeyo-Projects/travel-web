@@ -151,7 +151,10 @@ function renderAssistantText(text: string): ReactNode {
       }
 
       renderedBlocks.push(
-        <ul key={`ul-${blockIndex}`} className="list-disc space-y-1 pl-6">
+        <ul
+          key={`ul-${blockIndex}`}
+          className="list-disc space-y-1 [padding-inline-start:1.5rem]"
+        >
           {(() => {
             const listItemCounts = new Map<string, number>();
             return items.map((item) => {
@@ -178,7 +181,10 @@ function renderAssistantText(text: string): ReactNode {
       }
 
       renderedBlocks.push(
-        <ol key={`ol-${blockIndex}`} className="list-decimal space-y-1 pl-6">
+        <ol
+          key={`ol-${blockIndex}`}
+          className="list-decimal space-y-1 [padding-inline-start:1.5rem]"
+        >
           {(() => {
             const orderedItemCounts = new Map<string, number>();
             return items.map((item) => {
@@ -596,7 +602,7 @@ export function MessageList({
   lockedBookingId,
   isConversationLocked = false,
 }: MessageListProps) {
-  const { t } = useSiteI18n();
+  const { t, dir } = useSiteI18n();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -605,7 +611,10 @@ export function MessageList({
   });
 
   return (
-    <div className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6">
+    <div
+      dir={dir}
+      className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6"
+    >
       {messages.map((message) => (
         <MessageItem
           key={message.id}
@@ -662,7 +671,8 @@ function MessageItem({
   isConversationLocked?: boolean;
 }) {
   const isUser = message.role === "user";
-  const { t } = useSiteI18n();
+  const { t, dir } = useSiteI18n();
+  const isRtl = dir === "rtl";
 
   if (isUser) {
     const text = extractUserMessageText(message);
@@ -672,10 +682,13 @@ function MessageItem({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex justify-end"
+        className={cn("flex", isRtl ? "justify-start" : "justify-end")}
       >
         <div className="bg-primary/5 text-foreground max-w-[90%] sm:max-w-[85%] rounded-2xl rounded-tr-sm px-4 sm:px-5 py-2.5 sm:py-3 text-[15px] sm:text-base">
-          <p className="whitespace-pre-wrap break-words leading-relaxed">
+          <p
+            dir="auto"
+            className="whitespace-pre-wrap break-words leading-relaxed [text-align:start]"
+          >
             {text}
           </p>
         </div>
@@ -740,6 +753,7 @@ function MessageItem({
             return (
               <div
                 key={block.key}
+                dir="auto"
                 className="prose prose-neutral dark:prose-invert max-w-none break-words text-[15px] sm:text-base"
               >
                 {renderAssistantText(block.content)}
@@ -1145,6 +1159,7 @@ function UIBlock({
       if (!isQuickRepliesData(data)) return null;
       return (
         <QuickReplies
+          question={data.question}
           options={data.options}
           allowFreeText={data.allow_free_text}
           disabled={!onQuickReply}

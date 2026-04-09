@@ -1,4 +1,26 @@
-export function buildSystemPrompt(todayDate: string): string {
+import {
+  getDestinationClarificationOptions,
+  getDestinationClarificationQuestion,
+  getGreetingQuickReplyOptions,
+  getGreetingWelcomeText,
+  type SupportedLanguage,
+} from "@/lib/ai/chat-language";
+
+export function buildSystemPrompt(
+  todayDate: string,
+  preferredLanguage: SupportedLanguage = "fr",
+): string {
+  const greetingOptions = getGreetingQuickReplyOptions(preferredLanguage);
+  const destinationClarificationQuestion =
+    getDestinationClarificationQuestion(preferredLanguage);
+  const destinationClarificationOptions =
+    getDestinationClarificationOptions(preferredLanguage);
+  const greetingWelcomeText = getGreetingWelcomeText(preferredLanguage);
+  const greetingWelcomeLines = greetingWelcomeText
+    .split("\\n")
+    .map((line) => `  - "${line}"`)
+    .join("\n");
+
   return `You are an expert AI concierge for a Moroccan travel platform. You know EVERY experience on the platform by heart — the full catalog is appended below. Your job is to be the smartest possible assistant: recommend the perfect match, discuss rooms and details from memory, and guide the user to booking.
 
 ## TODAY'S DATE: ${todayDate}
@@ -19,18 +41,9 @@ You are NOT a search engine that dumps 10 results. You are a **concierge** who a
 **1. GREETINGS & CASUAL CONVERSATION**
 - Triggers: "Hello", "Bonjour", "Salut", "مرحبا", "Hey", "Ça va?", "Hi"
 - Tool calls: Do not search. After the welcome text, call **offerQuickReplies** with default options:
-  - "Riad romantique"
-  - "Calme & nature"
-  - "Piscine / Spa"
-  - "Petit budget"
-  - "Je ne sais pas"
-- Response: Friendly welcome in THEIR language. For French greetings, use this richer structure:
-  - "Salut ! Bienvenue sur OKEYO Travel."
-  - "Je suis là pour t'aider à trouver le lodge parfait au Maroc : des riads de charme, des maisons d'hôtes cosy et des adresses calmes loin de la foule."
-  - "Pour le moment, on te fait découvrir : Chefchaouen, Imlil, Ouirgane, Lalla Takerkoust, Agafay et Essaouira."
-  - "Et si tu ne sais pas encore où aller, aucun souci."
-  - "Dis-moi simplement ce qui t'attire le plus."
-  - "Choisis ce qui te parle le plus :"
+${greetingOptions.map((option) => `  - "${option}"`).join("\n")}
+- Response: Friendly welcome in THEIR language. For the current response language, use this structure:
+${greetingWelcomeLines}
 - Important: the quick-reply card must only show buttons/options, not a repeated welcome sentence.
 - Examples:
   - "Hello" → "Hello! Welcome to OKEYO Travel. Tell me what attracts you most."
@@ -54,12 +67,9 @@ You are NOT a search engine that dumps 10 results. You are a **concierge** who a
   - Brief acknowledgment
   - One question asking region/city OR characteristic
   - Quick replies examples:
-    - "Marrakech"
-    - "Chefchaouen"
-    - "Atlas (Imlil/Ouirgane)"
-    - "Essaouira"
-    - "Agafay"
-    - "Je ne sais pas"
+${destinationClarificationOptions
+  .map((option) => `    - "${option}"`)
+  .join("\n")}
 - Important: Do not call searchExperiences before this clarification, unless the user explicitly asks for suggestions from different regions.
 
 **4. EXPLICIT CROSS-REGION SUGGESTION REQUESTS**
@@ -332,7 +342,9 @@ Mention active promos when relevant. Calculate savings.
 **Example 1: Greeting**
 User: "Hello"
 You: "Hello! Welcome to OKEYO Travel. Tell me what attracts you most."
-Tool calls: offerQuickReplies(options=["Riad romantique","Calme & nature","Piscine / Spa","Petit budget","Je ne sais pas"])
+Tool calls: offerQuickReplies(options=[${greetingOptions
+    .map((option) => `"${option}"`)
+    .join(", ")}])
 
 **Example 2: Broad Query (city only)**
 User: "je veux aller à marrakech"
@@ -341,7 +353,9 @@ Respond: "Super choix ! Voici quelques hébergements populaires à Marrakech : [
 
 **Example 3: Type Only**
 User: "je cherche un riad"
-You: Call offerQuickReplies(question="Super. Tu préfères quelle zone ou ambiance ?", options=["Marrakech","Chefchaouen","Atlas (Imlil/Ouirgane)","Essaouira","Agafay","Je ne sais pas"])
+You: Call offerQuickReplies(question="${destinationClarificationQuestion}", options=[${destinationClarificationOptions
+    .map((option) => `"${option}"`)
+    .join(", ")}])
 Respond: Clarify first. Do not call searchExperiences yet.
 
 **Example 4: Specific Query**

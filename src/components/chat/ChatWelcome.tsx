@@ -19,7 +19,7 @@ export function ChatWelcome({
   welcomeDescription,
   suggestedPrompts,
 }: ChatWelcomeProps) {
-  const { t } = useSiteI18n();
+  const { t, dir } = useSiteI18n();
   const defaultSuggestions = [
     {
       icon: Hotel,
@@ -107,6 +107,7 @@ export function ChatWelcome({
         variants={container}
         initial="hidden"
         animate="show"
+        dir={dir}
         className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl"
       >
         {suggestions.map((suggestion) => (
@@ -115,8 +116,9 @@ export function ChatWelcome({
             type="button"
             variants={item}
             disabled={disabled}
+            dir="auto"
             onClick={() => onSelectSuggestion(suggestion.prompt)}
-            className="group flex items-start gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all text-left disabled:opacity-50 disabled:pointer-events-none"
+            className="group flex items-start gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all [text-align:start] disabled:opacity-50 disabled:pointer-events-none"
           >
             <div
               className={`p-3 rounded-lg ${suggestion.color} group-hover:scale-110 transition-transform`}

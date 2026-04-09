@@ -1,40 +1,42 @@
 import { tool } from "ai";
 import { z } from "zod";
+import type { SupportedLanguage } from "@/lib/ai/chat-language";
 
-const suggestDateOptionsSchema = z.object({
-  nights: z
-    .number()
-    .int()
-    .min(1)
-    .max(30)
-    .optional()
-    .default(2)
-    .describe("Number of nights/days for each suggested option"),
-  start_after: z
-    .string()
-    .optional()
-    .describe("Optional minimum start date (YYYY-MM-DD)"),
-  include_flexible: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe("Include a 'flexible dates' option"),
-  max_options: z
-    .number()
-    .int()
-    .min(2)
-    .max(6)
-    .optional()
-    .default(4)
-    .describe("Maximum number of suggested options"),
-  language: z
-    .enum(["fr", "en", "ar"])
-    .optional()
-    .default("fr")
-    .describe("Language for labels"),
-});
+function createSuggestDateOptionsSchema(defaultLanguage: SupportedLanguage) {
+  return z.object({
+    nights: z
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .optional()
+      .default(2)
+      .describe("Number of nights/days for each suggested option"),
+    start_after: z
+      .string()
+      .optional()
+      .describe("Optional minimum start date (YYYY-MM-DD)"),
+    include_flexible: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe("Include a 'flexible dates' option"),
+    max_options: z
+      .number()
+      .int()
+      .min(2)
+      .max(6)
+      .optional()
+      .default(4)
+      .describe("Maximum number of suggested options"),
+    language: z
+      .enum(["fr", "en", "ar"])
+      .optional()
+      .default(defaultLanguage)
+      .describe("Language for labels"),
+  });
+}
 
-type SupportedLanguage = "fr" | "en" | "ar";
 type SuggestedDateOption = {
   id: string;
   label: string;
@@ -155,67 +157,73 @@ function buildFlexibleOption(language: SupportedLanguage): SuggestedDateOption {
   };
 }
 
-export const suggestDateOptions = tool({
-  description: `Suggest clickable date options to speed up date selection.
+export function createSuggestDateOptionsTool(
+  defaultLanguage: SupportedLanguage = "fr",
+) {
+  return tool({
+    description: `Suggest clickable date options to speed up date selection.
 Use this when the user has not provided exact dates and you want to offer 2-4 concrete alternatives.`,
-  inputSchema: suggestDateOptionsSchema,
-  execute: async ({
-    nights,
-    start_after,
-    include_flexible,
-    max_options,
-    language,
-  }) => {
-    const normalizedNights = Math.max(1, nights || 2);
-    const today = startOfUtcDay(new Date());
-    const minStart = parseDate(start_after) || today;
-    const safeMinStart = minStart > today ? minStart : today;
+    inputSchema: createSuggestDateOptionsSchema(defaultLanguage),
+    execute: async ({
+      nights,
+      start_after,
+      include_flexible,
+      max_options,
+      language,
+    }) => {
+      const normalizedNights = Math.max(1, nights || 2);
+      const today = startOfUtcDay(new Date());
+      const minStart = parseDate(start_after) || today;
+      const safeMinStart = minStart > today ? minStart : today;
 
-    const weekendStart = ensureNotBefore(nextSaturday(today), safeMinStart);
-    const nextWeekStart = ensureNotBefore(nextMonday(today), safeMinStart);
-    const twoWeeksStart = ensureNotBefore(
-      addDays(nextWeekStart, 7),
-      safeMinStart,
-    );
+      const weekendStart = ensureNotBefore(nextSaturday(today), safeMinStart);
+      const nextWeekStart = ensureNotBefore(nextMonday(today), safeMinStart);
+      const twoWeeksStart = ensureNotBefore(
+        addDays(nextWeekStart, 7),
+        safeMinStart,
+      );
 
-    const templates = [
-      { id: "next_weekend", key: "weekend" as const, start: weekendStart },
-      { id: "next_week", key: "next_week" as const, start: nextWeekStart },
-      {
-        id: "in_two_weeks",
-        key: "in_two_weeks" as const,
-        start: twoWeeksStart,
-      },
-    ];
+      const templates = [
+        { id: "next_weekend", key: "weekend" as const, start: weekendStart },
+        { id: "next_week", key: "next_week" as const, start: nextWeekStart },
+        {
+          id: "in_two_weeks",
+          key: "in_two_weeks" as const,
+          start: twoWeeksStart,
+        },
+      ];
 
-    const options: SuggestedDateOption[] = templates.map((item) => {
-      const fromDate = toISODate(item.start);
-      const toDate = toISODate(addDays(item.start, normalizedNights));
-      const label = buildDateLabel(language, item.key, fromDate, toDate);
-      const replyText = buildReplyText(language, label, fromDate, toDate);
+      const options: SuggestedDateOption[] = templates.map((item) => {
+        const fromDate = toISODate(item.start);
+        const toDate = toISODate(addDays(item.start, normalizedNights));
+        const label = buildDateLabel(language, item.key, fromDate, toDate);
+        const replyText = buildReplyText(language, label, fromDate, toDate);
+
+        return {
+          id: item.id,
+          label,
+          from_date: fromDate,
+          to_date: toDate,
+          nights: normalizedNights,
+          reply_text: replyText,
+        };
+      });
+
+      if (include_flexible) {
+        options.push(buildFlexibleOption(language));
+      }
+
+      const limitedOptions = options.slice(0, max_options);
 
       return {
-        id: item.id,
-        label,
-        from_date: fromDate,
-        to_date: toDate,
-        nights: normalizedNights,
-        reply_text: replyText,
+        success: true,
+        type: "date_options",
+        question: getQuestion(language),
+        options: limitedOptions,
+        allow_free_text: true,
       };
-    });
+    },
+  });
+}
 
-    if (include_flexible) {
-      options.push(buildFlexibleOption(language));
-    }
-
-    const limitedOptions = options.slice(0, max_options);
-
-    return {
-      success: true,
-      type: "date_options",
-      question: getQuestion(language),
-      options: limitedOptions,
-      allow_free_text: true,
-    };
-  },
-});
+export const suggestDateOptions = createSuggestDateOptionsTool();

@@ -5,6 +5,7 @@
   "header": {
     "home": "Home",
     "explore": "Explore",
+    "about": "About",
     "assistant": "AI Assistant",
     "dashboard": "Dashboard",
     "experiences": "Experiences",
@@ -105,6 +106,8 @@
       "howItWorks": "How it works",
       "subtitle": "AI builds your trip around you",
       "playDemo": "Play AI demo",
+      "fullscreen": "Open AI demo fullscreen",
+      "exitFullscreen": "Exit AI demo fullscreen",
       "mute": "Mute AI demo",
       "unmute": "Unmute AI demo",
       "prompts": {
@@ -169,11 +172,6 @@
       }
     }
   },
-  "collections": {
-    "title": "Our Collections",
-    "subtitle": "Explore our curated themes to find fresh inspiration.",
-    "empty": "No collections are available at the moment."
-  },
   "seo": {
     "layout": {
       "title": "Okeyo Travel — Let your mood lead",
@@ -194,9 +192,9 @@
       "title": "Conversation — Okeyo Travel",
       "description": "Continue your conversation with our assistant."
     },
-    "collections": {
-      "title": "Our Travel Collections — Okeyo Travel",
-      "description": "Discover our destination collections sorted by theme: adventure, relaxation, culture, and more."
+    "about": {
+      "title": "About Okeyo Travel",
+      "description": "Learn how Okeyo Travel combines local curation and AI guidance to help travelers find the right stay or experience faster."
     },
     "explore": {
       "title": "Explore destinations — Okeyo Travel",
@@ -224,6 +222,83 @@
     "privacy": {
       "title": "Privacy Policy | Okeyo Travel",
       "description": "Review Okeyo Travel's privacy policy and how your data is used and protected."
+    }
+  },
+  "about": {
+    "page": {
+      "hero": {
+        "eyebrow": "About Okeyo",
+        "title": "We build calmer, smarter trip planning.",
+        "description": "Okeyo Travel combines local hospitality, curated stays, and AI guidance so travelers can move from vague intent to the right booking with less friction.",
+        "primaryCta": "Explore experiences",
+        "secondaryCta": "Talk to the assistant"
+      },
+      "stats": {
+        "languages": {
+          "value": "3 languages",
+          "label": "A localized experience across French, English, and Arabic."
+        },
+        "curation": {
+          "value": "Local-first",
+          "label": "Experiences are organized around real places, hosts, and travel intent."
+        },
+        "planning": {
+          "value": "AI-guided",
+          "label": "Search, comparison, and booking flows are designed to reduce decision fatigue."
+        }
+      },
+      "story": {
+        "eyebrow": "Our approach",
+        "title": "Travel planning should feel personal again.",
+        "paragraphOne": "Most travel products force people into endless lists, filters, and tabs before they even know what fits their trip. Okeyo starts from intent instead: mood, budget, location, timing, and the type of stay or activity that feels right.",
+        "paragraphTwo": "We use AI to shorten the path from uncertainty to confidence, but we keep the product grounded in real inventory, clear information, and a calmer booking experience."
+      },
+      "presence": {
+        "eyebrow": "Built for discovery",
+        "title": "Designed around real destinations, not generic travel noise.",
+        "description": "The platform is structured to help travelers move from inspiration to decision without losing context. That means clearer route pages, stronger detail pages, and less clutter around the booking moment.",
+        "note": "We focus on helping travelers understand what a place feels like, who it suits, and why it matches the trip they are trying to build."
+      },
+      "principles": {
+        "eyebrow": "What guides us",
+        "title": "Three principles shape the product.",
+        "curation": {
+          "title": "Curation over volume",
+          "description": "We would rather present a smaller, clearer set of relevant options than flood travelers with undifferentiated inventory."
+        },
+        "guidance": {
+          "title": "Guidance over guesswork",
+          "description": "AI is used to help travelers refine the right direction quickly, not to fabricate answers or hide the details that matter."
+        },
+        "trust": {
+          "title": "Trust over friction",
+          "description": "Clear metadata, transparent pricing signals, and stronger page structure make the product easier to evaluate for both people and search engines."
+        }
+      },
+      "howItWorks": {
+        "eyebrow": "How Okeyo works",
+        "title": "A simpler path from idea to booking.",
+        "stepLabel": "Step {count}",
+        "stepOne": {
+          "title": "Start with intent",
+          "description": "Travelers can browse destination pages or describe the kind of trip they want in natural language."
+        },
+        "stepTwo": {
+          "title": "Narrow the fit",
+          "description": "The product surfaces the strongest matching stays or experiences based on type, place, timing, and practical constraints."
+        },
+        "stepThree": {
+          "title": "Book with context",
+          "description": "Once the right option is clear, the detail page and booking flow carry the decision forward without forcing a restart."
+        }
+      },
+      "cta": {
+        "eyebrow": "Next step",
+        "title": "See what Okeyo feels like in practice.",
+        "description": "Browse the live destination inventory, or reach support if you need help finding the right route through the product.",
+        "primaryCta": "Explore now",
+        "secondaryCta": "Contact support"
+      }
     }
   },
   "support": {

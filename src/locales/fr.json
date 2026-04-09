@@ -5,6 +5,7 @@
   "header": {
     "home": "Accueil",
     "explore": "Explorer",
+    "about": "À propos",
     "assistant": "Assistant IA",
     "dashboard": "Tableau de bord",
     "experiences": "Expériences",
@@ -105,6 +106,8 @@
       "howItWorks": "Comment ça marche",
       "subtitle": "L'IA construit votre voyage sur mesure",
       "playDemo": "Lire la démo IA",
+      "fullscreen": "Ouvrir la démo IA en plein écran",
+      "exitFullscreen": "Quitter le plein écran de la démo IA",
       "mute": "Couper le son de la démo IA",
       "unmute": "Activer le son de la démo IA",
       "prompts": {
@@ -169,11 +172,6 @@
       }
     }
   },
-  "collections": {
-    "title": "Nos Collections",
-    "subtitle": "Explorez nos sélections thématiques pour trouver l'inspiration.",
-    "empty": "Aucune collection disponible pour le moment."
-  },
   "seo": {
     "layout": {
       "title": "Okeyo Travel — Laissez parler votre mood",
@@ -194,9 +192,9 @@
       "title": "Conversation — Okeyo Travel",
       "description": "Continuez votre conversation avec notre assistant."
     },
-    "collections": {
-      "title": "Nos Collections de voyages — Okeyo Travel",
-      "description": "Découvrez nos collections de destinations triées par thème : aventure, détente, culture et plus encore."
+    "about": {
+      "title": "À propos d’Okeyo Travel",
+      "description": "Découvrez comment Okeyo Travel combine curation locale et accompagnement par IA pour aider les voyageurs à trouver plus vite la bonne expérience."
     },
     "explore": {
       "title": "Explorer les destinations — Okeyo Travel",
@@ -224,6 +222,83 @@
     "privacy": {
       "title": "Politique de confidentialité | Okeyo Travel",
       "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+    }
+  },
+  "about": {
+    "page": {
+      "hero": {
+        "eyebrow": "À propos d’Okeyo",
+        "title": "Nous rendons la planification de voyage plus simple et plus intelligente.",
+        "description": "Okeyo Travel associe hospitalité locale, sélection d’expériences et accompagnement par IA pour aider les voyageurs à passer plus vite d’une idée floue à la bonne réservation.",
+        "primaryCta": "Explorer les expériences",
+        "secondaryCta": "Parler à l’assistant"
+      },
+      "stats": {
+        "languages": {
+          "value": "3 langues",
+          "label": "Une expérience localisée en français, anglais et arabe."
+        },
+        "curation": {
+          "value": "Ancrage local",
+          "label": "Les expériences sont organisées autour de lieux, d’hôtes et d’intentions de voyage réels."
+        },
+        "planning": {
+          "value": "Guidé par l’IA",
+          "label": "La recherche, la comparaison et la réservation sont pensées pour réduire la fatigue de décision."
+        }
+      },
+      "story": {
+        "eyebrow": "Notre approche",
+        "title": "Préparer un voyage devrait redevenir personnel.",
+        "paragraphOne": "La plupart des produits voyage enferment l’utilisateur dans des listes, des filtres et des onglets sans fin avant même qu’il sache ce qui lui convient. Okeyo part de l’intention : l’envie, le budget, le lieu, le moment et le type de séjour ou d’activité recherché.",
+        "paragraphTwo": "Nous utilisons l’IA pour raccourcir le chemin entre l’incertitude et la confiance, tout en gardant le produit ancré dans un inventaire réel, des informations claires et une expérience de réservation plus calme."
+      },
+      "presence": {
+        "eyebrow": "Pensé pour la découverte",
+        "title": "Conçu autour de vraies destinations, pas d’un bruit touristique générique.",
+        "description": "La plateforme aide les voyageurs à passer de l’inspiration à la décision sans perdre le contexte. Cela passe par des pages de destination plus claires, de meilleures pages détail et moins de friction au moment de réserver.",
+        "note": "Nous voulons aider les voyageurs à comprendre l’ambiance d’un lieu, à qui il s’adresse et pourquoi il correspond vraiment au voyage qu’ils cherchent à construire."
+      },
+      "principles": {
+        "eyebrow": "Ce qui nous guide",
+        "title": "Trois principes structurent le produit.",
+        "curation": {
+          "title": "La sélection avant le volume",
+          "description": "Nous préférons montrer moins d’options, mais de manière plus claire et plus pertinente, plutôt que de noyer le voyageur sous un inventaire sans relief."
+        },
+        "guidance": {
+          "title": "Le guidage avant l’approximation",
+          "description": "L’IA sert à orienter rapidement vers la bonne direction, pas à inventer des réponses ni à masquer les détails importants."
+        },
+        "trust": {
+          "title": "La confiance avant la friction",
+          "description": "Des métadonnées claires, des signaux de prix lisibles et une structure de page plus solide rendent le produit plus facile à évaluer pour les voyageurs comme pour les moteurs de recherche."
+        }
+      },
+      "howItWorks": {
+        "eyebrow": "Comment fonctionne Okeyo",
+        "title": "Un chemin plus direct entre l’idée et la réservation.",
+        "stepLabel": "Étape {count}",
+        "stepOne": {
+          "title": "Partir de l’intention",
+          "description": "Les voyageurs peuvent parcourir les pages de destination ou décrire en langage naturel le type de voyage qu’ils recherchent."
+        },
+        "stepTwo": {
+          "title": "Affiner le bon choix",
+          "description": "Le produit fait remonter les séjours ou expériences les plus pertinents selon le type, le lieu, le timing et les contraintes pratiques."
+        },
+        "stepThree": {
+          "title": "Réserver avec du contexte",
+          "description": "Une fois la bonne option identifiée, la page détail et le parcours de réservation prolongent la décision sans repartir de zéro."
+        }
+      },
+      "cta": {
+        "eyebrow": "Suite",
+        "title": "Voyez comment Okeyo fonctionne concrètement.",
+        "description": "Explorez les destinations disponibles ou contactez le support si vous avez besoin d’aide pour trouver le bon chemin dans le produit.",
+        "primaryCta": "Explorer maintenant",
+        "secondaryCta": "Contacter le support"
+      }
     }
   },
   "support": {

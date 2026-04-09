@@ -27,7 +27,7 @@ export function ChatInput({
   isLoading,
   onRequestLocation,
 }: ChatInputProps) {
-  const { t } = useSiteI18n();
+  const { t, dir } = useSiteI18n();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { userLocation } = useChatContext();
   const [isFocused, setIsFocused] = useState(false);
@@ -50,7 +50,10 @@ export function ChatInput({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-2 py-2 sm:px-3 sm:py-4">
+    <div
+      dir={dir}
+      className="w-full max-w-3xl mx-auto px-2 py-2 sm:px-3 sm:py-4"
+    >
       <div
         className={cn(
           "relative flex flex-col bg-background border rounded-2xl shadow-sm transition-all duration-200",
@@ -65,13 +68,14 @@ export function ChatInput({
             value={input}
             onChange={handleInputChange}
             onKeyDown={onKeyDown}
+            dir="auto"
             onFocus={() => {
               setIsFocused(true);
               onInputFocus?.();
             }}
             onBlur={() => setIsFocused(false)}
             placeholder={t("chat.input.placeholder")}
-            className="min-h-[50px] sm:min-h-[56px] max-h-[140px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-base"
+            className="min-h-[50px] sm:min-h-[56px] max-h-[140px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-base [text-align:start]"
             rows={1}
           />
 

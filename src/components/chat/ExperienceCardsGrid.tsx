@@ -58,7 +58,7 @@ export function ExperienceCardsGrid({
             ? t("chat.results.count.one", { count: experiences.length })
             : t("chat.results.count.other", { count: experiences.length })}
           {promoCount > 0 && (
-            <span className="ml-2 text-orange-500 font-medium">
+            <span className="inline-flex gap-1 text-orange-500 font-medium [padding-inline-start:0.5rem]">
               ({t("chat.results.promoCount", { count: promoCount })})
             </span>
           )}

@@ -1,7 +1,7 @@
 "use client";
 
 import Hls from "hls.js";
-import { Play, Plus, Send, Volume2, VolumeX } from "lucide-react";
+import { Maximize, Minimize, Play, Send, Volume2, VolumeX } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
@@ -55,8 +55,10 @@ export function AISection() {
     ],
     [t],
   );
+  const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const pendingPlayRef = useRef(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
@@ -111,6 +113,18 @@ export function AISection() {
   }, [isMuted]);
 
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === videoContainerRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  useEffect(() => {
     const current = prompts[promptIndex];
 
     if (!isDeleting && displayedText === current) {
@@ -142,7 +156,10 @@ export function AISection() {
 
   const handleSend = () => {
     const text = userInput.trim();
-    if (!text) return;
+    if (!text) {
+      router.push(localizeHref("/chat", pathname));
+      return;
+    }
 
     captureEvent(ANALYTICS_EVENT.HOME_AI_PROMPT_SUBMITTED, {
       prompt_length: text.length,
@@ -176,6 +193,26 @@ export function AISection() {
   const handleToggleMute = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setIsMuted((current) => !current);
+  };
+
+  const handleToggleFullscreen = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+
+    const container = videoContainerRef.current;
+    if (!container) return;
+
+    try {
+      if (document.fullscreenElement === container) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await container.requestFullscreen();
+    } catch {
+      setIsFullscreen(document.fullscreenElement === container);
+    }
   };
 
   const handleVideoClick = () => {
@@ -222,15 +259,7 @@ export function AISection() {
               />
             )}
 
-            <div className="mt-6 flex items-center justify-between">
-              <button
-                type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/35 text-white/95 transition-colors hover:bg-white/10 sm:h-12 sm:w-12"
-                aria-label={t("home.ai.add")}
-              >
-                <Plus className="h-6 w-6" />
-              </button>
-
+            <div className="mt-6 flex items-center justify-end">
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white shadow-[0_10px_30px_rgba(255,37,102,0.55)] transition-transform hover:scale-105 sm:h-12 sm:w-12"
@@ -252,7 +281,10 @@ export function AISection() {
           </div>
 
           <div className="relative mt-8 overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-r from-[#c20566] to-[#760543] shadow-[0_16px_40px_rgba(0,0,0,0.4)] sm:mt-12 sm:rounded-[24px]">
-            <div className="relative flex h-auto items-center justify-center bg-black/35">
+            <div
+              ref={videoContainerRef}
+              className="relative flex h-auto items-center justify-center bg-black/35"
+            >
               <video
                 ref={videoRef}
                 className="h-full w-full object-contain"
@@ -277,6 +309,25 @@ export function AISection() {
                     <VolumeX className="h-5 w-5" />
                   ) : (
                     <Volume2 className="h-5 w-5" />
+                  )}
+                </button>
+              )}
+
+              {isPlaying && (
+                <button
+                  type="button"
+                  onClick={handleToggleFullscreen}
+                  className="absolute bottom-4 right-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white backdrop-blur-md transition-colors hover:bg-black/60 sm:h-12 sm:w-12"
+                  aria-label={t(
+                    isFullscreen
+                      ? "home.ai.exitFullscreen"
+                      : "home.ai.fullscreen",
+                  )}
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-5 w-5" />
+                  ) : (
+                    <Maximize className="h-5 w-5" />
                   )}
                 </button>
               )}

@@ -690,6 +690,7 @@ export function BookingChat({
           body: {
             sessionId,
             conversationId: currentConvId,
+            language: effectiveLanguage,
             userLocation: userLocation
               ? { lat: userLocation.lat, lng: userLocation.lng }
               : null,

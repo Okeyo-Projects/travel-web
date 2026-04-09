@@ -25,14 +25,16 @@ import {
   useConversations,
 } from "@/hooks/use-conversations";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
+import { cn } from "@/lib/utils";
 
 export function ConversationSidebar() {
-  const { locale, t } = useSiteI18n();
+  const { locale, t, dir } = useSiteI18n();
   const { data: conversations = [], isLoading } = useConversations();
   const archiveConversation = useArchiveConversation();
   const { conversationId, startNewConversation } = useChatContext();
   const router = useRouter();
   const pathname = usePathname();
+  const isRtl = dir === "rtl";
 
   const handleNewConversation = () => {
     startNewConversation();
@@ -61,7 +63,7 @@ export function ConversationSidebar() {
   const distanceLocale = locale === "en" ? enUS : locale === "ar" ? arSA : fr;
 
   return (
-    <Sidebar>
+    <Sidebar side={isRtl ? "right" : "left"}>
       <SidebarHeader className="border-b p-4 gap-3 pt-[calc(1rem+env(safe-area-inset-top))]">
         <Link
           href={localizeHref("/", pathname)}
@@ -135,7 +137,7 @@ export function ConversationSidebar() {
                       >
                         <Link href={localizeHref(`/chat/${conv.id}`, pathname)}>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 pr-5">
+                            <div className="flex items-start justify-between gap-2 [padding-inline-end:1.25rem]">
                               <p className="text-sm font-medium truncate">
                                 {title}
                               </p>
@@ -144,7 +146,13 @@ export function ConversationSidebar() {
                               ) : null}
                             </div>
                             {hasSummary ? (
-                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                              <p
+                                dir="auto"
+                                className={cn(
+                                  "text-xs text-muted-foreground line-clamp-2 mt-1",
+                                  isRtl && "text-right",
+                                )}
+                              >
                                 {summary}
                               </p>
                             ) : null}

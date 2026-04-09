@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { useChatContext } from "@/contexts/ChatContext";
 import { getIntlLocale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 export interface BookingIntentSummary {
   booking_id: string;
@@ -88,7 +89,7 @@ function BookingCheckoutModal({
   onOpenChange: (open: boolean) => void;
   onConfirmed: () => void;
 }) {
-  const { locale, t } = useSiteI18n();
+  const { locale, t, dir } = useSiteI18n();
   const intlLocale = getIntlLocale(locale);
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -123,7 +124,10 @@ function BookingCheckoutModal({
 
   return (
     <Dialog open={open} onOpenChange={confirmed ? undefined : onOpenChange}>
-      <DialogContent className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full">
+      <DialogContent
+        dir={dir}
+        className="max-w-md w-[calc(100vw-1.5rem)] sm:w-full"
+      >
         <DialogHeader>
           <DialogTitle className="text-lg">
             {confirmed
@@ -228,7 +232,7 @@ function BookingCheckoutModal({
                 disabled={isConfirming}
               >
                 {isConfirming ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : null}
                 {t("chat.bookingConfirm.confirm")}
               </Button>
@@ -244,8 +248,9 @@ export function BookingConfirmCard({
   summary,
   conversationId,
 }: BookingConfirmCardProps) {
-  const { locale, t } = useSiteI18n();
+  const { locale, t, dir } = useSiteI18n();
   const intlLocale = getIntlLocale(locale);
+  const isRtl = dir === "rtl";
   const [modalOpen, setModalOpen] = useState(false);
   const {
     conversationId: contextConversationId,
@@ -311,7 +316,10 @@ export function BookingConfirmCard({
 
   return (
     <>
-      <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+      <div
+        dir={dir}
+        className="rounded-2xl border bg-card shadow-sm overflow-hidden"
+      >
         <div className="px-4 py-3 bg-primary/5 border-b flex items-center justify-between gap-2">
           <div className="min-w-0">
             <p className="font-semibold text-sm break-words">
@@ -358,7 +366,7 @@ export function BookingConfirmCard({
         <div className="px-4 pb-4">
           <Button className="w-full gap-2" onClick={() => setModalOpen(true)}>
             {t("chat.bookingConfirm.cta")}
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className={cn("w-4 h-4", isRtl && "rotate-180")} />
           </Button>
         </div>
       </div>

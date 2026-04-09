@@ -3,22 +3,30 @@ import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import type { AgentToolName } from "@/lib/ai/agent-config";
 import { loadAgentRuntimeConfig } from "@/lib/ai/agent-config";
 import { loadCatalogContext } from "@/lib/ai/catalog-context";
+import {
+  getDestinationClarificationOptions,
+  getDestinationClarificationQuestion,
+  getGreetingQuickReplyOptions,
+  getGreetingWelcomeText,
+  getLanguageDisplayName,
+  normalizeSupportedLanguage,
+} from "@/lib/ai/chat-language";
 import { aiDebug } from "@/lib/ai/debug-log";
 import { buildAgentPromptFromConfig } from "@/lib/ai/prompt-builder";
 import { buildSystemPrompt } from "@/lib/ai/system-prompt";
 import {
   checkAvailability,
   createBookingIntent,
+  createOfferQuickRepliesTool,
+  createSelectRoomTypeTool,
+  createSuggestDateOptionsTool,
   findSimilar,
   getExperienceDetails,
   getExperienceOptionDetails,
   getExperiencePromos,
   getLinkedExperiences,
-  offerQuickReplies,
   requestUserLocation,
   searchExperiences,
-  selectRoomType,
-  suggestDateOptions,
   validatePromoCode,
 } from "@/lib/ai/tools";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
@@ -331,16 +339,19 @@ export async function POST(req: Request) {
       sessionId,
       userLocation,
       configVersionId,
+      language,
     } = await req.json();
     const safeMessages = dedupeInputMessages(
       Array.isArray(messages) ? messages : [],
     );
+    const requestedLanguage = normalizeSupportedLanguage(language);
 
     aiDebug("chat.route", "request_received", {
       requestId,
       sessionId: typeof sessionId === "string" ? sessionId : null,
       configVersionId:
         typeof configVersionId === "string" ? configVersionId : null,
+      language: requestedLanguage,
       rawMessagesCount: Array.isArray(messages) ? messages.length : 0,
       dedupedMessagesCount: safeMessages.length,
     });
@@ -349,6 +360,10 @@ export async function POST(req: Request) {
       overrideVersionId:
         typeof configVersionId === "string" ? configVersionId : null,
     });
+
+    const offerQuickReplies = createOfferQuickRepliesTool(requestedLanguage);
+    const suggestDateOptions = createSuggestDateOptionsTool(requestedLanguage);
+    const selectRoomType = createSelectRoomTypeTool(requestedLanguage);
 
     const allTools = {
       searchExperiences,
@@ -400,7 +415,7 @@ export async function POST(req: Request) {
         config: agentConfig,
         todayDate,
         enabledTools: Object.keys(effectiveTools),
-      }) || buildSystemPrompt(todayDate);
+      }) || buildSystemPrompt(todayDate, requestedLanguage);
 
     // Load catalog context so the AI knows what experiences are available
     const catalogContext = await loadCatalogContext();
@@ -433,38 +448,37 @@ export async function POST(req: Request) {
       typeof configuredGreetingUnsureOption === "string"
         ? isTruthyEnvVar(configuredGreetingUnsureOption)
         : true;
-    const greetingOptions = includeUnsureGreetingOption
-      ? [
-          "Riad romantique",
-          "Calme & nature",
-          "Piscine / Spa",
-          "Petit budget",
-          "Je ne sais pas",
-        ]
-      : ["Riad romantique", "Calme & nature", "Piscine / Spa", "Petit budget"];
+    const greetingOptions = getGreetingQuickReplyOptions(
+      requestedLanguage,
+      includeUnsureGreetingOption,
+    );
+    const destinationClarificationQuestion =
+      getDestinationClarificationQuestion(requestedLanguage);
+    const destinationClarificationOptions =
+      getDestinationClarificationOptions(requestedLanguage);
+    const requestedLanguageName = getLanguageDisplayName(requestedLanguage);
     aiDebug("chat.route", "greeting_quick_replies_config", {
       requestId,
+      requestedLanguage,
       includeUnsureGreetingOption,
       greetingOptions,
     });
 
-    const frenchGreetingTemplate = [
-      "Salut ! Bienvenue sur OKEYO Travel.",
-      "Je suis là pour t'aider à trouver le lodge parfait au Maroc : des riads de charme, des maisons d'hôtes cosy et des adresses calmes loin de la foule.",
-      "Pour le moment, on te fait découvrir : Chefchaouen, Imlil, Ouirgane, Lalla Takerkoust, Agafay et Essaouira.",
-      "Et si tu ne sais pas encore où aller, aucun souci.",
-      "Dis-moi simplement ce qui t'attire le plus.",
-      "Choisis ce qui te parle le plus :",
-    ].join("\\n");
+    const greetingTemplate = getGreetingWelcomeText(requestedLanguage);
 
     // Runtime safety overrides.
     systemPrompt += `\n\n## CRITICAL LODGING-ONLY MODE\nYou are in strict lodging-only mode.\n- Recommend and discuss ONLY lodging experiences (riads, lodges, maisons d'hôtes, hôtels).\n- Never suggest trips, treks, tours, workshops, or activities.\n- Always call searchExperiences with type="lodging".\n- If user asks for a trip/activity, politely redirect to a lodging suggestion matching the same vibe/location.\n- Any quick-reply options must stay lodging-focused (style, budget, destination, room preference).`;
-    systemPrompt += `\n\n## CRITICAL GREETING QUICK REPLIES RULE\nWhen user sends a greeting (hello/bonjour/salut/marhba/hi/hey), do not call searchExperiences.\nCall offerQuickReplies with exactly these options: ${greetingOptions
+    systemPrompt += `\n\n## CURRENT INTERFACE LANGUAGE\nThe current interface/request language is ${requestedLanguageName} (${requestedLanguage}).\nKeep quick-reply questions, button labels, date options, and room-choice prompts in ${requestedLanguageName} unless the user's latest message clearly switches to another supported language.\nNever default interactive choices to French when responding in another language.`;
+    systemPrompt += `\n\n## CRITICAL GREETING QUICK REPLIES RULE\nWhen user sends a greeting (hello/bonjour/salut/marhba/hi/hey), do not call searchExperiences.\nCall offerQuickReplies with language="${requestedLanguage}" and exactly these options: ${greetingOptions
       .map((option) => `"${option}"`)
       .join(
         ", ",
-      )}.\nIf greeting is in French, use exactly this welcome text before the quick replies:\n${frenchGreetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
-    systemPrompt += `\n\n## CRITICAL DESTINATION CLARIFICATION RULE\nWhen user asks for a type or vibe without city/region (examples: "je veux une auberge", "je veux un endroit calme"), do NOT call searchExperiences yet unless the user explicitly asks for cross-region suggestions.\nFirst call offerQuickReplies to clarify destination or ambiance with concise options such as: "Marrakech", "Chefchaouen", "Atlas (Imlil/Ouirgane)", "Essaouira", "Agafay", "Je ne sais pas".\nAfter user chooses, call searchExperiences with type="lodging" and the chosen context.`;
+      )}.\nUse exactly this welcome text before the quick replies:\n${greetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
+    systemPrompt += `\n\n## CRITICAL DESTINATION CLARIFICATION RULE\nWhen user asks for a type or vibe without city/region (examples: "je veux une auberge", "je veux un endroit calme"), do NOT call searchExperiences yet unless the user explicitly asks for cross-region suggestions.\nFirst call offerQuickReplies with language="${requestedLanguage}", question="${destinationClarificationQuestion}", and concise options such as: ${destinationClarificationOptions
+      .map((option) => `"${option}"`)
+      .join(
+        ", ",
+      )}.\nAfter user chooses, call searchExperiences with type="lodging" and the chosen context.`;
     systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room option, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room details without attempting the relevant tool call first.`;
     systemPrompt += `\n\n## CRITICAL EXPERIENCE DETAIL RULE\nWhen the user asks details about a specific experience by name, resolve the exact experience_id from recent tool outputs.\nIf no reliable ID is available, call searchExperiences(query=user wording, limit=4) first, then call getExperienceDetails with the returned ID.\nNever claim "experience not found" without trying that fallback path.`;
 
