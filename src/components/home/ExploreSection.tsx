@@ -71,12 +71,10 @@ export function ExploreSection() {
 
   return (
     <section className="relative overflow-hidden bg-[#FAFAFA] px-4 py-16 sm:px-6 sm:py-24">
-      {/* biome-ignore lint/performance/noImgElement: Decorative background pattern spans the section width. */}
-      <img
-        src="/testimonial-pattern.svg"
-        alt=""
+      <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 w-full opacity-35"
+        className="pointer-events-none absolute inset-0 bg-bottom bg-no-repeat opacity-35"
+        style={{ backgroundImage: "url('/testimonial-pattern.svg')" }}
       />
 
       <div className="relative z-10 mx-auto max-w-[1380px]">

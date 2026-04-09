@@ -44,6 +44,7 @@ const inter = Inter({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const FAVICON_BASE_PATH = "/favicon";
 
 async function getRequestLocale() {
   const requestHeaders = await headers();
@@ -61,6 +62,30 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s",
     },
     description: t("seo.layout.description"),
+    manifest: `${FAVICON_BASE_PATH}/site.webmanifest`,
+    icons: {
+      icon: [
+        { url: `${FAVICON_BASE_PATH}/favicon.ico` },
+        {
+          url: `${FAVICON_BASE_PATH}/favicon-32x32.png`,
+          sizes: "32x32",
+          type: "image/png",
+        },
+        {
+          url: `${FAVICON_BASE_PATH}/favicon-16x16.png`,
+          sizes: "16x16",
+          type: "image/png",
+        },
+      ],
+      apple: [
+        {
+          url: `${FAVICON_BASE_PATH}/apple-touch-icon.png`,
+          sizes: "180x180",
+          type: "image/png",
+        },
+      ],
+      shortcut: [`${FAVICON_BASE_PATH}/favicon.ico`],
+    },
     robots:
       process.env.NEXT_PUBLIC_NOINDEX === "true"
         ? { index: false, follow: false }

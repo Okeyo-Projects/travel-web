@@ -21,7 +21,6 @@ export async function HeroSection() {
         playsInline
         preload="none"
         poster="/hero-video-poster.jpg"
-        aria-hidden="true"
         title="Vidéo de présentation Okeyo Travel"
       >
         <source

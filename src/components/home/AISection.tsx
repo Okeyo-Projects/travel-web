@@ -2,7 +2,6 @@
 
 import Hls from "hls.js";
 import { Play, Plus, Send, Volume2, VolumeX } from "lucide-react";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
@@ -189,14 +188,10 @@ export function AISection() {
   return (
     <section className="bg-[#08090d] px-4 pb-16 pt-2 sm:px-6 sm:pb-24 m-8">
       <div className="relative mx-auto max-w-[1380px] overflow-hidden rounded-[26px] border border-white/10 bg-gradient-to-br from-[#20131d] via-[#60163d] to-[#a1084e] shadow-[0_24px_80px_rgba(0,0,0,0.55)] sm:rounded-[34px]">
-        <Image
-          src="/ai-pattern.png"
-          alt=""
+        <div
           aria-hidden="true"
-          fill
-          sizes="100vw"
-          className="pointer-events-none object-cover opacity-40"
-          priority={false}
+          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-40"
+          style={{ backgroundImage: "url('/ai-pattern.png')" }}
         />
 
         <div className="relative z-10 px-4 pb-10 pt-10 sm:px-8 sm:pb-14 sm:pt-14 lg:px-20 lg:pb-16 lg:pt-16 xl:px-24">
@@ -254,12 +249,6 @@ export function AISection() {
             <h3 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
               {t("home.ai.subtitle")}
             </h3>
-            <p className="mt-4 text-white/70 max-w-2xl mx-auto text-lg">
-              Notre assistant de voyage intelligent analyse des milliers
-              d'options pour vous proposer les meilleures recommandations de
-              séjours au Maroc, parfaitement adaptées à votre budget et vos
-              envies.
-            </p>
           </div>
 
           <div className="relative mt-8 overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-r from-[#c20566] to-[#760543] shadow-[0_16px_40px_rgba(0,0,0,0.4)] sm:mt-12 sm:rounded-[24px]">

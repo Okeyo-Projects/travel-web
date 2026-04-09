@@ -1,12 +1,12 @@
 "use client";
 
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { useT } from "@/providers/translations-provider";
 import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { useT } from "@/providers/translations-provider";
 
 export function FooterSection() {
   const pathname = usePathname();
@@ -22,13 +22,10 @@ export function FooterSection() {
   return (
     <footer className="bg-white px-4 pb-6 sm:px-6 sm:pb-10">
       <div className="relative mx-auto max-w-[1380px] overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-r from-[#121419] via-[#191a1f] to-[#670833] px-6 py-10 text-white sm:px-10 sm:py-14">
-        <Image
-          src="/ai-pattern.png"
-          alt=""
+        <div
           aria-hidden="true"
-          fill
-          sizes="(min-width: 1024px) 1380px, 100vw"
-          className="pointer-events-none object-cover opacity-35"
+          className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-35"
+          style={{ backgroundImage: "url('/ai-pattern.png')" }}
         />
 
         <div className="relative z-10 grid gap-12 lg:grid-cols-[1.1fr_0.8fr_1.4fr]">
