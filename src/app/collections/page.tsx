@@ -74,7 +74,7 @@ export default async function CollectionsPage() {
               description={category.description ?? undefined}
               imageUrl={resolveStorageUrl(category.asset)}
               href={localizeHref(
-                `/explore/category/${buildCategorySlug({
+                `/explore/region/${buildCategorySlug({
                   title: category.title,
                   slug: category.slug,
                 })}`,

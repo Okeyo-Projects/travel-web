@@ -1,570 +1,119 @@
-"use client";
-
-import { addDays, format } from "date-fns";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { ExplorePageClient } from "@/app/explore/ExplorePageClient";
 import {
-  Calendar,
-  Home,
-  Loader2,
-  MapPin,
-  Minus,
-  Plus,
-  Search,
-  Users,
-} from "lucide-react";
-import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import type { DateRange } from "react-day-picker";
-import { CompactExperienceCard, ExperienceGroup } from "@/components/explore";
-import { ExperienceDetailModal } from "@/components/explore/ExperienceDetailModal";
-import { FooterSection } from "@/components/home/FooterSection";
-import { TestimonialSection } from "@/components/home/TestimonialSection";
-import { MarketingHeader } from "@/components/site/MarketingHeader";
-import { useSiteI18n } from "@/components/site/site-i18n";
-import { Button } from "@/components/ui/button";
-import { Calendar as DatePickerCalendar } from "@/components/ui/calendar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useCategories } from "@/hooks/use-categories";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useInfiniteExperiences } from "@/hooks/use-experiences";
-import { useAllCategoryGroups } from "@/hooks/use-experiences-by-category";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { getIntlLocale } from "@/lib/i18n";
+  fetchExploreCategoryGroups,
+  fetchExploreSearchResults,
+} from "@/lib/explore/server";
+import { resolveLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildCategorySlug } from "@/lib/routing/slugs";
-import type { ExperienceSort, ExperienceType } from "@/types/experience";
+import { createClient } from "@/lib/supabase/server";
+import type { ExperienceType } from "@/types/experience";
 
-export default function ExplorePage() {
-  const { locale, t } = useSiteI18n();
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const categoryQuery = searchParams.get("category");
-  const { data: categories } = useCategories();
+function normalizeSearchValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    return value[0] ?? "";
+  }
+  return value ?? "";
+}
 
-  // All search state lives in the URL
-  const qParam = searchParams.get("q") ?? "";
-  const typeParam = (searchParams.get("type") ?? "all") as
-    | ExperienceType
-    | "all";
-  const dateFromParam = searchParams.get("dateFrom") ?? "";
-  const dateToParam = searchParams.get("dateTo") ?? "";
-  const guestsParam = Math.max(
-    1,
-    Number(searchParams.get("guests") ?? "1") || 1,
-  );
+function normalizePositiveInt(
+  value: string | string[] | undefined,
+  fallback: number,
+): number {
+  const parsed = Number(normalizeSearchValue(value));
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+  return Math.floor(parsed);
+}
 
-  // Local state only for the text input while the user is typing
-  const [locationInput, setLocationInput] = useState(qParam);
-  const debouncedSearch = useDebounce(qParam, 500);
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const categoryQuery = normalizeSearchValue(params.category).trim();
+  const q = normalizeSearchValue(params.q).trim();
+  const typeParam = normalizeSearchValue(params.type).trim();
+  const type =
+    typeParam === "lodging" || typeParam === "trip" || typeParam === "activity"
+      ? (typeParam as ExperienceType)
+      : undefined;
+  const dateFrom = normalizeSearchValue(params.dateFrom).trim() || undefined;
+  const dateTo = normalizeSearchValue(params.dateTo).trim() || undefined;
+  const guests = normalizePositiveInt(params.guests, 1);
+  const page = normalizePositiveInt(params.page, 1);
+  const pageSize = 12;
+  const showSearchResults =
+    q.length > 0 || Boolean(type) || Boolean(dateFrom) || guests > 1;
 
-  // Sync input when URL q param changes (e.g. browser back/forward)
-  useEffect(() => {
-    setLocationInput(qParam);
-  }, [qParam]);
+  if (categoryQuery) {
+    try {
+      const supabase = await createClient();
+      const { data: category } = await supabase
+        .from("categories" as never)
+        .select("title, slug")
+        .eq("id" as never, categoryQuery)
+        .eq("is_active" as never, true)
+        .maybeSingle<{
+          title:
+            | string
+            | {
+                fr?: string | null;
+                en?: string | null;
+                ar?: string | null;
+              };
+          slug?: string | null;
+        }>();
 
-  const activeType = typeParam;
-  const dateFrom = dateFromParam || undefined;
-  const dateTo = dateToParam || undefined;
-  const dateRange: DateRange | undefined = dateFromParam
-    ? {
-        from: new Date(dateFromParam),
-        to: dateToParam ? new Date(dateToParam) : undefined,
+      if (category) {
+        redirect(
+          localizeHref(
+            `/explore/region/${buildCategorySlug({
+              title: category.title,
+              slug: category.slug,
+            })}`,
+            locale,
+          ),
+        );
       }
-    : undefined;
-  const guestsCount = guestsParam;
-  const [activeSort] = useState<ExperienceSort>("newest");
-  const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
-    null,
-  );
-
-  const updateParams = (updates: Record<string, string | null>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(updates)) {
-      if (value === null || value === "") {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
+    } catch {
+      // Ignore category redirect failures and continue rendering explore.
     }
-    const query = params.toString();
-    router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
-  };
+  }
 
-  const formatDateLabel = (value: Date) =>
-    new Intl.DateTimeFormat(getIntlLocale(locale), {
-      day: "2-digit",
-      month: "short",
-    }).format(value);
-  const dateLabel = dateRange?.from
-    ? dateRange.to
-      ? `${formatDateLabel(dateRange.from)} - ${formatDateLabel(dateRange.to)}`
-      : formatDateLabel(dateRange.from)
-    : t("explore.filters.date.empty");
-  const activityLabel =
-    activeType === "all"
-      ? t("explore.filters.activity.options.all")
-      : activeType === "lodging"
-        ? t("explore.filters.activity.options.lodging")
-        : "";
-  const guestsLabel =
-    guestsCount === 1
-      ? t("explore.filters.guests.countOne", { count: guestsCount })
-      : t("explore.filters.guests.countOther", { count: guestsCount });
-  const hasSearchText = debouncedSearch.length > 0;
-  const hasActiveFilters =
-    activeType !== "all" || Boolean(dateFrom) || guestsCount > 1;
-
-  // Fetch category groups for the browse view (when not searching)
-  const { data: categoryGroups, isLoading: isLoadingGroups } =
-    useAllCategoryGroups(8, locale);
-
-  // Fetch experiences for search results
-  const {
-    data: searchData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: isLoadingSearch,
-    isError: isSearchError,
-  } = useInfiniteExperiences(
-    {
-      search: debouncedSearch || undefined,
-      type: activeType === "all" ? undefined : activeType,
-      guests: guestsCount > 1 ? guestsCount : undefined,
+  if (showSearchResults) {
+    const { items, fetchedCount } = await fetchExploreSearchResults({
+      search: q || undefined,
+      type,
+      guests: guests > 1 ? guests : undefined,
       dateFrom,
       dateTo,
-      sort: activeSort,
-      pageSize: 12,
-    },
-    // Enable search with either query text or active filters
-    hasSearchText || hasActiveFilters,
-  );
-
-  const searchResults = searchData?.pages.flatMap((page) => page.items) || [];
-
-  const handleSearch = () => {
-    updateParams({ q: locationInput.trim() || null });
-  };
-
-  const showSearchResults = hasSearchText || hasActiveFilters;
-
-  useEffect(() => {
-    if (!categoryQuery || !categories || categories.length === 0) {
-      return;
-    }
-
-    const category = categories.find((item) => item.id === categoryQuery);
-    if (!category) {
-      return;
-    }
-
-    router.replace(
-      localizeHref(
-        `/explore/category/${buildCategorySlug({
-          title: category.title,
-          slug: category.slug,
-        })}`,
-        pathname,
-      ),
-    );
-  }, [categoryQuery, categories, pathname, router]);
-
-  useEffect(() => {
-    if (!showSearchResults) return;
-    if (isLoadingSearch || isFetchingNextPage) return;
-
-    captureEvent(ANALYTICS_EVENT.EXPERIENCE_SEARCH, {
-      query: debouncedSearch || "",
-      filters: JSON.stringify({
-        type: activeType,
-        dateFrom,
-        dateTo,
-        guests: guestsCount,
-      }),
-      results_count: searchResults.length,
+      limit: page * pageSize,
+      offset: 0,
     });
-  }, [
-    activeType,
-    dateFrom,
-    dateTo,
-    debouncedSearch,
-    guestsCount,
-    isFetchingNextPage,
-    isLoadingSearch,
-    searchResults.length,
-    showSearchResults,
-  ]);
+
+    return (
+      <ExplorePageClient
+        categoryGroups={[]}
+        searchResults={items}
+        hasMoreSearchResults={fetchedCount === page * pageSize}
+      />
+    );
+  }
+
+  const categoryGroups = await fetchExploreCategoryGroups(8, locale);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section with Background Image */}
-      <div className="relative h-[400px] sm:h-[500px]">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <Image
-            src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=2000&q=80"
-            alt={t("explore.hero.imageAlt")}
-            fill
-            className="w-full h-full object-cover"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-[1280px] flex-col px-5 pt-5 sm:px-8 sm:pt-8">
-          <MarketingHeader />
-          <div className="flex flex-1 flex-col items-center justify-center text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-              {t("explore.hero.title")}
-            </h1>
-            <p className="text-white/80 text-sm sm:text-base max-w-2xl">
-              {t("explore.hero.description")}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Section - Below the image */}
-      <div className="relative z-20 -mt-8 px-4">
-        <div className="max-w-5xl mx-auto">
-          {/* Dark Search Bar */}
-          <div className="bg-[#1a1a1a] rounded-full p-2 flex items-center shadow-2xl">
-            {/* Location - Twice as big (flex-2) */}
-            <div className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-[2] min-w-0">
-              <MapPin className="w-5 h-5 text-[#ff2566] shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-400">
-                  {t("explore.filters.location.label")}
-                </p>
-                <input
-                  type="text"
-                  placeholder={t("explore.filters.location.placeholder")}
-                  value={locationInput}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-gray-500 outline-none border-none p-0"
-                />
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="w-px h-8 bg-white/10" />
-
-            {/* Activity */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
-                >
-                  <Home className="w-5 h-5 text-[#ff2566] shrink-0" />
-                  <div className="text-left min-w-0 hidden sm:block">
-                    <p className="text-xs text-gray-400">
-                      {t("explore.filters.activity.label")}
-                    </p>
-                    <p className="text-sm text-white">{activityLabel}</p>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-44">
-                <DropdownMenuItem onClick={() => updateParams({ type: null })}>
-                  {t("explore.filters.activity.options.all")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => updateParams({ type: "lodging" })}
-                >
-                  {t("explore.filters.activity.options.lodging")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Divider */}
-            <div className="w-px h-8 bg-white/10" />
-
-            {/* When */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
-                >
-                  <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
-                  <div className="text-left min-w-0 hidden sm:block">
-                    <p className="text-xs text-gray-400">
-                      {t("explore.filters.date.label")}
-                    </p>
-                    <p className="text-sm text-white">{dateLabel}</p>
-                  </div>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-auto p-3">
-                <DatePickerCalendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={(range) =>
-                    updateParams({
-                      dateFrom: range?.from
-                        ? format(range.from, "yyyy-MM-dd")
-                        : null,
-                      dateTo: range?.to ? format(range.to, "yyyy-MM-dd") : null,
-                    })
-                  }
-                  disabled={(date) => date < addDays(new Date(), -1)}
-                  numberOfMonths={1}
-                />
-                {dateRange?.from && (
-                  <div className="mt-2 flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        updateParams({ dateFrom: null, dateTo: null })
-                      }
-                    >
-                      {t("explore.filters.date.clear")}
-                    </Button>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-
-            {/* Divider */}
-            <div className="w-px h-8 bg-white/10" />
-
-            {/* Guests */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-full transition-colors flex-1 justify-center min-w-0"
-                >
-                  <Users className="w-5 h-5 text-[#ff2566] shrink-0" />
-                  <div className="text-left min-w-0 hidden sm:block">
-                    <p className="text-xs text-gray-400">
-                      {t("explore.filters.guests.label")}
-                    </p>
-                    <p className="text-sm text-white">{guestsLabel}</p>
-                  </div>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="start" className="w-56">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {t("explore.filters.guests.title")}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {t("explore.filters.guests.hint")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() =>
-                        updateParams({
-                          guests:
-                            guestsCount > 2 ? String(guestsCount - 1) : null,
-                        })
-                      }
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-6 text-center text-sm font-medium">
-                      {guestsCount}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() =>
-                        updateParams({ guests: String(guestsCount + 1) })
-                      }
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Divider */}
-            <div className="w-px h-8 bg-white/10 hidden sm:block" />
-
-            {/* Search Button */}
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="w-12 h-12 bg-[#ff2566] hover:bg-[#e0205a] rounded-full flex items-center justify-center transition-colors shrink-0 ml-2"
-            >
-              <Search className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-16">
-        {showSearchResults ? (
-          /* Search Results View */
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {debouncedSearch
-                  ? t("explore.results.titleWithQuery", {
-                      query: debouncedSearch,
-                    })
-                  : t("explore.results.titleFiltered")}
-              </h2>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setLocationInput("");
-                  router.replace(pathname, { scroll: false });
-                }}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                {t("explore.results.clearSearch")}
-              </Button>
-            </div>
-
-            {isSearchError ? (
-              <div className="text-center py-24 text-red-500">
-                {t("explore.results.error")}
-              </div>
-            ) : isLoadingSearch ? (
-              <div className="flex justify-center py-24">
-                <Loader2 className="h-8 w-8 animate-spin text-[#ff2566]" />
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {searchResults.map((experience, index) => (
-                    <CompactExperienceCard
-                      key={experience.id}
-                      experience={experience}
-                      onOpenDetails={() => setActiveSearchIndex(index)}
-                    />
-                  ))}
-                </div>
-                <ExperienceDetailModal
-                  open={activeSearchIndex !== null}
-                  experiences={searchResults}
-                  startIndex={activeSearchIndex ?? 0}
-                  onClose={() => setActiveSearchIndex(null)}
-                />
-
-                {searchResults.length === 0 && (
-                  <div className="text-center py-24">
-                    <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">
-                      {t("explore.results.empty")}
-                    </p>
-                    <Button
-                      variant="link"
-                      onClick={() => {
-                        setLocationInput("");
-                        router.replace(pathname, { scroll: false });
-                      }}
-                      className="mt-2 text-[#ff2566]"
-                    >
-                      {t("explore.results.reset")}
-                    </Button>
-                  </div>
-                )}
-
-                {hasNextPage && (
-                  <div className="flex justify-center py-8">
-                    <Button
-                      variant="outline"
-                      onClick={() => fetchNextPage()}
-                      disabled={isFetchingNextPage}
-                    >
-                      {isFetchingNextPage ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          {t("explore.results.loadingMore")}
-                        </>
-                      ) : (
-                        t("explore.results.loadMore")
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        ) : (
-          /* Browse View - Category Groups */
-          <div className="space-y-8">
-            {isLoadingGroups ? (
-              <div className="flex justify-center py-24">
-                <Loader2 className="h-8 w-8 animate-spin text-[#ff2566]" />
-              </div>
-            ) : (
-              categoryGroups?.map((group) => (
-                <ExperienceGroup
-                  key={group.categoryId}
-                  title={group.categoryTitle}
-                  subtitle={
-                    group.experiences.length === 1
-                      ? t("explore.browse.groupSubtitle.one", {
-                          count: group.experiences.length,
-                        })
-                      : t("explore.browse.groupSubtitle.other", {
-                          count: group.experiences.length,
-                        })
-                  }
-                  imageUrl={group.categoryAsset}
-                  experiences={group.experiences}
-                  onMoreClick={() => {
-                    router.push(
-                      localizeHref(
-                        `/explore/category/${buildCategorySlug({
-                          title: group.categoryTitle,
-                          slug: group.categorySlug,
-                        })}`,
-                        pathname,
-                      ),
-                    );
-                  }}
-                />
-              ))
-            )}
-
-            {!isLoadingGroups &&
-              (!categoryGroups || categoryGroups.length === 0) && (
-                <div className="text-center py-24">
-                  <p className="text-gray-500 text-lg">
-                    {t("explore.browse.empty")}
-                  </p>
-                </div>
-              )}
-          </div>
-        )}
-      </div>
-
-      {/* Testimonial Section */}
-      {!showSearchResults && <TestimonialSection />}
-
-      {/* Footer Section */}
-      <FooterSection />
-    </div>
+    <ExplorePageClient
+      categoryGroups={categoryGroups}
+      searchResults={[]}
+      hasMoreSearchResults={false}
+    />
   );
 }

@@ -1,21 +1,19 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { Camera } from "lucide-react";
-import { useImageViewer } from "@/hooks/use-image-viewer";
+import { CustomVideoPlayer } from "@/components/experience/CustomVideoPlayer";
 import { Button } from "@/components/ui/button";
-
-const CustomVideoPlayer = dynamic(
-  () => import("./CustomVideoPlayer").then((m) => m.CustomVideoPlayer),
-  { ssr: false },
-);
+import { useImageViewer } from "@/hooks/use-image-viewer";
 
 interface ExperienceGalleryProps {
   images: string[];
   videoUrl?: string | null;
 }
 
-export function ExperienceGallery({ images, videoUrl }: ExperienceGalleryProps) {
+export function ExperienceGallery({
+  images,
+  videoUrl,
+}: ExperienceGalleryProps) {
   const { openImageViewer, Viewer } = useImageViewer();
 
   if (!images?.length && !videoUrl) {
@@ -24,9 +22,7 @@ export function ExperienceGallery({ images, videoUrl }: ExperienceGalleryProps) 
 
   return (
     <div className="space-y-3">
-      {videoUrl ? (
-        <CustomVideoPlayer src={videoUrl} />
-      ) : null}
+      {videoUrl ? <CustomVideoPlayer src={videoUrl} /> : null}
 
       {images.length > 0 && (
         <div className="flex justify-end">

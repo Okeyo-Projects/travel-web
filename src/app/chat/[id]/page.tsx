@@ -18,6 +18,7 @@ export async function generateMetadata({
   return {
     title: t("seo.chatConversation.title"),
     description: t("seo.chatConversation.description"),
+    robots: { index: false, follow: false },
     alternates: buildLocaleAlternates(href, locale),
     openGraph: {
       title: t("seo.chatConversation.title"),

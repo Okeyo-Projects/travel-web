@@ -10,17 +10,17 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = createTranslator(locale);
 
   return {
-    title: t("seo.preorder.title"),
-    description: t("seo.preorder.description"),
-    alternates: buildLocaleAlternates("/preorder", locale),
+    title: t("seo.category.title"),
+    description: t("seo.category.description"),
+    alternates: buildLocaleAlternates("/explore/region", locale),
     openGraph: {
-      title: t("seo.preorder.title"),
-      description: t("seo.preorder.description"),
-      url: localizeHref("/preorder", locale),
+      title: t("seo.category.title"),
+      description: t("seo.category.description"),
+      url: localizeHref("/explore/region", locale),
     },
   };
 }
 
-export default function PreorderLayout({ children }: { children: ReactNode }) {
+export default function CategoryLayout({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }

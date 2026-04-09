@@ -1,3 +1,5 @@
+"use client";
+
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -99,7 +101,7 @@ export function ReviewList({ experienceId }: ReviewListProps) {
             <SelectValue placeholder="Trier" />
           </SelectTrigger>
           <SelectContent>
-        {sortOptions.map((option) => (
+            {sortOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

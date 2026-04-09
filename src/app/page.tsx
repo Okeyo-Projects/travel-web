@@ -4,7 +4,7 @@ import { AISection } from "@/components/home/AISection";
 import { ExploreSection } from "@/components/home/ExploreSection";
 import { FooterSection } from "@/components/home/FooterSection";
 import { HeroSection } from "@/components/home/HeroSection";
-import { TestimonialSection } from "@/components/home/TestimonialSection";
+import { HomeTestimonialSection } from "@/components/home/HomeTestimonialSection";
 import { JsonLd } from "@/components/seo/json-ld";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
@@ -71,7 +71,7 @@ export default async function HomePage() {
       <HeroSection />
       <AISection />
       <ExploreSection />
-      <TestimonialSection />
+      <HomeTestimonialSection />
       <FooterSection />
     </div>
   );

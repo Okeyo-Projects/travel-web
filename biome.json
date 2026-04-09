@@ -33,5 +33,23 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["supabase/functions/**/*.ts"],
+      "formatter": {
+        "lineWidth": 100
+      },
+      "javascript": {
+        "formatter": {
+          "quoteStyle": "single",
+          "trailingCommas": "all",
+          "semicolons": "always",
+          "arrowParentheses": "always",
+          "bracketSpacing": true,
+          "bracketSameLine": false
+        }
+      }
+    }
+  ]
 }

@@ -42,8 +42,6 @@ export const ANALYTICS_EVENT = {
   CHAT_MESSAGE_FAILED: "chat_message_failed",
   BOOKING_QUOTE_FAILED: "booking_quote_failed",
   BOOKING_SUBMIT_FAILED: "booking_submit_failed",
-  // Server-side
-  PREORDER_SUBMITTED: "preorder_submitted",
   AI_CHAT_COMPLETED: "ai_chat_completed",
   AI_RESPONSE_RECEIVED: "ai_response_received",
   AI_RESPONSE_FEEDBACK_SUBMITTED: "ai_response_feedback_submitted",

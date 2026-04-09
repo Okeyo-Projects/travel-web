@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEO Health Report — okeyotravel.com</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface-2: #1a2236;
+      --surface-3: #1f2b42;
+      --border: #2a3654;
+      --text: #e2e8f0;
+      --text-dim: #8b95a8;
+      --text-muted: #5b6478;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
+      --yellow: #eab308;
+      --yellow-dim: rgba(234, 179, 8, 0.12);
+      --orange: #f97316;
+      --orange-dim: rgba(249, 115, 22, 0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.12);
+      --purple: #a855f7;
+      --purple-dim: rgba(168, 85, 247, 0.12);
+      --cyan: #06b6d4;
+      --radius: 12px;
+      --radius-lg: 16px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 60px 0 40px;
+      position: relative;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(ellipse, var(--accent-glow), transparent 70%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header .subtitle {
+      color: var(--text-dim);
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+
+    .meta-item svg {
+      width: 16px;
+      height: 16px;
+      opacity: 0.6;
+    }
+
+    /* Score Ring */
+    .score-section {
+      display: flex;
+      justify-content: center;
+      padding: 40px 0 60px;
+    }
+
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 48px 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .score-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), var(--yellow), var(--green));
+    }
+
+    .score-ring-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 24px;
+    }
+
+    .score-ring {
+      width: 200px;
+      height: 200px;
+      transform: rotate(-90deg);
+    }
+
+    .score-ring-bg {
+      fill: none;
+      stroke: var(--surface-3);
+      stroke-width: 10;
+    }
+
+    .score-ring-fill {
+      fill: none;
+      stroke: var(--orange);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 565.48;
+      stroke-dashoffset: 214.88;
+      transition: stroke-dashoffset 2s ease;
+    }
+
+    .score-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .score-number {
+      font-size: 56px;
+      font-weight: 900;
+      color: var(--orange);
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .score-comparison {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-dim);
+      color: var(--green);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .score-comparison svg { width: 14px; height: 14px; }
+
+    /* Category Breakdown */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 48px;
+    }
+
+    .cat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .cat-card:hover { border-color: var(--accent); }
+
+    .cat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .cat-info { flex: 1; }
+
+    .cat-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .cat-bar-container {
+      height: 6px;
+      background: var(--surface-3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .cat-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1.5s ease;
+    }
+
+    .cat-score-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .cat-score { font-weight: 700; }
+    .cat-weight { color: var(--text-muted); }
+
+    /* Section */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    /* Issue Cards */
+    .issues-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .issue-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      border-left: 3px solid transparent;
+    }
+
+    .issue-card.critical { border-left-color: var(--red); }
+    .issue-card.high { border-left-color: var(--orange); }
+    .issue-card.medium { border-left-color: var(--yellow); }
+    .issue-card.low { border-left-color: var(--accent); }
+    .issue-card.pass { border-left-color: var(--green); }
+
+    .issue-severity {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .sev-critical { background: var(--red-dim); color: var(--red); }
+    .sev-high { background: var(--orange-dim); color: var(--orange); }
+    .sev-medium { background: var(--yellow-dim); color: var(--yellow); }
+    .sev-low { background: var(--accent-glow); color: var(--accent); }
+    .sev-pass { background: var(--green-dim); color: var(--green); }
+
+    .issue-content h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .issue-content p {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .data-table thead {
+      background: var(--surface-2);
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table td {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover { background: var(--surface-2); }
+
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .dot-green { background: var(--green); }
+    .dot-yellow { background: var(--yellow); }
+    .dot-orange { background: var(--orange); }
+    .dot-red { background: var(--red); }
+
+    /* Page Scores Grid */
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .page-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .page-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .page-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .page-card-score {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .page-mini-bar {
+      height: 4px;
+      background: var(--surface-3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .page-mini-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    /* Quick Wins */
+    .wins-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .win-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .win-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--green);
+    }
+
+    .win-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--green-dim);
+      color: var(--green);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .win-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .win-card p {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    /* Improvements banner */
+    .improvements-banner {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(59, 130, 246, 0.08));
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-bottom: 48px;
+    }
+
+    .improvements-banner h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 16px;
+    }
+
+    .improvements-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+    }
+
+    .improvement-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    .improvement-item .check {
+      color: var(--green);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* International SEO */
+    .lang-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .lang-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .lang-flag { font-size: 36px; margin-bottom: 12px; }
+    .lang-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .lang-url { font-size: 12px; color: var(--text-muted); font-family: monospace; }
+
+    .lang-checks {
+      margin-top: 16px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .lang-checks div {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      color: var(--text-dim);
+    }
+
+    /* Footer */
+    .report-footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 { font-size: 28px; }
+      .score-card { padding: 32px; }
+      .categories-grid { grid-template-columns: 1fr; }
+      .lang-cards { grid-template-columns: 1fr; }
+      .meta-row { gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">SEO Health Report</div>
+    <h1>okeyotravel.com</h1>
+    <p class="subtitle">AI-Powered Travel Planning & Accommodation Booking Platform</p>
+    <div class="meta-row">
+      <div class="meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        28 March 2026
+      </div>
+      <div class="meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Morocco Market
+      </div>
+      <div class="meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        96 Pages in Sitemap
+      </div>
+      <div class="meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        FR / EN / AR
+      </div>
+    </div>
+  </div>
+
+  <!-- Overall Score -->
+  <div class="score-section">
+    <div class="score-card">
+      <div class="score-ring-container">
+        <svg class="score-ring" viewBox="0 0 200 200">
+          <circle class="score-ring-bg" cx="100" cy="100" r="90"/>
+          <circle class="score-ring-fill" cx="100" cy="100" r="90"/>
+        </svg>
+        <div class="score-value">
+          <div class="score-number">62</div>
+          <div class="score-label">/ 100</div>
+        </div>
+      </div>
+      <div class="score-comparison">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+        +38 points since Feb 2026 staging audit
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="categories-grid">
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--accent-glow); color: var(--accent);">&#9881;</div>
+      <div class="cat-info">
+        <div class="cat-name">Technical SEO</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 68%; background: var(--yellow);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--yellow);">68/100</span><span class="cat-weight">25% weight</span></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--orange-dim); color: var(--orange);">&#9998;</div>
+      <div class="cat-info">
+        <div class="cat-name">Content Quality</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 52%; background: var(--orange);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--orange);">52/100</span><span class="cat-weight">25% weight</span></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--yellow-dim); color: var(--yellow);">&#128196;</div>
+      <div class="cat-info">
+        <div class="cat-name">On-Page SEO</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 58%; background: var(--orange);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--orange);">58/100</span><span class="cat-weight">20% weight</span></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--purple-dim); color: var(--purple);">{ }</div>
+      <div class="cat-info">
+        <div class="cat-name">Schema & Structured Data</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 65%; background: var(--yellow);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--yellow);">65/100</span><span class="cat-weight">10% weight</span></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--red-dim); color: var(--red);">&#9889;</div>
+      <div class="cat-info">
+        <div class="cat-name">Performance (CWV)</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 55%; background: var(--orange);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--orange);">55/100</span><span class="cat-weight">10% weight</span></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--red-dim); color: var(--red);">&#128247;</div>
+      <div class="cat-info">
+        <div class="cat-name">Images</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 45%; background: var(--red);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--red);">45/100</span><span class="cat-weight">5% weight</span></div>
+      </div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-icon" style="background: var(--accent-glow); color: var(--cyan);">&#129302;</div>
+      <div class="cat-info">
+        <div class="cat-name">AI Search Readiness</div>
+        <div class="cat-bar-container"><div class="cat-bar" style="width: 62%; background: var(--yellow);"></div></div>
+        <div class="cat-score-row"><span class="cat-score" style="color: var(--yellow);">62/100</span><span class="cat-weight">5% weight</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Improvements Since Last Audit -->
+  <div class="improvements-banner">
+    <h3>Improvements Since Staging Audit (Feb 2026 &mdash; Score: 24/100)</h3>
+    <div class="improvements-list">
+      <div class="improvement-item"><span class="check">&#10003;</span> robots.txt properly configured</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> XML sitemap with 96 URLs</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Hreflang tags across FR/EN/AR</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Schema markup foundation added</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Meta descriptions on all pages</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Canonical tags implemented</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Arabic RTL fully functional</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Privacy & Terms comprehensive</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> Support page with 10 FAQs</div>
+      <div class="improvement-item"><span class="check">&#10003;</span> AI bot access explicitly allowed</div>
+    </div>
+  </div>
+
+  <!-- Critical Issues -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--red-dim); color: var(--red);">!</div>
+      <h2 class="section-title">Critical Issues</h2>
+    </div>
+    <div class="issues-list">
+      <div class="issue-card critical">
+        <span class="issue-severity sev-critical">Critical</span>
+        <div class="issue-content">
+          <h4>Experience pages render only skeleton loaders</h4>
+          <p>All ~20 accommodation detail pages (x3 languages = 60 URLs) serve empty skeleton UI in the initial HTML. Content is loaded entirely via client-side JavaScript. Googlebot may not execute JS fully, meaning property names, descriptions, prices, images, and availability are invisible to search engines.</p>
+        </div>
+      </div>
+      <div class="issue-card critical">
+        <span class="issue-severity sev-critical">Critical</span>
+        <div class="issue-content">
+          <h4>Duplicate title tags & meta descriptions on all experience pages</h4>
+          <p>Every experience page shares the identical title "Exp&eacute;rience de voyage &mdash; Okeyo Travel" and the same generic meta description. Google treats these as duplicate signals, severely limiting ranking potential for your most important product pages.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- High Issues -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--orange-dim); color: var(--orange);">&#9888;</div>
+      <h2 class="section-title">High Priority Issues</h2>
+    </div>
+    <div class="issues-list">
+      <div class="issue-card high">
+        <span class="issue-severity sev-high">High</span>
+        <div class="issue-content">
+          <h4>Chat page indexed with no crawlable content</h4>
+          <p>The /chat page is set to "index, follow" but contains no server-rendered H1, text, or meaningful content. It should be noindexed to preserve crawl budget.</p>
+        </div>
+      </div>
+      <div class="issue-card high">
+        <span class="issue-severity sev-high">High</span>
+        <div class="issue-content">
+          <h4>Missing alt text on key images</h4>
+          <p>Logo (header & footer), hero background, AI pattern, testimonial photos, and Payzone badge all lack descriptive alt text. This impacts accessibility and image search visibility.</p>
+        </div>
+      </div>
+      <div class="issue-card high">
+        <span class="issue-severity sev-high">High</span>
+        <div class="issue-content">
+          <h4>No FAQPage schema on support page</h4>
+          <p>The support page has 10 well-structured FAQs but no FAQPage schema markup. This is a missed opportunity for rich results in Google Search.</p>
+        </div>
+      </div>
+      <div class="issue-card high">
+        <span class="issue-severity sev-high">High</span>
+        <div class="issue-content">
+          <h4>Missing LodgingBusiness schema on experience pages</h4>
+          <p>Accommodation pages lack LodgingBusiness, Product, and Offer structured data. This prevents rich results showing prices, ratings, and availability in search.</p>
+        </div>
+      </div>
+      <div class="issue-card high">
+        <span class="issue-severity sev-high">High</span>
+        <div class="issue-content">
+          <h4>Category page titles in ALL CAPS with no context</h4>
+          <p>"CHEFCHAOUEN &mdash; Okeyo Travel" lacks travel keywords and proper casing. Should be "Chefchaouen &mdash; H&eacute;bergements & Exp&eacute;riences | Okeyo Travel".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medium Issues -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--yellow-dim); color: var(--yellow);">&#9679;</div>
+      <h2 class="section-title">Medium Priority Issues</h2>
+    </div>
+    <div class="issues-list">
+      <div class="issue-card medium">
+        <span class="issue-severity sev-medium">Medium</span>
+        <div class="issue-content">
+          <h4>No "About Us" page</h4>
+          <p>E-E-A-T signals require clear entity information. No team bios, company story, or credentials are visible anywhere on the site.</p>
+        </div>
+      </div>
+      <div class="issue-card medium">
+        <span class="issue-severity sev-medium">Medium</span>
+        <div class="issue-content">
+          <h4>Thin content on category & explore pages</h4>
+          <p>Category pages average ~350 words (just listing cards). Explore page has ~300 words. Both need introductory content, travel tips, and destination context.</p>
+        </div>
+      </div>
+      <div class="issue-card medium">
+        <span class="issue-severity sev-medium">Medium</span>
+        <div class="issue-content">
+          <h4>Stock testimonial photos reduce trust</h4>
+          <p>All 3 testimonials use Unsplash stock photos. This undermines authenticity. Use real photos or avatar initials instead.</p>
+        </div>
+      </div>
+      <div class="issue-card medium">
+        <span class="issue-severity sev-medium">Medium</span>
+        <div class="issue-content">
+          <h4>Minimal internal cross-linking</h4>
+          <p>No "related experiences", "nearby destinations", or contextual links between pages. This limits link equity distribution and user navigation paths.</p>
+        </div>
+      </div>
+      <div class="issue-card medium">
+        <span class="issue-severity sev-medium">Medium</span>
+        <div class="issue-content">
+          <h4>Preorder page indexed with thin content</h4>
+          <p>The waitlist page has ~250 words and no long-term SEO value. Should be noindexed.</p>
+        </div>
+      </div>
+      <div class="issue-card medium">
+        <span class="issue-severity sev-medium">Medium</span>
+        <div class="issue-content">
+          <h4>Heavy JavaScript bundle</h4>
+          <p>15+ JS chunks loaded. Experience pages rely entirely on client-side data fetching, impacting both performance and SEO.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What's Passing -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--green-dim); color: var(--green);">&#10003;</div>
+      <h2 class="section-title">Passing Checks</h2>
+    </div>
+    <div class="issues-list">
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>Hreflang implementation</h4>
+          <p>Correct tags on all pages: fr, en, ar, x-default. Bidirectional references verified.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>Arabic RTL support</h4>
+          <p>dir="rtl", lang="ar" correctly set. Content fully translated. No mixed language issues detected.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>robots.txt configuration</h4>
+          <p>Blocks private routes, allows public content. Includes AI bot directives. Sitemap reference present.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>XML sitemap</h4>
+          <p>96 URLs across 3 locales. Current lastmod dates. Proper priority and changefreq values.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>Canonical tags</h4>
+          <p>Present and correct on all audited pages. No self-referencing issues found.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>HTTPS enforced</h4>
+          <p>All pages served over HTTPS with proper redirects.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>Clean URL structure</h4>
+          <p>Semantic URLs with locale prefix. Slugified experience names. No parameter pollution.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>Schema foundation</h4>
+          <p>Organization, WebSite, Service, BreadcrumbList, and CollectionPage schemas properly implemented.</p>
+        </div>
+      </div>
+      <div class="issue-card pass">
+        <span class="issue-severity sev-pass">Pass</span>
+        <div class="issue-content">
+          <h4>Legal pages comprehensive</h4>
+          <p>Privacy (~1,400 words) and Terms (~2,000 words) cover all required areas. Strong trust signal.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- International SEO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--accent-glow); color: var(--accent);">&#127760;</div>
+      <h2 class="section-title">International SEO</h2>
+    </div>
+    <div class="lang-cards">
+      <div class="lang-card">
+        <div class="lang-flag">&#127467;&#127479;</div>
+        <div class="lang-name">French (Default)</div>
+        <div class="lang-url">/fr/*</div>
+        <div class="lang-checks">
+          <div><span style="color: var(--green);">&#10003;</span> lang="fr"</div>
+          <div><span style="color: var(--green);">&#10003;</span> x-default</div>
+          <div><span style="color: var(--green);">&#10003;</span> Content localized</div>
+          <div><span style="color: var(--green);">&#10003;</span> Schema inLanguage</div>
+        </div>
+      </div>
+      <div class="lang-card">
+        <div class="lang-flag">&#127468;&#127463;</div>
+        <div class="lang-name">English</div>
+        <div class="lang-url">/en/*</div>
+        <div class="lang-checks">
+          <div><span style="color: var(--green);">&#10003;</span> lang="en"</div>
+          <div><span style="color: var(--green);">&#10003;</span> Hreflang bidirectional</div>
+          <div><span style="color: var(--green);">&#10003;</span> Content localized</div>
+          <div><span style="color: var(--green);">&#10003;</span> Schema inLanguage</div>
+        </div>
+      </div>
+      <div class="lang-card">
+        <div class="lang-flag">&#127474;&#127462;</div>
+        <div class="lang-name">Arabic</div>
+        <div class="lang-url">/ar/*</div>
+        <div class="lang-checks">
+          <div><span style="color: var(--green);">&#10003;</span> lang="ar" + dir="rtl"</div>
+          <div><span style="color: var(--green);">&#10003;</span> Hreflang bidirectional</div>
+          <div><span style="color: var(--green);">&#10003;</span> Fully translated</div>
+          <div><span style="color: var(--green);">&#10003;</span> No mixed language</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page-by-Page Scores -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--purple-dim); color: var(--purple);">&#9733;</div>
+      <h2 class="section-title">Page-by-Page Scores</h2>
+    </div>
+    <div class="page-grid">
+      <div class="page-card">
+        <div class="page-card-name">Homepage (FR/EN/AR)</div>
+        <div class="page-card-score" style="color: var(--green);">85</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 85%; background: var(--green);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Privacy Policy</div>
+        <div class="page-card-score" style="color: var(--green);">75</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 75%; background: var(--green);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Terms of Service</div>
+        <div class="page-card-score" style="color: var(--green);">75</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 75%; background: var(--green);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Support / FAQ</div>
+        <div class="page-card-score" style="color: var(--yellow);">70</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 70%; background: var(--yellow);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Explore</div>
+        <div class="page-card-score" style="color: var(--orange);">55</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 55%; background: var(--orange);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Collections</div>
+        <div class="page-card-score" style="color: var(--orange);">55</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 55%; background: var(--orange);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Category Pages</div>
+        <div class="page-card-score" style="color: var(--orange);">45</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 45%; background: var(--orange);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Preorder</div>
+        <div class="page-card-score" style="color: var(--orange);">45</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 45%; background: var(--orange);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Chat (AI Assistant)</div>
+        <div class="page-card-score" style="color: var(--red);">25</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 25%; background: var(--red);"></div></div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-name">Experience Pages</div>
+        <div class="page-card-score" style="color: var(--red);">20</div>
+        <div class="page-mini-bar"><div class="page-mini-fill" style="width: 20%; background: var(--red);"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Wins -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon" style="background: var(--green-dim); color: var(--green);">&#9889;</div>
+      <h2 class="section-title">Top 5 Quick Wins</h2>
+    </div>
+    <div class="wins-grid">
+      <div class="win-card">
+        <div class="win-number">1</div>
+        <h4>Unique titles & meta for experiences</h4>
+        <p>Template: "{Property} &mdash; H&eacute;bergement &agrave; {Location} | Okeyo Travel". Server-render with generateMetadata.</p>
+      </div>
+      <div class="win-card">
+        <div class="win-number">2</div>
+        <h4>Fix all missing alt text</h4>
+        <p>Logo, hero, testimonials, Payzone badge. Use empty alt="" for decorative images.</p>
+      </div>
+      <div class="win-card">
+        <div class="win-number">3</div>
+        <h4>Noindex chat & preorder pages</h4>
+        <p>Add meta robots noindex,follow. Remove from sitemap.xml.</p>
+      </div>
+      <div class="win-card">
+        <div class="win-number">4</div>
+        <h4>FAQPage schema on support</h4>
+        <p>10 FAQs already exist. Wrap in JSON-LD for rich result eligibility.</p>
+      </div>
+      <div class="win-card">
+        <div class="win-number">5</div>
+        <h4>LodgingBusiness schema</h4>
+        <p>Add to experience pages with name, address, price, amenities, rating.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="report-footer">
+    <p>SEO Health Report generated on 28 March 2026 &mdash; okeyotravel.com</p>
+    <p style="margin-top: 8px;">Next audit recommended: April 2026 (after critical fixes deployed)</p>
+  </div>
+
+</div>
+
+</body>
+</html>

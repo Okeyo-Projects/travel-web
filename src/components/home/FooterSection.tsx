@@ -13,6 +13,7 @@ export function FooterSection() {
   const t = useT();
   const companyLinks = [
     { label: t("home.footer.links.explore"), href: "/explore" },
+    { label: t("home.footer.links.about"), href: "/about" },
     { label: t("home.footer.links.privacy"), href: "/privacy" },
     { label: t("home.footer.links.terms"), href: "/terms" },
     { label: t("home.footer.links.support"), href: "/support" },
@@ -34,7 +35,7 @@ export function FooterSection() {
           <div>
             <Image
               src="/logo_white.png"
-              alt="Okeyo Travel"
+              alt="Okeyo Travel Logo"
               width={200}
               height={80}
               className="h-auto w-[130px] sm:w-[200px]"

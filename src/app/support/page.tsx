@@ -21,6 +21,8 @@ import {
   SUPPORT_WHATSAPP_URL,
 } from "@/types/support";
 
+import { JsonLd } from "@/components/seo/json-ld";
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
@@ -42,6 +44,33 @@ export default async function SupportPage() {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
   const t = createTranslator(locale);
+
+  const faqItems = [
+    "general-response-times",
+    "general-contact-options",
+    "booking-modify",
+    "booking-cancel",
+    "payments-charge",
+    "payments-refund-time",
+    "account-login",
+    "account-profile",
+    "host-visibility",
+    "host-booking-issues",
+  ];
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((key) => ({
+      "@type": "Question",
+      name: t(`support.faq.items.${key}.question`),
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: t(`support.faq.items.${key}.answer`).replace(/\*\*/g, ""), // Remove markdown bold
+      },
+    })),
+  };
+
   const contactCards = [
     {
       title: t("support.page.cards.email.title"),
@@ -68,6 +97,7 @@ export default async function SupportPage() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fb]">
+      <JsonLd schema={faqSchema} />
       <section className="bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_35%),linear-gradient(135deg,#08090d_0%,#141a26_52%,#57132b_100%)] px-6 pb-12 pt-6">
         <MarketingHeader className="mx-auto max-w-6xl" />
 

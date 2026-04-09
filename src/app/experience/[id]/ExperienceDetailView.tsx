@@ -1,25 +1,17 @@
-"use client";
-
 import {
   BedDouble,
   Check,
-  ChevronLeft,
   Clock3,
-  Loader2,
   MapPin,
   Minus,
-  Share2,
   ShieldCheck,
   Star,
   Users,
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
 import { ReviewList } from "@/components/experience/ReviewList";
-import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,16 +23,12 @@ import {
 } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBooking } from "@/hooks/use-booking";
-import {
-  type ExperienceDetailResponse,
-  useExperienceDetail,
-} from "@/hooks/use-experience-detail";
-import { useShare } from "@/hooks/use-share";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
+import type { ExperienceDetail } from "@/types/experience-detail";
+import { ExperienceDetailHeader } from "@/components/experience/ExperienceDetailHeader";
+import { ExperienceBookingSection } from "@/components/experience/ExperienceBookingSection";
+import { ExperienceDescription } from "@/components/experience/ExperienceDescription";
+import { ExperienceAnalytics } from "@/components/experience/ExperienceAnalytics";
+import { RoomBookingButton } from "@/components/experience/RoomBookingButton";
 
 function formatMoney(cents: number | null | undefined, currency = "MAD") {
   if (typeof cents !== "number") {
@@ -90,75 +78,13 @@ function buildMapLinks(
   };
 }
 
-export function ExperienceDetailClient({
-  experienceId,
-  initialData,
+export function ExperienceDetailView({
+  experience,
+  url,
 }: {
-  experienceId: string;
-  initialData?: ExperienceDetailResponse;
+  experience: ExperienceDetail;
+  url: string;
 }) {
-  const identifier = experienceId;
-  const { data, isLoading, isError } = useExperienceDetail(identifier, {
-    initialData,
-  });
-  const { openBooking, BookingModal } = useBooking();
-  const pathname = usePathname();
-
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-
-  const shareExperience = data?.transformed;
-  const shareLocationLabel = shareExperience
-    ? [shareExperience.city, shareExperience.region, shareExperience.country]
-        .filter(Boolean)
-        .join(", ")
-    : null;
-  const shareSlug = shareExperience
-    ? buildExperienceSlug({
-        title: shareExperience.title,
-        id: shareExperience.id,
-      })
-    : identifier;
-  const shareHref = localizeHref(`/experience/${shareSlug}`, pathname);
-  const share = useShare({
-    title: shareExperience?.title ?? "",
-    url: shareHref,
-    description: shareExperience?.shortDescription ?? "",
-    locationLabel: shareLocationLabel,
-    previewImageUrl: shareExperience?.thumbnailUrl ?? null,
-    experienceId: shareExperience?.id ?? null,
-    source: "experience_detail_page",
-  });
-
-  useEffect(() => {
-    if (!data) return;
-    captureEvent(ANALYTICS_EVENT.EXPERIENCE_VIEWED, {
-      experience_id: data.transformed.id,
-      type: data.transformed.type,
-    });
-  }, [data]);
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (isError || !data) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
-        <p className="text-center text-lg font-medium text-destructive">
-          Une erreur est survenue
-        </p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Recharger
-        </Button>
-      </div>
-    );
-  }
-
-  const experience = data.transformed;
   const { host, trip, lodging } = experience;
 
   const heroImages = experience.gallery
@@ -200,11 +126,6 @@ export function ExperienceDetailClient({
       : null;
 
   const description = experience.longDescription || experience.shortDescription;
-  const showReadMore = description.length > 280;
-  const visibleDescription =
-    showReadMore && !descriptionExpanded
-      ? `${description.slice(0, 280)}...`
-      : description;
 
   const itineraryByDay = (() => {
     if (!trip?.itinerary?.length) {
@@ -233,51 +154,18 @@ export function ExperienceDetailClient({
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="bg-[#19181b] px-4 py-4 shadow-sm sm:px-8">
-        <div className="mx-auto max-w-7xl">
-          <MarketingHeader />
-        </div>
-      </div>
-
-      <div className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => window.history.back()}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={share.openShare}>
-              <Share2 className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ExperienceAnalytics experienceId={experience.id} type={experience.type} />
+      
+      <ExperienceDetailHeader 
+        title={experience.title}
+        url={url}
+        description={experience.shortDescription}
+        locationLabel={locationLabel}
+        previewImageUrl={experience.thumbnailUrl}
+        experienceId={experience.id}
+      />
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="hidden items-center justify-between lg:flex">
-          <Button
-            variant="ghost"
-            className="gap-2"
-            onClick={() => window.history.back()}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Retour
-          </Button>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={share.openShare}
-            >
-              <Share2 className="h-4 w-4" />
-              Partager
-            </Button>
-          </div>
-        </div>
-
         {/* ── Desktop: 2-column layout (media left, content right) ── */}
         <div className="hidden lg:grid lg:grid-cols-12 lg:gap-10">
           {/* LEFT COLUMN — Video + Photos (sticky) */}
@@ -344,8 +232,6 @@ export function ExperienceDetailClient({
                             Vérifié
                           </span>
                         ) : null}
-                        {/* <span>{host.responseRate ?? "-"}% taux de réponse</span>
-                        <span>{host.responseTimeHours ?? "-"}h temps de réponse</span> */}
                       </div>
                     </div>
                   </div>
@@ -354,31 +240,11 @@ export function ExperienceDetailClient({
             ) : null}
 
             {/* Booking CTA */}
-            <Card className="rounded-3xl border-muted/60 shadow-lg shadow-black/5 overflow-hidden">
-              <div className="bg-gradient-to-br from-primary/5 via-transparent to-transparent p-6">
-                <div className="flex items-center justify-between gap-6">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {trip ? "Prochain départ" : "Tarif à partir de"}
-                    </p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-3xl font-bold tracking-tight text-foreground">
-                        {formattedPrice}
-                      </span>
-                      <span className="text-sm font-medium text-muted-foreground">
-                        / {nightsLabel}
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    className="h-12 px-8 text-sm font-semibold rounded-2xl shadow-md hover:shadow-lg transition-all"
-                    onClick={() => openBooking(experience)}
-                  >
-                    Réserver cette expérience
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            <ExperienceBookingSection 
+              experience={experience}
+              formattedPrice={formattedPrice}
+              nightsLabel={nightsLabel}
+            />
 
             {/* Tabs */}
             <Tabs defaultValue="overview" className="w-full">
@@ -474,23 +340,7 @@ export function ExperienceDetailClient({
                   </Card>
                 </div>
 
-                <div className="space-y-2">
-                  <h2 className="text-xl font-semibold">
-                    À propos de cette expérience
-                  </h2>
-                  <p className="leading-relaxed text-muted-foreground">
-                    {visibleDescription}
-                  </p>
-                  {showReadMore ? (
-                    <Button
-                      variant="link"
-                      className="h-auto p-0 font-semibold"
-                      onClick={() => setDescriptionExpanded((state) => !state)}
-                    >
-                      {descriptionExpanded ? "Voir moins" : "Lire plus"}
-                    </Button>
-                  ) : null}
-                </div>
+                <ExperienceDescription description={description} />
 
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Équipements</h3>
@@ -576,7 +426,7 @@ export function ExperienceDetailClient({
                             className="rounded-xl border bg-muted/20 p-3"
                           >
                             <p className="font-medium">{item.title}</p>
-                            <p className="mt-1 text-sm text-muted-foreground">
+                            <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
                               {item.details}
                             </p>
                             <p className="mt-2 text-xs text-muted-foreground">
@@ -627,7 +477,7 @@ export function ExperienceDetailClient({
                           </span>{" "}
                           {lodging.min_stay_nights ?? 1} nuit(s)
                         </p>
-                        <p>
+                        <p className="whitespace-pre-wrap">
                           {lodging.house_rules ??
                             "Règles supplémentaires à confirmer avec l&apos;hôte."}
                         </p>
@@ -707,7 +557,7 @@ export function ExperienceDetailClient({
                           <h3 className="text-lg font-semibold">
                             {room.name ?? "Chambre"}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {room.description ?? "Description non renseignée."}
                           </p>
                           <div className="flex flex-wrap gap-2 text-xs">
@@ -726,13 +576,7 @@ export function ExperienceDetailClient({
                               {formatMoney(room.price_cents, room.currency)} /
                               nuit
                             </p>
-                            <Button
-                              size="sm"
-                              className="rounded-xl"
-                              onClick={() => openBooking(experience, room.id)}
-                            >
-                              Réserver
-                            </Button>
+                            <RoomBookingButton experience={experience} roomId={room.id} />
                           </div>
                         </div>
                       </div>
@@ -849,16 +693,19 @@ export function ExperienceDetailClient({
                           Vérifié
                         </span>
                       ) : null}
-                      <span>{host.responseRate ?? "-"}% taux de réponse</span>
-                      <span>
-                        {host.responseTimeHours ?? "-"}h temps de réponse
-                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           ) : null}
+
+          {/* Booking CTA for Mobile */}
+          <ExperienceBookingSection 
+            experience={experience}
+            formattedPrice={formattedPrice}
+            nightsLabel={nightsLabel}
+          />
 
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0">
@@ -953,23 +800,7 @@ export function ExperienceDetailClient({
                 </Card>
               </div>
 
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold">
-                  À propos de cette expérience
-                </h2>
-                <p className="leading-relaxed text-muted-foreground">
-                  {visibleDescription}
-                </p>
-                {showReadMore ? (
-                  <Button
-                    variant="link"
-                    className="h-auto p-0 font-semibold"
-                    onClick={() => setDescriptionExpanded((state) => !state)}
-                  >
-                    {descriptionExpanded ? "Voir moins" : "Lire plus"}
-                  </Button>
-                ) : null}
-              </div>
+              <ExperienceDescription description={description} />
 
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold">Équipements</h3>
@@ -1055,7 +886,7 @@ export function ExperienceDetailClient({
                           className="rounded-xl border bg-muted/20 p-3"
                         >
                           <p className="font-medium">{item.title}</p>
-                          <p className="mt-1 text-sm text-muted-foreground">
+                          <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
                             {item.details}
                           </p>
                           <p className="mt-2 text-xs text-muted-foreground">
@@ -1068,7 +899,8 @@ export function ExperienceDetailClient({
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Détails d&apos;itinéraire indisponibles pour cette expérience.
+                  Détails d&apos;itinéraire indisponibles pour cette
+                  expérience.
                 </div>
               )}
             </TabsContent>
@@ -1105,7 +937,7 @@ export function ExperienceDetailClient({
                         </span>{" "}
                         {lodging.min_stay_nights ?? 1} nuit(s)
                       </p>
-                      <p>
+                      <p className="whitespace-pre-wrap">
                         {lodging.house_rules ??
                           "Règles supplémentaires à confirmer avec l&apos;hôte."}
                       </p>
@@ -1116,7 +948,7 @@ export function ExperienceDetailClient({
                     <CardHeader>
                       <CardTitle className="text-base">
                         Horaires et annulation
-                      </CardTitle>
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm text-muted-foreground">
                       <p>
@@ -1151,10 +983,12 @@ export function ExperienceDetailClient({
               {lodging?.rooms?.length ? (
                 lodging.rooms.map((room) => (
                   <Card key={room.id} className="overflow-hidden rounded-2xl">
-                    <div className="grid grid-cols-1 gap-0">
+                    <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
                       <div className="bg-muted/30 p-2">
                         {room.photoUrls.length ? (
-                          <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
+                          <Carousel
+                            opts={{ loop: room.photoUrls.length > 1 }}
+                          >
                             <CarouselContent className="ml-0">
                               {room.photoUrls.map((photoUrl, index) => (
                                 <CarouselItem
@@ -1183,7 +1017,7 @@ export function ExperienceDetailClient({
                         <h3 className="text-lg font-semibold">
                           {room.name ?? "Chambre"}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                           {room.description ?? "Description non renseignée."}
                         </p>
                         <div className="flex flex-wrap gap-2 text-xs">
@@ -1202,13 +1036,7 @@ export function ExperienceDetailClient({
                             {formatMoney(room.price_cents, room.currency)} /
                             nuit
                           </p>
-                          <Button
-                            size="sm"
-                            className="rounded-xl"
-                            onClick={() => openBooking(experience, room.id)}
-                          >
-                            Réserver
-                          </Button>
+                          <RoomBookingButton experience={experience} roomId={room.id} />
                         </div>
                       </div>
                     </div>
@@ -1265,26 +1093,6 @@ export function ExperienceDetailClient({
           </Tabs>
         </div>
       </main>
-
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 p-4 backdrop-blur md:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase text-muted-foreground">
-              À partir de
-            </p>
-            <p className="text-lg font-semibold">{formattedPrice}</p>
-          </div>
-          <Button
-            className="h-11 rounded-full px-8"
-            onClick={() => openBooking(experience)}
-          >
-            Réserver
-          </Button>
-        </div>
-      </div>
-
-      <BookingModal />
-      {share.shareDialog}
     </div>
   );
 }

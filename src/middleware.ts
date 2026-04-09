@@ -21,16 +21,18 @@ function buildCsp(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://connect.facebook.net`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net",
-    "media-src 'self' blob: https://*.supabase.co",
+    "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co https://*.cloudflarestream.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflarestream.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net",
+    "media-src 'self' blob: https://*.supabase.co https://*.cloudflarestream.com",
     "frame-ancestors 'none'",
   ].join("; ");
 }
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64");
+  const nonce = Buffer.from(
+    crypto.getRandomValues(new Uint8Array(16)),
+  ).toString("base64");
   const csp = buildCsp(nonce);
 
   if (shouldBypass(pathname)) {

@@ -1,5 +1,9 @@
 # Supabase Database Setup
 
+Canonical source of truth for shared Supabase assets is `../travel/infra/supabase`.
+This `travel-web/supabase` directory is a mirror for local compatibility and must stay byte-for-byte aligned for `functions/`, `migrations/`, `config.toml`, and `ENV_TEMPLATE.txt`.
+Before editing shared Supabase assets here, update the canonical directory first and run `npm run supabase:check-sync` from the `travel-web` root.
+
 This directory contains all database migrations, functions, and seed data for the Okeyo Experience platform.
 
 ## Prerequisites

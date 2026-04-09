@@ -1,6 +1,7 @@
 "use client";
 
-import { Play, Plus, Send } from "lucide-react";
+import Hls from "hls.js";
+import { Play, Plus, Send, Volume2, VolumeX } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +14,35 @@ const TYPING_SPEED = 30;
 const DELETING_SPEED = 15;
 const PAUSE_AFTER_TYPE = 2500;
 const PAUSE_AFTER_DELETE = 400;
+const HOME_AI_VIDEO_URL =
+  "https://customer-zklo0xkkeetv1rh0.cloudflarestream.com/3ef9d259694e7f28399d8fd4a4bccf09/manifest/video.m3u8";
+const HOME_AI_VIDEO_POSTER_URL =
+  "https://customer-zklo0xkkeetv1rh0.cloudflarestream.com/3ef9d259694e7f28399d8fd4a4bccf09/thumbnails/thumbnail.jpg?time=1s&height=900";
+
+function attachVideoSource(video: HTMLVideoElement, src: string) {
+  if (!src.includes(".m3u8")) {
+    video.src = src;
+    video.load();
+    return null;
+  }
+
+  if (video.canPlayType("application/vnd.apple.mpegurl")) {
+    video.src = src;
+    video.load();
+    return null;
+  }
+
+  if (!Hls.isSupported()) {
+    video.src = src;
+    video.load();
+    return null;
+  }
+
+  const hls = new Hls();
+  hls.loadSource(src);
+  hls.attachMedia(video);
+  return hls;
+}
 
 export function AISection() {
   const t = useT();
@@ -27,12 +57,59 @@ export function AISection() {
     [t],
   );
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const pendingPlayRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
   const [promptIndex, setPromptIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [userInput, setUserInput] = useState("");
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setIsVideoReady(false);
+
+    const flushPendingPlay = () => {
+      setIsVideoReady(true);
+
+      if (!pendingPlayRef.current) return;
+
+      pendingPlayRef.current = false;
+      void video.play().catch(() => {
+        setIsPlaying(false);
+      });
+    };
+
+    const handleVideoError = () => {
+      pendingPlayRef.current = false;
+      setIsVideoReady(false);
+      setIsPlaying(false);
+    };
+
+    video.addEventListener("loadedmetadata", flushPendingPlay);
+    video.addEventListener("canplay", flushPendingPlay);
+    video.addEventListener("error", handleVideoError);
+
+    const hls = attachVideoSource(video, HOME_AI_VIDEO_URL);
+
+    return () => {
+      pendingPlayRef.current = false;
+      video.removeEventListener("loadedmetadata", flushPendingPlay);
+      video.removeEventListener("canplay", flushPendingPlay);
+      video.removeEventListener("error", handleVideoError);
+      hls?.destroy();
+    };
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = isMuted;
+  }, [isMuted]);
 
   useEffect(() => {
     const current = prompts[promptIndex];
@@ -78,8 +155,35 @@ export function AISection() {
   };
 
   const handlePlay = () => {
-    if (!videoRef.current) return;
-    videoRef.current.play();
+    const video = videoRef.current;
+    if (!video) return;
+
+    pendingPlayRef.current = true;
+
+    if (!isVideoReady && video.readyState < 2) {
+      return;
+    }
+
+    void video
+      .play()
+      .then(() => {
+        pendingPlayRef.current = false;
+      })
+      .catch(() => {
+        setIsPlaying(false);
+      });
+  };
+
+  const handleToggleMute = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setIsMuted((current) => !current);
+  };
+
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (!video || !isPlaying) return;
+
+    video.pause();
   };
 
   return (
@@ -150,35 +254,61 @@ export function AISection() {
             <h3 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
               {t("home.ai.subtitle")}
             </h3>
+            <p className="mt-4 text-white/70 max-w-2xl mx-auto text-lg">
+              Notre assistant de voyage intelligent analyse des milliers
+              d'options pour vous proposer les meilleures recommandations de
+              séjours au Maroc, parfaitement adaptées à votre budget et vos
+              envies.
+            </p>
           </div>
 
           <div className="relative mt-8 overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-r from-[#c20566] to-[#760543] shadow-[0_16px_40px_rgba(0,0,0,0.4)] sm:mt-12 sm:rounded-[24px]">
-            <video
-              ref={videoRef}
-              className="h-full max-h-[500px] w-full object-cover"
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            >
-              <source src="/ai-video.mp4" type="video/mp4" />
-            </video>
-            {!isPlaying && (
-              <button
-                type="button"
-                onClick={handlePlay}
-                className="absolute inset-0 flex items-center justify-center"
-                aria-label={t("home.ai.playDemo")}
-              >
-                <span className="absolute inline-flex h-20 w-20 rounded-full bg-white/30 animate-ping" />
-                <span className="absolute inline-flex h-28 w-28 rounded-full bg-white/20" />
-                <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-black shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
-                  <Play className="ml-1 h-7 w-7" />
-                </span>
-              </button>
-            )}
+            <div className="relative flex h-auto items-center justify-center bg-black/35">
+              <video
+                ref={videoRef}
+                className="h-full w-full object-contain"
+                muted={isMuted}
+                loop
+                playsInline
+                preload="metadata"
+                poster={HOME_AI_VIDEO_POSTER_URL}
+                onClick={handleVideoClick}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+
+              {isPlaying && (
+                <button
+                  type="button"
+                  onClick={handleToggleMute}
+                  className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/45 text-white backdrop-blur-md transition-colors hover:bg-black/60 sm:h-12 sm:w-12"
+                  aria-label={t(isMuted ? "home.ai.unmute" : "home.ai.mute")}
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-5 w-5" />
+                  ) : (
+                    <Volume2 className="h-5 w-5" />
+                  )}
+                </button>
+              )}
+
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent" />
+
+              {!isPlaying && (
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  className="absolute inset-0 z-10 flex items-center justify-center"
+                  aria-label={t("home.ai.playDemo")}
+                >
+                  <span className="absolute inline-flex h-20 w-20 rounded-full bg-white/30 animate-ping" />
+                  <span className="absolute inline-flex h-28 w-28 rounded-full bg-white/20" />
+                  <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-black shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+                    <Play className="ml-1 h-7 w-7" />
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

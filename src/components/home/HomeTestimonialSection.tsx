@@ -1,10 +1,8 @@
-"use client";
-
 import { Star } from "lucide-react";
+import { headers } from "next/headers";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useT } from "@/providers/translations-provider";
+import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/types/supabase";
 import { IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
@@ -29,7 +27,7 @@ const clampRate = (value: number) =>
   Math.max(1, Math.min(5, Math.round(value)));
 
 const resolveAvatarUrl = (
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   avatarKey: string,
 ) => {
   if (!avatarKey) {
@@ -48,7 +46,7 @@ const resolveAvatarUrl = (
 };
 
 const mapDbTestimonial = (
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   row: DbTestimonial,
 ): TestimonialItem => ({
   id: row.id,
@@ -59,78 +57,60 @@ const mapDbTestimonial = (
   rate: clampRate(row.rate),
 });
 
-export function TestimonialSection() {
-  const t = useT();
-  const fallbackTestimonials = useMemo<TestimonialItem[]>(
-    () => [
-      {
-        id: "fallback-1",
-        quote: t("home.testimonials.items.one.quote"),
-        name: t("home.testimonials.items.one.name"),
-        role: t("home.testimonials.items.one.role"),
-        avatar:
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80",
-        rate: 5,
-      },
-      {
-        id: "fallback-2",
-        quote: t("home.testimonials.items.two.quote"),
-        name: t("home.testimonials.items.two.name"),
-        role: t("home.testimonials.items.two.role"),
-        avatar:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&q=80",
-        rate: 5,
-      },
-      {
-        id: "fallback-3",
-        quote: t("home.testimonials.items.three.quote"),
-        name: t("home.testimonials.items.three.name"),
-        role: t("home.testimonials.items.three.role"),
-        avatar:
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80",
-        rate: 5,
-      },
-    ],
-    [t],
-  );
-  const [testimonials, setTestimonials] =
-    useState<TestimonialItem[]>(fallbackTestimonials);
+export async function HomeTestimonialSection() {
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
+  const fallbackTestimonials: TestimonialItem[] = [
+    {
+      id: "fallback-1",
+      quote: t("home.testimonials.items.one.quote"),
+      name: t("home.testimonials.items.one.name"),
+      role: t("home.testimonials.items.one.role"),
+      avatar:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80",
+      rate: 5,
+    },
+    {
+      id: "fallback-2",
+      quote: t("home.testimonials.items.two.quote"),
+      name: t("home.testimonials.items.two.name"),
+      role: t("home.testimonials.items.two.role"),
+      avatar:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&q=80",
+      rate: 5,
+    },
+    {
+      id: "fallback-3",
+      quote: t("home.testimonials.items.three.quote"),
+      name: t("home.testimonials.items.three.name"),
+      role: t("home.testimonials.items.three.role"),
+      avatar:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80",
+      rate: 5,
+    },
+  ];
 
-  useEffect(() => {
-    let cancelled = false;
+  let testimonials = fallbackTestimonials;
 
-    const fetchTestimonials = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("website_testimonials")
-        .select("id, avatar_key, name, role, message, rate")
-        .is("deleted_at", null)
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false });
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("website_testimonials")
+      .select("id, avatar_key, name, role, message, rate")
+      .is("deleted_at", null)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
-      if (cancelled) return;
-
-      if (error) {
-        console.error("Failed to load website testimonials:", error);
-        setTestimonials(fallbackTestimonials);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        setTestimonials(fallbackTestimonials);
-        return;
-      }
-
-      setTestimonials(data.map((row) => mapDbTestimonial(supabase, row)));
-    };
-
-    fetchTestimonials();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [fallbackTestimonials]);
+    if (error) {
+      console.error("Failed to load website testimonials:", error);
+    } else if (data && data.length > 0) {
+      testimonials = data.map((row) => mapDbTestimonial(supabase, row));
+    }
+  } catch (error) {
+    console.error("Failed to initialize testimonial fetch:", error);
+  }
 
   return (
     <section className="relative overflow-hidden bg-white px-4 py-16 sm:px-6 sm:py-24">

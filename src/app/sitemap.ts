@@ -12,8 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/",
     "/explore",
     "/collections",
-    "/chat",
-    "/preorder",
+    "/about",
     "/support",
     "/terms",
     "/privacy",
@@ -30,13 +29,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             ? ("daily" as const)
             : path === "/collections"
               ? ("weekly" as const)
-              : path === "/chat"
+              : path === "/about"
                 ? ("monthly" as const)
-                : path === "/preorder"
+                : path === "/support"
                   ? ("monthly" as const)
-                  : path === "/support"
-                    ? ("monthly" as const)
-                    : ("yearly" as const),
+                  : ("yearly" as const),
       priority:
         path === "/"
           ? 1.0
@@ -44,13 +41,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             ? 0.9
             : path === "/collections"
               ? 0.8
-              : path === "/chat"
+              : path === "/about"
                 ? 0.7
-                : path === "/preorder"
-                  ? 0.6
-                  : path === "/support"
-                    ? 0.5
-                    : 0.3,
+                : path === "/support"
+                  ? 0.5
+                  : 0.3,
     })),
   );
 
@@ -85,9 +80,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }>;
 
     categoryRoutes = categories.flatMap((cat) => {
-      const path = `/explore/category/${encodeURIComponent(
-        buildCategorySlug({ title: cat.title, slug: cat.slug }),
-      )}`;
+      const slug = buildCategorySlug({ title: cat.title, slug: cat.slug });
+      const path = `/explore/region/${slug}`;
 
       return LOCALES.map((locale) => ({
         url: `${SITE_URL}${localizeHref(path, locale)}`,
@@ -98,10 +92,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     experienceRoutes = experiences.flatMap((exp) => {
-      const path = `/experience/${buildExperienceSlug({
+      const slug = buildExperienceSlug({
         title: exp.title,
         id: exp.id,
-      })}`;
+      });
+      const path = `/experience/${slug}`;
 
       return LOCALES.map((locale) => ({
         url: `${SITE_URL}${localizeHref(path, locale)}`,

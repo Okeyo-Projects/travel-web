@@ -105,6 +105,8 @@
       "howItWorks": "How it works",
       "subtitle": "AI builds your trip around you",
       "playDemo": "Play AI demo",
+      "mute": "Mute AI demo",
+      "unmute": "Unmute AI demo",
       "prompts": {
         "one": "I want a peaceful hostel with mountain views, ideal for remote work and meeting other travelers, max budget 400 MAD per night.",
         "two": "Find me an authentic riad in Marrakech for 2 people, with a pool, near the medina, for a romantic weekend.",
@@ -142,7 +144,7 @@
       }
     },
     "footer": {
-      "tagline": "Your smart travel companion, powered by AI.",
+      "tagline": "Your smart travel companion",
       "usefulLinks": "Useful links",
       "newsletterTitle": "Join our newsletter",
       "newsletterDescription": "Get our latest news, offers, and travel advice every week.",
@@ -156,6 +158,7 @@
       },
       "links": {
         "explore": "Explore",
+        "about": "About Us",
         "privacy": "Privacy Policy",
         "terms": "Terms of Service",
         "support": "Support"
@@ -213,10 +216,6 @@
     "support": {
       "title": "Help & Support — Okeyo Travel",
       "description": "Find answers to frequently asked questions and contact our support team."
-    },
-    "preorder": {
-      "title": "Preorder — Okeyo Travel",
-      "description": "Be among the first to enjoy Okeyo Travel. Reserve your early access now."
     },
     "terms": {
       "title": "Terms of Service | Okeyo Travel",
@@ -740,6 +739,34 @@
     },
     "debug": {
       "component": "Debug UI component: {component}"
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist or is no longer available.",
+      "home": "Back to home",
+      "explore": "Explore experiences"
+    },
+    "global": {
+      "title": "Something went wrong",
+      "description": "This page could not be displayed right now. Please try again or return to the home page.",
+      "retry": "Retry",
+      "home": "Back to home",
+      "explore": "Explore experiences"
+    },
+    "experienceNotFound": {
+      "title": "Experience not found",
+      "description": "This experience does not exist, is no longer available, or the link is incorrect.",
+      "home": "Back to home",
+      "explore": "View other experiences"
+    },
+    "experienceError": {
+      "title": "Unable to load this experience",
+      "description": "An error occurred while loading this experience. You can retry or go back to explore.",
+      "retry": "Retry",
+      "home": "Back to home",
+      "explore": "Explore"
     }
   }
 }

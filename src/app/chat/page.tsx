@@ -23,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("seo.chat.title"),
     description: t("seo.chat.description"),
+    robots: { index: false, follow: false },
     alternates: buildLocaleAlternates("/chat", locale),
     openGraph: {
       title: t("seo.chat.title"),

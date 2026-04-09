@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,13 +8,35 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin/", "/agent/", "/host/", "/bookings/", "/profile/", "/notifications/", "/settings/"],
+        disallow: [
+          "/api/",
+          "/admin/",
+          "/agent/",
+          "/host/",
+          "/bookings/",
+          "/profile/",
+          "/notifications/",
+          "/settings/",
+          "/chat",
+          "/chat/",
+        ],
       },
       // Allow AI crawlers — good for AI search readiness
       {
         userAgent: ["GPTBot", "ClaudeBot", "CCBot", "Google-Extended"],
         allow: "/",
-        disallow: ["/api/", "/admin/", "/agent/", "/host/", "/bookings/", "/profile/", "/notifications/", "/settings/"],
+        disallow: [
+          "/api/",
+          "/admin/",
+          "/agent/",
+          "/host/",
+          "/bookings/",
+          "/profile/",
+          "/notifications/",
+          "/settings/",
+          "/chat",
+          "/chat/",
+        ],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

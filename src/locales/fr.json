@@ -105,6 +105,8 @@
       "howItWorks": "Comment ça marche",
       "subtitle": "L'IA construit votre voyage sur mesure",
       "playDemo": "Lire la démo IA",
+      "mute": "Couper le son de la démo IA",
+      "unmute": "Activer le son de la démo IA",
       "prompts": {
         "one": "Je veux une auberge de jeunesse paisible avec vue sur les montagnes, idéale pour travailler à distance et rencontrer d'autres voyageurs, budget max 400 dhs / nuit.",
         "two": "Trouve-moi un riad authentique à Marrakech pour 2 personnes, avec piscine, proche de la médina, pour un week-end romantique.",
@@ -142,7 +144,7 @@
       }
     },
     "footer": {
-      "tagline": "Votre compagnon de voyage intelligent, propulsé par l'IA.",
+      "tagline": "Votre compagnon de voyage intelligent",
       "usefulLinks": "Liens utiles",
       "newsletterTitle": "Rejoignez notre newsletter",
       "newsletterDescription": "Recevez nos dernières actualités, offres et conseils voyage chaque semaine.",
@@ -156,6 +158,7 @@
       },
       "links": {
         "explore": "Explorer",
+        "about": "À propos",
         "privacy": "Politique de confidentialité",
         "terms": "Conditions d'utilisation",
         "support": "Support"
@@ -213,10 +216,6 @@
     "support": {
       "title": "Aide & Support — Okeyo Travel",
       "description": "Retrouvez toutes nos réponses aux questions fréquentes et contactez notre équipe d'assistance."
-    },
-    "preorder": {
-      "title": "Précommande — Okeyo Travel",
-      "description": "Soyez parmi les premiers à profiter d'Okeyo Travel. Réservez votre accès anticipé dès maintenant."
     },
     "terms": {
       "title": "Conditions d'utilisation | Okeyo Travel",
@@ -740,6 +739,34 @@
     },
     "debug": {
       "component": "Composant UI de debug : {component}"
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page introuvable",
+      "description": "La page que vous recherchez n’existe pas ou n’est plus disponible.",
+      "home": "Retour à l’accueil",
+      "explore": "Explorer les expériences"
+    },
+    "global": {
+      "title": "Une erreur est survenue",
+      "description": "Impossible d’afficher cette page pour le moment. Veuillez réessayer ou revenir à l’accueil.",
+      "retry": "Réessayer",
+      "home": "Retour à l’accueil",
+      "explore": "Explorer les expériences"
+    },
+    "experienceNotFound": {
+      "title": "Expérience introuvable",
+      "description": "Cette expérience n’existe pas, n’est plus disponible ou le lien est incorrect.",
+      "home": "Retour à l’accueil",
+      "explore": "Voir d’autres expériences"
+    },
+    "experienceError": {
+      "title": "Impossible de charger cette expérience",
+      "description": "Une erreur est survenue pendant le chargement. Vous pouvez réessayer ou revenir à l’exploration.",
+      "retry": "Réessayer",
+      "home": "Retour à l’accueil",
+      "explore": "Explorer"
     }
   }
 }

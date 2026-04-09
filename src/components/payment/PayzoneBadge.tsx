@@ -57,7 +57,7 @@ export function PayzoneBadge({
         <div className={cn("w-full min-w-[320px] shrink-0", imageWrapperClassName)}>
           <Image
             src="/payzone.png"
-            alt="Payzone secure payment"
+            alt="Paiement sécurisé par Payzone - Cartes acceptées: Visa, Mastercard, CMI"
             width={962}
             height={120}
             className={cn("h-auto w-full", imageClassName)}
