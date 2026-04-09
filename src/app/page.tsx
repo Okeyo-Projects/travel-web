@@ -6,8 +6,10 @@ import { FooterSection } from "@/components/home/FooterSection";
 import { HeroSection } from "@/components/home/HeroSection";
 import { HomeTestimonialSection } from "@/components/home/HomeTestimonialSection";
 import { JsonLd } from "@/components/seo/json-ld";
+import { fetchFeaturedExperiences } from "@/lib/explore/server";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
+import type { ExperienceListItem } from "@/types/experience";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
@@ -38,6 +40,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const { locale, t } = await getRequestTranslator();
+  let featuredExperiences: ExperienceListItem[] = [];
+
+  try {
+    featuredExperiences = await fetchFeaturedExperiences(6);
+  } catch (error) {
+    console.error("Failed to load featured experiences for home page:", error);
+  }
 
   return (
     <div className="bg-[#08090d]">
@@ -70,7 +79,7 @@ export default async function HomePage() {
       />
       <HeroSection />
       <AISection />
-      <ExploreSection />
+      <ExploreSection experiences={featuredExperiences} />
       <HomeTestimonialSection />
       <FooterSection />
     </div>

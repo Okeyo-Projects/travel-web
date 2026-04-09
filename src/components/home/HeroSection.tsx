@@ -1,7 +1,13 @@
 import { ChevronDown } from "lucide-react";
 import { headers } from "next/headers";
+import { HeroBackgroundVideo } from "@/components/home/HeroBackgroundVideo";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
+
+const HERO_VIDEO_DESKTOP_URL =
+  "https://customer-zklo0xkkeetv1rh0.cloudflarestream.com/3918d9e2c45a546b62b44491eeb687ab/manifest/video.m3u8";
+const HERO_VIDEO_MOBILE_URL =
+  "https://customer-zklo0xkkeetv1rh0.cloudflarestream.com/51d39070335a2f4ed5ea1ce4439ce969/manifest/video.m3u8";
 
 export async function HeroSection() {
   const requestHeaders = await headers();
@@ -10,26 +16,12 @@ export async function HeroSection() {
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden bg-black text-white">
-      {/* poster shows as LCP element while video loads; preload="none" avoids
-          downloading 5+ MB before first paint — compress video to <1.5 MB with
-          ffmpeg and place first-frame WebP at /hero-video-poster.webp */}
-      <video
-        className="absolute inset-0 h-full w-full object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="none"
+      <HeroBackgroundVideo
+        desktopSrc={HERO_VIDEO_DESKTOP_URL}
+        mobileSrc={HERO_VIDEO_MOBILE_URL}
         poster="/hero-video-poster.jpg"
         title="Vidéo de présentation Okeyo Travel"
-      >
-        <source
-          media="(max-width: 768px)"
-          src="/hero-mobile-video.mp4"
-          type="video/mp4"
-        />
-        <source src="/hero-video.mp4" type="video/mp4" />
-      </video>
+      />
 
       <div className="relative z-20 mx-auto flex min-h-[100svh] w-full max-w-[1280px] flex-col px-5 pb-8 pt-5 sm:px-8 sm:pb-10 sm:pt-8">
         <MarketingHeader />

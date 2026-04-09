@@ -216,6 +216,16 @@ function applySort<T extends QueryWithOrder<T>>(
   }
 }
 
+function stripExperienceMeta({
+  _priceCents,
+  _roomTypes,
+  ...experience
+}: ExploreExperienceWithMeta): ExperienceListItem {
+  void _priceCents;
+  void _roomTypes;
+  return experience;
+}
+
 function mapExperienceWithMeta(exp: RawExperience): ExploreExperienceWithMeta {
   const lodgingData = Array.isArray(exp.lodging)
     ? (exp.lodging[0] ?? null)
@@ -588,11 +598,29 @@ export async function fetchExploreSearchResults(
   );
 
   return {
-    items: availabilityFilteredItems.map(
-      ({ _priceCents, _roomTypes, ...exp }) => exp,
-    ),
+    items: availabilityFilteredItems.map(stripExperienceMeta),
     fetchedCount: (data || []).length,
   };
+}
+
+export async function fetchFeaturedExperiences(
+  limit = 6,
+): Promise<ExperienceListItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("experiences")
+    .select(EXPERIENCE_LIST_SELECT)
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .order("avg_rating", { ascending: false, nullsFirst: false })
+    .order("bookings_count", { ascending: false, nullsFirst: false })
+    .range(0, Math.max(limit, 1) - 1);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).map(mapExperienceWithMeta).map(stripExperienceMeta);
 }
 
 export async function fetchExploreCategoryGroups(

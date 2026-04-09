@@ -4,21 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CompactExperienceCard } from "@/components/explore/CompactExperienceCard";
-import { useExperiences } from "@/hooks/use-experiences";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useT } from "@/providers/translations-provider";
+import type { ExperienceListItem } from "@/types/experience";
 
-export function ExploreSection() {
+interface ExploreSectionProps {
+  experiences: ExperienceListItem[];
+}
+
+export function ExploreSection({ experiences }: ExploreSectionProps) {
   const pathname = usePathname();
   const t = useT();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
-
-  const { data: experiences, isLoading } = useExperiences({
-    featured: true,
-    limit: 6,
-  });
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -51,7 +50,7 @@ export function ExploreSection() {
     };
   }, [checkScroll]);
 
-  const experienceCount = experiences?.length ?? 0;
+  const experienceCount = experiences.length;
 
   useEffect(() => {
     void experienceCount;
@@ -102,26 +101,13 @@ export function ExploreSection() {
               ref={scrollRef}
               className="flex gap-5 overflow-x-auto pb-4 [scroll-snap-type:x_mandatory] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
-              {isLoading
-                ? ["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4"].map(
-                    (key) => (
-                      <div
-                        key={key}
-                        className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
-                      >
-                        <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200 animate-pulse" />
-                        <div className="mt-3 h-5 w-3/4 rounded bg-gray-200 animate-pulse" />
-                        <div className="mt-2 h-4 w-1/2 rounded bg-gray-200 animate-pulse" />
-                      </div>
-                    ),
-                  )
-                : (experiences ?? []).map((experience) => (
-                    <CompactExperienceCard
-                      key={experience.id}
-                      experience={experience}
-                      className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
-                    />
-                  ))}
+              {experiences.map((experience) => (
+                <CompactExperienceCard
+                  key={experience.id}
+                  experience={experience}
+                  className="w-[280px] sm:w-[320px] md:w-[360px] flex-shrink-0 [scroll-snap-align:start]"
+                />
+              ))}
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
