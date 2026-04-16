@@ -7,7 +7,7 @@ import { fetchExperienceData } from "@/lib/routing/experience-resolver";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 import { buildKeywords, buildPageTitle } from "@/lib/seo/page-metadata";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
@@ -37,17 +37,28 @@ export async function generateMetadata({
   }
 
   const experience = data.transformed;
-  const title = buildPageTitle(experience.title);
-  const description = experience.shortDescription || experience.longDescription;
-  const keywords = buildKeywords(
-    experience.title,
-    experience.shortDescription,
-    experience.longDescription,
-    experience.city,
-    experience.region,
-    experience.country,
-    experience.type,
-  );
+
+  const useLocalizedMetadata = locale === "fr";
+
+  const title = useLocalizedMetadata
+    ? buildPageTitle(experience.title)
+    : t("seo.experience.fallbackTitle");
+
+  const description = useLocalizedMetadata
+    ? experience.shortDescription || experience.longDescription
+    : t("seo.experience.fallbackDescription");
+
+  const keywords = useLocalizedMetadata
+    ? buildKeywords(
+        experience.title,
+        experience.shortDescription,
+        experience.longDescription,
+        experience.city,
+        experience.region,
+        experience.country,
+        experience.type,
+      )
+    : undefined;
 
   return {
     title,

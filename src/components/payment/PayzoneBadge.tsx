@@ -9,6 +9,7 @@ type PayzoneBadgeProps = {
   descriptionClassName?: string;
   imageWrapperClassName?: string;
   imageClassName?: string;
+  isBlurBackground?: boolean;   
 };
 
 export function PayzoneBadge({
@@ -20,11 +21,13 @@ export function PayzoneBadge({
   descriptionClassName,
   imageWrapperClassName,
   imageClassName,
+  isBlurBackground = false
 }: PayzoneBadgeProps) {
   return (
     <div
       className={cn(
         "rounded-2xl border border-border bg-card p-4",
+          isBlurBackground ? "backdrop-blur-sm bg-white/30" : "bg-card",
         className,
       )}
     >

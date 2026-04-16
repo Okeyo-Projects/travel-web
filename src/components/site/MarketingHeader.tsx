@@ -1,20 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { cn } from "@/lib/utils";
-import { useViewMode } from "@/providers/view-mode-provider";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { cn } from "@/lib/utils";
+import { useViewMode } from "@/providers/view-mode-provider";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { NotificationBell } from "./NotificationBell";
-import { UserMenu } from "./UserMenu";
 import { useSiteI18n } from "./site-i18n";
+import { UserMenu } from "./UserMenu";
 
 interface MarketingHeaderProps {
   className?: string;
@@ -27,6 +27,8 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
   const { t } = useSiteI18n();
   const isHostMode = Boolean(user && mode === "host");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Close mobile menu on navigation
   useEffect(() => {
@@ -47,8 +49,57 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
     };
   }, [mobileMenuOpen]);
 
+  // Track navigation progress
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We want to trigger on pathname changes
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let progressInterval: NodeJS.Timeout;
+
+    const startLoading = () => {
+      setIsLoading(true);
+      setProgress(0);
+
+      let currentProgress = 0;
+      progressInterval = setInterval(() => {
+        currentProgress += Math.random() * 10;
+        if (currentProgress > 90) {
+          currentProgress = 90;
+          clearInterval(progressInterval);
+        }
+        setProgress(currentProgress);
+      }, 100);
+    };
+
+    const completeLoading = () => {
+      setProgress(100);
+      timeoutId = setTimeout(() => {
+        setIsLoading(false);
+        setProgress(0);
+      }, 200);
+    };
+
+    startLoading();
+    completeLoading();
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(progressInterval);
+    };
+  }, [pathname]);
+
   return (
     <>
+      {isLoading &&
+        createPortal(
+          <div className="fixed top-0 left-0 right-0 z-[1000] h-1 bg-gradient-to-r from-[#d12d61] to-[#ff6b6b] transition-all duration-300 ease-out">
+            <div
+              className="h-full bg-white/30 transition-all duration-150 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>,
+          document.body,
+        )}
+
       <header
         className={cn("flex items-center justify-between gap-6", className)}
       >
@@ -222,9 +273,7 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
                 )}
               </div>
 
- 
-                <LanguageSwitcher variant="dark" className="shrink-0 mt-3" />
-        
+              <LanguageSwitcher variant="dark" className="shrink-0 mt-3" />
 
               {/* Auth section */}
               <div className="mt-8 border-t border-white/20 pt-6">

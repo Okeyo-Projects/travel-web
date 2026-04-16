@@ -23,6 +23,8 @@ async function getRequestTranslator() {
   };
 }
 
+export const revalidate = 3600;
+
 export async function generateMetadata(): Promise<Metadata> {
   const { locale, t } = await getRequestTranslator();
 

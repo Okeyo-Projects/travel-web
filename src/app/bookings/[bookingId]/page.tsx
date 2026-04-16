@@ -1,30 +1,14 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  Loader2,
-  MapPin,
-  XCircle,
-} from "lucide-react";
-import Link from "next/link";
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 import {
   BookingCancellationDialog,
   type BookingCancellationPayload,
 } from "@/components/booking/BookingCancellationDialog";
 import { ReviewForm } from "@/components/experience/ReviewForm";
 import { ReviewStars } from "@/components/experience/ReviewStars";
+import { FooterSection } from "@/components/home/FooterSection";
 import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,12 +20,38 @@ import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import {
   isPayzoneSession,
+  readPayzoneReturnParams,
   type PayzoneReturnStatus,
   type PayzoneSession,
-  readPayzoneReturnParams,
 } from "@/lib/payzone";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  CreditCard,
+  Home,
+  Loader2,
+  MapPin,
+  RefreshCw,
+  UserMinus,
+  Users,
+  XCircle,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
 type CancellationPolicy = Database["public"]["Enums"]["cancellation_policy"];
@@ -718,225 +728,321 @@ export default function BookingDetailPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {booking.experience?.title ?? "Détail réservation"}
-            </h1>
-            <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-              <MapPin className="size-4" />
-              <span>{booking.experience?.city ?? "Destination"}</span>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="bg-gradient-to-br from-[#08090d] to-[#1a1a2e]">
+        <MarketingHeader className="mx-auto max-w-5xl" />
+        <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
+          <div className="mb-6">
+            <Link
+              href="/bookings"
+              className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="size-4" />
+              Back to bookings
+            </Link>
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {booking.experience?.title ?? "Booking Details"}
+              </h1>
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-white/70">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="size-4" />
+                  <span>{booking.experience?.city ?? "Location"}</span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="border-white/20 text-white bg-white/5"
+                >
+                  <StatusIcon className="size-3 mr-1.5" />
+                  {statusMeta.label}
+                </Badge>
+              </div>
             </div>
           </div>
-          <Badge variant={statusMeta.variant} className="gap-1.5">
-            <StatusIcon className="size-3.5" />
-            {statusMeta.label}
-          </Badge>
         </div>
-
-        <Card>
-          <CardContent className="pt-6 space-y-4">
-            <div className="flex items-center gap-2 text-sm">
-              <CalendarDays className="size-4 text-muted-foreground" />
-              <span>{formatDateRange(booking.from_date, booking.to_date)}</span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {guests} voyageur{guests > 1 ? "s" : ""}
-            </div>
-            <Separator />
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Sous-total</span>
-                <span>
-                  {formatPrice(booking.price_subtotal_cents, booking.currency)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Frais</span>
-                <span>
-                  {formatPrice(booking.price_fees_cents ?? 0, booking.currency)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Taxes</span>
-                <span>
-                  {formatPrice(
-                    booking.price_taxes_cents ?? 0,
-                    booking.currency,
-                  )}
-                </span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-semibold text-base">
-                <span>Total</span>
-                <span>
-                  {formatPrice(booking.price_total_cents, booking.currency)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {cancellationPolicyInfo && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Annulation et remboursement
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{cancellationPolicyInfo.badge}</Badge>
-                {booking.status === "cancelled" && cancellationDateLabel ? (
-                  <Badge variant="destructive">
-                    Annulée le {cancellationDateLabel}
-                  </Badge>
-                ) : null}
-              </div>
-              <div className="space-y-2 text-sm">
-                <p>{cancellationPolicyInfo.policySummary}</p>
-                <p className="text-muted-foreground">
-                  {cancellationPolicyInfo.refundSummary}
-                </p>
-              </div>
-              {booking.cancellation_reason ? (
-                <div className="rounded-xl border bg-muted/20 p-4 text-sm">
-                  <p className="font-medium text-foreground">
-                    Motif enregistré
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    {booking.cancellation_reason}
-                  </p>
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        )}
-
-        {(booking.guest_notes || booking.host_notes) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Messages</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {booking.guest_notes && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Votre message
-                  </p>
-                  <p className="text-sm">{booking.guest_notes}</p>
-                </div>
-              )}
-              {booking.host_notes && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Message de l'hôte
-                  </p>
-                  <p className="text-sm">{booking.host_notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {booking.status === "completed" ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Votre avis</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {bookingReviewQuery.isLoading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" />
-                  Chargement de votre avis...
-                </div>
-              ) : bookingReviewQuery.data ? (
-                <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium">Avis déjà publié</p>
-                    <ReviewStars
-                      rating={bookingReviewQuery.data.ratingOverall}
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {bookingReviewQuery.data.text}
-                  </p>
-                </div>
-              ) : booking.experience?.id ? (
-                <ReviewForm
-                  bookingId={booking.id}
-                  experienceId={booking.experience.id}
-                  onSuccess={() => {
-                    refetch();
-                  }}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Impossible de retrouver l'expérience associée à cette
-                  réservation.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ) : null}
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              {canPay && (
-                <Button
-                  onClick={handleStartPayment}
-                  disabled={isStartingPayment}
-                >
-                  {isStartingPayment ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : null}
-                  Payer maintenant
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  void handleCheckPaymentStatus();
-                }}
-                disabled={!lastPaymentId || isCheckingPayment}
-              >
-                {isCheckingPayment ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : null}
-                Vérifier le paiement
-              </Button>
-              {canCancel && (
-                <Button
-                  variant="destructive"
-                  onClick={() => setIsCancelDialogOpen(true)}
-                  disabled={cancelBookingMutation.isPending}
-                >
-                  {cancelBookingMutation.isPending ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : null}
-                  Annuler la réservation
-                </Button>
-              )}
-              <Button variant="ghost" asChild>
-                <Link href="/bookings">Retour</Link>
-              </Button>
-            </div>
-
-            {(canPay || booking.status === "pending_payment") && (
-              <PayzoneBadge
-                title="Paiement securise avec Payzone"
-                description="Le reglement s'effectue sur la page de paiement securisee de Payzone."
-              />
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6 flex-1">
+        {booking.experience?.thumbnail_url && (
+          <Card className="overflow-hidden">
+            <div className="relative aspect-video sm:aspect-[21/9]">
+              <Image
+                src={booking.experience.thumbnail_url}
+                alt={booking.experience.title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+          </Card>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="size-5" />
+                  Booking Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start gap-3 text-sm">
+                  <CalendarDays className="size-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="font-medium">Dates</p>
+                    <p className="text-muted-foreground">
+                      {formatDateRange(booking.from_date, booking.to_date)}
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="flex items-start gap-3 text-sm">
+                  <Users className="size-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="font-medium">Guests</p>
+                    <p className="text-muted-foreground">
+                      {guests} guest{guests > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>
+                      {formatPrice(
+                        booking.price_subtotal_cents,
+                        booking.currency,
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Fees</span>
+                    <span>
+                      {formatPrice(
+                        booking.price_fees_cents ?? 0,
+                        booking.currency,
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Taxes</span>
+                    <span>
+                      {formatPrice(
+                        booking.price_taxes_cents ?? 0,
+                        booking.currency,
+                      )}
+                    </span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between font-semibold text-base">
+                    <span>Total</span>
+                    <span>
+                      {formatPrice(booking.price_total_cents, booking.currency)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {cancellationPolicyInfo && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="size-5" />
+                    Cancellation Policy
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">
+                      {cancellationPolicyInfo.badge}
+                    </Badge>
+                    {booking.status === "cancelled" && cancellationDateLabel ? (
+                      <Badge variant="destructive">
+                        Cancelled on {cancellationDateLabel}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <p>{cancellationPolicyInfo.policySummary}</p>
+                    <p className="text-muted-foreground">
+                      {cancellationPolicyInfo.refundSummary}
+                    </p>
+                  </div>
+                  {booking.cancellation_reason ? (
+                    <div className="rounded-xl border bg-muted/20 p-4 text-sm">
+                      <p className="font-medium text-foreground">
+                        Cancellation reason
+                      </p>
+                      <p className="mt-1 text-muted-foreground">
+                        {booking.cancellation_reason}
+                      </p>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
+
+            {(booking.guest_notes || booking.host_notes) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Messages</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {booking.guest_notes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Your message
+                      </p>
+                      <p className="text-sm">{booking.guest_notes}</p>
+                    </div>
+                  )}
+                  {booking.host_notes && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Host message
+                      </p>
+                      <p className="text-sm">{booking.host_notes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {booking.status === "completed" ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Review</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {bookingReviewQuery.isLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="size-4 animate-spin" />
+                      Loading review...
+                    </div>
+                  ) : bookingReviewQuery.data ? (
+                    <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium">Review submitted</p>
+                        <ReviewStars
+                          rating={bookingReviewQuery.data.ratingOverall}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {bookingReviewQuery.data.text}
+                      </p>
+                    </div>
+                  ) : booking.experience?.id ? (
+                    <ReviewForm
+                      bookingId={booking.id}
+                      experienceId={booking.experience.id}
+                      onSuccess={() => {
+                        refetch();
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Unable to find the experience for this booking.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+
+          <div className="space-y-6">
+            <Card className="sticky top-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {canPay && (
+                  <Button
+                    onClick={handleStartPayment}
+                    disabled={isStartingPayment}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    {isStartingPayment ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="size-4" />
+                    )}
+                    Pay Now
+                  </Button>
+                )}
+
+                {lastPaymentId && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      void handleCheckPaymentStatus();
+                    }}
+                    disabled={isCheckingPayment}
+                    className="w-full gap-2"
+                  >
+                    {isCheckingPayment ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4" />
+                    )}
+                    Check Payment Status
+                  </Button>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" asChild className="w-full gap-2">
+                    <Link href="/bookings">
+                      <Home className="size-4" />
+                      <span className="hidden sm:inline">Bookings</span>
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild className="w-full gap-2">
+                    <Link href="/explore">
+                      <MapPin className="size-4" />
+                      <span className="hidden sm:inline">Explore</span>
+                    </Link>
+                  </Button>
+                </div>
+
+                {canCancel && (
+                  <>
+                    <Separator className="my-3" />
+                    <Button
+                      variant="destructive"
+                      onClick={() => setIsCancelDialogOpen(true)}
+                      disabled={cancelBookingMutation.isPending}
+                      className="w-full gap-2"
+                    >
+                      {cancelBookingMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <UserMinus className="size-4" />
+                      )}
+                      Cancel Booking
+                    </Button>
+                  </>
+                )}
+
+                {(canPay || booking.status === "pending_payment") && (
+                  <>
+                    <Separator className="my-3" />
+                    <PayzoneBadge
+                      className="border-dashed"
+                    />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      <FooterSection />
 
       {cancellationPolicyInfo ? (
         <BookingCancellationDialog

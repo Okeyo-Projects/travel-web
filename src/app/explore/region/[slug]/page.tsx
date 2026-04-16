@@ -53,6 +53,8 @@ const EXPERIENCE_SELECT = `
   rooms:lodging_room_types(id, name, price_cents, currency, max_persons, total_rooms, photos)
 `;
 
+export const revalidate = 3600;
+
 export default async function ExploreCategoryPage({
   params,
 }: {

@@ -7,14 +7,21 @@ import { useImageViewer } from "@/hooks/use-image-viewer";
 
 interface ExperienceGalleryProps {
   images: string[];
-  videoUrl?: string | null;
+  video?: {
+    url: string | null;
+    hlsUrl: string | null;
+  } | null;
+  imageAlts?: string[];
 }
 
 export function ExperienceGallery({
   images,
-  videoUrl,
+  video,
+  imageAlts,
 }: ExperienceGalleryProps) {
   const { openImageViewer, Viewer } = useImageViewer();
+
+  const videoUrl = video?.hlsUrl ?? video?.url ?? null;
 
   if (!images?.length && !videoUrl) {
     return null;
@@ -30,7 +37,7 @@ export function ExperienceGallery({
             type="button"
             variant="outline"
             className="gap-2 rounded-full"
-            onClick={() => openImageViewer(images, 0)}
+            onClick={() => openImageViewer(images, 0, imageAlts)}
           >
             <Camera className="h-4 w-4" />
             Voir les {images.length} photos

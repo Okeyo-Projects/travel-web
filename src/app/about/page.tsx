@@ -19,6 +19,8 @@ import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
+export const revalidate = 3600;
+
 async function getRequestTranslator() {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
@@ -157,7 +159,9 @@ export default async function AboutPage() {
                   variant="outline"
                   className="h-12 rounded-full border-white/20 bg-white/5 px-6 text-white hover:bg-white/10 hover:text-white"
                 >
-                  <Link href={chatHref}>{t("about.page.hero.secondaryCta")}</Link>
+                  <Link href={chatHref}>
+                    {t("about.page.hero.secondaryCta")}
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -304,8 +308,14 @@ export default async function AboutPage() {
               <Button asChild className="h-12 rounded-full px-6">
                 <Link href={exploreHref}>{t("about.page.cta.primaryCta")}</Link>
               </Button>
-              <Button asChild variant="outline" className="h-12 rounded-full px-6">
-                <Link href={supportHref}>{t("about.page.cta.secondaryCta")}</Link>
+              <Button
+                asChild
+                variant="outline"
+                className="h-12 rounded-full px-6"
+              >
+                <Link href={supportHref}>
+                  {t("about.page.cta.secondaryCta")}
+                </Link>
               </Button>
             </div>
           </div>

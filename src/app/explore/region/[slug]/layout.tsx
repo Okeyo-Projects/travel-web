@@ -17,7 +17,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 1800;
 
 async function fetchCategoryTitle(
   routeSlug: string,

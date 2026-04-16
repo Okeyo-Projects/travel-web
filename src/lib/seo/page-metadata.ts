@@ -46,8 +46,49 @@ function normalizeText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+function toTitleCase(text: string): string {
+  if (!text) return text;
+
+  const upper = text.toUpperCase();
+  const lower = text.toLowerCase();
+
+  if (upper === text) {
+    return text
+      .toLowerCase()
+      .replace(
+        /(^|\s)([a-zàâäéèêëïîôùûüçÿ])/g,
+        (_, separator, char) => separator + char.toUpperCase(),
+      )
+      .replace(/\b(d'|l'|de|la|le|les|des|du|aux|à|au)\b/gi, (match) =>
+        match.toLowerCase(),
+      )
+      .replace(
+        /\b(Marrakech|Meknès|Fès|Oujda|Rabat|Casablanca|Agadir|Tanger|Tétouan|Essaouira|Chefchaouen)\b/g,
+        (match) => {
+          const known: Record<string, string> = {
+            marrakech: "Marrakech",
+            meknès: "Meknès",
+            fès: "Fès",
+            oujda: "Oujda",
+            rabat: "Rabat",
+            casablanca: "Casablanca",
+            agadir: "Agadir",
+            tanger: "Tanger",
+            tétouan: "Tétouan",
+            essaouira: "Essaouira",
+            chefchaouen: "Chefchaouen",
+          };
+          return known[match.toLowerCase()] || match;
+        },
+      );
+  }
+
+  return text;
+}
+
 export function buildPageTitle(title: string): string {
-  return `${normalizeText(title)} — ${SITE_NAME}`;
+  const titleCased = toTitleCase(title);
+  return `${normalizeText(titleCased)} — ${SITE_NAME}`;
 }
 
 export function resolveLocalizedText(

@@ -138,6 +138,29 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
             {t("header.settings")}
           </Link>
         </DropdownMenuItem>
+        {mode === "host" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={localizeHref("/host", pathname)}>
+                <Compass className="mr-2 h-4 w-4" />
+                {t("header.dashboard")}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={localizeHref("/host/experiences", pathname)}>
+                <BriefcaseBusiness className="mr-2 h-4 w-4" />
+                {t("header.experiences")}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={localizeHref("/host/availability", pathname)}>
+                <CalendarDays className="mr-2 h-4 w-4" />
+                {t("header.availability")}
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
         {canHost && (
           <DropdownMenuItem
             onSelect={() => {

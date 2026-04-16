@@ -1,8 +1,10 @@
+"use client";
+
 import { Star } from "lucide-react";
-import { headers } from "next/headers";
 import Image from "next/image";
-import { createTranslator, resolveLocale } from "@/lib/i18n";
-import { createClient } from "@/lib/supabase/server";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useT } from "@/providers/translations-provider";
 import type { Tables } from "@/types/supabase";
 import { IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
@@ -27,7 +29,7 @@ const clampRate = (value: number) =>
   Math.max(1, Math.min(5, Math.round(value)));
 
 const resolveAvatarUrl = (
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createClient>,
   avatarKey: string,
 ) => {
   if (!avatarKey) {
@@ -46,7 +48,7 @@ const resolveAvatarUrl = (
 };
 
 const mapDbTestimonial = (
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createClient>,
   row: DbTestimonial,
 ): TestimonialItem => ({
   id: row.id,
@@ -57,60 +59,112 @@ const mapDbTestimonial = (
   rate: clampRate(row.rate),
 });
 
-export async function HomeTestimonialSection() {
-  const requestHeaders = await headers();
-  const locale = resolveLocale(requestHeaders.get("x-locale"));
-  const t = createTranslator(locale);
-  const fallbackTestimonials: TestimonialItem[] = [
-    {
-      id: "fallback-1",
-      quote: t("home.testimonials.items.one.quote"),
-      name: t("home.testimonials.items.one.name"),
-      role: t("home.testimonials.items.one.role"),
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80",
-      rate: 5,
-    },
-    {
-      id: "fallback-2",
-      quote: t("home.testimonials.items.two.quote"),
-      name: t("home.testimonials.items.two.name"),
-      role: t("home.testimonials.items.two.role"),
-      avatar:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&q=80",
-      rate: 5,
-    },
-    {
-      id: "fallback-3",
-      quote: t("home.testimonials.items.three.quote"),
-      name: t("home.testimonials.items.three.name"),
-      role: t("home.testimonials.items.three.role"),
-      avatar:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80",
-      rate: 5,
-    },
+export function HomeTestimonialSection() {
+  const t = useT();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const fallbackTestimonials = useMemo<TestimonialItem[]>(
+    () => [
+      {
+        id: "fallback-1",
+        quote: t("home.testimonials.items.one.quote"),
+        name: t("home.testimonials.items.one.name"),
+        role: t("home.testimonials.items.one.role"),
+        avatar:
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=180&q=80",
+        rate: 5,
+      },
+      {
+        id: "fallback-2",
+        quote: t("home.testimonials.items.two.quote"),
+        name: t("home.testimonials.items.two.name"),
+        role: t("home.testimonials.items.two.role"),
+        avatar:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=180&q=80",
+        rate: 5,
+      },
+      {
+        id: "fallback-3",
+        quote: t("home.testimonials.items.three.quote"),
+        name: t("home.testimonials.items.three.name"),
+        role: t("home.testimonials.items.three.role"),
+        avatar:
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=180&q=80",
+        rate: 5,
+      },
+    ],
+    [t],
+  );
+  const [testimonials, setTestimonials] =
+    useState<TestimonialItem[]>(fallbackTestimonials);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTestimonials = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("website_testimonials")
+        .select("id, avatar_key, name, role, message, rate")
+        .is("deleted_at", null)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Failed to load website testimonials:", error);
+        setTestimonials(fallbackTestimonials);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setTestimonials(fallbackTestimonials);
+        return;
+      }
+
+      setTestimonials(data.map((row) => mapDbTestimonial(supabase, row)));
+    };
+
+    fetchTestimonials();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fallbackTestimonials]);
+
+  const duplicatedTestimonials = [
+    ...testimonials,
+    ...testimonials,
+    ...testimonials,
   ];
 
-  let testimonials = fallbackTestimonials;
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
 
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("website_testimonials")
-      .select("id, avatar_key, name, role, message, rate")
-      .is("deleted_at", null)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false });
+    let animationFrameId: number;
+    let scrollPos = 0;
+    const scrollSpeed = 0.5;
 
-    if (error) {
-      console.error("Failed to load website testimonials:", error);
-    } else if (data && data.length > 0) {
-      testimonials = data.map((row) => mapDbTestimonial(supabase, row));
-    }
-  } catch (error) {
-    console.error("Failed to initialize testimonial fetch:", error);
-  }
+    const scroll = () => {
+      scrollPos += scrollSpeed;
+      const maxScroll = scrollContainer.scrollWidth / 3;
+
+      if (scrollPos >= maxScroll) {
+        scrollPos = 0;
+      }
+
+      scrollContainer.style.transform = `translateX(-${scrollPos}px)`;
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [testimonials]);
 
   return (
     <section className="relative overflow-hidden bg-white px-4 py-16 sm:px-6 sm:py-24">
@@ -130,40 +184,51 @@ export async function HomeTestimonialSection() {
           {t("home.testimonials.title")}
         </h2>
 
-        <div className="mt-14 grid gap-10 md:grid-cols-2 xl:grid-cols-3">
-          {testimonials.map((item) => (
-            <article key={item.id} className="space-y-6">
-              <p className="text-lg leading-relaxed text-[#03233a]">
-                {item.quote}
-              </p>
+        <div className="mt-14 overflow-hidden">
+          <div
+            ref={scrollRef}
+            className="flex gap-10"
+            style={{
+              width: `fit-content`,
+            }}
+          >
+            {duplicatedTestimonials.map((item, index) => (
+              <article
+                key={`${item.id}-${index}`}
+                className="w-[calc(100vw-4rem)] flex-shrink-0 space-y-6 sm:w-[calc(50vw-4rem)] md:w-[calc(33.333vw-4rem)] xl:w-[400px]"
+              >
+                <p className="text-lg leading-relaxed text-[#03233a]">
+                  {item.quote}
+                </p>
 
-              <div className="flex items-center gap-3">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star
-                    key={`${item.id}-star-${index + 1}`}
-                    className="h-5 w-5 text-primary"
-                    fill={index < item.rate ? "currentColor" : "none"}
-                  />
-                ))}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Image
-                  src={item.avatar}
-                  alt={`Portrait de ${item.name}`}
-                  width={48}
-                  height={48}
-                  placeholder="blur"
-                  blurDataURL={IMAGE_BLUR_DATA_URL}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-2xl font-bold text-black">{item.name}</p>
-                  <p className="text-sm text-[#03233a]/80">{item.role}</p>
+                <div className="flex items-center gap-3">
+                  {Array.from({ length: 5 }).map((_, starIndex) => (
+                    <Star
+                      key={`${item.id}-${index}-star-${starIndex + 1}`}
+                      className="h-5 w-5 text-primary"
+                      fill={starIndex < item.rate ? "currentColor" : "none"}
+                    />
+                  ))}
                 </div>
-              </div>
-            </article>
-          ))}
+
+                <div className="flex items-center gap-4">
+                  <Image
+                    src={item.avatar}
+                    alt={`Portrait de ${item.name}`}
+                    width={48}
+                    height={48}
+                    placeholder="blur"
+                    blurDataURL={IMAGE_BLUR_DATA_URL}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="text-2xl font-bold text-black">{item.name}</p>
+                    <p className="text-sm text-[#03233a]/80">{item.role}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -50,11 +50,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const supabase = await createClient();
 
-    // Fetch active categories that have published experiences
     const [categoriesResult, experiencesResult] = await Promise.all([
       supabase
         .from("categories" as never)
-        .select("*")
+        .select(`
+          id,
+          title,
+          slug,
+          updated_at,
+          experience_categories(
+            experience:experiences!inner(
+              id,
+              status
+            )
+          )
+        `)
         .eq("is_active" as never, true),
       supabase
         .from("experiences" as never)
@@ -63,9 +73,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]);
 
     const categories = (categoriesResult.data ?? []) as Array<{
+      id: string;
       title: { fr?: string; en?: string; ar?: string } | string;
       slug?: string | null;
       updated_at: string;
+      experience_categories?: Array<{
+        experience: { id: string; status: string };
+      }>;
     }>;
 
     const experiences = (experiencesResult.data ?? []) as Array<{
@@ -74,17 +88,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       updated_at: string;
     }>;
 
-    categoryRoutes = categories.flatMap((cat) => {
-      const slug = buildCategorySlug({ title: cat.title, slug: cat.slug });
-      const path = `/explore/region/${slug}`;
+    categoryRoutes = categories
+      .filter((cat) => {
+        const hasPublishedExperience =
+          cat.experience_categories?.some(
+            (ec) => ec.experience.status === "published",
+          ) ?? false;
+        return hasPublishedExperience;
+      })
+      .flatMap((cat) => {
+        const slug = buildCategorySlug({ title: cat.title, slug: cat.slug });
+        const paths = [`/explore/region/${slug}`, `/explore/category/${slug}`];
 
-      return LOCALES.map((locale) => ({
-        url: `${SITE_URL}${localizeHref(path, locale)}`,
-        lastModified: new Date(cat.updated_at),
-        changeFrequency: "weekly" as const,
-        priority: 0.7,
-      }));
-    });
+        return paths.flatMap((path) =>
+          LOCALES.map((locale) => ({
+            url: `${SITE_URL}${localizeHref(path, locale)}`,
+            lastModified: new Date(cat.updated_at),
+            changeFrequency: "weekly" as const,
+            priority: 0.7,
+          })),
+        );
+      });
 
     experienceRoutes = experiences.flatMap((exp) => {
       const slug = buildExperienceSlug({

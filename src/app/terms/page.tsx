@@ -8,6 +8,8 @@ import { LegalPage } from "@/components/legal/legal-page";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 
+export const revalidate = 3600;
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));

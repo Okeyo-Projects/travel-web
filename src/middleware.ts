@@ -37,11 +37,31 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
 
+  const getCacheHeaders = () => {
+    const isApiRoute = pathname.startsWith("/api");
+
+    if (isApiRoute) {
+      return {
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+      };
+    }
+
+    return {
+      "Cache-Control":
+        "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+      "CDN-Cache-Control":
+        "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
+    };
+  };
+
   if (shouldBypass(pathname)) {
     const response = NextResponse.next({
       request: { headers: requestHeaders },
     });
     response.headers.set("Content-Security-Policy", csp);
+    Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
     return response;
   }
 
@@ -58,6 +78,9 @@ export function middleware(request: NextRequest) {
       request: { headers: requestHeaders },
     });
     response.headers.set("Content-Security-Policy", csp);
+    Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
     return response;
   }
 
@@ -66,6 +89,9 @@ export function middleware(request: NextRequest) {
       request: { headers: requestHeaders },
     });
     response.headers.set("Content-Security-Policy", csp);
+    Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
     return response;
   }
 
@@ -75,6 +101,9 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.redirect(redirectUrl);
   response.headers.set("Content-Security-Policy", csp);
+  Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
   return response;
 }
 

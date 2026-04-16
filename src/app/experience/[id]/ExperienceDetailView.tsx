@@ -10,8 +10,13 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { ExperienceAnalytics } from "@/components/experience/ExperienceAnalytics";
+import { ExperienceBookingSection } from "@/components/experience/ExperienceBookingSection";
+import { ExperienceDescription } from "@/components/experience/ExperienceDescription";
+import { ExperienceDetailHeader } from "@/components/experience/ExperienceDetailHeader";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
 import { ReviewList } from "@/components/experience/ReviewList";
+import { RoomBookingButton } from "@/components/experience/RoomBookingButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,11 +29,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ExperienceDetail } from "@/types/experience-detail";
-import { ExperienceDetailHeader } from "@/components/experience/ExperienceDetailHeader";
-import { ExperienceBookingSection } from "@/components/experience/ExperienceBookingSection";
-import { ExperienceDescription } from "@/components/experience/ExperienceDescription";
-import { ExperienceAnalytics } from "@/components/experience/ExperienceAnalytics";
-import { RoomBookingButton } from "@/components/experience/RoomBookingButton";
 
 function formatMoney(cents: number | null | undefined, currency = "MAD") {
   if (typeof cents !== "number") {
@@ -102,6 +102,12 @@ export function ExperienceDetailView({
     .filter(Boolean)
     .join(", ");
 
+  const imageAlts = heroImages.map((_, index) => {
+    const total = heroImages.length;
+    const photoNumber = index + 1;
+    return `Photo ${photoNumber} of ${total} - ${experience.title} in ${locationLabel}`;
+  });
+
   const latitude = experience.location?.latitude ?? null;
   const longitude = experience.location?.longitude ?? null;
   const mapLinks = buildMapLinks(
@@ -154,9 +160,12 @@ export function ExperienceDetailView({
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <ExperienceAnalytics experienceId={experience.id} type={experience.type} />
-      
-      <ExperienceDetailHeader 
+      <ExperienceAnalytics
+        experienceId={experience.id}
+        type={experience.type}
+      />
+
+      <ExperienceDetailHeader
         title={experience.title}
         url={url}
         description={experience.shortDescription}
@@ -173,7 +182,8 @@ export function ExperienceDetailView({
             <div className="sticky top-24 space-y-4">
               <ExperienceGallery
                 images={heroImages}
-                videoUrl={experience.video?.url}
+                video={experience.video}
+                imageAlts={imageAlts}
               />
             </div>
           </div>
@@ -240,7 +250,7 @@ export function ExperienceDetailView({
             ) : null}
 
             {/* Booking CTA */}
-            <ExperienceBookingSection 
+            <ExperienceBookingSection
               experience={experience}
               formattedPrice={formattedPrice}
               nightsLabel={nightsLabel}
@@ -576,7 +586,10 @@ export function ExperienceDetailView({
                               {formatMoney(room.price_cents, room.currency)} /
                               nuit
                             </p>
-                            <RoomBookingButton experience={experience} roomId={room.id} />
+                            <RoomBookingButton
+                              experience={experience}
+                              roomId={room.id}
+                            />
                           </div>
                         </div>
                       </div>
@@ -669,10 +682,7 @@ export function ExperienceDetailView({
               </div>
             </div>
 
-            <ExperienceGallery
-              images={heroImages}
-              videoUrl={experience.video?.url}
-            />
+            <ExperienceGallery images={heroImages} video={experience.video} />
           </section>
 
           {host ? (
@@ -701,7 +711,7 @@ export function ExperienceDetailView({
           ) : null}
 
           {/* Booking CTA for Mobile */}
-          <ExperienceBookingSection 
+          <ExperienceBookingSection
             experience={experience}
             formattedPrice={formattedPrice}
             nightsLabel={nightsLabel}
@@ -899,8 +909,7 @@ export function ExperienceDetailView({
                 ))
               ) : (
                 <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Détails d&apos;itinéraire indisponibles pour cette
-                  expérience.
+                  Détails d&apos;itinéraire indisponibles pour cette expérience.
                 </div>
               )}
             </TabsContent>
@@ -948,7 +957,7 @@ export function ExperienceDetailView({
                     <CardHeader>
                       <CardTitle className="text-base">
                         Horaires et annulation
-                        </CardTitle>
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm text-muted-foreground">
                       <p>
@@ -986,9 +995,7 @@ export function ExperienceDetailView({
                     <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
                       <div className="bg-muted/30 p-2">
                         {room.photoUrls.length ? (
-                          <Carousel
-                            opts={{ loop: room.photoUrls.length > 1 }}
-                          >
+                          <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
                             <CarouselContent className="ml-0">
                               {room.photoUrls.map((photoUrl, index) => (
                                 <CarouselItem
@@ -1036,7 +1043,10 @@ export function ExperienceDetailView({
                             {formatMoney(room.price_cents, room.currency)} /
                             nuit
                           </p>
-                          <RoomBookingButton experience={experience} roomId={room.id} />
+                          <RoomBookingButton
+                            experience={experience}
+                            roomId={room.id}
+                          />
                         </div>
                       </div>
                     </div>

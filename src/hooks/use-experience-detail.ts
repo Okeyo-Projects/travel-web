@@ -61,6 +61,7 @@ export const SELECT_EXPERIENCE_DETAIL = `
     id,
     path,
     hls_playlist_url,
+    bucket,
     metadata,
     kind,
     duration_seconds
@@ -74,6 +75,7 @@ export const SELECT_EXPERIENCE_DETAIL = `
       id,
       path,
       hls_playlist_url,
+      bucket,
       metadata,
       kind,
       duration_seconds
@@ -200,11 +202,12 @@ function parseMedia(
   return record
     .map((item) => {
       const asset = item.asset;
-      const url = asset?.path ? resolveStorageUrl(asset.path) : null;
+      const bucket = asset?.bucket || "media";
+      const url = asset?.path ? resolveStorageUrl(asset.path, bucket) : null;
       const rawThumbnail = extractThumbnailFromMetadata(asset?.metadata);
       const thumbnailUrl = rawThumbnail ? resolveStorageUrl(rawThumbnail) : url;
       const hlsUrl = asset?.hls_playlist_url
-        ? resolveStorageUrl(asset.hls_playlist_url)
+        ? resolveStorageUrl(asset.hls_playlist_url, bucket)
         : null;
       const kind = asset?.kind ?? "photo";
       const durationSeconds = asset?.duration_seconds ?? null;
@@ -420,20 +423,21 @@ function parseTrip(
 
 export function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
   const gallery = parseMedia(record.media);
+  const videoBucket = record.video?.bucket || "media";
   const videoMedia = record.video
     ? {
         id: record.video.id,
         role: null,
         kind: record.video.kind ?? "video",
         caption: null,
-        url: resolveStorageUrl(record.video.path),
+        url: resolveStorageUrl(record.video.path, videoBucket),
         thumbnailUrl: (() => {
           const thumb = extractThumbnailFromMetadata(record.video?.metadata);
           const resolved = thumb ? resolveStorageUrl(thumb) : null;
           return resolved ?? resolveStorageUrl(record.thumbnail_url);
         })(),
         hlsUrl: record.video.hls_playlist_url
-          ? resolveStorageUrl(record.video.hls_playlist_url)
+          ? resolveStorageUrl(record.video.hls_playlist_url, videoBucket)
           : null,
         durationSeconds: record.video.duration_seconds ?? null,
       }

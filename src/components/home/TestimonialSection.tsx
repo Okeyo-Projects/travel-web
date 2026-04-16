@@ -2,7 +2,7 @@
 
 import { Star } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/providers/translations-provider";
 import type { Tables } from "@/types/supabase";
@@ -61,6 +61,7 @@ const mapDbTestimonial = (
 
 export function TestimonialSection() {
   const t = useT();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const fallbackTestimonials = useMemo<TestimonialItem[]>(
     () => [
       {
@@ -132,6 +133,39 @@ export function TestimonialSection() {
     };
   }, [fallbackTestimonials]);
 
+  const duplicatedTestimonials = [
+    ...testimonials,
+    ...testimonials,
+    ...testimonials,
+  ];
+
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+
+    let animationFrameId: number;
+    let scrollPos = 0;
+    const scrollSpeed = 0.5;
+
+    const scroll = () => {
+      scrollPos += scrollSpeed;
+      const maxScroll = scrollContainer.scrollWidth / 3;
+
+      if (scrollPos >= maxScroll) {
+        scrollPos = 0;
+      }
+
+      scrollContainer.style.transform = `translateX(-${scrollPos}px)`;
+      animationFrameId = requestAnimationFrame(scroll);
+    };
+
+    animationFrameId = requestAnimationFrame(scroll);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [testimonials]);
+
   return (
     <section className="relative overflow-hidden bg-white px-4 py-16 sm:px-6 sm:py-24">
       <div
@@ -150,40 +184,51 @@ export function TestimonialSection() {
           {t("home.testimonials.title")}
         </h2>
 
-        <div className="mt-14 grid gap-10 md:grid-cols-2 xl:grid-cols-3">
-          {testimonials.map((item) => (
-            <article key={item.id} className="space-y-6">
-              <p className="text-lg leading-relaxed text-[#03233a]">
-                {item.quote}
-              </p>
+        <div className="mt-14 overflow-hidden">
+          <div
+            ref={scrollRef}
+            className="flex gap-10"
+            style={{
+              width: `fit-content`,
+            }}
+          >
+            {duplicatedTestimonials.map((item, index) => (
+              <article
+                key={`${item.id}-${index}`}
+                className="w-[calc(100vw-4rem)] flex-shrink-0 space-y-6 sm:w-[calc(50vw-4rem)] md:w-[calc(33.333vw-4rem)] xl:w-[400px]"
+              >
+                <p className="text-lg leading-relaxed text-[#03233a]">
+                  {item.quote}
+                </p>
 
-              <div className="flex items-center gap-3">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star
-                    key={`${item.id}-star-${index + 1}`}
-                    className="h-5 w-5 text-primary"
-                    fill={index < item.rate ? "currentColor" : "none"}
-                  />
-                ))}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Image
-                  src={item.avatar}
-                  alt={`Portrait de ${item.name}`}
-                  width={48}
-                  height={48}
-                  placeholder="blur"
-                  blurDataURL={IMAGE_BLUR_DATA_URL}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-2xl font-bold text-black">{item.name}</p>
-                  <p className="text-sm text-[#03233a]/80">{item.role}</p>
+                <div className="flex items-center gap-3">
+                  {Array.from({ length: 5 }).map((_, starIndex) => (
+                    <Star
+                      key={`${item.id}-${index}-star-${starIndex + 1}`}
+                      className="h-5 w-5 text-primary"
+                      fill={starIndex < item.rate ? "currentColor" : "none"}
+                    />
+                  ))}
                 </div>
-              </div>
-            </article>
-          ))}
+
+                <div className="flex items-center gap-4">
+                  <Image
+                    src={item.avatar}
+                    alt={`Portrait de ${item.name}`}
+                    width={48}
+                    height={48}
+                    placeholder="blur"
+                    blurDataURL={IMAGE_BLUR_DATA_URL}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="text-2xl font-bold text-black">{item.name}</p>
+                    <p className="text-sm text-[#03233a]/80">{item.role}</p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

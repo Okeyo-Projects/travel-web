@@ -9,6 +9,7 @@ import {
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { FooterSection } from "@/components/home/FooterSection";
+import { JsonLd } from "@/components/seo/json-ld";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { ReportIssueForm } from "@/components/support/ReportIssueForm";
 import { SupportFaq } from "@/components/support/SupportFaq";
@@ -21,7 +22,7 @@ import {
   SUPPORT_WHATSAPP_URL,
 } from "@/types/support";
 
-import { JsonLd } from "@/components/seo/json-ld";
+export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();

@@ -1,9 +1,11 @@
-import { fetchExperienceData } from "@/lib/routing/experience-resolver";
-import { ExperienceDetailView } from "./ExperienceDetailView";
-import { notFound } from "next/navigation";
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { resolveLocale } from "@/lib/i18n";
+import { fetchExperienceData } from "@/lib/routing/experience-resolver";
 import { localizeHref } from "@/lib/routing/locale-path";
+import { ExperienceDetailView } from "./ExperienceDetailView";
+
+export const revalidate = 3600;
 
 export default async function ExperiencePage({
   params,
@@ -22,9 +24,6 @@ export default async function ExperiencePage({
   const url = localizeHref(`/experience/${id}`, locale);
 
   return (
-    <ExperienceDetailView
-      experience={initialData.transformed}
-      url={url}
-    />
+    <ExperienceDetailView experience={initialData.transformed} url={url} />
   );
 }

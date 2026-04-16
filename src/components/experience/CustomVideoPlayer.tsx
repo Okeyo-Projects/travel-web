@@ -1,14 +1,26 @@
 "use client";
 
 import Hls from "hls.js";
-import { Maximize, Minimize, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import {
+  Maximize,
+  Minimize,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 
 function isHlsSrc(src: string) {
-  return src.includes(".m3u8");
+  return (
+    src.includes(".m3u8") ||
+    src.includes("cloudflarestream.com") ||
+    src.includes("/playlist.m3u8") ||
+    src.includes("stream.mux.com")
+  );
 }
 
 function attachHls(video: HTMLVideoElement, src: string): Hls | null {
@@ -91,10 +103,13 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     const next = !isPlaying;
-    captureEvent(next ? ANALYTICS_EVENT.VIDEO_PLAYED : ANALYTICS_EVENT.VIDEO_PAUSED, {
-      src,
-      progress_pct: Math.round(progress),
-    });
+    captureEvent(
+      next ? ANALYTICS_EVENT.VIDEO_PLAYED : ANALYTICS_EVENT.VIDEO_PAUSED,
+      {
+        src,
+        progress_pct: Math.round(progress),
+      },
+    );
     setIsPlaying(next);
   };
 
@@ -103,7 +118,10 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
     if (videoRef.current) {
       const next = !isMuted;
       videoRef.current.muted = next;
-      captureEvent(next ? ANALYTICS_EVENT.VIDEO_MUTED : ANALYTICS_EVENT.VIDEO_UNMUTED, { src });
+      captureEvent(
+        next ? ANALYTICS_EVENT.VIDEO_MUTED : ANALYTICS_EVENT.VIDEO_UNMUTED,
+        { src },
+      );
       setIsMuted(next);
     }
   };
@@ -133,11 +151,13 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={cn(
         "relative flex justify-center overflow-hidden shadow-sm group",
-        isFullscreen ? "h-screen w-screen" : "rounded-2xl h-[60vh] md:h-[70vh] w-full"
+        isFullscreen
+          ? "h-screen w-screen"
+          : "rounded-2xl h-[60vh] md:h-[70vh] w-full",
       )}
     >
       {/* Blurred background video */}
@@ -162,9 +182,7 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
 
       {/* Play/Pause Overlay Icon (shows when paused) */}
       {!isPlaying && (
-        <div 
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-        >
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="bg-black/40 p-5 rounded-full backdrop-blur-md">
             <Play className="h-10 w-10 text-white ml-1" />
           </div>
@@ -173,13 +191,12 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
 
       {/* Controls Bar */}
       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-        
         {/* Progress Bar */}
-        <div 
+        <div
           className="w-full h-1.5 bg-white/30 rounded-full mb-4 cursor-pointer relative"
           onClick={handleSeek}
         >
-          <div 
+          <div
             className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-150 ease-linear"
             style={{ width: `${progress}%` }}
           />
@@ -187,29 +204,41 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
 
         {/* Buttons */}
         <div className="flex items-center justify-between">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={togglePlay}
             className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
           >
-            {isPlaying ? <Pause className="h-5 w-5 fill-white" /> : <Play className="h-5 w-5 fill-white ml-0.5" />}
+            {isPlaying ? (
+              <Pause className="h-5 w-5 fill-white" />
+            ) : (
+              <Play className="h-5 w-5 fill-white ml-0.5" />
+            )}
           </button>
 
           <div className="flex items-center gap-3">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={toggleMute}
               className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
             >
-              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+              {isMuted ? (
+                <VolumeX className="h-5 w-5" />
+              ) : (
+                <Volume2 className="h-5 w-5" />
+              )}
             </button>
-            
-            <button 
-              type="button" 
+
+            <button
+              type="button"
               onClick={toggleFullscreen}
               className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
             >
-              {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+              {isFullscreen ? (
+                <Minimize className="h-5 w-5" />
+              ) : (
+                <Maximize className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>

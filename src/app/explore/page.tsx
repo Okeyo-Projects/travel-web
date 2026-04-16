@@ -11,6 +11,8 @@ import { buildCategorySlug } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
 import type { ExperienceType } from "@/types/experience";
 
+export const revalidate = 1800;
+
 function normalizeSearchValue(value: string | string[] | undefined): string {
   if (Array.isArray(value)) {
     return value[0] ?? "";
