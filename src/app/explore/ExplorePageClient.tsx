@@ -17,7 +17,6 @@ import type { DateRange } from "react-day-picker";
 import { CompactExperienceCard, ExperienceGroup } from "@/components/explore";
 import { ExperienceDetailModal } from "@/components/explore/ExperienceDetailModal";
 import { FooterSection } from "@/components/home/FooterSection";
-import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
@@ -43,12 +42,14 @@ interface ExplorePageClientProps {
   categoryGroups: ExploreCategoryGroup[];
   searchResults: ExperienceListItem[];
   hasMoreSearchResults: boolean;
+  testimonialSection?: React.ReactNode;
 }
 
 export function ExplorePageClient({
   categoryGroups,
   searchResults,
   hasMoreSearchResults,
+  testimonialSection,
 }: ExplorePageClientProps) {
   const { locale, t } = useSiteI18n();
   const pathname = usePathname();
@@ -469,7 +470,7 @@ export function ExplorePageClient({
         )}
       </div>
 
-      {!showSearchResults && <TestimonialSection />}
+      {!showSearchResults && testimonialSection}
       <FooterSection />
     </div>
   );

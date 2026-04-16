@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ExplorePageClient } from "@/app/explore/ExplorePageClient";
+import { TestimonialSection } from "@/components/home/TestimonialSection";
 import {
   fetchExploreCategoryGroups,
   fetchExploreSearchResults,
@@ -89,6 +90,8 @@ export default async function ExplorePage({
     }
   }
 
+  const testimonialSection = <TestimonialSection />;
+
   if (showSearchResults) {
     const { items, fetchedCount } = await fetchExploreSearchResults({
       search: q || undefined,
@@ -105,6 +108,7 @@ export default async function ExplorePage({
         categoryGroups={[]}
         searchResults={items}
         hasMoreSearchResults={fetchedCount === page * pageSize}
+        testimonialSection={testimonialSection}
       />
     );
   }
@@ -116,6 +120,7 @@ export default async function ExplorePage({
       categoryGroups={categoryGroups}
       searchResults={[]}
       hasMoreSearchResults={false}
+      testimonialSection={testimonialSection}
     />
   );
 }

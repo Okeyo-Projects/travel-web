@@ -56,7 +56,18 @@ export function HeroBackgroundVideo({
         return;
       }
 
-      const { default: Hls } = await import("hls.js");
+      let Hls: typeof import("hls.js").default;
+      try {
+        ({ default: Hls } = await import("hls.js"));
+      } catch {
+        if (!isDisposed && currentLoadVersion === loadVersion) {
+          video.src = nextSrc;
+          video.load();
+          ensurePlayback();
+        }
+        return;
+      }
+
       if (isDisposed || currentLoadVersion !== loadVersion) return;
 
       if (!Hls.isSupported()) {
@@ -72,6 +83,12 @@ export function HeroBackgroundVideo({
       hls.loadSource(nextSrc);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, ensurePlayback);
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        if (data.fatal) {
+          hls.destroy();
+          cleanupStream = () => {};
+        }
+      });
       cleanupStream = () => {
         hls.destroy();
       };
@@ -83,31 +100,21 @@ export function HeroBackgroundVideo({
       void setVideoSource();
     };
 
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", handleViewportChange);
-    } else {
-      mediaQuery.addListener(handleViewportChange);
-    }
-
+    mediaQuery.addEventListener("change", handleViewportChange);
     video.addEventListener("canplay", ensurePlayback);
 
     return () => {
       isDisposed = true;
       cleanupStream();
       video.removeEventListener("canplay", ensurePlayback);
-
-      if (typeof mediaQuery.removeEventListener === "function") {
-        mediaQuery.removeEventListener("change", handleViewportChange);
-      } else {
-        mediaQuery.removeListener(handleViewportChange);
-      }
+      mediaQuery.removeEventListener("change", handleViewportChange);
     };
   }, [desktopSrc, mobileSrc]);
 
   return (
     <video
       ref={videoRef}
-      className="absolute inset-0 h-full w-full object-cover"
+      className="absolute inset-0 h-full w-full object-cover pointer-events-none"
       autoPlay
       muted
       loop

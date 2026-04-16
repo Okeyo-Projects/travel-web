@@ -297,3 +297,8 @@
     transform: translateY(-35%);
   }
 }
+
+.testimonial-pattern {
+  background-image: url('/testimonial-pattern.svg');
+  background-size: cover;
+}

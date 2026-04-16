@@ -40,6 +40,11 @@ function attachVideoSource(video: HTMLVideoElement, src: string) {
   const hls = new Hls();
   hls.loadSource(src);
   hls.attachMedia(video);
+  hls.on(Hls.Events.ERROR, (_event, data) => {
+    if (data.fatal) {
+      hls.destroy();
+    }
+  });
   return hls;
 }
 
