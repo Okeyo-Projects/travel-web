@@ -27,7 +27,7 @@ export function HeroBackgroundVideo({
 
     const setVideoSource = () => {
       const nextSrc = mediaQuery.matches ? mobileSrc : desktopSrc;
-      if (video.src !== nextSrc) {
+      if (video.getAttribute("src") !== nextSrc) {
         video.src = nextSrc;
         video.load();
       }

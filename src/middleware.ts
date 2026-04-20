@@ -18,7 +18,7 @@ function shouldBypass(pathname: string): boolean {
 function buildCsp(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://connect.facebook.net`,
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://connect.facebook.net`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co https://*.cloudflarestream.com",

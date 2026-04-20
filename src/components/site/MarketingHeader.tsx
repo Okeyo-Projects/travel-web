@@ -180,7 +180,6 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
           ) : (
             <Button
               type="button"
-              disabled={loading}
               onClick={() => openAuthModal({ mode: "login" })}
               className="rounded-full border border-white/60 bg-transparent px-8 text-white hover:bg-white/10"
             >
