@@ -1,5 +1,5 @@
-import posthog from "posthog-js";
 import { isBrowserAnalyticsAllowed } from "@/lib/analytics/browser";
+import posthog from "posthog-js";
 
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const hasConfig =
@@ -16,8 +16,8 @@ if (posthogKey && shouldInitialize && !posthog.__loaded) {
     ui_host: "https://us.posthog.com",
     defaults: "2026-01-30",
     capture_exceptions: true,
-    capture_pageview: false,
-    disable_session_recording: true,
+    capture_pageview: true,
+    disable_session_recording: false,
     persistence: "localStorage+cookie",
     debug: isDebugEnabled,
   });
