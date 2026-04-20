@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { JsonLd } from "@/components/seo/json-ld";
+import { getLowestPricedRoom } from "@/lib/experience-pricing";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { fetchExperienceData } from "@/lib/routing/experience-resolver";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
@@ -20,7 +21,7 @@ export async function generateMetadata({
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
   const t = createTranslator(locale);
-  const data = await fetchExperienceData(id);
+  const data = await fetchExperienceData(id, locale);
   const href = `/experience/${id}`;
 
   if (!data?.transformed) {
@@ -85,13 +86,16 @@ export default async function ExperienceLayout({
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
   const t = createTranslator(locale);
-  const data = await fetchExperienceData(id);
+  const data = await fetchExperienceData(id, locale);
   const experience = data?.transformed;
 
   const description =
     experience?.shortDescription ??
     experience?.longDescription ??
     t("seo.experience.fallbackDescription");
+  const lowestPricedRoom = experience
+    ? getLowestPricedRoom(experience.lodging?.rooms)
+    : null;
 
   const experiencePath = `/experience/${id}`;
   const experienceUrl = `${SITE_URL}${localizeHref(experiencePath, locale)}`;
@@ -159,9 +163,9 @@ export default async function ExperienceLayout({
                         },
                       }
                     : {}),
-                  ...(experience.lodging?.rooms?.[0]?.price_cents
+                  ...(lowestPricedRoom
                     ? {
-                        priceRange: `${experience.lodging.rooms[0].price_cents / 100} ${experience.lodging.rooms[0].currency || "MAD"}`,
+                        priceRange: `${lowestPricedRoom.price_cents / 100} ${lowestPricedRoom.currency || "MAD"}`,
                       }
                     : {}),
                 },

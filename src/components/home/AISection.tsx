@@ -1,52 +1,19 @@
 "use client";
 
-import Hls from "hls.js";
-import { Maximize, Minimize, Play, Send, Volume2, VolumeX } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useT } from "@/providers/translations-provider";
+import { Maximize, Minimize, Play, Send, Volume2, VolumeX } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const TYPING_SPEED = 30;
 const DELETING_SPEED = 15;
 const PAUSE_AFTER_TYPE = 2500;
 const PAUSE_AFTER_DELETE = 400;
-const HOME_AI_VIDEO_URL =
-  "https://customer-zklo0xkkeetv1rh0.cloudflarestream.com/3ef9d259694e7f28399d8fd4a4bccf09/manifest/video.m3u8";
-const HOME_AI_VIDEO_POSTER_URL =
-  "https://customer-zklo0xkkeetv1rh0.cloudflarestream.com/3ef9d259694e7f28399d8fd4a4bccf09/thumbnails/thumbnail.jpg?time=1s&height=900";
-
-function attachVideoSource(video: HTMLVideoElement, src: string) {
-  if (!src.includes(".m3u8")) {
-    video.src = src;
-    video.load();
-    return null;
-  }
-
-  if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    video.src = src;
-    video.load();
-    return null;
-  }
-
-  if (!Hls.isSupported()) {
-    video.src = src;
-    video.load();
-    return null;
-  }
-
-  const hls = new Hls();
-  hls.loadSource(src);
-  hls.attachMedia(video);
-  hls.on(Hls.Events.ERROR, (_event, data) => {
-    if (data.fatal) {
-      hls.destroy();
-    }
-  });
-  return hls;
-}
+const HOME_AI_VIDEO_URL = "/videos/ai_video.mp4";
+const HOME_AI_VIDEO_POSTER_URL = "/ai-video-poster.jpg";
 
 export function AISection() {
   const t = useT();
@@ -100,14 +67,14 @@ export function AISection() {
     video.addEventListener("canplay", flushPendingPlay);
     video.addEventListener("error", handleVideoError);
 
-    const hls = attachVideoSource(video, HOME_AI_VIDEO_URL);
+    video.src = HOME_AI_VIDEO_URL;
+    video.load();
 
     return () => {
       pendingPlayRef.current = false;
       video.removeEventListener("loadedmetadata", flushPendingPlay);
       video.removeEventListener("canplay", flushPendingPlay);
       video.removeEventListener("error", handleVideoError);
-      hls?.destroy();
     };
   }, []);
 
@@ -288,11 +255,11 @@ export function AISection() {
           <div className="relative mt-8 overflow-hidden rounded-[20px] border border-white/10 bg-gradient-to-r from-[#c20566] to-[#760543] shadow-[0_16px_40px_rgba(0,0,0,0.4)] sm:mt-12 sm:rounded-[24px]">
             <div
               ref={videoContainerRef}
-              className="relative flex h-auto items-center justify-center bg-black/35"
+              className="relative flex h-[260px] items-center justify-center bg-black/35 sm:h-[360px] lg:h-[500px]"
             >
               <video
                 ref={videoRef}
-                className="h-full w-full object-contain"
+                className="block h-full w-full object-contain"
                 muted={isMuted}
                 loop
                 playsInline

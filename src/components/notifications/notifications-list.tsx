@@ -1,4 +1,5 @@
 import { BellOff } from "lucide-react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import type { NotificationRow } from "@/types/notification";
@@ -18,6 +19,7 @@ export function NotificationsList({
   onMarkAllAsRead,
   onNotificationClick,
 }: NotificationsListProps) {
+  const { t } = useSiteI18n();
   const unreadCount = notifications.filter((item) => !item.read_at).length;
 
   if (isLoading) {
@@ -36,9 +38,11 @@ export function NotificationsList({
         <div className="rounded-full bg-muted p-3">
           <BellOff className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mt-4 text-lg font-semibold">Aucune notification</h2>
+        <h2 className="mt-4 text-lg font-semibold">
+          {t("notifications.empty.title")}
+        </h2>
         <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          Les nouvelles alertes de réservation, paiement et activité apparaîtront ici.
+          {t("notifications.empty.description")}
         </p>
       </div>
     );
@@ -49,8 +53,10 @@ export function NotificationsList({
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {unreadCount > 0
-            ? `${unreadCount} non lue${unreadCount > 1 ? "s" : ""}`
-            : "Tout est lu"}
+            ? unreadCount === 1
+              ? t("notifications.page.unread.one", { count: unreadCount })
+              : t("notifications.page.unread.other", { count: unreadCount })
+            : t("notifications.page.unread.allRead")}
         </p>
         <Button
           type="button"
@@ -59,7 +65,7 @@ export function NotificationsList({
           disabled={unreadCount === 0 || isMarkingAll}
           onClick={onMarkAllAsRead}
         >
-          Tout marquer comme lu
+          {t("notifications.page.markAll")}
         </Button>
       </div>
 

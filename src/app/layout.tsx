@@ -21,6 +21,7 @@ import { PostHogProvider } from "@/providers/posthog-provider";
 import QueryProvider from "@/providers/query-provider";
 import { TranslationsProvider } from "@/providers/translations-provider";
 import { ViewModeProvider } from "@/providers/view-mode-provider";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -161,6 +162,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${inter.variable} antialiased min-h-[100dvh] flex flex-col bg-white`}
       >
+        <NextTopLoader color="#FF6B35" showSpinner={false} />
         <TranslationsProvider locale={locale} messages={messages}>
           <PostHogProvider>
             <QueryProvider>

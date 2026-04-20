@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getLowestPricedRoom } from "@/lib/experience-pricing";
 import type { ExperienceDetail } from "@/types/experience-detail";
 
 function formatMoney(cents: number | null | undefined, currency = "MAD") {
@@ -117,12 +118,9 @@ export function ExperienceDetailView({
   );
 
   const nightsLabel = trip ? "pers." : "nuit";
-  const basePrice =
-    trip?.price_cents ??
-    lodging?.rooms.find((room) => typeof room.price_cents === "number")
-      ?.price_cents ??
-    null;
-  const baseCurrency = trip?.currency ?? lodging?.rooms[0]?.currency ?? "MAD";
+  const lowestPricedRoom = getLowestPricedRoom(lodging?.rooms);
+  const basePrice = trip?.price_cents ?? lowestPricedRoom?.price_cents ?? null;
+  const baseCurrency = trip?.currency ?? lowestPricedRoom?.currency ?? "MAD";
   const formattedPrice = formatMoney(basePrice, baseCurrency);
 
   const capacity = trip?.group_size_max
@@ -157,6 +155,15 @@ export function ExperienceDetailView({
   const hasStayTab = Boolean(lodging);
   const hasRoomsTab = Boolean(lodging?.rooms?.length);
   const hasItineraryTab = Boolean(trip?.itinerary?.length || trip);
+
+  const allRoomItems = Array.from(
+    new Map(
+      (lodging?.rooms ?? [])
+        .flatMap((room) => room.items)
+        .map((item) => [item.key, item]),
+    ).values(),
+  );
+  const allEquipment = [...experience.amenities, ...allRoomItems];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -354,19 +361,25 @@ export function ExperienceDetailView({
 
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Équipements</h3>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {experience.amenities.map((amenity) => (
-                      <div
-                        key={amenity.key}
-                        className="flex items-center gap-3 rounded-xl border bg-card p-3"
-                      >
-                        <Check className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">
-                          {amenity.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  {allEquipment.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {allEquipment.map((item) => (
+                        <div
+                          key={item.key}
+                          className="flex items-center gap-3 rounded-xl border bg-card p-3"
+                        >
+                          <Check className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium">
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Aucun équipement renseigné.
+                    </p>
+                  )}
                 </div>
 
                 {experience.servicesIncluded.length ||
@@ -580,6 +593,19 @@ export function ExperienceDetailView({
                               {room.capacity_beds} lit(s)
                             </Badge>
                           </div>
+                          {room.items.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {room.items.map((equip) => (
+                                <Badge
+                                  key={equip.key}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {equip.label}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                           <Separator />
                           <div className="flex items-center justify-between">
                             <p className="text-lg font-semibold">
@@ -814,19 +840,25 @@ export function ExperienceDetailView({
 
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold">Équipements</h3>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {experience.amenities.map((amenity) => (
-                    <div
-                      key={amenity.key}
-                      className="flex items-center gap-3 rounded-xl border bg-card p-3"
-                    >
-                      <Check className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">
-                        {amenity.label}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {allEquipment.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {allEquipment.map((item) => (
+                      <div
+                        key={item.key}
+                        className="flex items-center gap-3 rounded-xl border bg-card p-3"
+                      >
+                        <Check className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Aucun équipement renseigné.
+                  </p>
+                )}
               </div>
 
               {experience.servicesIncluded.length ||

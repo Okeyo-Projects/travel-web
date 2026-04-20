@@ -4,6 +4,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 export type TestimonialItem = {
@@ -20,6 +21,7 @@ export function TestimonialCarousel({
 }: {
   testimonials: TestimonialItem[];
 }) {
+  const { t } = useSiteI18n();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start" });
 
@@ -62,7 +64,9 @@ export function TestimonialCarousel({
                 <div className="flex items-center gap-4">
                   <Image
                     src={item.avatar}
-                    alt={`Portrait de ${item.name}`}
+                    alt={t("home.testimonials.carousel.avatarAlt", {
+                      name: item.name,
+                    })}
                     width={48}
                     height={48}
                     placeholder="blur"
@@ -85,7 +89,7 @@ export function TestimonialCarousel({
           type="button"
           onClick={scrollPrev}
           className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition hover:bg-gray-50"
-          aria-label="Previous testimonial"
+          aria-label={t("home.testimonials.carousel.previous")}
         >
           <ChevronLeft className="h-5 w-5 text-gray-600" />
         </button>
@@ -101,7 +105,9 @@ export function TestimonialCarousel({
                   ? "w-6 bg-primary"
                   : "w-2 bg-gray-300 hover:bg-gray-400"
               }`}
-              aria-label={`Go to testimonial ${i + 1}`}
+              aria-label={t("home.testimonials.carousel.goTo", {
+                count: i + 1,
+              })}
             />
           ))}
         </div>
@@ -110,7 +116,7 @@ export function TestimonialCarousel({
           type="button"
           onClick={scrollNext}
           className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition hover:bg-gray-50"
-          aria-label="Next testimonial"
+          aria-label={t("home.testimonials.carousel.next")}
         >
           <ChevronRight className="h-5 w-5 text-gray-600" />
         </button>

@@ -1,5 +1,4 @@
 import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
 import {
   Bell,
   CalendarCheck,
@@ -10,6 +9,8 @@ import {
   Star,
   UserPlus,
 } from "lucide-react";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { getDateFnsLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { NotificationKind, NotificationRow } from "@/types/notification";
 
@@ -58,6 +59,7 @@ function getNotificationIcon(kind: NotificationKind) {
 }
 
 export function NotificationItem({ notification, onClick }: NotificationItemProps) {
+  const { locale } = useSiteI18n();
   const unread = !notification.read_at;
   const Icon = getNotificationIcon(notification.kind as NotificationKind);
 
@@ -85,7 +87,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
           <p className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(notification.created_at), {
               addSuffix: true,
-              locale: fr,
+              locale: getDateFnsLocale(locale),
             })}
           </p>
         </div>

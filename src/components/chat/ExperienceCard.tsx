@@ -1,6 +1,7 @@
 import { BedDouble, DoorOpen, MapPin, Play, Star, Users } from "lucide-react";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +58,6 @@ export function ExperienceCard({
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { openImageViewer, Viewer } = useImageViewer();
-  const router = useRouter();
   const pathname = usePathname();
   const experienceHref = localizeHref(
     `/experience/${buildExperienceSlug({ title: experience.title, id: experience.id })}`,
@@ -340,21 +340,35 @@ export function ExperienceCard({
           </div>
 
           <div className="flex w-full sm:w-auto gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onSelect) {
+            {onSelect ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
                   onSelect();
-                } else {
-                  router.push(experienceHref);
-                }
-              }}
-              className="flex-1 sm:flex-none"
-            >
-              {t("chat.experienceCard.details")}
-            </Button>
+                }}
+                className="flex-1 sm:flex-none"
+              >
+                {t("chat.experienceCard.details")}
+              </Button>
+            ) : (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="flex-1 sm:flex-none"
+              >
+                <Link
+                  href={experienceHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t("chat.experienceCard.details")}
+                </Link>
+              </Button>
+            )}
             {onBook && (
               <Button
                 size="sm"

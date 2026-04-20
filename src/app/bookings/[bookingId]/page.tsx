@@ -9,12 +9,26 @@ import { ReviewStars } from "@/components/experience/ReviewStars";
 import { FooterSection } from "@/components/home/FooterSection";
 import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
-import { useCancelBooking } from "@/hooks/use-booking-mutations";
+import {
+  useCancelBooking,
+  useHostRespondToBooking,
+} from "@/hooks/use-booking-mutations";
 import { useReviewForBooking } from "@/hooks/use-reviews";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
@@ -30,11 +44,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
+  BriefcaseBusiness,
   CalendarDays,
   CheckCircle2,
   Clock3,
   CreditCard,
   Home,
+  LayoutDashboard,
   Loader2,
   MapPin,
   RefreshCw,
@@ -62,8 +78,12 @@ const CANCELLABLE_STATUSES: BookingStatus[] = [
   "pending_payment",
 ];
 
+type ViewerRole = "guest" | "host";
+
 type BookingDetail = {
   id: string;
+  guest_id: string;
+  host_id: string;
   from_date: string;
   to_date: string;
   adults: number;
@@ -81,6 +101,12 @@ type BookingDetail = {
   host_notes: string | null;
   created_at: string;
   updated_at: string;
+  responded_at: string | null;
+  guest: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
   experience: {
     id: string;
     title: string;
@@ -91,7 +117,7 @@ type BookingDetail = {
   } | null;
 };
 
-function formatDateRange(from: string, to: string) {
+function formatDateRange(from: string, to: string, locale: string) {
   const opts: Intl.DateTimeFormatOptions = {
     day: "numeric",
     month: "short",
@@ -99,11 +125,11 @@ function formatDateRange(from: string, to: string) {
   };
   const fromDate = new Date(from);
   const toDate = new Date(to);
-  return `${fromDate.toLocaleDateString("fr-FR", opts)} - ${toDate.toLocaleDateString("fr-FR", opts)}`;
+  return `${fromDate.toLocaleDateString(locale, opts)} - ${toDate.toLocaleDateString(locale, opts)}`;
 }
 
-function formatPrice(cents: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
+function formatPrice(cents: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
@@ -121,69 +147,96 @@ function subtractDays(date: Date, days: number) {
   return next;
 }
 
-function formatLongDate(value: Date) {
-  return value.toLocaleDateString("fr-FR", {
+function formatLongDate(value: Date, locale: string) {
+  return value.toLocaleDateString(locale, {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 }
 
-function getStatusBadge(status: BookingStatus | null) {
+function formatBookingTimestamp(value: string, locale: string) {
+  return new Date(value).toLocaleDateString(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getStatusBadge(
+  status: BookingStatus | null,
+  t: ReturnType<typeof useSiteI18n>["t"],
+  viewerRole: ViewerRole = "guest",
+) {
   switch (status) {
     case "pending_host":
       return {
-        label: "En attente d'approbation",
+        label:
+          viewerRole === "host"
+            ? t("booking.detail.status.pendingHost.host")
+            : t("booking.detail.status.pendingHost.guest"),
         variant: "secondary" as const,
         icon: Clock3,
       };
     case "approved":
       return {
-        label: "Approuvée, paiement requis",
+        label:
+          viewerRole === "host"
+            ? t("booking.detail.status.approved.host")
+            : t("booking.detail.status.approved.guest"),
         variant: "secondary" as const,
         icon: Clock3,
       };
     case "pending_payment":
       return {
-        label: "Paiement en cours",
+        label:
+          viewerRole === "host"
+            ? t("booking.detail.status.pendingPayment.host")
+            : t("booking.detail.status.pendingPayment.guest"),
         variant: "secondary" as const,
         icon: Clock3,
       };
     case "confirmed":
       return {
-        label: "Confirmée",
+        label: t("booking.detail.status.confirmed"),
         variant: "default" as const,
         icon: CheckCircle2,
       };
     case "completed":
       return {
-        label: "Terminée",
+        label: t("booking.detail.status.completed"),
         variant: "outline" as const,
         icon: CheckCircle2,
       };
     case "declined":
       return {
-        label: "Refusée",
+        label: t("booking.detail.status.declined"),
         variant: "destructive" as const,
         icon: XCircle,
       };
     case "cancelled":
       return {
-        label: "Annulée",
+        label: t("booking.detail.status.cancelled"),
         variant: "destructive" as const,
         icon: XCircle,
       };
     case "refunded":
       return {
-        label: "Remboursée",
+        label: t("booking.detail.status.refunded"),
         variant: "outline" as const,
         icon: CheckCircle2,
       };
     case "draft":
-      return { label: "Brouillon", variant: "outline" as const, icon: Clock3 };
+      return {
+        label: t("booking.detail.status.draft"),
+        variant: "outline" as const,
+        icon: Clock3,
+      };
     default:
       return {
-        label: status ?? "Inconnu",
+        label: status ?? t("booking.detail.status.unknown"),
         variant: "outline" as const,
         icon: Clock3,
       };
@@ -219,85 +272,114 @@ function getCancellationPolicyInfo(
   fromDate: string,
   totalCents: number,
   currency: string,
+  locale: string,
+  t: ReturnType<typeof useSiteI18n>["t"],
 ) {
   const arrivalDate = parseDateOnly(fromDate);
-  const arrivalLabel = formatLongDate(arrivalDate);
-  const totalLabel = formatPrice(totalCents, currency);
+  const arrivalLabel = formatLongDate(arrivalDate, locale);
+  const totalLabel = formatPrice(totalCents, currency, locale);
   const now = new Date();
 
   if (policy === "free") {
     return {
-      badge: "Annulation gratuite",
-      policySummary: `Annulation sans frais jusqu'au ${arrivalLabel}.`,
+      badge: t("booking.detail.cancellation.badge.free"),
+      policySummary: t("booking.detail.cancellation.summary.free", {
+        date: arrivalLabel,
+      }),
       refundSummary:
         now < arrivalDate
-          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le début du séjour.`
-          : "Le séjour a déjà commencé, aucun remboursement automatique n'est indiqué.",
+          ? t("booking.detail.cancellation.refund.freeActive", {
+              amount: totalLabel,
+            })
+          : t("booking.detail.cancellation.refund.started"),
     };
   }
 
   if (policy === "flexible") {
     const deadline = subtractDays(arrivalDate, 1);
-    const deadlineLabel = formatLongDate(deadline);
+    const deadlineLabel = formatLongDate(deadline, locale);
 
     return {
-      badge: "Flexible (24 h)",
-      policySummary:
-        "Remboursement intégral si l'annulation intervient au moins 24 h avant l'arrivée.",
+      badge: t("booking.detail.cancellation.badge.flexible"),
+      policySummary: t("booking.detail.cancellation.summary.flexible"),
       refundSummary:
         now <= deadline
-          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
-          : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+          ? t("booking.detail.cancellation.refund.beforeDeadline", {
+              amount: totalLabel,
+              date: deadlineLabel,
+            })
+          : t("booking.detail.cancellation.refund.deadlinePassed", {
+              date: deadlineLabel,
+            }),
     };
   }
 
   if (policy === "strict") {
     const deadline = subtractDays(arrivalDate, 14);
-    const deadlineLabel = formatLongDate(deadline);
+    const deadlineLabel = formatLongDate(deadline, locale);
 
     return {
-      badge: "Stricte (14 jours)",
-      policySummary:
-        "Remboursement intégral si l'annulation intervient au moins 14 jours avant l'arrivée.",
+      badge: t("booking.detail.cancellation.badge.strict"),
+      policySummary: t("booking.detail.cancellation.summary.strict"),
       refundSummary:
         now <= deadline
-          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
-          : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+          ? t("booking.detail.cancellation.refund.beforeDeadline", {
+              amount: totalLabel,
+              date: deadlineLabel,
+            })
+          : t("booking.detail.cancellation.refund.deadlinePassed", {
+              date: deadlineLabel,
+            }),
     };
   }
 
   if (policy === "non_refundable") {
     return {
-      badge: "Non remboursable",
-      policySummary:
-        "Cette expérience ne prévoit pas de remboursement en cas d'annulation.",
-      refundSummary:
-        "Aucun remboursement n'est prévu par la politique de l'expérience.",
+      badge: t("booking.detail.cancellation.badge.nonRefundable"),
+      policySummary: t("booking.detail.cancellation.summary.nonRefundable"),
+      refundSummary: t("booking.detail.cancellation.refund.none"),
     };
   }
 
   if (policy === "moderate") {
     const deadline = subtractDays(arrivalDate, 7);
-    const deadlineLabel = formatLongDate(deadline);
+    const deadlineLabel = formatLongDate(deadline, locale);
 
     return {
-      badge: "Modérée (7 jours)",
-      policySummary:
-        "Remboursement intégral si l'annulation intervient au moins 7 jours avant l'arrivée.",
+      badge: t("booking.detail.cancellation.badge.moderate"),
+      policySummary: t("booking.detail.cancellation.summary.moderate"),
       refundSummary:
         now <= deadline
-          ? `Remboursement estimé à ${totalLabel} si vous annulez avant le ${deadlineLabel}.`
-          : `La fenêtre de remboursement intégral s'est terminée le ${deadlineLabel}.`,
+          ? t("booking.detail.cancellation.refund.beforeDeadline", {
+              amount: totalLabel,
+              date: deadlineLabel,
+            })
+          : t("booking.detail.cancellation.refund.deadlinePassed", {
+              date: deadlineLabel,
+            }),
     };
   }
 
   return {
-    badge: "Politique standard",
-    policySummary:
-      "Les conditions d'annulation dépendent de l'expérience réservée.",
-    refundSummary: `Montant de réservation estimé: ${totalLabel}.`,
+    badge: t("booking.detail.cancellation.badge.standard"),
+    policySummary: t("booking.detail.cancellation.summary.standard"),
+    refundSummary: t("booking.detail.cancellation.refund.standard", {
+      amount: totalLabel,
+    }),
   };
 }
+
+const HOST_ACCEPT_TEMPLATES = [
+  "Looking forward to hosting you!",
+  "Welcome! Feel free to reach out if you have any questions.",
+  "Confirmed! See you soon.",
+];
+
+const HOST_DECLINE_TEMPLATES = [
+  "Unfortunately I'm unavailable for those dates.",
+  "The experience is fully booked for that period.",
+  "I'm unable to accommodate this request at this time.",
+];
 
 export default function BookingDetailPage() {
   const params = useParams();
@@ -306,12 +388,23 @@ export default function BookingDetailPage() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
+  const { t, locale } = useSiteI18n();
   const bookingId = params?.bookingId as string;
   const [lastPaymentId, setLastPaymentId] = useState<string | null>(null);
   const [isStartingPayment, setIsStartingPayment] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isHostResponseDialogOpen, setIsHostResponseDialogOpen] =
+    useState(false);
+  const [hostResponseMode, setHostResponseMode] = useState<
+    "approved" | "declined"
+  >("approved");
+  const [hostResponseNote, setHostResponseNote] = useState("");
+  const [selectedHostTemplate, setSelectedHostTemplate] = useState<
+    string | null
+  >(null);
   const cancelBookingMutation = useCancelBooking();
+  const hostRespondMutation = useHostRespondToBooking();
   const handledReturnKeyRef = useRef<string | null>(null);
   const pendingPaymentStorageKey = useMemo(
     () => `payzone:pending-payment:${bookingId}`,
@@ -340,6 +433,8 @@ export default function BookingDetailPage() {
         .select(
           `
           id,
+          guest_id,
+          host_id,
           from_date,
           to_date,
           adults,
@@ -357,18 +452,24 @@ export default function BookingDetailPage() {
           host_notes,
           created_at,
           updated_at,
+          responded_at,
+          guest:profiles!bookings_guest_id_fkey(id, display_name, avatar_url),
           experience:experiences(id, title, city, thumbnail_url, type, cancellation_policy)
         `,
         )
         .eq("id", bookingId)
-        .eq("guest_id", user.id)
         .single();
 
       if (error) throw error;
       return data as BookingDetail;
     },
   });
-  const bookingReviewQuery = useReviewForBooking(user ? bookingId : null);
+  const isGuestView = Boolean(user && booking?.guest_id === user.id);
+  const isHostView = Boolean(booking && !isGuestView);
+  const viewerRole: ViewerRole = isHostView ? "host" : "guest";
+  const bookingReviewQuery = useReviewForBooking(
+    isGuestView ? bookingId : null,
+  );
 
   const persistPendingPaymentId = useCallback(
     (paymentId: string) => {
@@ -531,7 +632,7 @@ export default function BookingDetailPage() {
     : 0;
 
   useEffect(() => {
-    if (!booking) return;
+    if (!booking || !isGuestView) return;
     if (booking.status !== "confirmed" && booking.status !== "completed")
       return;
     if (hasTrackedCompletedPayment()) return;
@@ -551,6 +652,7 @@ export default function BookingDetailPage() {
     booking,
     guests,
     hasTrackedCompletedPayment,
+    isGuestView,
     markCompletedPaymentTracked,
   ]);
 
@@ -563,7 +665,7 @@ export default function BookingDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Connectez-vous pour accéder au détail de votre réservation.
+              Connectez-vous pour acceder au detail de cette reservation.
             </p>
             <Button asChild>
               <Link href="/">Aller à l'accueil</Link>
@@ -574,18 +676,34 @@ export default function BookingDetailPage() {
     );
   }
 
-  const statusMeta = getStatusBadge(booking?.status ?? null);
-  const canPay = booking?.status === "approved";
-  const canCancel = booking?.status
-    ? CANCELLABLE_STATUSES.includes(booking.status)
-    : false;
+  const statusMeta = getStatusBadge(booking?.status ?? null, t, viewerRole);
+  const canPay = isGuestView && booking?.status === "approved";
+  const canCancel =
+    isGuestView && booking?.status
+      ? CANCELLABLE_STATUSES.includes(booking.status)
+      : false;
+  const canHostRespond = isHostView && booking?.status === "pending_host";
   const cancellationPolicyInfo = booking
     ? getCancellationPolicyInfo(
         booking.experience?.cancellation_policy,
         booking.from_date,
         booking.price_total_cents,
         booking.currency,
+        locale,
+        t,
       )
+    : null;
+  const hostResponseTemplates =
+    hostResponseMode === "approved"
+      ? HOST_ACCEPT_TEMPLATES
+      : HOST_DECLINE_TEMPLATES;
+  const backHref = isHostView ? "/host" : "/bookings";
+  const backLabel = isHostView ? "Back to dashboard" : "Back to bookings";
+  const requestDateLabel = booking
+    ? formatBookingTimestamp(booking.created_at, locale)
+    : null;
+  const responseDateLabel = booking?.responded_at
+    ? formatBookingTimestamp(booking.responded_at, locale)
     : null;
 
   const handleStartPayment = async () => {
@@ -690,6 +808,41 @@ export default function BookingDetailPage() {
     }
   };
 
+  const handleOpenHostResponse = (mode: "approved" | "declined") => {
+    setHostResponseMode(mode);
+    setHostResponseNote("");
+    setSelectedHostTemplate(null);
+    setIsHostResponseDialogOpen(true);
+  };
+
+  const handleConfirmHostResponse = async () => {
+    if (!booking || !canHostRespond) return;
+
+    try {
+      await hostRespondMutation.mutateAsync({
+        bookingId: booking.id,
+        hostId: booking.host_id,
+        response: hostResponseMode,
+        message: hostResponseNote.trim() || selectedHostTemplate || undefined,
+        template: selectedHostTemplate ?? undefined,
+      });
+
+      setIsHostResponseDialogOpen(false);
+      toast.success(
+        hostResponseMode === "approved"
+          ? "Reservation approuvee."
+          : "Reservation refusee.",
+      );
+      await refetch();
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Impossible de mettre a jour la reservation.";
+      toast.error(message);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -734,11 +887,11 @@ export default function BookingDetailPage() {
         <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
           <div className="mb-6">
             <Link
-              href="/bookings"
+              href={backHref}
               className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
             >
               <ArrowLeft className="size-4" />
-              Back to bookings
+              {backLabel}
             </Link>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -781,6 +934,52 @@ export default function BookingDetailPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
+            {isHostView && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="size-5" />
+                    Guest Request
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start gap-3 text-sm">
+                    <Users className="size-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium">Guest</p>
+                      <p className="text-muted-foreground">
+                        {booking.guest?.display_name ?? "Guest"}
+                      </p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex items-start gap-3 text-sm">
+                    <CalendarDays className="size-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium">Requested on</p>
+                      <p className="text-muted-foreground">
+                        {requestDateLabel}
+                      </p>
+                    </div>
+                  </div>
+                  {responseDateLabel ? (
+                    <>
+                      <Separator />
+                      <div className="flex items-start gap-3 text-sm">
+                        <CheckCircle2 className="size-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="font-medium">Responded on</p>
+                          <p className="text-muted-foreground">
+                            {responseDateLabel}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -794,7 +993,7 @@ export default function BookingDetailPage() {
                   <div>
                     <p className="font-medium">Dates</p>
                     <p className="text-muted-foreground">
-                      {formatDateRange(booking.from_date, booking.to_date)}
+                      {formatDateRange(booking.from_date, booking.to_date, locale)}
                     </p>
                   </div>
                 </div>
@@ -816,6 +1015,7 @@ export default function BookingDetailPage() {
                       {formatPrice(
                         booking.price_subtotal_cents,
                         booking.currency,
+                        locale,
                       )}
                     </span>
                   </div>
@@ -825,6 +1025,7 @@ export default function BookingDetailPage() {
                       {formatPrice(
                         booking.price_fees_cents ?? 0,
                         booking.currency,
+                        locale,
                       )}
                     </span>
                   </div>
@@ -834,6 +1035,7 @@ export default function BookingDetailPage() {
                       {formatPrice(
                         booking.price_taxes_cents ?? 0,
                         booking.currency,
+                        locale,
                       )}
                     </span>
                   </div>
@@ -841,14 +1043,14 @@ export default function BookingDetailPage() {
                   <div className="flex justify-between font-semibold text-base">
                     <span>Total</span>
                     <span>
-                      {formatPrice(booking.price_total_cents, booking.currency)}
+                      {formatPrice(booking.price_total_cents, booking.currency, locale)}
                     </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {cancellationPolicyInfo && (
+            {isGuestView && cancellationPolicyInfo && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -896,7 +1098,7 @@ export default function BookingDetailPage() {
                   {booking.guest_notes && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">
-                        Your message
+                        {isHostView ? "Guest message" : "Your message"}
                       </p>
                       <p className="text-sm">{booking.guest_notes}</p>
                     </div>
@@ -904,7 +1106,7 @@ export default function BookingDetailPage() {
                   {booking.host_notes && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">
-                        Host message
+                        {isHostView ? "Your response" : "Host message"}
                       </p>
                       <p className="text-sm">{booking.host_notes}</p>
                     </div>
@@ -913,7 +1115,7 @@ export default function BookingDetailPage() {
               </Card>
             )}
 
-            {booking.status === "completed" ? (
+            {isGuestView && booking.status === "completed" ? (
               <Card>
                 <CardHeader>
                   <CardTitle>Your Review</CardTitle>
@@ -957,83 +1159,157 @@ export default function BookingDetailPage() {
           <div className="space-y-6">
             <Card className="sticky top-6">
               <CardHeader>
-                <CardTitle className="text-lg">Actions</CardTitle>
+                <CardTitle className="text-lg">
+                  {isHostView ? "Host Actions" : "Actions"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {canPay && (
-                  <Button
-                    onClick={handleStartPayment}
-                    disabled={isStartingPayment}
-                    className="w-full gap-2"
-                    size="lg"
-                  >
-                    {isStartingPayment ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <CreditCard className="size-4" />
-                    )}
-                    Pay Now
-                  </Button>
-                )}
-
-                {lastPaymentId && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      void handleCheckPaymentStatus();
-                    }}
-                    disabled={isCheckingPayment}
-                    className="w-full gap-2"
-                  >
-                    {isCheckingPayment ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-4" />
-                    )}
-                    Check Payment Status
-                  </Button>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" asChild className="w-full gap-2">
-                    <Link href="/bookings">
-                      <Home className="size-4" />
-                      <span className="hidden sm:inline">Bookings</span>
-                    </Link>
-                  </Button>
-                  <Button variant="outline" asChild className="w-full gap-2">
-                    <Link href="/explore">
-                      <MapPin className="size-4" />
-                      <span className="hidden sm:inline">Explore</span>
-                    </Link>
-                  </Button>
-                </div>
-
-                {canCancel && (
+                {isHostView ? (
                   <>
-                    <Separator className="my-3" />
-                    <Button
-                      variant="destructive"
-                      onClick={() => setIsCancelDialogOpen(true)}
-                      disabled={cancelBookingMutation.isPending}
-                      className="w-full gap-2"
-                    >
-                      {cancelBookingMutation.isPending ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <UserMinus className="size-4" />
-                      )}
-                      Cancel Booking
-                    </Button>
+                    {canHostRespond ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => handleOpenHostResponse("declined")}
+                          className="w-full gap-2"
+                        >
+                          <XCircle className="size-4" />
+                          Decline
+                        </Button>
+                        <Button
+                          onClick={() => handleOpenHostResponse("approved")}
+                          className="w-full gap-2"
+                        >
+                          <CheckCircle2 className="size-4" />
+                          Approve
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                        {booking.status === "approved" &&
+                          "This booking has been approved and is now waiting for guest payment."}
+                        {booking.status === "pending_payment" &&
+                          "Guest payment is being processed."}
+                        {booking.status === "confirmed" &&
+                          "This booking is confirmed."}
+                        {booking.status === "declined" &&
+                          "This booking request was declined."}
+                        {booking.status === "cancelled" &&
+                          "This booking was cancelled."}
+                        {booking.status === "completed" &&
+                          "This booking has been completed."}
+                        {booking.status === "refunded" &&
+                          "This booking was refunded."}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="w-full gap-2"
+                      >
+                        <Link href="/host">
+                          <LayoutDashboard className="size-4" />
+                          <span className="hidden sm:inline">Dashboard</span>
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="w-full gap-2"
+                      >
+                        <Link href="/host/experiences">
+                          <BriefcaseBusiness className="size-4" />
+                          <span className="hidden sm:inline">Experiences</span>
+                        </Link>
+                      </Button>
+                    </div>
                   </>
-                )}
-
-                {(canPay || booking.status === "pending_payment") && (
+                ) : (
                   <>
-                    <Separator className="my-3" />
-                    <PayzoneBadge
-                      className="border-dashed"
-                    />
+                    {canPay && (
+                      <Button
+                        onClick={handleStartPayment}
+                        disabled={isStartingPayment}
+                        className="w-full gap-2"
+                        size="lg"
+                      >
+                        {isStartingPayment ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <CreditCard className="size-4" />
+                        )}
+                        Pay Now
+                      </Button>
+                    )}
+
+                    {lastPaymentId && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          void handleCheckPaymentStatus();
+                        }}
+                        disabled={isCheckingPayment}
+                        className="w-full gap-2"
+                      >
+                        {isCheckingPayment ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="size-4" />
+                        )}
+                        Check Payment Status
+                      </Button>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="w-full gap-2"
+                      >
+                        <Link href="/bookings">
+                          <Home className="size-4" />
+                          <span className="hidden sm:inline">Bookings</span>
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="w-full gap-2"
+                      >
+                        <Link href="/explore">
+                          <MapPin className="size-4" />
+                          <span className="hidden sm:inline">Explore</span>
+                        </Link>
+                      </Button>
+                    </div>
+
+                    {canCancel && (
+                      <>
+                        <Separator className="my-3" />
+                        <Button
+                          variant="destructive"
+                          onClick={() => setIsCancelDialogOpen(true)}
+                          disabled={cancelBookingMutation.isPending}
+                          className="w-full gap-2"
+                        >
+                          {cancelBookingMutation.isPending ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <UserMinus className="size-4" />
+                          )}
+                          Cancel Booking
+                        </Button>
+                      </>
+                    )}
+
+                    {(canPay || booking.status === "pending_payment") && (
+                      <>
+                        <Separator className="my-3" />
+                        <PayzoneBadge className="border-dashed" />
+                      </>
+                    )}
                   </>
                 )}
               </CardContent>
@@ -1044,7 +1320,7 @@ export default function BookingDetailPage() {
 
       <FooterSection />
 
-      {cancellationPolicyInfo ? (
+      {isGuestView && cancellationPolicyInfo ? (
         <BookingCancellationDialog
           open={isCancelDialogOpen}
           onOpenChange={setIsCancelDialogOpen}
@@ -1054,6 +1330,88 @@ export default function BookingDetailPage() {
           refundSummary={cancellationPolicyInfo.refundSummary}
         />
       ) : null}
+
+      <AlertDialog
+        open={isHostResponseDialogOpen}
+        onOpenChange={setIsHostResponseDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {hostResponseMode === "approved"
+                ? "Approve booking"
+                : "Decline booking"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {hostResponseMode === "approved"
+                ? "Send the guest a short note about the next step."
+                : "Let the guest know why you cannot host this booking."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Quick replies</p>
+              <div className="flex flex-wrap gap-2">
+                {hostResponseTemplates.map((template) => {
+                  const isActive = selectedHostTemplate === template;
+                  return (
+                    <button
+                      key={template}
+                      type="button"
+                      onClick={() =>
+                        setSelectedHostTemplate(isActive ? null : template)
+                      }
+                      className={`rounded-full border px-3 py-1.5 text-left text-xs transition-colors ${
+                        isActive
+                          ? "border-primary bg-primary/10 text-foreground"
+                          : "border-border bg-background text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {template}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Add a note</p>
+              <Textarea
+                value={hostResponseNote}
+                onChange={(event) => setHostResponseNote(event.target.value)}
+                placeholder={
+                  hostResponseMode === "approved"
+                    ? "Let the guest know what happens next"
+                    : "Explain why you cannot host this time"
+                }
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={hostRespondMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              onClick={() => {
+                void handleConfirmHostResponse();
+              }}
+              disabled={hostRespondMutation.isPending}
+            >
+              {hostRespondMutation.isPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Send response"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

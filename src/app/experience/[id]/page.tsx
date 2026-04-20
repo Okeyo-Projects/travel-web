@@ -13,14 +13,16 @@ export default async function ExperiencePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const initialData = await fetchExperienceData(id);
+
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+
+  const initialData = await fetchExperienceData(id, locale);
 
   if (!initialData?.transformed) {
     notFound();
   }
 
-  const requestHeaders = await headers();
-  const locale = resolveLocale(requestHeaders.get("x-locale"));
   const url = localizeHref(`/experience/${id}`, locale);
 
   return (

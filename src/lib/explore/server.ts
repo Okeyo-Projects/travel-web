@@ -633,7 +633,7 @@ export async function fetchExploreCategoryGroups(
     .from("categories" as never)
     .select("*")
     .eq("is_active" as never, true)
-    .limit(6);
+    .order("created_at" as never, { ascending: false });
 
   if (categoriesError) {
     throw categoriesError;
@@ -653,11 +653,16 @@ export async function fetchExploreCategoryGroups(
     throw usedCategoriesError;
   }
 
-  const usedCategoryIds = new Set(
-    ((usedCategoriesData ?? []) as Array<{ category_id: string }>).map(
-      (item) => item.category_id,
-    ),
-  );
+  const experienceCountByCategory = new Map<string, number>();
+
+  for (const item of (usedCategoriesData ?? []) as Array<{
+    category_id: string;
+  }>) {
+    experienceCountByCategory.set(
+      item.category_id,
+      (experienceCountByCategory.get(item.category_id) ?? 0) + 1,
+    );
+  }
 
   const categories = (
     (allCategories ?? []) as Array<{
@@ -673,7 +678,13 @@ export async function fetchExploreCategoryGroups(
       slug: string | null;
       asset: string | null;
     }>
-  ).filter((category) => usedCategoryIds.has(category.id));
+  )
+    .filter((category) => experienceCountByCategory.has(category.id))
+    .sort(
+      (a, b) =>
+        (experienceCountByCategory.get(b.id) ?? 0) -
+        (experienceCountByCategory.get(a.id) ?? 0),
+    );
 
   const results: ExploreCategoryGroup[] = [];
 

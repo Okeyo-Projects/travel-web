@@ -1,5 +1,8 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 type PayzoneBadgeProps = {
   title?: string;
@@ -9,58 +12,64 @@ type PayzoneBadgeProps = {
   descriptionClassName?: string;
   imageWrapperClassName?: string;
   imageClassName?: string;
-  isBlurBackground?: boolean;   
+  isBlurBackground?: boolean;
 };
 
 export function PayzoneBadge({
- // title = "Paiement securisé avec Payzone",
- title,
+  title,
   description,
   className,
   titleClassName,
   descriptionClassName,
   imageWrapperClassName,
   imageClassName,
-  isBlurBackground = false
+  isBlurBackground = false,
 }: PayzoneBadgeProps) {
+  const { t } = useSiteI18n();
+  const resolvedTitle = title ?? t("payment.payzone.title");
+  const resolvedDescription =
+    description ?? t("payment.payzone.description");
+
   return (
     <div
       className={cn(
         "rounded-2xl border border-border bg-card p-4",
-          isBlurBackground ? "backdrop-blur-sm bg-white/30" : "bg-card",
+        isBlurBackground ? "backdrop-blur-sm bg-white/30" : "bg-card",
         className,
       )}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {title || description ? (
+        {resolvedTitle || resolvedDescription ? (
           <div className="space-y-1.5">
-            {title ? (
+            {resolvedTitle ? (
               <p
                 className={cn(
                   "text-sm font-semibold text-card-foreground",
                   titleClassName,
                 )}
               >
-                {title}
+                {resolvedTitle}
               </p>
             ) : null}
-            {description ? (
+            {resolvedDescription ? (
               <p
                 className={cn(
                   "text-xs leading-5 text-muted-foreground",
                   descriptionClassName,
                 )}
               >
-                {description}
+                {resolvedDescription}
               </p>
             ) : null}
           </div>
         ) : null}
 
-        <div className={cn("w-full min-w-[320px] shrink-0", imageWrapperClassName)}>
+        <div
+          className={cn("w-full min-w-[320px] shrink-0", imageWrapperClassName)}
+        >
           <Image
             src="/payzone.png"
-            alt="Paiement sécurisé par Payzone - Cartes acceptées: Visa, Mastercard, CMI"
+            alt={t("payment.payzone.imageAlt")}
             width={962}
             height={120}
             className={cn("h-auto w-full", imageClassName)}

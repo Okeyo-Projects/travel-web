@@ -27,13 +27,26 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
+
   return (
     <LegalPage
-      title="Conditions d'utilisation"
-      description="Ces conditions encadrent l'utilisation d'okeyo travel, la publication des offres, les réservations, les paiements et les responsabilités des utilisateurs comme des prestataires."
+      title={t("legal.terms.title")}
+      description={t("legal.terms.description")}
       lastUpdated={LEGAL_LAST_UPDATED}
       sections={termsSections}
+      eyebrow={t("legal.page.eyebrow")}
+      lastUpdatedLabel={t("legal.page.lastUpdated")}
+      homeHref={localizeHref("/", locale)}
+      homeLabel={t("legal.page.home")}
+      exploreHref={localizeHref("/explore", locale)}
+      exploreLabel={t("legal.page.explore")}
+      tableOfContentsLabel={t("legal.page.tableOfContents")}
+      onThisPageLabel={t("legal.page.onThisPage")}
+      sectionLabel={t("legal.page.section")}
     />
   );
 }

@@ -43,9 +43,10 @@ export function useCategories() {
         .from("experience_categories")
         .select(`
           category_id,
-          experience:experiences!inner(status)
+          experience:experiences!inner(status, deleted_at)
         `)
-        .eq("experience.status", "published");
+        .eq("experience.status", "published")
+        .is("experience.deleted_at", null);
 
       if (usedCategoriesError) {
         console.error(
@@ -55,17 +56,29 @@ export function useCategories() {
         throw usedCategoriesError;
       }
 
-      // Extract unique used category IDs
-      const usedCategoryIds = new Set(
-        usedCategoriesData?.map((item: any) => item.category_id) || [],
-      );
+      const experienceCountByCategory = new Map<string, number>();
+      const categoryRows = (allCategories ?? []) as Category[];
+      const usedCategoryRows = (usedCategoriesData ?? []) as Array<{
+        category_id: string;
+      }>;
 
-      // 3. Filter categories
-      const filteredCategories = (allCategories ?? []).filter((c: any) =>
-        usedCategoryIds.has(c.id),
-      );
+      for (const item of usedCategoryRows) {
+        const categoryId = item.category_id;
+        experienceCountByCategory.set(
+          categoryId,
+          (experienceCountByCategory.get(categoryId) ?? 0) + 1,
+        );
+      }
 
-      return filteredCategories as Category[];
+      const filteredCategories = categoryRows
+        .filter((category) => experienceCountByCategory.has(category.id))
+        .sort(
+          (a, b) =>
+            (experienceCountByCategory.get(b.id) ?? 0) -
+            (experienceCountByCategory.get(a.id) ?? 0),
+        );
+
+      return filteredCategories;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

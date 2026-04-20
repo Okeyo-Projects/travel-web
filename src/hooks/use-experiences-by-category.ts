@@ -255,7 +255,7 @@ export function useAllCategoryGroups(
         .from("categories" as never)
         .select("*")
         .eq("is_active" as never, true)
-        .limit(6);
+        .order("created_at" as never, { ascending: false });
 
       if (categoriesError) {
         console.error(
@@ -283,15 +283,24 @@ export function useAllCategoryGroups(
         throw usedCategoriesError;
       }
 
-      const usedCategoryIds = new Set(
-        ((usedCategoriesData ?? []) as Array<{ category_id: string }>).map(
-          (item) => item.category_id,
-        ),
-      );
+      const experienceCountByCategory = new Map<string, number>();
 
-      const categories = ((allCategories ?? []) as CategoryGroupRow[]).filter(
-        (category) => usedCategoryIds.has(category.id),
-      );
+      for (const item of (usedCategoriesData ?? []) as Array<{
+        category_id: string;
+      }>) {
+        experienceCountByCategory.set(
+          item.category_id,
+          (experienceCountByCategory.get(item.category_id) ?? 0) + 1,
+        );
+      }
+
+      const categories = ((allCategories ?? []) as CategoryGroupRow[])
+        .filter((category) => experienceCountByCategory.has(category.id))
+        .sort(
+          (a, b) =>
+            (experienceCountByCategory.get(b.id) ?? 0) -
+            (experienceCountByCategory.get(a.id) ?? 0),
+        );
 
       // For each category, fetch its experiences
       const results: ExperiencesByCategory[] = [];

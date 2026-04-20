@@ -9,6 +9,15 @@ type LegalPageProps = {
   description: string;
   lastUpdated: string;
   sections: LegalSection[];
+  eyebrow: string;
+  lastUpdatedLabel: string;
+  homeHref: string;
+  homeLabel: string;
+  exploreHref: string;
+  exploreLabel: string;
+  tableOfContentsLabel: string;
+  onThisPageLabel: string;
+  sectionLabel: string;
 };
 
 function BulletList({
@@ -41,6 +50,15 @@ export function LegalPage({
   description,
   lastUpdated,
   sections,
+  eyebrow,
+  lastUpdatedLabel,
+  homeHref,
+  homeLabel,
+  exploreHref,
+  exploreLabel,
+  tableOfContentsLabel,
+  onThisPageLabel,
+  sectionLabel,
 }: LegalPageProps) {
   return (
     <div className="bg-[#08090d] print:bg-white">
@@ -56,7 +74,7 @@ export function LegalPage({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-3xl space-y-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-                  Informations légales
+                  {eyebrow}
                 </p>
                 <div className="space-y-3">
                   <h1 className="font-[family:var(--font-playfair-display)] text-4xl leading-tight text-slate-950 sm:text-5xl">
@@ -70,7 +88,7 @@ export function LegalPage({
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 print:border-slate-200 print:bg-white">
                 <p className="font-medium text-slate-900">
-                  Dernière mise à jour
+                  {lastUpdatedLabel}
                 </p>
                 <p>{lastUpdated}</p>
               </div>
@@ -78,16 +96,16 @@ export function LegalPage({
 
             <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-600 print:hidden">
               <Link
-                href="/"
+                href={homeHref}
                 className="rounded-full border border-slate-200 px-4 py-2 transition-colors hover:border-primary hover:text-primary"
               >
-                Retour à l'accueil
+                {homeLabel}
               </Link>
               <Link
-                href="/explore"
+                href={exploreHref}
                 className="rounded-full border border-slate-200 px-4 py-2 transition-colors hover:border-primary hover:text-primary"
               >
-                Explorer les offres
+                {exploreLabel}
               </Link>
             </div>
 
@@ -100,7 +118,7 @@ export function LegalPage({
           </div>
 
           <nav
-            aria-label="Table des matières"
+            aria-label={tableOfContentsLabel}
             className="mt-6 flex gap-2 overflow-x-auto pb-2 lg:hidden print:hidden"
           >
             {sections.map((section) => (
@@ -118,9 +136,9 @@ export function LegalPage({
             <aside className="hidden lg:block print:hidden">
               <div className="sticky top-6 rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-                  Sur cette page
+                  {onThisPageLabel}
                 </p>
-                <nav aria-label="Table des matières" className="mt-4">
+                <nav aria-label={tableOfContentsLabel} className="mt-4">
                   <ol className="space-y-2 text-sm text-slate-600">
                     {sections.map((section, index) => (
                       <li key={section.id}>
@@ -150,7 +168,7 @@ export function LegalPage({
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-                        Section {(index + 1).toString().padStart(2, "0")}
+                        {sectionLabel} {(index + 1).toString().padStart(2, "0")}
                       </p>
                       <h2 className="font-[family:var(--font-playfair-display)] text-3xl leading-tight text-slate-950">
                         {section.title}

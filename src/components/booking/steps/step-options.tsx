@@ -3,10 +3,13 @@
 import { Check, Users } from "lucide-react";
 import Image from "next/image";
 import { useBookingContext } from "@/components/booking/booking-context";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { getIntlLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { getImageUrl } from "@/utils/functions";
 
 export function StepOptions() {
+  const { t } = useSiteI18n();
   const { experience } = useBookingContext();
 
   if (experience?.type === "trip") return <TripOptions />;
@@ -14,7 +17,7 @@ export function StepOptions() {
 
   return (
     <p className="text-center text-sm text-muted-foreground py-8">
-      No options available for this experience type.
+      {t("booking.steps.options.noneAvailable")}
     </p>
   );
 }
@@ -22,13 +25,15 @@ export function StepOptions() {
 /* ─── Trip: departure selection ─────────────────────────────────── */
 
 function TripOptions() {
+  const { locale, t } = useSiteI18n();
   const { experience, departureId, setDepartureId } = useBookingContext();
   const departures = experience?.trip?.departures ?? [];
+  const intlLocale = getIntlLocale(locale);
 
   if (departures.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground py-8">
-        No departures available at the moment.
+        {t("booking.steps.options.trip.noneAvailable")}
       </p>
     );
   }
@@ -38,7 +43,7 @@ function TripOptions() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Select the departure that works for you.
+        {t("booking.steps.options.trip.select")}
       </p>
       {departures.map((dep) => {
         const selected = departureId === dep.id;
@@ -63,7 +68,7 @@ function TripOptions() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 space-y-1">
                 <p className="font-semibold text-sm capitalize">
-                  {departDate.toLocaleDateString("en-GB", {
+                  {departDate.toLocaleDateString(intlLocale, {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
@@ -72,8 +77,8 @@ function TripOptions() {
                 </p>
                 {returnDate && (
                   <p className="text-xs text-muted-foreground">
-                    Returns:{" "}
-                    {returnDate.toLocaleDateString("en-GB", {
+                    {t("booking.steps.options.trip.returns")}{" "}
+                    {returnDate.toLocaleDateString(intlLocale, {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -90,12 +95,14 @@ function TripOptions() {
                     )}
                   >
                     {soldOut
-                      ? "Sold out"
-                      : `${dep.seats_available} seat${dep.seats_available !== 1 ? "s" : ""} left`}
+                      ? t("booking.steps.options.trip.soldOut")
+                      : t("booking.steps.options.trip.seatsLeft", {
+                          count: dep.seats_available,
+                        })}
                   </span>
                   {dep.price_override_cents ? (
                     <span className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", {
+                      {new Intl.NumberFormat(intlLocale, {
                         style: "currency",
                         currency,
                         maximumFractionDigits: 0,
@@ -103,7 +110,7 @@ function TripOptions() {
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">
-                      Standard price
+                      {t("booking.steps.options.trip.standardPrice")}
                     </span>
                   )}
                 </div>
@@ -129,6 +136,7 @@ function TripOptions() {
 /* ─── Lodging: room selection (single-select mode like mobile) ───── */
 
 function LodgingOptions() {
+  const { locale, t } = useSiteI18n();
   const {
     experience,
     roomSelections,
@@ -138,11 +146,12 @@ function LodgingOptions() {
     infants,
   } = useBookingContext();
   const rooms = experience?.lodging?.rooms ?? [];
+  const intlLocale = getIntlLocale(locale);
 
   if (rooms.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground py-8">
-        No rooms available.
+        {t("booking.steps.options.lodging.noneAvailable")}
       </p>
     );
   }
@@ -174,10 +183,12 @@ function LodgingOptions() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Select the room type for your stay.
+        {t("booking.steps.options.lodging.select")}
         {adults + children > 0 && (
           <span className="ml-1">
-            ({adults + children} guest{adults + children !== 1 ? "s" : ""})
+            ({t("booking.steps.options.lodging.guestCount", {
+              count: adults + children,
+            })})
           </span>
         )}
       </p>
@@ -206,7 +217,9 @@ function LodgingOptions() {
               <div className="relative h-36 w-full bg-muted">
                 <Image
                   src={roomImageUrl}
-                  alt={room.name ?? "Room"}
+                  alt={
+                    room.name ?? t("booking.steps.options.lodging.roomFallback")
+                  }
                   fill
                   className="object-cover"
                 />
@@ -216,10 +229,16 @@ function LodgingOptions() {
             <div className="p-4 space-y-2">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <p className="font-semibold text-sm">{room.name}</p>
+                  <p className="font-semibold text-sm">
+                    {room.name ?? t("booking.steps.options.lodging.roomFallback")}
+                  </p>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                     <Users className="h-3 w-3" />
-                    <span>Up to {room.max_persons} guests</span>
+                    <span>
+                      {t("booking.steps.options.lodging.upToGuests", {
+                        count: room.max_persons,
+                      })}
+                    </span>
                   </div>
                 </div>
                 <div
@@ -236,19 +255,21 @@ function LodgingOptions() {
 
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold">
-                  {new Intl.NumberFormat("fr-FR", {
+                  {new Intl.NumberFormat(intlLocale, {
                     style: "currency",
                     currency: room.currency,
                     maximumFractionDigits: 0,
                   }).format(room.price_cents / 100)}
                   <span className="text-xs font-normal text-muted-foreground">
                     {" "}
-                    / night
+                    / {t("booking.steps.options.lodging.perNight")}
                   </span>
                 </span>
                 {selected && qty > 1 && (
                   <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
-                    {qty} room{qty !== 1 ? "s" : ""} needed
+                    {t("booking.steps.options.lodging.roomsNeeded", {
+                      count: qty,
+                    })}
                   </span>
                 )}
               </div>

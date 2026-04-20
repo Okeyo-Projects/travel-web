@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useChatContext } from "@/contexts/ChatContext";
 import { useAuth } from "./use-auth";
 
@@ -11,6 +16,18 @@ export interface Conversation {
   locked_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ConversationMessageRecord {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content?: string | null;
+  parts?: unknown;
+}
+
+export interface ConversationThreadData {
+  conversation: Conversation | null;
+  messages: ConversationMessageRecord[];
 }
 
 interface LocationPayload {
@@ -26,21 +43,64 @@ interface PersistedMessagePayload {
   metadata?: Record<string, unknown>;
 }
 
-export function useConversations() {
-  const { user } = useAuth();
-  const { clientId } = useChatContext();
+function buildConversationListSuffix(clientId: string) {
+  const params = new URLSearchParams();
 
-  return useQuery({
+  if (clientId) {
+    params.append("clientId", clientId);
+  }
+
+  return params.toString() ? `?${params.toString()}` : "";
+}
+
+export function getConversationQueryKey(
+  conversationId: string | null,
+  clientId: string,
+) {
+  return ["conversation", conversationId, clientId] as const;
+}
+
+async function fetchConversation(
+  conversationId: string,
+  clientId: string,
+): Promise<ConversationThreadData> {
+  const suffix = buildConversationListSuffix(clientId);
+  const response = await fetch(`/api/conversations/${conversationId}${suffix}`);
+
+  if (!response.ok) throw new Error("Failed to load conversation");
+
+  const data = await response.json();
+  return {
+    conversation: data.conversation ?? null,
+    messages: Array.isArray(data.messages)
+      ? (data.messages as ConversationMessageRecord[])
+      : [],
+  };
+}
+
+export async function prefetchConversation(
+  queryClient: QueryClient,
+  conversationId: string,
+  clientId: string,
+) {
+  await queryClient.prefetchQuery({
+    queryKey: getConversationQueryKey(conversationId, clientId),
+    queryFn: () => fetchConversation(conversationId, clientId),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useConversations() {
+  const { user, loading: authLoading } = useAuth();
+  const { clientId } = useChatContext();
+  const isAnonymousReady = !user && !authLoading && clientId.length > 0;
+  const canLoadConversations = Boolean(user) || isAnonymousReady;
+
+  const query = useQuery({
     queryKey: ["conversations", user?.id, clientId],
     queryFn: async () => {
-      // Always send clientId when available so API can claim anonymous
-      // conversations after authentication.
-      const params = new URLSearchParams();
-      if (clientId) {
-        params.append("clientId", clientId);
-      }
-
-      const url = `/api/conversations${params.toString() ? `?${params.toString()}` : ""}`;
+      const suffix = buildConversationListSuffix(clientId);
+      const url = `/api/conversations${suffix}`;
       const response = await fetch(url);
 
       if (!response.ok) throw new Error("Failed to load conversations");
@@ -48,42 +108,38 @@ export function useConversations() {
       const data = await response.json();
       return data.conversations || [];
     },
+    enabled: canLoadConversations,
     staleTime: 1000 * 60, // 1 minute
   });
+
+  return {
+    ...query,
+    isAccessReady: canLoadConversations,
+  };
 }
 
 export function useConversation(conversationId: string | null) {
+  const { user, loading: authLoading } = useAuth();
   const { clientId } = useChatContext();
+  const isAnonymousReady = !user && !authLoading && clientId.length > 0;
+  const canLoadConversation =
+    Boolean(conversationId) && (Boolean(user) || isAnonymousReady);
 
-  return useQuery({
-    queryKey: ["conversation", conversationId, clientId],
+  const query = useQuery({
+    queryKey: getConversationQueryKey(conversationId, clientId),
     queryFn: async () => {
       if (!conversationId) return null;
-
-      const params = new URLSearchParams();
-      if (clientId) {
-        params.append("clientId", clientId);
-      }
-
-      const suffix = params.toString() ? `?${params.toString()}` : "";
-
-      // Always fetch from database (API handles both authenticated and anonymous)
-      const response = await fetch(
-        `/api/conversations/${conversationId}${suffix}`,
-      );
-
-      if (!response.ok) throw new Error("Failed to load conversation");
-
-      const data = await response.json();
-      return {
-        conversation: data.conversation,
-        messages: data.messages || [],
-      };
+      return fetchConversation(conversationId, clientId);
     },
-    enabled: !!conversationId,
+    enabled: canLoadConversation,
     staleTime: 1000 * 60 * 5, // Keep loaded thread stable while user chats
     refetchOnWindowFocus: false,
   });
+
+  return {
+    ...query,
+    isAccessReady: !conversationId || canLoadConversation,
+  };
 }
 
 export function useCreateConversation() {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useBooking } from "@/hooks/use-booking";
@@ -16,6 +17,7 @@ export function ExperienceBookingSection({
   formattedPrice,
   nightsLabel,
 }: ExperienceBookingSectionProps) {
+  const { t } = useSiteI18n();
   const { openBooking, BookingModal } = useBooking();
 
   return (
@@ -25,7 +27,9 @@ export function ExperienceBookingSection({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {experience.trip ? "Prochain départ" : "Tarif à partir de"}
+                {experience.trip
+                  ? t("experience.bookingSection.nextDeparture")
+                  : t("experience.bookingSection.startingFrom")}
               </p>
               <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="text-3xl font-bold tracking-tight text-foreground">
@@ -40,7 +44,7 @@ export function ExperienceBookingSection({
               className="h-auto min-h-12 w-full rounded-2xl px-5 py-3 text-center text-sm font-semibold leading-tight whitespace-normal shadow-md transition-all hover:shadow-lg sm:w-auto sm:px-8 sm:whitespace-nowrap"
               onClick={() => openBooking(experience)}
             >
-              Réserver cette expérience
+              {t("experience.bookingSection.book")}
             </Button>
           </div>
         </div>

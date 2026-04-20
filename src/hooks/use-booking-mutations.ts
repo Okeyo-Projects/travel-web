@@ -62,6 +62,33 @@ export type CancelBookingInput = {
   details?: string;
 };
 
+export type HostRespondBookingInput = {
+  bookingId: string;
+  hostId: string;
+  response: "approved" | "declined";
+  message?: string;
+  template?: string;
+};
+
+export type HostRespondBookingResult = {
+  success: boolean;
+  message: string;
+  new_status: BookingStatus;
+  availability: {
+    type: "trip" | "lodging";
+    available?: number;
+    total?: number;
+    message: string;
+  } | null;
+};
+
+type UntypedRpcClient = {
+  rpc: (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
+};
+
 const CANCELLABLE_BOOKING_STATUSES: BookingStatus[] = [
   "pending_host",
   "approved",
@@ -104,7 +131,7 @@ export function useCreateBooking() {
 
 export function useGetBookingQuote() {
   const supabase = createClient();
-  const supabaseAny = supabase as any;
+  const rpcClient = supabase as unknown as UntypedRpcClient;
 
   return useMutation({
     mutationFn: async (input: BookingQuoteInput) => {
@@ -113,7 +140,7 @@ export function useGetBookingQuote() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      const { data, error } = await supabaseAny.rpc("get_booking_quote", {
+      const { data, error } = await rpcClient.rpc("get_booking_quote", {
         p_experience_id: input.experienceId,
         p_from_date: input.fromDate,
         p_to_date: input.toDate,
@@ -129,13 +156,65 @@ export function useGetBookingQuote() {
       if (error) throw error;
 
       // RPC returns array with one result in some contexts, or just the object
-      const result = Array.isArray(data) ? data[0] : (data as any);
+      const result = (
+        Array.isArray(data) ? data[0] : data
+      ) as BookingQuoteResult | null;
 
       if (!result || !result.success) {
         throw new Error(result?.message || "Failed to get quote");
       }
 
       return result as BookingQuoteResult;
+    },
+  });
+}
+
+export function useHostRespondToBooking() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+  const rpcClient = supabase as unknown as UntypedRpcClient;
+
+  return useMutation({
+    mutationFn: async (input: HostRespondBookingInput) => {
+      const { data, error } = await rpcClient.rpc("host_respond_to_booking", {
+        p_booking_id: input.bookingId,
+        p_host_id: input.hostId,
+        p_response: input.response,
+        p_message: input.message ?? null,
+        p_template: input.template ?? null,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const result = (
+        Array.isArray(data) ? data[0] : data
+      ) as HostRespondBookingResult | null;
+
+      if (!result || !result.success) {
+        throw new Error(
+          result?.message || "Impossible de mettre a jour la reservation.",
+        );
+      }
+
+      return {
+        ...(result as HostRespondBookingResult),
+        bookingId: input.bookingId,
+      };
+    },
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["booking-detail", variables.bookingId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["bookings"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["host-dashboard"],
+        }),
+      ]);
     },
   });
 }

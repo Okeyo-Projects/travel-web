@@ -32,7 +32,7 @@ export function FooterSection() {
           <div>
             <Image
               src="/logo_white.png"
-              alt="Okeyo Travel Logo"
+              alt={t("home.footer.logoAlt")}
               width={200}
               height={80}
               className="h-auto w-[130px] sm:w-[200px]"

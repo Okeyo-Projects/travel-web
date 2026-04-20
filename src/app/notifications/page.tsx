@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { NotificationsList } from "@/components/notifications/notifications-list";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { useAuth } from "@/hooks/use-auth";
 import {
   useMarkAllNotificationsRead,
@@ -16,6 +17,7 @@ import { localizeHref } from "@/lib/routing/locale-path";
 import type { NotificationRow } from "@/types/notification";
 
 export default function NotificationsPage() {
+  const { t } = useSiteI18n();
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -65,9 +67,11 @@ export default function NotificationsPage() {
 
       <section className="mx-auto w-full max-w-3xl space-y-6 px-4 py-10">
         <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Notifications</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {t("notifications.page.title")}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Suivez vos réservations, paiements, avis et activité en temps réel.
+            {t("notifications.page.description")}
           </p>
         </header>
 

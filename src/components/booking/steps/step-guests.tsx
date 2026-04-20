@@ -3,9 +3,11 @@
 import { Minus, Plus } from "lucide-react";
 import * as React from "react";
 import { useBookingContext } from "@/components/booking/booking-context";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 
 export function StepGuests() {
+  const { t } = useSiteI18n();
   const { adults, children, infants, setGuests, experience, departureId } =
     useBookingContext();
 
@@ -37,14 +39,14 @@ export function StepGuests() {
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         {maxGuests < 20
-          ? `Up to ${maxGuests} guest${maxGuests !== 1 ? "s" : ""} for this experience.`
-          : "How many people are joining?"}
+          ? t("booking.steps.guests.maxGuests", { count: maxGuests })
+          : t("booking.steps.guests.question")}
       </p>
 
       <div className="divide-y rounded-xl border">
         <GuestCounter
-          label="Adults"
-          description="Ages 13+"
+          label={t("booking.steps.guests.labels.adults")}
+          description={t("booking.steps.guests.descriptions.adults")}
           value={adults}
           onIncrement={() => update("adults", 1)}
           onDecrement={() => update("adults", -1)}
@@ -52,16 +54,16 @@ export function StepGuests() {
           maxReached={totalGuests >= maxGuests}
         />
         <GuestCounter
-          label="Children"
-          description="Ages 2–12"
+          label={t("booking.steps.guests.labels.children")}
+          description={t("booking.steps.guests.descriptions.children")}
           value={children}
           onIncrement={() => update("children", 1)}
           onDecrement={() => update("children", -1)}
           maxReached={totalGuests >= maxGuests}
         />
         <GuestCounter
-          label="Infants"
-          description="Under 2"
+          label={t("booking.steps.guests.labels.infants")}
+          description={t("booking.steps.guests.descriptions.infants")}
           value={infants}
           onIncrement={() => update("infants", 1)}
           onDecrement={() => update("infants", -1)}
@@ -71,7 +73,7 @@ export function StepGuests() {
 
       {totalGuests >= maxGuests && (
         <p className="text-xs text-amber-600 text-center">
-          Maximum of {maxGuests} guest{maxGuests !== 1 ? "s" : ""} reached.
+          {t("booking.steps.guests.maxReached", { count: maxGuests })}
         </p>
       )}
     </div>

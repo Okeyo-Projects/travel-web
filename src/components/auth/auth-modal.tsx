@@ -54,9 +54,12 @@ export function AuthModal() {
   const t = useT();
   const { authModalOpen, authMode, closeAuthModal, setAuthMode, supabase } =
     useAuth();
+  const appleAuthEnabled =
+    process.env.NEXT_PUBLIC_APPLE_AUTH_ENABLED === "true";
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -67,6 +70,7 @@ export function AuthModal() {
     if (!authModalOpen) {
       setLoginEmail("");
       setLoginPassword("");
+      setForgotPasswordEmail("");
       setSignupName("");
       setSignupEmail("");
       setSignupPassword("");
@@ -78,6 +82,12 @@ export function AuthModal() {
     if (!open) {
       closeAuthModal();
     }
+  };
+
+  const handleModeChange = (mode: "login" | "signup" | "forgot-password") => {
+    setMessage(null);
+    setIsSubmitting(false);
+    setAuthMode(mode);
   };
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -155,7 +165,57 @@ export function AuthModal() {
     setIsSubmitting(false);
   };
 
+  const handleForgotPassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setMessage(null);
+
+    const email = forgotPasswordEmail.trim();
+
+    if (!email || !email.includes("@")) {
+      setMessage({
+        type: "error",
+        text: t("authModal.messages.invalidEmail"),
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const redirectTo = new URL(
+      localizeHref("/reset-password", pathname),
+      window.location.origin,
+    ).toString();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+
+    if (error) {
+      setMessage({ type: "error", text: error.message });
+      setIsSubmitting(false);
+      return;
+    }
+
+    setMessage({
+      type: "success",
+      text: t("authModal.messages.resetPasswordSent", { email }),
+    });
+    setIsSubmitting(false);
+  };
+
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
+    if (provider === "apple" && !appleAuthEnabled) {
+      captureEvent(ANALYTICS_EVENT.AUTH_LOGIN_FAILED, {
+        method: provider,
+        error_message: "apple_oauth_not_configured",
+      });
+      setMessage({
+        type: "error",
+        text: t("authModal.messages.appleNotConfigured"),
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setMessage(null);
 
@@ -180,6 +240,11 @@ export function AuthModal() {
           type: "error",
           text: t("authModal.messages.oauthCancelled"),
         });
+      } else if (normalizedError.includes("missing oauth secret")) {
+        setMessage({
+          type: "error",
+          text: t("authModal.messages.appleNotConfigured"),
+        });
       } else {
         setMessage({ type: "error", text: error.message });
       }
@@ -191,15 +256,24 @@ export function AuthModal() {
   };
 
   const headerCopy = useMemo(() => {
-    return authMode === "login"
-      ? {
-          title: t("authModal.login.title"),
-          description: t("authModal.login.description"),
-        }
-      : {
-          title: t("authModal.signup.title"),
-          description: t("authModal.signup.description"),
-        };
+    if (authMode === "login") {
+      return {
+        title: t("authModal.login.title"),
+        description: t("authModal.login.description"),
+      };
+    }
+
+    if (authMode === "signup") {
+      return {
+        title: t("authModal.signup.title"),
+        description: t("authModal.signup.description"),
+      };
+    }
+
+    return {
+      title: t("authModal.forgotPassword.title"),
+      description: t("authModal.forgotPassword.description"),
+    };
   }, [authMode, t]);
 
   const content = (
@@ -262,6 +336,16 @@ export function AuthModal() {
               required
             />
           </div>
+          <button
+            type="button"
+            className="self-end text-sm font-medium text-[#ff2566] hover:text-[#e0205a]"
+            onClick={() => {
+              setForgotPasswordEmail(loginEmail.trim());
+              handleModeChange("forgot-password");
+            }}
+          >
+            {t("authModal.login.forgotPassword")}
+          </button>
           {message ? (
             <div
               className={cn(
@@ -282,7 +366,7 @@ export function AuthModal() {
             {t("authModal.login.submit")}
           </Button>
         </form>
-      ) : (
+      ) : authMode === "signup" ? (
         <form className="flex flex-col gap-4" onSubmit={handleSignup}>
           <div className="space-y-2">
             <Label htmlFor="signup-name">
@@ -348,49 +432,99 @@ export function AuthModal() {
             {t("authModal.signup.submit")}
           </Button>
         </form>
+      ) : (
+        <form className="flex flex-col gap-4" onSubmit={handleForgotPassword}>
+          <div className="space-y-2">
+            <Label htmlFor="forgot-password-email">
+              {t("authModal.forgotPassword.emailLabel")}
+            </Label>
+            <Input
+              id="forgot-password-email"
+              type="email"
+              value={forgotPasswordEmail}
+              onChange={(event) => setForgotPasswordEmail(event.target.value)}
+              autoComplete="email"
+              placeholder={t("authModal.forgotPassword.emailPlaceholder")}
+              className="h-11 rounded-full bg-muted/60"
+              required
+            />
+          </div>
+          {message ? (
+            <div
+              className={cn(
+                "rounded-lg px-3 py-2 text-sm",
+                message.type === "error"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-emerald-50 text-emerald-700",
+              )}
+            >
+              {message.text}
+            </div>
+          ) : null}
+          <Button
+            type="submit"
+            className="h-11 rounded-full bg-[#ff2566] text-white hover:bg-[#e0205a]"
+            disabled={isSubmitting}
+          >
+            {t("authModal.forgotPassword.submit")}
+          </Button>
+          <button
+            type="button"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => handleModeChange("login")}
+          >
+            {t("authModal.forgotPassword.backToLogin")}
+          </button>
+        </form>
       )}
 
-      <p className="text-center text-sm text-muted-foreground">
-        {authMode === "login"
-          ? t("authModal.login.switchPrompt")
-          : t("authModal.signup.switchPrompt")}{" "}
-        <button
-          type="button"
-          onClick={() => setAuthMode(authMode === "login" ? "signup" : "login")}
-          className="font-semibold text-foreground hover:text-[#ff2566]"
-        >
-          {authMode === "login"
-            ? t("authModal.login.switchAction")
-            : t("authModal.signup.switchAction")}
-        </button>
-      </p>
+      {authMode !== "forgot-password" ? (
+        <>
+          <p className="text-center text-sm text-muted-foreground">
+            {authMode === "login"
+              ? t("authModal.login.switchPrompt")
+              : t("authModal.signup.switchPrompt")}{" "}
+            <button
+              type="button"
+              onClick={() =>
+                handleModeChange(authMode === "login" ? "signup" : "login")
+              }
+              className="font-semibold text-foreground hover:text-[#ff2566]"
+            >
+              {authMode === "login"
+                ? t("authModal.login.switchAction")
+                : t("authModal.signup.switchAction")}
+            </button>
+          </p>
 
-      <div className="flex items-center gap-3">
-        <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">
-          {t("authModal.orContinueWith")}
-        </span>
-        <Separator className="flex-1" />
-      </div>
+          <div className="flex items-center gap-3">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">
+              {t("authModal.orContinueWith")}
+            </span>
+            <Separator className="flex-1" />
+          </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => handleOAuthSignIn("google")}
-        className="h-11 rounded-full border border-input"
-        disabled={isSubmitting}
-      >
-        {t("authModal.continueWithGoogle")}
-      </Button>
-      <Button
-        type="button"
-        onClick={() => handleOAuthSignIn("apple")}
-        className="h-11 rounded-full bg-black text-white hover:bg-black/90"
-        disabled={isSubmitting}
-      >
-        <AppleLogo className="mr-2 h-4 w-4" />
-        {t("authModal.continueWithApple")}
-      </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleOAuthSignIn("google")}
+            className="h-11 rounded-full border border-input"
+            disabled={isSubmitting}
+          >
+            {t("authModal.continueWithGoogle")}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => handleOAuthSignIn("apple")}
+            className="h-11 rounded-full bg-black text-white hover:bg-black/90"
+            disabled={isSubmitting}
+          >
+            <AppleLogo className="mr-2 h-4 w-4" />
+            {t("authModal.continueWithApple")}
+          </Button>
+        </>
+      ) : null}
 
       <p className="text-center text-xs leading-6 text-muted-foreground">
         {t("authModal.legalPrefix")}{" "}

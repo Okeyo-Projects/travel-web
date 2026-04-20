@@ -1,8 +1,19 @@
 import type { NotificationTarget } from "@/types/notification";
 
+function getMetadataActionUrl(notification: NotificationTarget): string | null {
+  const metadata = notification.metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const actionUrl = (metadata as Record<string, unknown>).action_url;
+  return typeof actionUrl === "string" && actionUrl.length > 0 ? actionUrl : null;
+}
+
 export function getNotificationTargetHref(notification: NotificationTarget): string | null {
-  if (notification.action_url) {
-    return notification.action_url;
+  const actionUrl = notification.action_url || getMetadataActionUrl(notification);
+  if (actionUrl) {
+    return actionUrl;
   }
 
   const { kind, entity_id: entityId, entity_type: entityType } = notification;

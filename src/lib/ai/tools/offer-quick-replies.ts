@@ -58,6 +58,15 @@ function isLodgingOnlyOption(value: string): boolean {
   return !NON_LODGING_PATTERNS.some((pattern) => pattern.test(value));
 }
 
+const MAX_QUESTION_LENGTH = 120;
+
+function isNarrativeQuestion(value: string): boolean {
+  if (value.length > MAX_QUESTION_LENGTH) return true;
+  const sentenceCount = (value.match(/[.!?](\s|$)/g) ?? []).length;
+  if (sentenceCount >= 2) return true;
+  return false;
+}
+
 function sanitizeQuestion(input: string, language: SupportedLanguage): string {
   const normalized = input.trim();
   if (!normalized) {
@@ -65,6 +74,10 @@ function sanitizeQuestion(input: string, language: SupportedLanguage): string {
   }
 
   if (NON_LODGING_PATTERNS.some((pattern) => pattern.test(normalized))) {
+    return getQuickReplyFallbackQuestion(language);
+  }
+
+  if (isNarrativeQuestion(normalized)) {
     return getQuickReplyFallbackQuestion(language);
   }
 

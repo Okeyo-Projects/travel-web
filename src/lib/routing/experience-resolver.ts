@@ -2,7 +2,9 @@ import {
   type ExperienceDetailResponse,
   SELECT_EXPERIENCE_DETAIL,
   transformRecord,
+  buildRoomItemsMap,
 } from "@/hooks/use-experience-detail";
+import { type AppLocale, resolveLocale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseExperienceRecord } from "@/types/experience-detail";
 import { buildExperienceSlug } from "./slugs";
@@ -79,21 +81,39 @@ export async function resolveExperienceId(
 
 export async function fetchExperienceData(
   identifier: string,
+  locale: AppLocale = resolveLocale(null),
 ): Promise<ExperienceDetailResponse> {
   try {
     const experienceId = await resolveExperienceId(identifier);
     if (!experienceId) return null;
 
     const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("experiences" as never)
-      .select(SELECT_EXPERIENCE_DETAIL)
-      .eq("id" as never, experienceId)
-      .maybeSingle<SupabaseExperienceRecord>();
+
+    const [{ data, error }, roomItemsResult] = await Promise.all([
+      supabase
+        .from("experiences" as never)
+        .select(SELECT_EXPERIENCE_DETAIL)
+        .eq("id" as never, experienceId)
+        .maybeSingle<SupabaseExperienceRecord>(),
+      supabase.from("room_items" as never).select("key, category, name, icon"),
+    ]);
 
     if (error || !data) return null;
 
-    return { transformed: transformRecord(data), raw: data };
+    const roomItemsMap = buildRoomItemsMap(
+      (roomItemsResult.data ?? []) as Array<{
+        key: string;
+        category: string;
+        name: { fr?: string; en?: string; ar?: string } | null;
+        icon: string | null;
+      }>,
+      locale,
+    );
+
+    return {
+      transformed: transformRecord(data, roomItemsMap, locale),
+      raw: data,
+    };
   } catch (err) {
     console.error("Error fetching experience data:", err);
     return null;

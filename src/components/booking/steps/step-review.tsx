@@ -15,22 +15,19 @@ import * as React from "react";
 import { toast } from "sonner";
 import { useBookingContext } from "@/components/booking/booking-context";
 import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useCreateBooking } from "@/hooks/use-booking-mutations";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { getIntlLocale } from "@/lib/i18n";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { cn } from "@/lib/utils";
 
-const NOTE_TEMPLATES = [
-  "Special occasion",
-  "Traveling with children",
-  "Early check-in requested",
-];
-
 export function StepReview() {
+  const { locale, t } = useSiteI18n();
   const {
     experience,
     startDate,
@@ -48,11 +45,17 @@ export function StepReview() {
   } = useBookingContext();
 
   const [noteTemplate, setNoteTemplate] = React.useState<string | null>(null);
+  const noteTemplates = [
+    t("booking.steps.review.noteTemplates.one"),
+    t("booking.steps.review.noteTemplates.two"),
+    t("booking.steps.review.noteTemplates.three"),
+  ];
 
   const { mutateAsync: createBooking, isPending: isSubmitting } =
     useCreateBooking();
   const { user } = useAuth();
   const router = useRouter();
+  const intlLocale = getIntlLocale(locale);
 
   const handleSelectTemplate = (template: string) => {
     if (noteTemplate === template) {
@@ -66,7 +69,7 @@ export function StepReview() {
 
   const formatCurrency = (amountCents: number) => {
     if (!quote) return "";
-    return new Intl.NumberFormat("fr-FR", {
+    return new Intl.NumberFormat(intlLocale, {
       style: "currency",
       currency: quote.currency,
       maximumFractionDigits: 0,
@@ -77,7 +80,7 @@ export function StepReview() {
     if (!experience || !quote) return;
     if (!experience.host?.id) return;
     if (!user?.id) {
-      toast.error("Please log in to book.");
+      toast.error(t("booking.steps.review.loginRequired"));
       return;
     }
 
@@ -121,14 +124,14 @@ export function StepReview() {
         total_price: quote.total_cents,
         guest_count: adults + children + infants,
       });
-      toast.success("Booking request sent!");
+      toast.success(t("booking.steps.review.successToast"));
       router.push(booking?.id ? `/bookings/${booking.id}` : "/bookings");
     } catch (error) {
       posthog.captureException(error, {
         event: ANALYTICS_EVENT.BOOKING_SUBMIT_FAILED,
         experience_id: experience?.id,
       });
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("booking.steps.review.errorToast"));
       console.error(error);
     }
   };
@@ -137,7 +140,7 @@ export function StepReview() {
   const dateStr = React.useMemo(() => {
     if (!startDate) return "";
     const fmt = (d: Date) =>
-      d.toLocaleDateString("en-GB", {
+      d.toLocaleDateString(intlLocale, {
         day: "numeric",
         month: "short",
         year: "numeric",
@@ -146,16 +149,29 @@ export function StepReview() {
       return `${fmt(startDate)} → ${fmt(endDate)}`;
     }
     return fmt(startDate);
-  }, [startDate, endDate]);
+  }, [endDate, intlLocale, startDate]);
 
   // Format guest string
   const guestStr = React.useMemo(() => {
-    const parts = [`${adults} adult${adults !== 1 ? "s" : ""}`];
+    const parts = [
+      adults === 1
+        ? t("chat.bookingConfirm.labels.adult.one", { count: adults })
+        : t("chat.bookingConfirm.labels.adult.other", { count: adults }),
+    ];
     if (children > 0)
-      parts.push(`${children} child${children !== 1 ? "ren" : ""}`);
-    if (infants > 0) parts.push(`${infants} infant${infants !== 1 ? "s" : ""}`);
+      parts.push(
+        children === 1
+          ? t("chat.bookingConfirm.labels.child.one", { count: children })
+          : t("chat.bookingConfirm.labels.child.other", { count: children }),
+      );
+    if (infants > 0)
+      parts.push(
+        infants === 1
+          ? t("chat.bookingConfirm.labels.infant.one", { count: infants })
+          : t("chat.bookingConfirm.labels.infant.other", { count: infants }),
+      );
     return parts.join(", ");
-  }, [adults, children, infants]);
+  }, [adults, children, infants, t]);
 
   // Format rooms string for lodging
   const roomStr = React.useMemo(() => {
@@ -165,10 +181,10 @@ export function StepReview() {
         const info = experience.lodging?.rooms.find(
           (room) => room.id === r.roomId,
         );
-        return `${r.quantity} × ${info?.name ?? "Room"}`;
+        return `${r.quantity} × ${info?.name ?? t("booking.steps.review.roomFallback")}`;
       })
       .join(", ");
-  }, [experience, roomSelections]);
+  }, [experience, roomSelections, t]);
 
   // Format departure for trips
   const selectedDeparture = React.useMemo(() => {
@@ -186,10 +202,12 @@ export function StepReview() {
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <p className="text-sm font-medium">Message to host</p>
+          <p className="text-sm font-medium">
+            {t("booking.steps.review.messageToHost")}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {NOTE_TEMPLATES.map((tpl) => (
+          {noteTemplates.map((tpl) => (
             <button
               key={tpl}
               type="button"
@@ -206,7 +224,7 @@ export function StepReview() {
           ))}
         </div>
         <Textarea
-          placeholder="Add a note for the host…"
+          placeholder={t("booking.steps.review.notePlaceholder")}
           value={guestNotes}
           onChange={(e) => {
             setGuestNotes(e.target.value);
@@ -241,7 +259,7 @@ export function StepReview() {
             <Plane className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>
               {new Date(selectedDeparture.depart_at).toLocaleDateString(
-                "en-GB",
+                intlLocale,
                 {
                   day: "numeric",
                   month: "short",
@@ -253,7 +271,7 @@ export function StepReview() {
                   {" "}
                   →{" "}
                   {new Date(selectedDeparture.return_at).toLocaleDateString(
-                    "en-GB",
+                    intlLocale,
                     {
                       day: "numeric",
                       month: "short",
@@ -283,7 +301,7 @@ export function StepReview() {
           <div className="flex justify-between text-sm text-emerald-600">
             <span className="flex items-center gap-1.5">
               <Tag className="h-3.5 w-3.5" />
-              {quote.message ?? "Promo discount"}
+              {quote.message ?? t("booking.steps.review.promoDiscount")}
             </span>
             <span>−{formatCurrency(quote.discount_cents)}</span>
           </div>
@@ -292,7 +310,7 @@ export function StepReview() {
         <Separator />
 
         <div className="flex justify-between font-bold text-base">
-          <span>Total</span>
+          <span>{t("booking.steps.review.total")}</span>
           <span>{formatCurrency(quote.total_cents)}</span>
         </div>
       </div>
@@ -306,10 +324,10 @@ export function StepReview() {
           disabled={isSubmitting || isLoadingQuote}
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-          Confirm booking
+          {t("booking.steps.review.confirm")}
         </Button>
         <p className="text-xs text-center text-muted-foreground mt-2">
-          You won't be charged until the host accepts your request.
+          {t("booking.steps.review.notice")}
         </p>
       </div>
 

@@ -301,6 +301,10 @@ serve(async (req) => {
         // Determine entity_type and entity_id from data
         let entityType = null;
         let entityId = null;
+        const actionUrl =
+            typeof data?.action_url === 'string' && data.action_url.length > 0
+                ? data.action_url
+                : null;
 
         if (data?.booking_id) {
             entityType = 'booking';
@@ -331,6 +335,7 @@ serve(async (req) => {
                 // For now, let's stick to entity_type/id which are standard.
                 entity_type: entityType,
                 entity_id: entityId,
+                action_url: actionUrl,
                 read_at: null,
                 metadata: data,
             });

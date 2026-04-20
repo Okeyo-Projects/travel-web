@@ -52,7 +52,10 @@
     "messages": {
       "nameRequired": "Veuillez saisir votre nom.",
       "emailConfirmation": "Vérifiez votre e-mail pour confirmer votre compte.",
-      "oauthCancelled": "La connexion a été annulée. Veuillez réessayer."
+      "oauthCancelled": "La connexion a été annulée. Veuillez réessayer.",
+      "invalidEmail": "Saisissez une adresse e-mail valide.",
+      "resetPasswordSent": "Nous avons envoyé un lien de réinitialisation à {email}.",
+      "appleNotConfigured": "La connexion Apple n’est pas encore disponible sur le web. Configurez le secret du fournisseur Apple dans Supabase puis activez NEXT_PUBLIC_APPLE_AUTH_ENABLED."
     },
     "login": {
       "title": "Connectez-vous",
@@ -61,9 +64,18 @@
       "emailPlaceholder": "vous@email.com",
       "passwordLabel": "Mot de passe",
       "passwordPlaceholder": "••••••••",
+      "forgotPassword": "Mot de passe oublié ?",
       "submit": "Connexion",
       "switchPrompt": "Vous n'avez pas de compte ?",
       "switchAction": "Créer un compte"
+    },
+    "forgotPassword": {
+      "title": "Réinitialisez votre mot de passe",
+      "description": "Saisissez votre e-mail et nous vous enverrons un lien de réinitialisation sécurisé.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "vous@email.com",
+      "submit": "Envoyer le lien",
+      "backToLogin": "Retour à la connexion"
     },
     "signup": {
       "title": "Créez votre compte",
@@ -77,6 +89,37 @@
       "submit": "Créer un compte",
       "switchPrompt": "Vous avez déjà un compte ?",
       "switchAction": "Se connecter"
+    }
+  },
+  "resetPasswordPage": {
+    "title": "Choisissez un nouveau mot de passe",
+    "description": "Créez un mot de passe solide pour votre compte Okeyo Travel.",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "newPasswordPlaceholder": "Créez un nouveau mot de passe",
+    "confirmPasswordLabel": "Confirmez le mot de passe",
+    "confirmPasswordPlaceholder": "Saisissez à nouveau votre nouveau mot de passe",
+    "submit": "Mettre à jour le mot de passe",
+    "backToHome": "Retour à l’accueil",
+    "passwordStrength": "Solidité du mot de passe",
+    "strength": {
+      "weak": "Faible",
+      "medium": "Moyenne",
+      "strong": "Forte"
+    },
+    "requirements": {
+      "title": "Votre mot de passe doit contenir :",
+      "minLength": "Au moins 8 caractères",
+      "uppercase": "Une lettre majuscule",
+      "lowercase": "Une lettre minuscule",
+      "number": "Un chiffre"
+    },
+    "messages": {
+      "missingFields": "Saisissez et confirmez votre nouveau mot de passe.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "weakPassword": "Utilisez au moins 8 caractères, avec une majuscule, une minuscule et un chiffre.",
+      "success": "Votre mot de passe a été mis à jour. Vous pouvez maintenant l’utiliser pour vous connecter.",
+      "invalidRecoveryLink": "Ce lien de réinitialisation est manquant, expiré ou déjà utilisé.",
+      "loading": "Vérification de votre session de réinitialisation..."
     }
   },
   "common": {

@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { getLocaleFromPathname } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
 import type {
   ExperienceAmenity,
@@ -14,9 +16,28 @@ import type {
   ExperienceService,
   ExperienceServiceRecord,
   ExperienceTrip,
+  RoomItem,
   SupabaseExperienceRecord,
 } from "@/types/experience-detail";
 import { resolveStorageUrl } from "@/utils/functions";
+
+const LABEL_LOCALES: AppLocale[] = ["fr", "en", "ar"];
+
+function localizedLabel(
+  locale: AppLocale,
+  fields: Partial<Record<AppLocale, string | null | undefined>>,
+  fallback: string,
+): string {
+  const ordered: AppLocale[] = [
+    locale,
+    ...LABEL_LOCALES.filter((l) => l !== locale),
+  ];
+  for (const l of ordered) {
+    const val = fields[l];
+    if (typeof val === "string" && val.length > 0) return val;
+  }
+  return fallback;
+}
 
 export const SELECT_EXPERIENCE_DETAIL = `
   id,
@@ -87,6 +108,7 @@ export const SELECT_EXPERIENCE_DETAIL = `
       key,
       label_en,
       label_fr,
+      label_ar,
       icon,
       category
     )
@@ -157,6 +179,7 @@ export const SELECT_EXPERIENCE_DETAIL = `
       key,
       label_en,
       label_fr,
+      label_ar,
       icon,
       category
     )
@@ -168,6 +191,7 @@ export const SELECT_EXPERIENCE_DETAIL = `
       key,
       label_en,
       label_fr,
+      label_ar,
       icon,
       category
     )
@@ -250,6 +274,7 @@ function parseHost(host: any | null | undefined): ExperienceHost | null {
 
 function parseAmenities(
   records: ExperienceAmenityRecord[] | null | undefined,
+  locale: AppLocale,
 ): ExperienceAmenity[] {
   if (!records?.length) {
     return [];
@@ -264,7 +289,11 @@ function parseAmenities(
 
       return {
         key: source.key,
-        label: source.label_en ?? source.label_fr ?? source.key,
+        label: localizedLabel(
+          locale,
+          { fr: source.label_fr, en: source.label_en, ar: source.label_ar },
+          source.key,
+        ),
         icon: source.icon,
         category: source.category,
       };
@@ -275,6 +304,7 @@ function parseAmenities(
 function parseServices(
   records: ExperienceServiceRecord[] | null | undefined,
   type: "included" | "excluded",
+  locale: AppLocale,
 ): ExperienceService[] {
   if (!records?.length) {
     return [];
@@ -289,7 +319,11 @@ function parseServices(
 
       return {
         key: service.key,
-        label: service.label_en ?? service.label_fr ?? service.key,
+        label: localizedLabel(
+          locale,
+          { fr: service.label_fr, en: service.label_en, ar: service.label_ar },
+          service.key,
+        ),
         icon: service.icon,
         category: service.category,
         notes: item.notes ?? null,
@@ -359,6 +393,7 @@ function parseLodging(
     | null
     | undefined,
   roomRecords: any[] | null | undefined,
+  roomItemsMap: Map<string, RoomItem>,
 ): ExperienceLodging | null {
   const lodging = normalizeSingle(lodgingRecords);
   if (!lodging) {
@@ -380,10 +415,15 @@ function parseLodging(
       ? room.equipments.filter(Boolean)
       : [];
 
+    const items: RoomItem[] = itemKeys
+      .map((key: string) => roomItemsMap.get(key))
+      .filter((item: RoomItem | undefined): item is RoomItem => item != null);
+
     return {
       ...room,
       photoUrls,
       itemKeys,
+      items,
     };
   });
 
@@ -421,7 +461,11 @@ function parseTrip(
   };
 }
 
-export function transformRecord(record: SupabaseExperienceRecord): ExperienceDetail {
+export function transformRecord(
+  record: SupabaseExperienceRecord,
+  roomItemsMap?: Map<string, RoomItem>,
+  locale: AppLocale = DEFAULT_LOCALE,
+): ExperienceDetail {
   const gallery = parseMedia(record.media);
   const videoBucket = record.video?.bucket || "media";
   const videoMedia = record.video
@@ -479,11 +523,23 @@ export function transformRecord(record: SupabaseExperienceRecord): ExperienceDet
       views: record.views_count ?? 0,
     },
     host: parseHost(record.host),
-    lodging: parseLodging(record.lodging, record.rooms),
+    lodging: parseLodging(
+      record.lodging,
+      record.rooms,
+      roomItemsMap ?? new Map(),
+    ),
     trip: parseTrip(record.trip, record.itinerary, record.departures),
-    amenities: parseAmenities(record.amenities),
-    servicesIncluded: parseServices(record.servicesIncluded, "included"),
-    servicesExcluded: parseServices(record.servicesExcluded, "excluded"),
+    amenities: parseAmenities(record.amenities, locale),
+    servicesIncluded: parseServices(
+      record.servicesIncluded,
+      "included",
+      locale,
+    ),
+    servicesExcluded: parseServices(
+      record.servicesExcluded,
+      "excluded",
+      locale,
+    ),
     metadata: (record.metadata as Record<string, unknown> | null) ?? null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
@@ -494,6 +550,54 @@ export type ExperienceDetailResponse = {
   transformed: ExperienceDetail;
   raw: SupabaseExperienceRecord;
 } | null;
+
+type RoomItemsRow = {
+  key: string;
+  category: string;
+  name: { fr?: string; en?: string; ar?: string } | null;
+  icon: string | null;
+};
+
+export function buildRoomItemsMap(
+  rows: RoomItemsRow[],
+  locale: AppLocale = DEFAULT_LOCALE,
+): Map<string, RoomItem> {
+  const map = new Map<string, RoomItem>();
+  for (const row of rows) {
+    const name = row.name ?? {};
+    const label =
+      typeof name === "object"
+        ? localizedLabel(
+            locale,
+            {
+              fr: name.fr,
+              en: name.en,
+              ar: name.ar,
+            },
+            row.key,
+          )
+        : row.key;
+    map.set(row.key, {
+      key: row.key,
+      label,
+      icon: row.icon,
+      category: row.category,
+    });
+  }
+  return map;
+}
+
+async function fetchRoomItemsMap(
+  supabase: ReturnType<typeof createClient>,
+  locale: AppLocale,
+): Promise<Map<string, RoomItem>> {
+  const { data } = await supabase
+    .from("room_items" as never)
+    .select("key, category, name, icon")
+    .returns<RoomItemsRow[]>();
+
+  return buildRoomItemsMap(data ?? [], locale);
+}
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -566,17 +670,25 @@ async function fetchExperienceDetail(
   identifier: string,
 ): Promise<ExperienceDetailResponse> {
   const supabase = createClient();
+  const locale = getLocaleFromPathname(
+    typeof window !== "undefined" ? window.location.pathname : undefined,
+  );
   const experienceId = await resolveExperienceId(supabase, identifier);
 
   if (!experienceId) {
     return null;
   }
 
-  const { data, error } = await supabase
-    .from("experiences")
-    .select(SELECT_EXPERIENCE_DETAIL)
-    .eq("id", experienceId)
-    .maybeSingle<SupabaseExperienceRecord>();
+  const [result, roomItemsMap] = await Promise.all([
+    supabase
+      .from("experiences")
+      .select(SELECT_EXPERIENCE_DETAIL)
+      .eq("id", experienceId)
+      .maybeSingle<SupabaseExperienceRecord>(),
+    fetchRoomItemsMap(supabase, locale),
+  ]);
+
+  const { data, error } = result;
   if (error) {
     throw error;
   }
@@ -586,7 +698,7 @@ async function fetchExperienceDetail(
   }
 
   return {
-    transformed: transformRecord(data),
+    transformed: transformRecord(data, roomItemsMap, locale),
     raw: data,
   };
 }

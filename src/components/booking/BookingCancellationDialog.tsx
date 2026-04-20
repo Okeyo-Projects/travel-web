@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,11 +25,11 @@ import { Textarea } from "@/components/ui/textarea";
 const NO_REASON_VALUE = "__none__";
 
 const CANCELLATION_REASONS = [
-  { value: "changed_plans", label: "Changement de programme" },
-  { value: "found_alternative", label: "J'ai trouvé une autre option" },
-  { value: "price_too_high", label: "Le prix est trop élevé" },
-  { value: "personal_reasons", label: "Raison personnelle" },
-  { value: "other", label: "Autre" },
+  { value: "changed_plans", key: "changedPlans" },
+  { value: "found_alternative", key: "foundAlternative" },
+  { value: "price_too_high", key: "priceTooHigh" },
+  { value: "personal_reasons", key: "personalReasons" },
+  { value: "other", key: "other" },
 ] as const;
 
 export type BookingCancellationReason =
@@ -57,6 +58,7 @@ export function BookingCancellationDialog({
   policySummary,
   refundSummary,
 }: BookingCancellationDialogProps) {
+  const { t } = useSiteI18n();
   const [reason, setReason] = useState<BookingCancellationReason | null>(null);
   const [details, setDetails] = useState("");
 
@@ -82,7 +84,9 @@ export function BookingCancellationDialog({
 
     void onConfirm({
       reason,
-      reasonLabel: selectedReason?.label ?? null,
+      reasonLabel: selectedReason
+        ? t(`booking.cancellationDialog.reasons.${selectedReason.key}`)
+        : null,
       details: details.trim(),
     });
   };
@@ -91,10 +95,9 @@ export function BookingCancellationDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-xl" showCloseButton={!isLoading}>
         <DialogHeader>
-          <DialogTitle>Annuler la réservation</DialogTitle>
+          <DialogTitle>{t("booking.cancellationDialog.title")}</DialogTitle>
           <DialogDescription>
-            Cette action est définitive. Vérifiez les conditions ci-dessous
-            avant de confirmer.
+            {t("booking.cancellationDialog.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -104,11 +107,10 @@ export function BookingCancellationDialog({
               <AlertTriangle className="mt-0.5 size-5 text-destructive" />
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">
-                  Votre réservation sera annulée immédiatement.
+                  {t("booking.cancellationDialog.warningTitle")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Vous devrez créer une nouvelle réservation si vous changez
-                  d&apos;avis plus tard.
+                  {t("booking.cancellationDialog.warningDescription")}
                 </p>
               </div>
             </div>
@@ -117,20 +119,22 @@ export function BookingCancellationDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border bg-muted/20 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Politique
+                {t("booking.cancellationDialog.policy")}
               </p>
               <p className="mt-2 text-sm text-foreground">{policySummary}</p>
             </div>
             <div className="rounded-xl border bg-muted/20 p-4">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Remboursement estimé
+                {t("booking.cancellationDialog.refund")}
               </p>
               <p className="mt-2 text-sm text-foreground">{refundSummary}</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="booking-cancel-reason">Motif (facultatif)</Label>
+            <Label htmlFor="booking-cancel-reason">
+              {t("booking.cancellationDialog.reasonLabel")}
+            </Label>
             <Select
               value={reason ?? NO_REASON_VALUE}
               onValueChange={(value) => {
@@ -142,15 +146,17 @@ export function BookingCancellationDialog({
               }}
             >
               <SelectTrigger id="booking-cancel-reason" className="w-full">
-                <SelectValue placeholder="Choisir un motif" />
+                <SelectValue
+                  placeholder={t("booking.cancellationDialog.reasonPlaceholder")}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_REASON_VALUE}>
-                  Je préfère ne pas préciser
+                  {t("booking.cancellationDialog.reasonSkip")}
                 </SelectItem>
                 {CANCELLATION_REASONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(`booking.cancellationDialog.reasons.${option.key}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -159,13 +165,13 @@ export function BookingCancellationDialog({
 
           <div className="space-y-2">
             <Label htmlFor="booking-cancel-details">
-              Détails supplémentaires (facultatif)
+              {t("booking.cancellationDialog.detailsLabel")}
             </Label>
             <Textarea
               id="booking-cancel-details"
               value={details}
               onChange={(event) => setDetails(event.target.value)}
-              placeholder="Ajoutez un peu de contexte si vous le souhaitez."
+              placeholder={t("booking.cancellationDialog.detailsPlaceholder")}
               rows={4}
               maxLength={500}
             />
@@ -179,7 +185,7 @@ export function BookingCancellationDialog({
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
-            Garder la réservation
+            {t("booking.cancellationDialog.keep")}
           </Button>
           <Button
             type="button"
@@ -188,7 +194,7 @@ export function BookingCancellationDialog({
             disabled={isLoading}
           >
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-            Annuler la réservation
+            {t("booking.cancellationDialog.confirm")}
           </Button>
         </DialogFooter>
       </DialogContent>

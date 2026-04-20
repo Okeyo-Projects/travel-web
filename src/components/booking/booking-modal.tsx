@@ -8,28 +8,14 @@ import { StepGuests } from "@/components/booking/steps/step-guests";
 import { StepOptions } from "@/components/booking/steps/step-options";
 import { StepPromo } from "@/components/booking/steps/step-promo";
 import { StepReview } from "@/components/booking/steps/step-review";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { getIntlLocale } from "@/lib/i18n";
 import type { BookingStep } from "./booking-context";
 
-const STEP_LABELS: Record<BookingStep, string> = {
-  guests: "Guests",
-  options: "Options",
-  dates: "Dates",
-  promo: "Promo",
-  review: "Review",
-};
-
-const STEP_TITLES: Record<BookingStep, string> = {
-  guests: "Who's coming?",
-  options: "Choose your option",
-  dates: "Pick your dates",
-  promo: "Promo code",
-  review: "Review & confirm",
-};
-
-function formatCents(cents: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
+function formatCents(cents: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
@@ -37,6 +23,7 @@ function formatCents(cents: number, currency: string) {
 }
 
 export function BookingModal() {
+  const { locale, t } = useSiteI18n();
   const {
     isOpen,
     closeBooking,
@@ -51,6 +38,23 @@ export function BookingModal() {
   } = useBookingContext();
 
   if (!experience) return null;
+
+  const intlLocale = getIntlLocale(locale);
+  const stepLabels: Record<BookingStep, string> = {
+    guests: t("booking.modal.stepLabels.guests"),
+    options: t("booking.modal.stepLabels.options"),
+    dates: t("booking.modal.stepLabels.dates"),
+    promo: t("booking.modal.stepLabels.promo"),
+    review: t("booking.modal.stepLabels.review"),
+  };
+
+  const stepTitles: Record<BookingStep, string> = {
+    guests: t("booking.modal.stepTitles.guests"),
+    options: t("booking.modal.stepTitles.options"),
+    dates: t("booking.modal.stepTitles.dates"),
+    promo: t("booking.modal.stepTitles.promo"),
+    review: t("booking.modal.stepTitles.review"),
+  };
 
   const stepsOrder: BookingStep[] =
     experience.type === "lodging"
@@ -88,7 +92,7 @@ export function BookingModal() {
               type="button"
               onClick={prevStep}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-muted transition-colors"
-              aria-label="Go back"
+              aria-label={t("booking.modal.back")}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -100,7 +104,7 @@ export function BookingModal() {
               {experience.title}
             </p>
             <h2 className="text-base font-semibold leading-tight">
-              {STEP_TITLES[currentStep]}
+              {stepTitles[currentStep]}
             </h2>
           </div>
         </div>
@@ -131,7 +135,7 @@ export function BookingModal() {
                           : "text-muted-foreground/40"
                     }`}
                   >
-                    {STEP_LABELS[step]}
+                    {stepLabels[step]}
                   </span>
                 </div>
                 {i < stepsOrder.length - 1 && (
@@ -156,16 +160,16 @@ export function BookingModal() {
                 {isLoadingQuote ? (
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <Loader2 className="size-3.5 animate-spin" />
-                    <span>Calculating…</span>
+                    <span>{t("booking.modal.footer.calculating")}</span>
                   </div>
                 ) : quoteError ? (
                   <span className="text-xs text-destructive">
-                    Price unavailable
+                    {t("booking.modal.footer.priceUnavailable")}
                   </span>
                 ) : quote ? (
                   <div className="space-y-0.5">
                     <p className="text-xs text-muted-foreground">
-                      Total estimate
+                      {t("booking.modal.footer.totalEstimate")}
                     </p>
                     <div className="flex items-baseline gap-1.5">
                       {quote.discount_cents > 0 && (
@@ -173,23 +177,26 @@ export function BookingModal() {
                           {formatCents(
                             quote.total_cents + quote.discount_cents,
                             quote.currency,
+                            intlLocale,
                           )}
                         </span>
                       )}
                       <span className="text-lg font-bold">
-                        {formatCents(quote.total_cents, quote.currency)}
+                        {formatCents(quote.total_cents, quote.currency, intlLocale)}
                       </span>
                     </div>
                     {quote.discount_cents > 0 && (
                       <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
                         <Tag className="size-3" />
-                        <span>{quote.message ?? "Promo applied"}</span>
+                        <span>
+                          {quote.message ?? t("booking.modal.footer.promoApplied")}
+                        </span>
                       </div>
                     )}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Complete details to see price
+                    {t("booking.modal.footer.completeDetails")}
                   </p>
                 )}
               </div>
@@ -200,7 +207,7 @@ export function BookingModal() {
                 disabled={!canProceed || isLoadingQuote}
                 className="shrink-0 px-7"
               >
-                Continue
+                {t("booking.modal.footer.continue")}
               </Button>
             </div>
           </div>

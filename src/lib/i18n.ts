@@ -1,3 +1,5 @@
+import { arSA, enUS, fr } from "date-fns/locale";
+import type { Locale as DateFnsLocale } from "date-fns/locale";
 import arMessages from "@/locales/ar.json";
 import enMessages from "@/locales/en.json";
 import frMessages from "@/locales/fr.json";
@@ -122,6 +124,20 @@ export function getLocaleDirection(
 
 export function getIntlLocale(locale: AppLocale = DEFAULT_LOCALE): IntlLocale {
   return LOCALE_INTL[locale];
+}
+
+export function getDateFnsLocale(
+  locale: AppLocale = DEFAULT_LOCALE,
+): DateFnsLocale {
+  switch (locale) {
+    case "en":
+      return enUS;
+    case "ar":
+      return arSA;
+    case "fr":
+    default:
+      return fr;
+  }
 }
 
 export function getLocaleMessages(

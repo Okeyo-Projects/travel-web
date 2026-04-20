@@ -52,7 +52,10 @@
     "messages": {
       "nameRequired": "يرجى إدخال اسمك.",
       "emailConfirmation": "تحقق من بريدك الإلكتروني لتأكيد حسابك.",
-      "oauthCancelled": "تم إلغاء تسجيل الدخول. يرجى المحاولة مرة أخرى."
+      "oauthCancelled": "تم إلغاء تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "invalidEmail": "أدخل عنوان بريد إلكتروني صالحًا.",
+      "resetPasswordSent": "أرسلنا رابط إعادة تعيين كلمة المرور إلى {email}.",
+      "appleNotConfigured": "تسجيل الدخول عبر Apple غير متاح على الويب حاليًا. اضبط سر موفر Apple في Supabase ثم فعّل NEXT_PUBLIC_APPLE_AUTH_ENABLED."
     },
     "login": {
       "title": "سجّل الدخول",
@@ -61,9 +64,18 @@
       "emailPlaceholder": "you@email.com",
       "passwordLabel": "كلمة المرور",
       "passwordPlaceholder": "••••••••",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
       "submit": "تسجيل الدخول",
       "switchPrompt": "ليس لديك حساب؟",
       "switchAction": "إنشاء حساب"
+    },
+    "forgotPassword": {
+      "title": "أعد تعيين كلمة المرور",
+      "description": "أدخل بريدك الإلكتروني وسنرسل لك رابطًا آمنًا لإعادة التعيين.",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "you@email.com",
+      "submit": "إرسال رابط إعادة التعيين",
+      "backToLogin": "العودة إلى تسجيل الدخول"
     },
     "signup": {
       "title": "أنشئ حسابك",
@@ -77,6 +89,37 @@
       "submit": "إنشاء حساب",
       "switchPrompt": "لديك حساب بالفعل؟",
       "switchAction": "سجّل الدخول"
+    }
+  },
+  "resetPasswordPage": {
+    "title": "اختر كلمة مرور جديدة",
+    "description": "أنشئ كلمة مرور قوية لحسابك في Okeyo Travel.",
+    "newPasswordLabel": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "أنشئ كلمة مرور جديدة",
+    "confirmPasswordLabel": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور الجديدة",
+    "submit": "تحديث كلمة المرور",
+    "backToHome": "العودة إلى الرئيسية",
+    "passwordStrength": "قوة كلمة المرور",
+    "strength": {
+      "weak": "ضعيفة",
+      "medium": "متوسطة",
+      "strong": "قوية"
+    },
+    "requirements": {
+      "title": "يجب أن تتضمن كلمة المرور:",
+      "minLength": "8 أحرف على الأقل",
+      "uppercase": "حرفًا كبيرًا واحدًا",
+      "lowercase": "حرفًا صغيرًا واحدًا",
+      "number": "رقمًا واحدًا"
+    },
+    "messages": {
+      "missingFields": "أدخل كلمة المرور الجديدة وأكدها.",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين.",
+      "weakPassword": "استخدم 8 أحرف على الأقل مع حرف كبير وحرف صغير ورقم.",
+      "success": "تم تحديث كلمة المرور. يمكنك الآن استخدامها لتسجيل الدخول.",
+      "invalidRecoveryLink": "رابط إعادة التعيين هذا مفقود أو منتهي الصلاحية أو تم استخدامه بالفعل.",
+      "loading": "جارٍ التحقق من جلسة إعادة التعيين..."
     }
   },
   "common": {

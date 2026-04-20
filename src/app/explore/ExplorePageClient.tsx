@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, format } from "date-fns";
+import { addDays, format, startOfDay } from "date-fns";
 import {
   Calendar,
   Home,
@@ -261,7 +261,7 @@ export function ExplorePageClient({
                       dateTo: range?.to ? format(range.to, "yyyy-MM-dd") : null,
                     })
                   }
-                  disabled={(date) => date < addDays(new Date(), -1)}
+                  disabled={(date) => startOfDay(date) < startOfDay(new Date())}
                   numberOfMonths={1}
                 />
                 {dateRange?.from && (

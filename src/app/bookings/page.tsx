@@ -13,12 +13,15 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { getIntlLocale } from "@/lib/i18n";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
 import { getImageUrl } from "@/utils/functions";
 
@@ -60,79 +63,63 @@ type LegendItem = {
   className: string;
 };
 
-const STATUS_TABS = [
-  { id: "all", label: "All" },
-  { id: "pending_host", label: "Pending" },
-  { id: "confirmed", label: "Upcoming" },
-  { id: "completed", label: "Past" },
-  { id: "cancelled", label: "Cancelled" },
-] as const;
-
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-const CALENDAR_LEGEND: LegendItem[] = [
-  { label: "Pending host", className: "bg-amber-500" },
-  { label: "Approved / awaiting payment", className: "bg-blue-500" },
-  { label: "Confirmed", className: "bg-emerald-500" },
-  { label: "Completed", className: "bg-slate-500" },
-  { label: "Cancelled / declined", className: "bg-red-500" },
-];
-
-type TabId = (typeof STATUS_TABS)[number]["id"];
-
-function statusBadge(status: BookingStatus | null) {
+type TabId = "all" | "pending_host" | "confirmed" | "completed" | "cancelled";
+function statusBadge(
+  status: BookingStatus | null,
+  t: ReturnType<typeof useSiteI18n>["t"],
+) {
   switch (status) {
     case "pending_host":
       return {
-        label: "Pending review",
+        label: t("booking.status.pendingReview"),
         variant: "secondary" as const,
         icon: Clock,
       };
     case "approved":
       return {
-        label: "Approved",
+        label: t("booking.status.approved"),
         variant: "secondary" as const,
         icon: CheckCircle,
       };
     case "pending_payment":
       return {
-        label: "Awaiting payment",
+        label: t("booking.status.awaitingPayment"),
         variant: "secondary" as const,
         icon: Clock,
       };
     case "confirmed":
       return {
-        label: "Confirmed",
+        label: t("booking.status.confirmed"),
         variant: "default" as const,
         icon: CheckCircle,
       };
     case "completed":
       return {
-        label: "Completed",
+        label: t("booking.status.completed"),
         variant: "outline" as const,
         icon: CheckCircle,
       };
     case "cancelled":
       return {
-        label: "Cancelled",
+        label: t("booking.status.cancelled"),
         variant: "destructive" as const,
         icon: XCircle,
       };
     case "declined":
       return {
-        label: "Declined",
+        label: t("booking.status.declined"),
         variant: "destructive" as const,
         icon: XCircle,
       };
     case "refunded":
       return {
-        label: "Refunded",
+        label: t("booking.status.refunded"),
         variant: "outline" as const,
         icon: RotateCcw,
       };
     default:
       return {
-        label: status ?? "Unknown",
+        label: status ?? t("booking.status.unknown"),
         variant: "outline" as const,
         icon: Clock,
       };
@@ -192,7 +179,11 @@ function eachDayInRange(from: string, to: string) {
   return days;
 }
 
-function dayIndicator(booking: Booking, selectedDay: Date) {
+function dayIndicator(
+  booking: Booking,
+  selectedDay: Date,
+  t: ReturnType<typeof useSiteI18n>["t"],
+) {
   const start = normalizeDate(booking.from_date);
   const end = normalizeDate(booking.to_date);
   const current = normalizeDate(selectedDay);
@@ -205,33 +196,45 @@ function dayIndicator(booking: Booking, selectedDay: Date) {
   const isStart = current.getTime() === start.getTime();
   const isEnd = current.getTime() === end.getTime();
 
-  if (isStart && isEnd) return "Check-in & check-out";
-  if (isStart) return "Check-in";
-  if (isEnd) return "Check-out";
+  if (isStart && isEnd) return t("bookings.page.dayIndicator.checkInOut");
+  if (isStart) return t("bookings.page.dayIndicator.checkIn");
+  if (isEnd) return t("bookings.page.dayIndicator.checkOut");
 
-  return `Day ${dayNumber} of ${totalDays}`;
+  return t("bookings.page.dayIndicator.dayOf", {
+    day: dayNumber,
+    total: totalDays,
+  });
 }
 
-function formatDateRange(from: string, to: string) {
+function formatDateRange(
+  from: string,
+  to: string,
+  locale: string,
+  t: ReturnType<typeof useSiteI18n>["t"],
+) {
   const opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
   const fromDate = new Date(from);
   const toDate = new Date(to);
   const nights = Math.round(
     (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24),
   );
-  return `${fromDate.toLocaleDateString("en-GB", opts)} – ${toDate.toLocaleDateString("en-GB", opts)} · ${nights} night${nights !== 1 ? "s" : ""}`;
+  const nightsLabel =
+    nights === 1
+      ? t("chat.bookingConfirm.labels.night.one", { count: nights })
+      : t("chat.bookingConfirm.labels.night.other", { count: nights });
+  return `${fromDate.toLocaleDateString(locale, opts)} – ${toDate.toLocaleDateString(locale, opts)} · ${nightsLabel}`;
 }
 
-function formatPrice(cents: number, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+function formatPrice(cents: number, currency: string, locale: string) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(cents / 100);
 }
 
-function formatMonthTitle(month: Date) {
-  return month.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+function formatMonthTitle(month: Date, locale: string) {
+  return month.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 function isSameDay(a: Date, b: Date) {
@@ -239,12 +242,37 @@ function isSameDay(a: Date, b: Date) {
 }
 
 export default function BookingsPage() {
+  const { locale, t } = useSiteI18n();
+  const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedMonth, setSelectedMonth] = useState(() => normalizeDate(new Date()));
   const [selectedDay, setSelectedDay] = useState(() => normalizeDate(new Date()));
+  const intlLocale = getIntlLocale(locale);
+  const statusTabs: Array<{ id: TabId; label: string }> = [
+    { id: "all", label: t("bookings.page.tabs.all") },
+    { id: "pending_host", label: t("bookings.page.tabs.pending") },
+    { id: "confirmed", label: t("bookings.page.tabs.upcoming") },
+    { id: "completed", label: t("bookings.page.tabs.past") },
+    { id: "cancelled", label: t("bookings.page.tabs.cancelled") },
+  ];
+  const weekdayLabels = Array.from({ length: 7 }).map((_, index) =>
+    new Intl.DateTimeFormat(intlLocale, { weekday: "short" }).format(
+      new Date(2024, 0, index + 7),
+    ),
+  );
+  const calendarLegend: LegendItem[] = [
+    { label: t("bookings.page.legend.pendingHost"), className: "bg-amber-500" },
+    {
+      label: t("bookings.page.legend.awaitingPayment"),
+      className: "bg-blue-500",
+    },
+    { label: t("booking.status.confirmed"), className: "bg-emerald-500" },
+    { label: t("booking.status.completed"), className: "bg-slate-500" },
+    { label: t("bookings.page.legend.cancelledDeclined"), className: "bg-red-500" },
+  ];
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["bookings", user?.id],
@@ -269,7 +297,7 @@ export default function BookingsPage() {
   });
 
   if (!authLoading && !user) {
-    router.replace("/");
+    router.replace(localizeHref("/", pathname));
     return null;
   }
 
@@ -370,7 +398,7 @@ export default function BookingsPage() {
 
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold">My Bookings</h1>
+          <h1 className="text-2xl font-bold">{t("bookings.page.title")}</h1>
           <div className="inline-flex w-full rounded-lg border bg-muted p-1 sm:w-auto">
             <button
               type="button"
@@ -382,7 +410,7 @@ export default function BookingsPage() {
               }`}
             >
               <Clock className="size-4" />
-              List
+              {t("bookings.page.view.list")}
             </button>
             <button
               type="button"
@@ -394,14 +422,14 @@ export default function BookingsPage() {
               }`}
             >
               <CalendarDays className="size-4" />
-              Calendar
+              {t("bookings.page.view.calendar")}
             </button>
           </div>
         </div>
 
         {viewMode === "list" && (
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {STATUS_TABS.map((tab) => (
+            {statusTabs.map((tab) => (
               <button
                 type="button"
                 key={tab.id}
@@ -446,28 +474,30 @@ export default function BookingsPage() {
             <div className="flex flex-col items-center gap-4 py-20 text-center">
               <CalendarDays className="size-10 text-muted-foreground/40" />
               <div>
-                <p className="font-medium">No bookings found</p>
+                <p className="font-medium">{t("bookings.page.empty.title")}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {activeTab === "all"
-                    ? "You haven't made any bookings yet."
-                    : "No bookings in this category."}
+                    ? t("bookings.page.empty.all")
+                    : t("bookings.page.empty.filtered")}
                 </p>
               </div>
-              <Button onClick={() => router.push("/explore")}>
-                Explore experiences
+              <Button
+                onClick={() => router.push(localizeHref("/explore", pathname))}
+              >
+                {t("bookings.page.empty.cta")}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
               {filtered.map((booking) => {
-                const { label, variant } = statusBadge(booking.status);
+                const { label, variant } = statusBadge(booking.status, t);
                 const thumbnailUrl = booking.experience?.thumbnail_url
                   ? getImageUrl(booking.experience.thumbnail_url)
                   : null;
                 return (
                   <Link
                     key={booking.id}
-                    href={`/bookings/${booking.id}`}
+                    href={localizeHref(`/bookings/${booking.id}`, pathname)}
                     className="block overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md"
                   >
                     <div className="flex">
@@ -475,7 +505,10 @@ export default function BookingsPage() {
                         <div className="relative w-28 shrink-0 sm:w-36">
                           <Image
                             src={thumbnailUrl}
-                            alt={booking.experience?.title ?? "Experience"}
+                            alt={
+                              booking.experience?.title ??
+                              t("bookings.page.experienceFallback")
+                            }
                             fill
                             className="object-cover"
                           />
@@ -488,7 +521,8 @@ export default function BookingsPage() {
                       <div className="min-w-0 flex-1 space-y-2 p-4">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="line-clamp-2 text-sm font-semibold leading-tight">
-                            {booking.experience?.title ?? "Experience"}
+                            {booking.experience?.title ??
+                              t("bookings.page.experienceFallback")}
                           </h3>
                           <Badge variant={variant} className="shrink-0 text-xs">
                             {label}
@@ -500,18 +534,40 @@ export default function BookingsPage() {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          {formatDateRange(booking.from_date, booking.to_date)}
+                          {formatDateRange(
+                            booking.from_date,
+                            booking.to_date,
+                            intlLocale,
+                            t,
+                          )}
                         </p>
                         <div className="flex items-center justify-between pt-1">
                           <span className="text-xs text-muted-foreground">
-                            {booking.adults} adult
-                            {booking.adults !== 1 ? "s" : ""}
+                            {booking.adults === 1
+                              ? t("chat.bookingConfirm.labels.adult.one", {
+                                  count: booking.adults,
+                                })
+                              : t("chat.bookingConfirm.labels.adult.other", {
+                                  count: booking.adults,
+                                })}
                             {booking.children
-                              ? ` · ${booking.children} child${booking.children !== 1 ? "ren" : ""}`
+                              ? ` · ${
+                                  booking.children === 1
+                                    ? t("chat.bookingConfirm.labels.child.one", {
+                                        count: booking.children,
+                                      })
+                                    : t("chat.bookingConfirm.labels.child.other", {
+                                        count: booking.children,
+                                      })
+                                }`
                               : ""}
                           </span>
                           <span className="text-sm font-bold">
-                            {formatPrice(booking.price_total_cents, booking.currency)}
+                            {formatPrice(
+                              booking.price_total_cents,
+                              booking.currency,
+                              intlLocale,
+                            )}
                           </span>
                         </div>
                       </div>
@@ -530,26 +586,26 @@ export default function BookingsPage() {
                   variant="outline"
                   size="icon"
                   onClick={() => moveMonth("prev")}
-                  aria-label="Previous month"
+                  aria-label={t("bookings.page.previousMonth")}
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
                 <h2 className="text-base font-semibold sm:text-lg">
-                  {formatMonthTitle(selectedMonth)}
+                  {formatMonthTitle(selectedMonth, intlLocale)}
                 </h2>
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
                   onClick={() => moveMonth("next")}
-                  aria-label="Next month"
+                  aria-label={t("bookings.page.nextMonth")}
                 >
                   <ChevronRight className="size-4" />
                 </Button>
               </div>
 
               <div className="mb-3 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground sm:gap-2">
-                {WEEKDAY_LABELS.map((label) => (
+                {weekdayLabels.map((label) => (
                   <div key={label} className="py-1">
                     {label}
                   </div>
@@ -610,9 +666,11 @@ export default function BookingsPage() {
             </div>
 
             <div className="rounded-2xl border bg-card p-4 sm:p-6">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">Legend</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">
+                {t("bookings.page.legend.title")}
+              </h3>
               <div className="grid gap-2 sm:grid-cols-2">
-                {CALENDAR_LEGEND.map((item) => (
+                {calendarLegend.map((item) => (
                   <div key={item.label} className="flex items-center gap-2 text-sm">
                     <span className={`size-2.5 rounded-full ${item.className}`} />
                     <span className="text-muted-foreground">{item.label}</span>
@@ -623,9 +681,11 @@ export default function BookingsPage() {
 
             <div className="rounded-2xl border bg-card p-4 sm:p-6">
               <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-lg font-semibold">Agenda</h3>
+                <h3 className="text-lg font-semibold">
+                  {t("bookings.page.agenda")}
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  {selectedDay.toLocaleDateString("en-US", {
+                  {selectedDay.toLocaleDateString(intlLocale, {
                     weekday: "long",
                     month: "long",
                     day: "numeric",
@@ -636,11 +696,13 @@ export default function BookingsPage() {
 
               {selectedDayBookings.length === 0 ? (
                 <div className="rounded-xl border border-dashed p-8 text-center">
-                  <p className="font-medium">No bookings on this date</p>
+                  <p className="font-medium">
+                    {t("bookings.page.noBookingsForDate.title")}
+                  </p>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {monthHasBookings
-                      ? "Pick another day to view booking details."
-                      : "This month has no bookings yet."}
+                      ? t("bookings.page.noBookingsForDate.pickAnother")
+                      : t("bookings.page.noBookingsForDate.emptyMonth")}
                   </p>
                 </div>
               ) : (
@@ -649,7 +711,7 @@ export default function BookingsPage() {
                     const thumbnailUrl = booking.experience?.thumbnail_url
                       ? getImageUrl(booking.experience.thumbnail_url)
                       : null;
-                    const { label, variant } = statusBadge(booking.status);
+                    const { label, variant } = statusBadge(booking.status, t);
                     const guests =
                       booking.adults +
                       (booking.children ?? 0) +
@@ -658,7 +720,7 @@ export default function BookingsPage() {
                     return (
                       <Link
                         key={`${booking.id}-${dateKey(selectedDay)}`}
-                        href={`/bookings/${booking.id}`}
+                        href={localizeHref(`/bookings/${booking.id}`, pathname)}
                         className="block overflow-hidden rounded-xl border transition-colors hover:bg-muted/40"
                       >
                         <div className="flex gap-3 p-3 sm:p-4">
@@ -666,7 +728,10 @@ export default function BookingsPage() {
                             <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-32">
                               <Image
                                 src={thumbnailUrl}
-                                alt={booking.experience?.title ?? "Experience"}
+                                alt={
+                                  booking.experience?.title ??
+                                  t("bookings.page.experienceFallback")
+                                }
                                 fill
                                 className="object-cover"
                               />
@@ -680,7 +745,8 @@ export default function BookingsPage() {
                           <div className="min-w-0 flex-1 space-y-2">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <h4 className="line-clamp-2 text-sm font-semibold sm:text-base">
-                                {booking.experience?.title ?? "Experience"}
+                                {booking.experience?.title ??
+                                  t("bookings.page.experienceFallback")}
                               </h4>
                               <Badge variant={variant} className="text-xs">
                                 {label}
@@ -688,15 +754,26 @@ export default function BookingsPage() {
                             </div>
 
                             <p className="text-xs text-muted-foreground sm:text-sm">
-                              {formatDateRange(booking.from_date, booking.to_date)}
+                              {formatDateRange(
+                                booking.from_date,
+                                booking.to_date,
+                                intlLocale,
+                                t,
+                              )}
                             </p>
 
                             <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                               <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
-                                {dayIndicator(booking, selectedDay)}
+                                {dayIndicator(booking, selectedDay, t)}
                               </span>
                               <span className="text-muted-foreground">
-                                {guests} guest{guests !== 1 ? "s" : ""}
+                                {guests === 1
+                                  ? t("chat.bookingConfirm.labels.traveler.one", {
+                                      count: guests,
+                                    })
+                                  : t("chat.bookingConfirm.labels.traveler.other", {
+                                      count: guests,
+                                    })}
                               </span>
                             </div>
                           </div>

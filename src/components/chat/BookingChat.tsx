@@ -55,10 +55,6 @@ type ChatSendSource =
   | "quick_reply"
   | "initial_prompt";
 
-type StoredConversationMessage = Pick<UIMessage, "id" | "role" | "parts"> & {
-  content?: string | null;
-};
-
 type ChatMessage = UIMessage & {
   content?: string;
 };
@@ -310,8 +306,11 @@ export function BookingChat({
     !!lockedBookingId &&
     lockedConversationId === activeConversationId;
 
-  const { data: conversationData, isLoading: loadingConversation } =
-    useConversation(initialConversationId || null);
+  const {
+    data: conversationData,
+    isLoading: loadingConversation,
+    isAccessReady: isConversationAccessReady,
+  } = useConversation(initialConversationId || null);
   const createConversation = useCreateConversation();
   const saveMessage = useSaveMessage();
 
@@ -358,12 +357,9 @@ export function BookingChat({
     if (loadingConversation) return;
     if (!conversationData?.conversation) return;
 
-    const conv = conversationData?.conversation as
-      | Record<string, unknown>
-      | undefined;
-    const conversationBookingId =
-      typeof conv?.booking_id === "string" ? conv.booking_id : null;
-    const conversationLocked = !!conv?.locked_at && !!conversationBookingId;
+    const conversationBookingId = conversationData.conversation.booking_id;
+    const conversationLocked =
+      !!conversationData.conversation.locked_at && !!conversationBookingId;
 
     if (conversationLocked) {
       if (lockedConversationId !== activeConversationId) {
@@ -396,12 +392,14 @@ export function BookingChat({
   useEffect(() => {
     if (!conversationData) return;
 
-    const loadedMessages: ChatMessage[] = (conversationData.messages || []).map(
-      (msg: StoredConversationMessage) => ({
+    const loadedMessages: ChatMessage[] = conversationData.messages.map(
+      (msg) => ({
         id: msg.id,
         role: msg.role,
         content: msg.content || "",
-        parts: msg.parts,
+        parts: Array.isArray(msg.parts)
+          ? (msg.parts as ChatMessage["parts"])
+          : [],
       }),
     );
 
@@ -852,7 +850,12 @@ export function BookingChat({
     hasTrackedBookingCreatedRef.current = false;
   }, [lockedBookingId]);
 
-  if (!mounted || loadingConversation) {
+  const shouldShowConversationLoader =
+    !!initialConversationId &&
+    (!isConversationAccessReady ||
+      (loadingConversation && messages.length === 0));
+
+  if (shouldShowConversationLoader) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />

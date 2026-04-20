@@ -27,13 +27,26 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const requestHeaders = await headers();
+  const locale = resolveLocale(requestHeaders.get("x-locale"));
+  const t = createTranslator(locale);
+
   return (
     <LegalPage
-      title="Politique de confidentialité"
-      description="Cette page détaille les données collectées par okeyo travel, leur usage, les cas de partage, vos droits et les mesures de sécurité mises en place."
+      title={t("legal.privacy.title")}
+      description={t("legal.privacy.description")}
       lastUpdated={LEGAL_LAST_UPDATED}
       sections={privacySections}
+      eyebrow={t("legal.page.eyebrow")}
+      lastUpdatedLabel={t("legal.page.lastUpdated")}
+      homeHref={localizeHref("/", locale)}
+      homeLabel={t("legal.page.home")}
+      exploreHref={localizeHref("/explore", locale)}
+      exploreLabel={t("legal.page.explore")}
+      tableOfContentsLabel={t("legal.page.tableOfContents")}
+      onThisPageLabel={t("legal.page.onThisPage")}
+      sectionLabel={t("legal.page.section")}
     />
   );
 }

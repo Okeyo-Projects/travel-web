@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { arSA, enUS, fr } from "date-fns/locale";
 import { CheckCircle2, Plus, Trash2 } from "lucide-react";
@@ -19,8 +20,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useChatContext } from "@/contexts/ChatContext";
+import { useAuth } from "@/hooks/use-auth";
 import {
   type Conversation,
+  prefetchConversation,
   useArchiveConversation,
   useConversations,
 } from "@/hooks/use-conversations";
@@ -29,12 +32,18 @@ import { cn } from "@/lib/utils";
 
 export function ConversationSidebar() {
   const { locale, t, dir } = useSiteI18n();
-  const { data: conversations = [], isLoading } = useConversations();
+  const {
+    data: conversations = [],
+    isLoading,
+    isAccessReady,
+  } = useConversations();
+  const { user } = useAuth();
   const archiveConversation = useArchiveConversation();
-  const { conversationId, startNewConversation } = useChatContext();
+  const { conversationId, startNewConversation, clientId } = useChatContext();
   const router = useRouter();
   const pathname = usePathname();
   const isRtl = dir === "rtl";
+  const queryClient = useQueryClient();
 
   const handleNewConversation = () => {
     startNewConversation();
@@ -61,6 +70,12 @@ export function ConversationSidebar() {
   };
 
   const distanceLocale = locale === "en" ? enUS : locale === "ar" ? arSA : fr;
+
+  const warmConversation = (targetConversationId: string) => {
+    if (!user && !clientId) return;
+
+    void prefetchConversation(queryClient, targetConversationId, clientId);
+  };
 
   return (
     <Sidebar side={isRtl ? "right" : "left"}>
@@ -96,7 +111,7 @@ export function ConversationSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isLoading ? (
+              {!isAccessReady || isLoading ? (
                 <div className="p-4 text-sm text-muted-foreground">
                   {t("chat.sidebar.loading")}
                 </div>
@@ -135,7 +150,12 @@ export function ConversationSidebar() {
                         isActive={isActive}
                         className="h-auto py-3"
                       >
-                        <Link href={localizeHref(`/chat/${conv.id}`, pathname)}>
+                        <Link
+                          href={localizeHref(`/chat/${conv.id}`, pathname)}
+                          onMouseEnter={() => warmConversation(conv.id)}
+                          onFocus={() => warmConversation(conv.id)}
+                          onTouchStart={() => warmConversation(conv.id)}
+                        >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 [padding-inline-end:1.25rem]">
                               <p className="text-sm font-medium truncate">

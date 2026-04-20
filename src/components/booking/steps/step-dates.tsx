@@ -1,12 +1,14 @@
 "use client";
 
-import { addDays } from "date-fns";
+import { startOfDay } from "date-fns";
 import * as React from "react";
 import type { DateRange } from "react-day-picker";
 import { useBookingContext } from "@/components/booking/booking-context";
-import { Calendar } from "@/components/ui/calendar"; // Assuming this exists
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { Calendar } from "@/components/ui/calendar";
 
 export function StepDates() {
+  const { t } = useSiteI18n();
   const { startDate, endDate, setDates } = useBookingContext();
 
   // Use a range state for the Calendar component
@@ -23,9 +25,9 @@ export function StepDates() {
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="text-center space-y-1">
-        <h3 className="font-medium">Quand partez-vous ?</h3>
+        <h3 className="font-medium">{t("booking.steps.dates.title")}</h3>
         <p className="text-sm text-muted-foreground">
-          Sélectionnez vos dates d'arrivée et de départ.
+          {t("booking.steps.dates.description")}
         </p>
       </div>
 
@@ -33,7 +35,7 @@ export function StepDates() {
         mode="range"
         selected={range}
         onSelect={setRange}
-        disabled={(date) => date < new Date() || date < addDays(new Date(), -1)}
+        disabled={(date) => startOfDay(date) < startOfDay(new Date())}
         initialFocus
         numberOfMonths={1} // Keep it simple for modal width
         className="rounded-md border shadow"

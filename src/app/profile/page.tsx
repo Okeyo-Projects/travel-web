@@ -2,10 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Clock, DollarSign, Globe, Loader2, Mail, Pencil } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
+import { getIntlLocale } from "@/lib/i18n";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
 import { getImageUrl } from "@/utils/functions";
 
@@ -60,13 +63,9 @@ function getExtensionFromFile(file: File): string {
   return fromName || "jpg";
 }
 
-const LANGUAGE_LABELS: Record<string, string> = {
-  fr: "Français",
-  en: "English",
-  ar: "العربية",
-};
-
 export default function ProfilePage() {
+  const { locale, t } = useSiteI18n();
+  const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -106,7 +105,7 @@ export default function ProfilePage() {
   }, []);
 
   if (!authLoading && !user) {
-    router.replace("/");
+    router.replace(localizeHref("/", pathname));
     return null;
   }
 
@@ -154,12 +153,18 @@ export default function ProfilePage() {
     }
 
     if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
-      setFormErrors((prev) => ({ ...prev, avatar: "Please select a JPG, PNG, or WebP image." }));
+      setFormErrors((prev) => ({
+        ...prev,
+        avatar: t("profile.page.errors.avatarType"),
+      }));
       return;
     }
 
     if (file.size > MAX_AVATAR_BYTES) {
-      setFormErrors((prev) => ({ ...prev, avatar: "Image size must be 5MB or less." }));
+      setFormErrors((prev) => ({
+        ...prev,
+        avatar: t("profile.page.errors.avatarSize"),
+      }));
       return;
     }
 
@@ -179,7 +184,7 @@ export default function ProfilePage() {
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
       if (!user) {
-        throw new Error("You must be logged in to edit your profile.");
+        throw new Error(t("profile.page.errors.authRequired"));
       }
 
       const supabase = createClient();
@@ -235,11 +240,14 @@ export default function ProfilePage() {
       setUploadProgress(100);
       queryClient.setQueryData(["profile", user.id], nextProfile);
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      toast.success("Profile updated successfully.");
+      toast.success(t("profile.page.toast.success"));
       handleDialogOpenChange(false);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unable to save profile.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("profile.page.errors.saveFallback");
       toast.error(message);
     },
     onSettled: () => {
@@ -251,11 +259,13 @@ export default function ProfilePage() {
     const nextErrors: { displayName?: string; bio?: string; avatar?: string } = {};
 
     if (!displayNameInput.trim()) {
-      nextErrors.displayName = "Display name is required.";
+      nextErrors.displayName = t("profile.page.errors.displayNameRequired");
     }
 
     if (bioInput.length > MAX_BIO_LENGTH) {
-      nextErrors.bio = `Bio must be ${MAX_BIO_LENGTH} characters or less.`;
+      nextErrors.bio = t("profile.page.errors.bioTooLong", {
+        count: MAX_BIO_LENGTH,
+      });
     }
 
     if (formErrors.avatar) {
@@ -274,25 +284,38 @@ export default function ProfilePage() {
     saveProfileMutation.mutate();
   };
 
-  const displayName = profile?.display_name ?? user?.email?.split("@")[0] ?? "User";
+  const displayName =
+    profile?.display_name ?? user?.email?.split("@")[0] ?? t("profile.page.userFallback");
+  const intlLocale = getIntlLocale(locale);
   const memberSince = profile?.created_at
-    ? new Date(profile.created_at).toLocaleDateString("en-US", {
+    ? new Date(profile.created_at).toLocaleDateString(intlLocale, {
         month: "long",
         year: "numeric",
       })
     : null;
 
+  const languageLabels: Record<string, string> = {
+    fr: t("language.options.fr"),
+    en: t("language.options.en"),
+    ar: t("language.options.ar"),
+  };
+
   const infoRows = [
-    { icon: Mail, label: "Email", value: user?.email ?? "—" },
+    { icon: Mail, label: t("profile.page.info.email"), value: user?.email ?? "—" },
     {
       icon: Globe,
-      label: "Language",
-      value: LANGUAGE_LABELS[profile?.preferred_language ?? ""] ?? "Français",
+      label: t("language.label"),
+      value:
+        languageLabels[profile?.preferred_language ?? ""] ?? t("language.options.fr"),
     },
-    { icon: DollarSign, label: "Currency", value: profile?.currency ?? "MAD" },
+    {
+      icon: DollarSign,
+      label: t("profile.page.info.currency"),
+      value: profile?.currency ?? "MAD",
+    },
     {
       icon: Clock,
-      label: "Timezone",
+      label: t("profile.page.info.timezone"),
       value: profile?.timezone ?? "Africa/Casablanca",
     },
   ];
@@ -335,7 +358,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1.5 text-primary-foreground shadow"
-                aria-label="Change avatar"
+                aria-label={t("profile.page.changeAvatar")}
                 onClick={openEditDialog}
               >
                 <Camera className="size-3.5" />
@@ -351,15 +374,19 @@ export default function ProfilePage() {
                 <>
                   <h1 className="text-2xl font-bold truncate">{displayName}</h1>
                   <p className="text-sm text-muted-foreground">
-                    {profile?.is_host ? "Host & Traveller" : "Traveller"}
-                    {memberSince && ` · Member since ${memberSince}`}
+                    {profile?.is_host
+                      ? t("profile.page.roles.hostTraveler")
+                      : t("profile.page.roles.traveler")}
+                    {memberSince
+                      ? ` · ${t("profile.page.memberSince", { date: memberSince })}`
+                      : ""}
                   </p>
                 </>
               )}
             </div>
             <Button variant="outline" size="sm" className="shrink-0" onClick={openEditDialog}>
               <Pencil className="mr-1.5 size-3.5" />
-              Edit
+              {t("profile.page.edit")}
             </Button>
           </div>
 
@@ -369,7 +396,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
-          <h2 className="font-semibold text-base">Account</h2>
+          <h2 className="font-semibold text-base">{t("profile.page.account")}</h2>
           <div className="divide-y">
             {infoRows.map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-center justify-between py-3">
@@ -384,23 +411,23 @@ export default function ProfilePage() {
         </div>
 
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-3">
-          <h2 className="font-semibold text-base">Quick links</h2>
+          <h2 className="font-semibold text-base">{t("profile.page.quickLinks")}</h2>
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
               className="h-auto py-3 flex-col gap-1"
-              onClick={() => router.push("/bookings")}
+              onClick={() => router.push(localizeHref("/bookings", pathname))}
             >
               <span className="text-base">📅</span>
-              <span className="text-xs font-medium">My Bookings</span>
+              <span className="text-xs font-medium">{t("header.bookings")}</span>
             </Button>
             <Button
               variant="outline"
               className="h-auto py-3 flex-col gap-1"
-              onClick={() => router.push("/settings")}
+              onClick={() => router.push(localizeHref("/settings", pathname))}
             >
               <span className="text-base">⚙️</span>
-              <span className="text-xs font-medium">Settings</span>
+              <span className="text-xs font-medium">{t("header.settings")}</span>
             </Button>
           </div>
         </div>
@@ -409,8 +436,8 @@ export default function ProfilePage() {
       <Dialog open={isEditOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-md" showCloseButton={!isSaving}>
           <DialogHeader>
-            <DialogTitle>Edit profile</DialogTitle>
-            <DialogDescription>Update your name, bio, and profile picture.</DialogDescription>
+            <DialogTitle>{t("profile.page.dialog.title")}</DialogTitle>
+            <DialogDescription>{t("profile.page.dialog.description")}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -428,7 +455,7 @@ export default function ProfilePage() {
                 className="relative rounded-full"
                 onClick={handleAvatarPick}
                 disabled={isSaving}
-                aria-label="Choose avatar"
+                aria-label={t("profile.page.dialog.chooseAvatar")}
               >
                 <Avatar className="size-16 border">
                   <AvatarImage src={previewAvatarUrl} alt={displayNameInput || displayName} />
@@ -439,8 +466,10 @@ export default function ProfilePage() {
                 </span>
               </button>
               <div className="space-y-1">
-                <p className="text-sm font-medium">Avatar</p>
-                <p className="text-xs text-muted-foreground">Click to upload JPG, PNG, or WebP (max 5MB).</p>
+                <p className="text-sm font-medium">{t("profile.page.dialog.avatar")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("profile.page.dialog.avatarHint")}
+                </p>
               </div>
             </div>
 
@@ -449,7 +478,7 @@ export default function ProfilePage() {
             {isSaving && uploadProgress > 0 && (
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Uploading avatar…</span>
+                  <span>{t("profile.page.dialog.uploadingAvatar")}</span>
                   <span>{uploadProgress}%</span>
                 </div>
                 <Progress value={uploadProgress} className="h-2" />
@@ -457,7 +486,7 @@ export default function ProfilePage() {
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="display-name">Display name</Label>
+              <Label htmlFor="display-name">{t("profile.page.dialog.displayName")}</Label>
               <Input
                 id="display-name"
                 value={displayNameInput}
@@ -471,7 +500,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="bio">{t("profile.page.dialog.bio")}</Label>
               <Textarea
                 id="bio"
                 value={bioInput}
@@ -482,13 +511,15 @@ export default function ProfilePage() {
                 disabled={isSaving}
                 rows={4}
                 maxLength={MAX_BIO_LENGTH}
-                placeholder="Tell travelers about yourself"
+                placeholder={t("profile.page.dialog.bioPlaceholder")}
               />
               <div className="flex items-center justify-between text-xs">
                 {formErrors.bio ? (
                   <p className="text-destructive">{formErrors.bio}</p>
                 ) : (
-                  <span className="text-muted-foreground">Max {MAX_BIO_LENGTH} characters.</span>
+                  <span className="text-muted-foreground">
+                    {t("profile.page.dialog.bioMax", { count: MAX_BIO_LENGTH })}
+                  </span>
                 )}
                 <span className={bioInput.length > MAX_BIO_LENGTH ? "text-destructive" : "text-muted-foreground"}>
                   {bioInput.length}/{MAX_BIO_LENGTH}
@@ -499,16 +530,16 @@ export default function ProfilePage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={isSaving}>
-              Cancel
+              {t("profile.page.dialog.cancel")}
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
-                  Saving…
+                  {t("profile.page.dialog.saving")}
                 </>
               ) : (
-                "Save changes"
+                t("profile.page.dialog.save")
               )}
             </Button>
           </DialogFooter>

@@ -22,6 +22,7 @@ export type ExperienceAmenityRecord = {
     key: string;
     label_en: string | null;
     label_fr: string | null;
+    label_ar: string | null;
     icon: string | null;
     category: string;
   } | null;
@@ -34,6 +35,7 @@ export type ExperienceServiceRecord = {
     key: string;
     label_en: string | null;
     label_fr: string | null;
+    label_ar: string | null;
     icon: string | null;
     category: string;
   } | null;
@@ -91,9 +93,17 @@ export type ExperienceHost = {
   responseRate: number | null;
 };
 
+export type RoomItem = {
+  key: string;
+  label: string;
+  icon: string | null;
+  category: string;
+};
+
 export type ExperienceRoom = LodgingRoomRow & {
   photoUrls: string[];
   itemKeys: string[];
+  items: RoomItem[];
 };
 
 export type ExperienceLodging = ExperienceLodgingRecord & {

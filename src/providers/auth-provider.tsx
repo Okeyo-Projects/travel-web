@@ -19,7 +19,7 @@ import {
 } from "@/lib/analytics/posthog";
 import { createClient } from "@/lib/supabase/client";
 
-export type AuthMode = "login" | "signup";
+export type AuthMode = "login" | "signup" | "forgot-password";
 
 type AuthModalOptions = {
   mode?: AuthMode;

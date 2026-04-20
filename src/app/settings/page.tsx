@@ -2,9 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,17 +17,14 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
 
 type Language = "fr" | "en" | "ar";
 
-const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
-  { value: "fr", label: "Français" },
-  { value: "en", label: "English" },
-  { value: "ar", label: "العربية" },
-];
-
 export default function SettingsPage() {
+  const { t } = useSiteI18n();
+  const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading, signOut } = useAuth();
   const queryClient = useQueryClient();
@@ -64,7 +62,7 @@ export default function SettingsPage() {
   const updateMutation = useMutation({
     mutationFn: async (patch: { preferred_language?: Language }) => {
       if (!user) {
-        throw new Error("User must be signed in to update settings.");
+        throw new Error(t("settings.page.errors.authRequired"));
       }
 
       const supabase = createClient();
@@ -80,11 +78,16 @@ export default function SettingsPage() {
   });
 
   if (!authLoading && !user) {
-    router.replace("/");
+    router.replace(localizeHref("/", pathname));
     return null;
   }
 
   const isSaving = updateMutation.isPending;
+  const languageOptions: { value: Language; label: string }[] = [
+    { value: "fr", label: t("language.options.fr") },
+    { value: "en", label: t("language.options.en") },
+    { value: "ar", label: t("language.options.ar") },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,11 +96,11 @@ export default function SettingsPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-10 space-y-6">
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold">{t("settings.page.title")}</h1>
 
         {/* Preferences */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-5">
-          <h2 className="font-semibold">Preferences</h2>
+          <h2 className="font-semibold">{t("settings.page.preferences")}</h2>
 
           {isLoading ? (
             <div className="flex justify-center py-6">
@@ -106,7 +109,7 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Language</Label>
+                <Label>{t("language.label")}</Label>
                 <Select
                   value={language}
                   onValueChange={(v) => {
@@ -120,7 +123,7 @@ export default function SettingsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {LANGUAGE_OPTIONS.map((opt) => (
+                    {languageOptions.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </SelectItem>
@@ -130,19 +133,21 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-muted-foreground">Currency</Label>
+                <Label className="text-muted-foreground">
+                  {t("settings.page.currency")}
+                </Label>
                 <div className="flex h-9 w-full items-center rounded-md border bg-transparent px-3 py-2 text-sm opacity-50 cursor-not-allowed">
-                  Moroccan Dirham (MAD)
+                  {t("settings.page.currencyValue")}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Only MAD is supported at the moment.
+                  {t("settings.page.currencyHint")}
                 </p>
               </div>
 
               {isSaving && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Loader2 className="size-3 animate-spin" />
-                  Saving…
+                  {t("settings.page.saving")}
                 </p>
               )}
             </div>
@@ -151,7 +156,7 @@ export default function SettingsPage() {
 
         {/* Account */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
-          <h2 className="font-semibold">Account</h2>
+          <h2 className="font-semibold">{t("settings.page.account")}</h2>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
 
           <Separator />
@@ -160,9 +165,9 @@ export default function SettingsPage() {
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={() => router.push("/profile")}
+              onClick={() => router.push(localizeHref("/profile", pathname))}
             >
-              Edit profile
+              {t("settings.page.editProfile")}
             </Button>
             <Button
               variant="ghost"
@@ -170,40 +175,40 @@ export default function SettingsPage() {
               onClick={() => signOut()}
             >
               <LogOut className="mr-2 size-4" />
-              Log out
+              {t("header.logout")}
             </Button>
           </div>
         </div>
 
         {/* Legal */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-3">
-          <h2 className="font-semibold">Support</h2>
+          <h2 className="font-semibold">{t("settings.page.support")}</h2>
           <p className="text-sm text-muted-foreground">
-            Browse FAQs or send a detailed issue report to the support team.
+            {t("settings.page.supportDescription")}
           </p>
           <a
-            href="/support"
+            href={localizeHref("/support", pathname)}
             className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Help Center & Support
+            {t("settings.page.supportLink")}
           </a>
         </div>
 
         {/* Legal */}
         <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-3">
-          <h2 className="font-semibold">Legal</h2>
+          <h2 className="font-semibold">{t("settings.page.legal")}</h2>
           <div className="space-y-2">
             <a
-              href="/privacy"
+              href={localizeHref("/privacy", pathname)}
               className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Privacy Policy
+              {t("settings.page.privacy")}
             </a>
             <a
-              href="/terms"
+              href={localizeHref("/terms", pathname)}
               className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Terms of Service
+              {t("settings.page.terms")}
             </a>
           </div>
         </div>

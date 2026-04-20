@@ -1913,6 +1913,30 @@ export type Database = {
           },
         ];
       };
+      room_items: {
+        Row: {
+          category: string;
+          created_at: string;
+          icon: string | null;
+          key: string;
+          name: Json;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          icon?: string | null;
+          key: string;
+          name: Json;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          icon?: string | null;
+          key?: string;
+          name?: Json;
+        };
+        Relationships: [];
+      };
       reviews: {
         Row: {
           author_id: string;

@@ -110,7 +110,7 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
         >
           <Image
             src="/logo_white.png"
-            alt="Okeyo Travel Logo - AI-Powered Travel Planning"
+            alt={t("header.logoAlt")}
             width={170}
             height={64}
             className="h-auto w-[92px] sm:w-[170px]"
