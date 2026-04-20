@@ -195,7 +195,7 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
           aria-label={
             mobileMenuOpen ? t("header.closeMenu") : t("header.openMenu")
           }
-          className="rounded-full p-2 text-white hover:bg-white/10 md:hidden relative z-[101]"
+          className="rounded-full p-2 text-white hover:bg-white/10 lg:hidden relative z-[101]"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
         >
           {mobileMenuOpen ? (
