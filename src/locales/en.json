@@ -20,6 +20,7 @@
     "conversations": "Conversations",
     "homeAria": "Okeyo Travel home",
     "userMenu": "User menu",
+    "logoAlt": "Okeyo Travel logo",
     "hostMode": "Host mode",
     "travelerMode": "Traveler mode",
     "switchToTraveler": "Switch to traveler mode",
@@ -126,8 +127,37 @@
     "close": "Close",
     "open": "Open",
     "loading": "Loading",
+    "loadingHostWorkspace": "Loading host workspace...",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "continue": "Continue",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and"
+  },
+  "host": {
+    "loadingWorkspace": "Loading host workspace..."
+  },
+  "review": {
+    "helpText": "Your feedback helps future travelers.",
+    "shareExperience": "Share your experience",
+    "chooseRating": "Choose a rating",
+    "minLength": "Your review must contain at least {min} characters",
+    "readyToPublish": "Ready to publish",
+    "placeholder": "Describe what you liked, the welcome, the organization...",
+    "publish": "Publish review",
+    "success": "Thank you, your review has been published.",
+    "error": "Unable to submit your review."
   },
   "home": {
     "hero": {
@@ -138,6 +168,7 @@
         "three": "Wanderlust,"
       },
       "trailing": "we'll handle the rest",
+      "videoTitle": "Okeyo Travel hero video",
       "description": "In 2 minutes, Okeyo AI finds the experience that fits you.",
       "cta": "Start your journey"
     },
@@ -197,6 +228,7 @@
       "emailPlaceholder": "Your email address",
       "subscribe": "Subscribe",
       "contact": "Contact",
+      "logoAlt": "Okeyo Travel logo",
       "social": {
         "facebook": "Facebook",
         "instagram": "Instagram",
@@ -569,12 +601,28 @@
       "imageAlt": "Travel destination preview"
     },
     "filters": {
+      "title": "Filters",
+      "description": "Refine your search results",
+      "sortBy": "Sort By",
+      "priceRange": "Price Range",
+      "featuredOnly": "Featured Only",
+      "clearFilters": "Clear Filters",
+      "apply": "Apply",
+      "sortOptions": {
+        "newest": "Newest",
+        "popular": "Popular",
+        "topRated": "Top Rated",
+        "priceLow": "Price: Low to High",
+        "priceHigh": "Price: High to Low"
+      },
       "location": {
         "label": "Location",
-        "placeholder": "Search for places..."
+        "placeholder": "Search for places...",
+        "defaultText": "Explore nearby destinations"
       },
       "activity": {
         "label": "Experience",
+        "defaultText": "All Activity",
         "options": {
           "all": "All experiences",
           "lodging": "Lodging"
@@ -885,6 +933,102 @@
       "retry": "Retry",
       "home": "Back to home",
       "explore": "Explore"
+    }
+  },
+  "payment": {
+    "payzone": {
+      "title": "Payment partner",
+      "description": "Transactions on Okeyo Travel are processed securely through Payzone.",
+      "imageAlt": "Payzone secure payment"
+    }
+  },
+  "experienceCard": {
+    "type": {
+      "lodging": "Stay",
+      "trip": "Trip",
+      "activity": "Activity"
+    },
+    "hostedBy": "Hosted by",
+    "contactHost": "Contact Host",
+    "fromPrice": "From"
+  },
+  "experienceGallery": {
+    "viewPhotos": "View {count} photos"
+  },
+  "booking": {
+    "steps": {
+      "review": {
+        "messageToHost": "Message to host",
+        "notePlaceholder": "Write a message to your host (optional)",
+        "noteTemplates": {
+          "one": "I'm looking forward to my stay!",
+          "two": "Please let me know about check-in details.",
+          "three": "I'm traveling with family."
+        },
+        "roomFallback": "Room",
+        "promoDiscount": "Promo discount",
+        "total": "Total",
+        "confirm": "Confirm booking",
+        "notice": "Your booking request will be sent to the host for approval. No payment will be charged right now.",
+        "loginRequired": "Please sign in to complete your booking",
+        "successToast": "Booking submitted successfully!",
+        "errorToast": "Failed to submit booking. Please try again."
+      }
+    },
+    "details": {
+      "subtotal": "Subtotal",
+      "fees": "Fees",
+      "taxes": "Taxes",
+      "total": "Total"
+    },
+    "messages": {
+      "quickReplies": "Quick replies",
+      "addNote": "Add a note"
+    }
+  },
+  "experienceDetails": {
+    "hostedBy": "Hosted by",
+    "verified": "Verified",
+    "type": "Type",
+    "servicesExcluded": "Excluded services",
+    "mediaUnavailable": "Media unavailable",
+    "tabs": {
+      "overview": "Overview",
+      "itinerary": "Itinerary",
+      "stay": "Stay",
+      "rooms": "Rooms",
+      "location": "Location",
+      "reviews": "Reviews"
+    },
+    "info": {
+      "duration": "Duration",
+      "maxCapacity": "Max capacity",
+      "amenities": "Amenities",
+      "new": "New",
+      "onRequest": "On request",
+      "flexible": "Flexible",
+      "night": "night",
+      "nights": "nights",
+      "day": "Day",
+      "hours": "hours",
+      "photoOf": "Photo {number} of {total}",
+      "nonSmoking": "Non-smoking",
+      "petsAllowed": "Pets allowed",
+      "minStay": "Minimum stay",
+      "additionalRules": "Additional rules to confirm with host",
+      "scheduleAndCancellation": "Schedule & Cancellation",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "cancellationPolicy": "Cancellation policy",
+      "includedServices": "Included services",
+      "excludedServices": "Excluded services",
+      "beds": "beds",
+      "noDetails": "No details provided",
+      "noRooms": "No rooms available",
+      "addressNotProvided": "Address not provided"
+    },
+    "rooms": {
+      "beds": "beds"
     }
   }
 }

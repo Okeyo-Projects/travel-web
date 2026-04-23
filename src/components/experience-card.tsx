@@ -21,6 +21,7 @@ import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
 import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
+import { useT } from "@/providers/translations-provider";
 
 interface ExperienceCardProps {
   experience: ExperienceListItem;
@@ -34,6 +35,7 @@ export function ExperienceCard({
   source = "explore",
 }: ExperienceCardProps) {
   const pathname = usePathname();
+  const t = useT();
   const price = experience.trip?.price_cents
     ? new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -113,7 +115,7 @@ export function ExperienceCard({
               className="bg-black/40 text-white hover:bg-black/60 backdrop-blur-md border-0"
             >
               <TypeIcon className="w-3 h-3 mr-1" />
-              <span className="capitalize">{experience.type}</span>
+              <span>{t(`experienceCard.type.${experience.type}`)}</span>
             </Badge>
           </div>
 
@@ -168,7 +170,8 @@ export function ExperienceCard({
               </div>
             )}
             <span className="text-sm text-muted-foreground line-clamp-1">
-              Hosted by {experience.host?.name ?? "Okeyo Host"}
+              {t("experienceCard.hostedBy")}{" "}
+              {experience.host?.name ?? "Okeyo Host"}
             </span>
           </div>
 
@@ -195,9 +198,11 @@ export function ExperienceCard({
             </div>
 
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">From</div>
+              <div className="text-xs text-muted-foreground">
+                {t("experienceCard.fromPrice")}
+              </div>
               <div className="font-bold text-primary text-lg">
-                {price ?? "Contact Host"}
+                {price ?? t("experienceCard.contactHost")}
               </div>
             </div>
           </div>

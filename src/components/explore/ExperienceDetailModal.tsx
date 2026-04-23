@@ -27,6 +27,7 @@ import { useExperienceDetail } from "@/hooks/use-experience-detail";
 import { useRequiredAuth } from "@/hooks/use-required-auth";
 import { useShare } from "@/hooks/use-share";
 import { useExperienceSocial } from "@/hooks/use-social";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
@@ -61,6 +62,7 @@ export function ExperienceDetailModal({
   startIndex,
   onClose,
 }: ExperienceDetailModalProps) {
+  const { t } = useSiteI18n();
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [comment, setComment] = useState("");
   const [isMediaVisible, setIsMediaVisible] = useState(true);
@@ -373,7 +375,9 @@ export function ExperienceDetailModal({
                   )}
                 />
               ) : (
-                <div className="text-sm text-white/70">Media unavailable</div>
+                <div className="text-sm text-white/70">
+                  {t("experienceDetails.mediaUnavailable")}
+                </div>
               )}
 
               {mediaItems.length > 1 && (

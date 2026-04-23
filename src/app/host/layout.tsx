@@ -7,8 +7,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useViewMode } from "@/providers/view-mode-provider";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 export default function HostLayout({ children }: { children: ReactNode }) {
+  const { t } = useSiteI18n();
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -29,7 +31,9 @@ export default function HostLayout({ children }: { children: ReactNode }) {
   if (authLoading || viewModeLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading host workspace...</p>
+        <p className="text-sm text-muted-foreground">
+          {t("host.loadingWorkspace")}
+        </p>
       </div>
     );
   }

@@ -20,6 +20,7 @@
     "conversations": "المحادثات",
     "homeAria": "الصفحة الرئيسية لـ Okeyo Travel",
     "userMenu": "قائمة المستخدم",
+    "logoAlt": "شعار Okeyo Travel",
     "hostMode": "وضع المضيف",
     "travelerMode": "وضع المسافر",
     "switchToTraveler": "التبديل إلى وضع المسافر",
@@ -126,8 +127,37 @@
     "close": "إغلاق",
     "open": "فتح",
     "loading": "جارٍ التحميل",
+    "loadingHostWorkspace": "جارٍ تحميل مساحة المضيف...",
     "previous": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "apply": "تطبيق",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "submit": "إرسال",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "back": "رجوع",
+    "continue": "متابعة",
+    "done": "تم",
+    "yes": "نعم",
+    "no": "لا",
+    "or": "أو",
+    "and": "و"
+  },
+  "host": {
+    "loadingWorkspace": "جارٍ تحميل مساحة المضيف..."
+  },
+  "review": {
+    "helpText": "ملاحظاتك تساعد المسافرين المستقبليين.",
+    "shareExperience": "شارك تجربتك",
+    "chooseRating": "اختر تقييمًا",
+    "minLength": "يجب أن تحتوي مراجعتك على الأقل {min} أحرف",
+    "readyToPublish": "جاهز للنشر",
+    "placeholder": "صف ما أعجبك، الاستقبال، التنظيم...",
+    "publish": "نشر المراجعة",
+    "success": "شكرًا، تم نشر مراجعتك.",
+    "error": "تعذر إرسال مراجعتك."
   },
   "home": {
     "hero": {
@@ -138,6 +168,7 @@
         "three": "شغفك،"
       },
       "trailing": "ونحن نتكفل بالباقي",
+      "videoTitle": "فيديو رئيسي لـ Okeyo Travel",
       "description": "في دقيقتين، يعثر ذكاء Okeyo الاصطناعي على التجربة التي تناسبك.",
       "cta": "ابدأ رحلتك"
     },
@@ -197,6 +228,7 @@
       "emailPlaceholder": "عنوان بريدك الإلكتروني",
       "subscribe": "اشتراك",
       "contact": "تواصل",
+      "logoAlt": "شعار Okeyo Travel",
       "social": {
         "facebook": "فيسبوك",
         "instagram": "إنستغرام",
@@ -569,12 +601,28 @@
       "imageAlt": "معاينة لوجهة سفر"
     },
     "filters": {
+      "title": "الفلاتر",
+      "description": "صفِّ نتائج البحث",
+      "sortBy": "ترتيب حسب",
+      "priceRange": "نطاق السعر",
+      "featuredOnly": "المميزة فقط",
+      "clearFilters": "مسح الفلاتر",
+      "apply": "تطبيق",
+      "sortOptions": {
+        "newest": "الأحدث",
+        "popular": "الأكثر شعبية",
+        "topRated": "الأعلى تقييمًا",
+        "priceLow": "السعر: من الأقل للأعلى",
+        "priceHigh": "السعر: من الأعلى للأقل"
+      },
       "location": {
         "label": "المكان",
-        "placeholder": "ابحث عن أماكن..."
+        "placeholder": "ابحث عن أماكن...",
+        "defaultText": "استكشف الوجهات القريبة"
       },
       "activity": {
         "label": "التجربة",
+        "defaultText": "كل الأنشطة",
         "options": {
           "all": "كل التجارب",
           "lodging": "إقامة"
@@ -885,6 +933,102 @@
       "retry": "إعادة المحاولة",
       "home": "العودة إلى الرئيسية",
       "explore": "استكشاف"
+    }
+  },
+  "payment": {
+    "payzone": {
+      "title": "شريك الدفع",
+      "description": "تتم معالجة المعاملات على Okeyo Travel بشكل آمن عبر Payzone.",
+      "imageAlt": "دفع آمن Payzone"
+    }
+  },
+  "experienceCard": {
+    "type": {
+      "lodging": "إقامة",
+      "trip": "رحلة",
+      "activity": "نشاط"
+    },
+    "hostedBy": "يستضيفه",
+    "contactHost": "تواصل مع المضيف",
+    "fromPrice": "من"
+  },
+  "experienceGallery": {
+    "viewPhotos": "عرض {count} صور"
+  },
+  "booking": {
+    "steps": {
+      "review": {
+        "messageToHost": "رسالة للمضيف",
+        "notePlaceholder": "اكتب رسالة للمضيف (اختياري)",
+        "noteTemplates": {
+          "one": "أنا متشوق لإقامتي!",
+          "two": "يرجى إخباري بتفاصيل تسجيل الدخول.",
+          "three": "أسافر مع عائلتي."
+        },
+        "roomFallback": "غرفة",
+        "promoDiscount": "خصم ترويجي",
+        "total": "الإجمالي",
+        "confirm": "تأكيد الحجز",
+        "notice": "سيتم إرسال طلب الحجز إلى المضيف للموافقة عليه. لن يتم خصم أي مبلغ الآن.",
+        "loginRequired": "يرجى تسجيل الدخول لإكمال حجزك",
+        "successToast": "تم إرسال الحجز بنجاح!",
+        "errorToast": "فشل إرسال الحجز. يرجى المحاولة مرة أخرى."
+      }
+    },
+    "details": {
+      "subtotal": "المجموع الفرعي",
+      "fees": "الرسوم",
+      "taxes": "الضرائب",
+      "total": "الإجمالي"
+    },
+    "messages": {
+      "quickReplies": "ردود سريعة",
+      "addNote": "إضافة ملاحظة"
+    }
+  },
+  "experienceDetails": {
+    "hostedBy": "يستضيفه",
+    "verified": "موثق",
+    "type": "النوع",
+    "servicesExcluded": "الخدمات غير المشمولة",
+    "mediaUnavailable": "الوسائط غير متوفرة",
+    "tabs": {
+      "overview": "نظرة عامة",
+      "itinerary": "البرنامج",
+      "stay": "الإقامة",
+      "rooms": "الغرف",
+      "location": "الموقع",
+      "reviews": "المراجعات"
+    },
+    "info": {
+      "duration": "المدة",
+      "maxCapacity": "السعة القصوى",
+      "amenities": "المرافق",
+      "new": "جديد",
+      "onRequest": "عند الطلب",
+      "flexible": "مرن",
+      "night": "ليلة",
+      "nights": "ليالٍ",
+      "day": "يوم",
+      "hours": "ساعات",
+      "photoOf": "صورة {number} من {total}",
+      "nonSmoking": "غير مدخن",
+      "petsAllowed": "الحيوانات الأليفة مسموحة",
+      "minStay": "الحد الأدنى للإقامة",
+      "additionalRules": "قواعد إضافية للتأكيد مع المضيف",
+      "scheduleAndCancellation": "المواعيد والإلغاء",
+      "checkIn": "تسجيل الوصول",
+      "checkOut": "تسجيل المغادرة",
+      "cancellationPolicy": "سياسة الإلغاء",
+      "includedServices": "الخدمات المشمولة",
+      "excludedServices": "الخدمات غير المشمولة",
+      "beds": "أسرة",
+      "noDetails": "لا توجد تفاصيل",
+      "noRooms": "لا توجد غرف متاحة",
+      "addressNotProvided": "العنوان غير مقدم"
+    },
+    "rooms": {
+      "beds": "أسرة"
     }
   }
 }

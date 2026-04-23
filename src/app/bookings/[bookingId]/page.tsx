@@ -993,7 +993,11 @@ export default function BookingDetailPage() {
                   <div>
                     <p className="font-medium">Dates</p>
                     <p className="text-muted-foreground">
-                      {formatDateRange(booking.from_date, booking.to_date, locale)}
+                      {formatDateRange(
+                        booking.from_date,
+                        booking.to_date,
+                        locale,
+                      )}
                     </p>
                   </div>
                 </div>
@@ -1010,7 +1014,9 @@ export default function BookingDetailPage() {
                 <Separator />
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-muted-foreground">
+                      {t("booking.details.subtotal")}
+                    </span>
                     <span>
                       {formatPrice(
                         booking.price_subtotal_cents,
@@ -1020,7 +1026,9 @@ export default function BookingDetailPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Fees</span>
+                    <span className="text-muted-foreground">
+                      {t("booking.details.fees")}
+                    </span>
                     <span>
                       {formatPrice(
                         booking.price_fees_cents ?? 0,
@@ -1030,7 +1038,9 @@ export default function BookingDetailPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Taxes</span>
+                    <span className="text-muted-foreground">
+                      {t("booking.details.taxes")}
+                    </span>
                     <span>
                       {formatPrice(
                         booking.price_taxes_cents ?? 0,
@@ -1041,9 +1051,13 @@ export default function BookingDetailPage() {
                   </div>
                   <Separator className="my-2" />
                   <div className="flex justify-between font-semibold text-base">
-                    <span>Total</span>
+                    <span>{t("booking.details.total")}</span>
                     <span>
-                      {formatPrice(booking.price_total_cents, booking.currency, locale)}
+                      {formatPrice(
+                        booking.price_total_cents,
+                        booking.currency,
+                        locale,
+                      )}
                     </span>
                   </div>
                 </div>
@@ -1351,7 +1365,9 @@ export default function BookingDetailPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium">Quick replies</p>
+              <p className="text-sm font-medium">
+                {t("booking.messages.quickReplies")}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {hostResponseTemplates.map((template) => {
                   const isActive = selectedHostTemplate === template;
@@ -1376,7 +1392,9 @@ export default function BookingDetailPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Add a note</p>
+              <p className="text-sm font-medium">
+                {t("booking.messages.addNote")}
+              </p>
               <Textarea
                 value={hostResponseNote}
                 onChange={(event) => setHostResponseNote(event.target.value)}

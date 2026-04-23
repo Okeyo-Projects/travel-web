@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useCreateReview } from "@/hooks/use-reviews";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 type ReviewFormProps = {
   bookingId: string;
@@ -13,7 +14,12 @@ type ReviewFormProps = {
 
 const MIN_REVIEW_LENGTH = 10;
 
-export function ReviewForm({ bookingId, experienceId, onSuccess }: ReviewFormProps) {
+export function ReviewForm({
+  bookingId,
+  experienceId,
+  onSuccess,
+}: ReviewFormProps) {
+  const { t } = useSiteI18n();
   const [rating, setRating] = useState<number>(0);
   const [hovered, setHovered] = useState<number>(0);
   const [text, setText] = useState("");
@@ -24,13 +30,13 @@ export function ReviewForm({ bookingId, experienceId, onSuccess }: ReviewFormPro
 
   const helperText = useMemo(() => {
     if (!rating) {
-      return "Choisissez une note";
+      return t("review.chooseRating");
     }
     if (text.trim().length < MIN_REVIEW_LENGTH) {
-      return `Votre avis doit contenir au moins ${MIN_REVIEW_LENGTH} caractères`;
+      return t("review.minLength", { min: MIN_REVIEW_LENGTH });
     }
-    return "Prêt à publier";
-  }, [rating, text]);
+    return t("review.readyToPublish");
+  }, [rating, text, t]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,22 +49,26 @@ export function ReviewForm({ bookingId, experienceId, onSuccess }: ReviewFormPro
         text: text.trim(),
       });
 
-      toast.success("Merci, votre avis a été publié.");
+      toast.success(t("review.success"));
       setRating(0);
       setHovered(0);
       setText("");
       onSuccess?.();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Impossible d'envoyer votre avis.";
+      const message =
+        error instanceof Error ? error.message : t("review.error");
       toast.error(message);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border bg-card p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-2xl border bg-card p-4"
+    >
       <div>
-        <p className="font-medium">Partagez votre expérience</p>
-        <p className="text-sm text-muted-foreground">Votre retour aide les prochains voyageurs.</p>
+        <p className="font-medium">{t("review.shareExperience")}</p>
+        <p className="text-sm text-muted-foreground">{t("review.helpText")}</p>
       </div>
 
       <div className="flex items-center gap-1">
@@ -74,9 +84,15 @@ export function ReviewForm({ bookingId, experienceId, onSuccess }: ReviewFormPro
               onMouseEnter={() => setHovered(value)}
               onMouseLeave={() => setHovered(0)}
               onClick={() => setRating(value)}
-              aria-label={`Noter ${value} sur 5`}
+              aria-label={`Rate ${value} out of 5`}
             >
-              <Star className={active ? "fill-amber-400 text-amber-400" : "text-muted-foreground/35"} />
+              <Star
+                className={
+                  active
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-muted-foreground/35"
+                }
+              />
             </button>
           );
         })}
@@ -85,15 +101,17 @@ export function ReviewForm({ bookingId, experienceId, onSuccess }: ReviewFormPro
       <Textarea
         value={text}
         onChange={(event) => setText(event.target.value)}
-        placeholder="Décrivez ce que vous avez apprécié, l'accueil, l'organisation..."
+        placeholder={t("review.placeholder")}
         rows={5}
       />
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">{helperText}</p>
         <Button type="submit" disabled={!isValid || createReview.isPending}>
-          {createReview.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Publier l'avis
+          {createReview.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : null}
+          {t("review.publish")}
         </Button>
       </div>
     </form>

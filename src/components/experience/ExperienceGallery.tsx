@@ -4,6 +4,7 @@ import { Camera } from "lucide-react";
 import { CustomVideoPlayer } from "@/components/experience/CustomVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { useImageViewer } from "@/hooks/use-image-viewer";
+import { useT } from "@/providers/translations-provider";
 
 interface ExperienceGalleryProps {
   images: string[];
@@ -20,6 +21,7 @@ export function ExperienceGallery({
   imageAlts,
 }: ExperienceGalleryProps) {
   const { openImageViewer, Viewer } = useImageViewer();
+  const t = useT();
 
   const videoUrl = video?.hlsUrl ?? video?.url ?? null;
 
@@ -40,7 +42,7 @@ export function ExperienceGallery({
             onClick={() => openImageViewer(images, 0, imageAlts)}
           >
             <Camera className="h-4 w-4" />
-            Voir les {images.length} photos
+            {t("experienceGallery.viewPhotos", { count: images.length })}
           </Button>
         </div>
       )}

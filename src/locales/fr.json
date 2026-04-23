@@ -20,6 +20,7 @@
     "conversations": "Conversations",
     "homeAria": "Accueil Okeyo Travel",
     "userMenu": "Menu utilisateur",
+    "logoAlt": "Logo Okeyo Travel",
     "hostMode": "Mode hôte",
     "travelerMode": "Mode voyageur",
     "switchToTraveler": "Passer en mode voyageur",
@@ -126,8 +127,37 @@
     "close": "Fermer",
     "open": "Ouvrir",
     "loading": "Chargement",
+    "loadingHostWorkspace": "Chargement de l'espace hôte...",
     "previous": "Précédent",
-    "next": "Suivant"
+    "next": "Suivant",
+    "apply": "Appliquer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "submit": "Envoyer",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "continue": "Continuer",
+    "done": "Terminé",
+    "yes": "Oui",
+    "no": "Non",
+    "or": "ou",
+    "and": "et"
+  },
+  "host": {
+    "loadingWorkspace": "Chargement de l'espace hôte..."
+  },
+  "review": {
+    "helpText": "Votre retour aide les prochains voyageurs.",
+    "shareExperience": "Partagez votre expérience",
+    "chooseRating": "Choisissez une note",
+    "minLength": "Votre avis doit contenir au moins {min} caractères",
+    "readyToPublish": "Prêt à publier",
+    "placeholder": "Décrivez ce que vous avez apprécié, l'accueil, l'organisation...",
+    "publish": "Publier l'avis",
+    "success": "Merci, votre avis a été publié.",
+    "error": "Impossible d'envoyer votre avis."
   },
   "home": {
     "hero": {
@@ -138,6 +168,7 @@
         "three": "Désir,"
       },
       "trailing": "nous nous occupons du reste",
+      "videoTitle": "Vidéro principale Okeyo Travel",
       "description": "En 2 minutes, l'IA Okeyo trouve l'expérience qui vous ressemble.",
       "cta": "Commencer votre voyage"
     },
@@ -197,6 +228,7 @@
       "emailPlaceholder": "Votre adresse e-mail",
       "subscribe": "S'abonner",
       "contact": "Contact",
+      "logoAlt": "Logo Okeyo Travel",
       "social": {
         "facebook": "Facebook",
         "instagram": "Instagram",
@@ -569,12 +601,28 @@
       "imageAlt": "Aperçu d’une destination de voyage"
     },
     "filters": {
+      "title": "Filtres",
+      "description": "Affinez vos résultats de recherche",
+      "sortBy": "Trier par",
+      "priceRange": "Gamme de prix",
+      "featuredOnly": "En vedette uniquement",
+      "clearFilters": "Effacer les filtres",
+      "apply": "Appliquer",
+      "sortOptions": {
+        "newest": "Plus récents",
+        "popular": "Populaires",
+        "topRated": "Mieux notés",
+        "priceLow": "Prix: croissant",
+        "priceHigh": "Prix: décroissant"
+      },
       "location": {
         "label": "Lieu",
-        "placeholder": "Rechercher des lieux..."
+        "placeholder": "Rechercher des lieux...",
+        "defaultText": "Explorer les destinations à proximité"
       },
       "activity": {
         "label": "Expérience",
+        "defaultText": "Toutes les activités",
         "options": {
           "all": "Toutes les expériences",
           "lodging": "Hébergement"
@@ -875,16 +923,112 @@
     },
     "experienceNotFound": {
       "title": "Expérience introuvable",
-      "description": "Cette expérience n’existe pas, n’est plus disponible ou le lien est incorrect.",
-      "home": "Retour à l’accueil",
-      "explore": "Voir d’autres expériences"
+      "description": "Cette expérience n'existe pas, n'est plus disponible ou le lien est incorrect.",
+      "home": "Retour à l'accueil",
+      "explore": "Voir d'autres expériences"
     },
     "experienceError": {
       "title": "Impossible de charger cette expérience",
-      "description": "Une erreur est survenue pendant le chargement. Vous pouvez réessayer ou revenir à l’exploration.",
+      "description": "Une erreur est survenue pendant le chargement. Vous pouvez réessayer ou revenir à l'exploration.",
       "retry": "Réessayer",
-      "home": "Retour à l’accueil",
+      "home": "Retour à l'accueil",
       "explore": "Explorer"
+    }
+  },
+  "payment": {
+    "payzone": {
+      "title": "Paiement partenaire",
+      "description": "Les transactions sur Okeyo Travel sont traitées de manière sécurisée via Payzone.",
+      "imageAlt": "Paiement sécurisé Payzone"
+    }
+  },
+  "experienceCard": {
+    "type": {
+      "lodging": "Hébergement",
+      "trip": "Voyage",
+      "activity": "Activité"
+    },
+    "hostedBy": "Hébergé par",
+    "contactHost": "Contacter l'hôte",
+    "fromPrice": "À partir de"
+  },
+  "experienceGallery": {
+    "viewPhotos": "Voir {count} photos"
+  },
+  "booking": {
+    "steps": {
+      "review": {
+        "messageToHost": "Message à l'hôte",
+        "notePlaceholder": "Écrivez un message à votre hôte (optionnel)",
+        "noteTemplates": {
+          "one": "J'ai hâte de mon séjour !",
+          "two": "Merci de me donner les détails d'enregistrement.",
+          "three": "Je voyage en famille."
+        },
+        "roomFallback": "Chambre",
+        "promoDiscount": "Réduction promo",
+        "total": "Total",
+        "confirm": "Confirmer la réservation",
+        "notice": "Votre demande de réservation sera envoyée à l'hôte pour approbation. Aucun paiement ne sera prélevé maintenant.",
+        "loginRequired": "Veuillez vous connecter pour compléter votre réservation",
+        "successToast": "Réservation envoyée avec succès !",
+        "errorToast": "Échec de l'envoi de la réservation. Veuillez réessayer."
+      }
+    },
+    "details": {
+      "subtotal": "Sous-total",
+      "fees": "Frais",
+      "taxes": "Taxes",
+      "total": "Total"
+    },
+    "messages": {
+      "quickReplies": "Réponses rapides",
+      "addNote": "Ajouter une note"
+    }
+  },
+  "experienceDetails": {
+    "hostedBy": "Hébergé par",
+    "verified": "Vérifié",
+    "type": "Type",
+    "servicesExcluded": "Services exclus",
+    "mediaUnavailable": "Média non disponible",
+    "tabs": {
+      "overview": "Aperçu",
+      "itinerary": "Itinéraire",
+      "stay": "Séjour",
+      "rooms": "Chambres",
+      "location": "Emplacement",
+      "reviews": "Avis"
+    },
+    "info": {
+      "duration": "Durée",
+      "maxCapacity": "Capacité max",
+      "amenities": "Équipements",
+      "new": "Nouveau",
+      "onRequest": "Sur demande",
+      "flexible": "Flexible",
+      "night": "nuit",
+      "nights": "nuits",
+      "day": "Jour",
+      "hours": "heures",
+      "photoOf": "Photo {number} sur {total}",
+      "nonSmoking": "Non-fumeur",
+      "petsAllowed": "Animaux acceptés",
+      "minStay": "Séjour minimum",
+      "additionalRules": "Règles supplémentaires à confirmer avec l'hôte",
+      "scheduleAndCancellation": "Horaires et annulation",
+      "checkIn": "Check-in",
+      "checkOut": "Check-out",
+      "cancellationPolicy": "Politique d'annulation",
+      "includedServices": "Services inclus",
+      "excludedServices": "Services exclus",
+      "beds": "lits",
+      "noDetails": "Aucun détail fourni",
+      "noRooms": "Aucune chambre disponible",
+      "addressNotProvided": "Adresse non renseignée"
+    },
+    "rooms": {
+      "beds": "lits"
     }
   }
 }

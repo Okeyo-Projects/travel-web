@@ -177,18 +177,6 @@ export default async function ExploreCategoryPage({
                   {categoryDescription}
                 </p>
               ) : null}
-              {locale === "fr" && categoryTitle ? (
-                <div className="hidden lg:block pt-4 text-sm text-white/60 max-w-2xl">
-                  <p>
-                    Découvrez nos meilleures offres et séjours dans la catégorie{" "}
-                    {categoryTitle}. Que vous soyez à la recherche d'aventure,
-                    de détente ou de découvertes culturelles, nos expériences{" "}
-                    {categoryTitle.toLowerCase()} sont soigneusement
-                    sélectionnées pour vous offrir des moments inoubliables au
-                    Maroc et au-delà.
-                  </p>
-                </div>
-              ) : null}
             </div>
           </div>
         </div>

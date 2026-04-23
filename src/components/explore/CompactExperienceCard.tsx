@@ -12,6 +12,7 @@ import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
 import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 interface CompactExperienceCardProps {
   experience: ExperienceListItem;
@@ -24,6 +25,7 @@ export function CompactExperienceCard({
   className,
   onOpenDetails,
 }: CompactExperienceCardProps) {
+  const { t } = useSiteI18n();
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pathname = usePathname();
@@ -132,7 +134,9 @@ export function CompactExperienceCard({
             />
           ) : (
             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No image</span>
+              <span className="text-gray-400">
+                {t("chat.experienceCard.noImage")}
+              </span>
             </div>
           )}
         </div>

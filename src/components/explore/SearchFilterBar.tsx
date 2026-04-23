@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useSiteI18n } from "@/components/site/site-i18n";
 
 interface SearchFilterBarProps {
   className?: string;
@@ -22,6 +23,7 @@ interface SearchFilterBarProps {
 }
 
 export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
+  const { t } = useSiteI18n();
   const [location, _setLocation] = useState("");
   const [activity, _setActivity] = useState("");
   const [date, _setDate] = useState("");
@@ -55,9 +57,11 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
         >
           <MapPin className="w-5 h-5 text-[#ff2566] shrink-0" />
           <div className="text-left min-w-0">
-            <p className="text-xs text-gray-400">Location</p>
+            <p className="text-xs text-gray-400">
+              {t("explore.filters.location.label")}
+            </p>
             <p className="text-sm text-white truncate">
-              {location || "Explore nearby destinations"}
+              {location || t("explore.filters.location.defaultText")}
             </p>
           </div>
         </button>
@@ -73,8 +77,12 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
         >
           <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
           <div className="text-left">
-            <p className="text-xs text-gray-400">Activity</p>
-            <p className="text-sm text-white">{activity || "All Activity"}</p>
+            <p className="text-xs text-gray-400">
+              {t("explore.filters.activity.label")}
+            </p>
+            <p className="text-sm text-white">
+              {activity || t("explore.filters.activity.defaultText")}
+            </p>
           </div>
         </button>
 
@@ -89,8 +97,12 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
         >
           <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
           <div className="text-left">
-            <p className="text-xs text-gray-400">When</p>
-            <p className="text-sm text-white">{date || "Choose a Date"}</p>
+            <p className="text-xs text-gray-400">
+              {t("explore.filters.date.label")}
+            </p>
+            <p className="text-sm text-white">
+              {date || t("explore.filters.date.empty")}
+            </p>
           </div>
         </button>
 
@@ -105,8 +117,12 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
         >
           <Users className="w-5 h-5 text-[#ff2566] shrink-0" />
           <div className="text-left">
-            <p className="text-xs text-gray-400">Guests</p>
-            <p className="text-sm text-white">{guests} guest</p>
+            <p className="text-xs text-gray-400">
+              {t("explore.filters.guests.label")}
+            </p>
+            <p className="text-sm text-white">
+              {guests} {t("explore.filters.guests.label").toLowerCase()}
+            </p>
           </div>
         </button>
 
@@ -126,24 +142,36 @@ export function SearchFilterBar({ className, onSearch }: SearchFilterBarProps) {
           <div className="flex items-center gap-3 py-2">
             <Bike className="w-5 h-5 text-[#ff2566] shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-gray-400">Activity</p>
-              <p className="text-sm text-white">{activity || "All Activity"}</p>
+              <p className="text-xs text-gray-400">
+                {t("explore.filters.activity.label")}
+              </p>
+              <p className="text-sm text-white">
+                {activity || t("explore.filters.activity.defaultText")}
+              </p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400" />
           </div>
           <div className="flex items-center gap-3 py-2">
             <Calendar className="w-5 h-5 text-[#ff2566] shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-gray-400">When</p>
-              <p className="text-sm text-white">{date || "Choose a Date"}</p>
+              <p className="text-xs text-gray-400">
+                {t("explore.filters.date.label")}
+              </p>
+              <p className="text-sm text-white">
+                {date || t("explore.filters.date.empty")}
+              </p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400" />
           </div>
           <div className="flex items-center gap-3 py-2">
             <Users className="w-5 h-5 text-[#ff2566] shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-gray-400">Guests</p>
-              <p className="text-sm text-white">{guests} guest</p>
+              <p className="text-xs text-gray-400">
+                {t("explore.filters.guests.label")}
+              </p>
+              <p className="text-sm text-white">
+                {guests} {t("explore.filters.guests.countOne")}
+              </p>
             </div>
             <ChevronDown className="w-4 h-4 text-gray-400" />
           </div>

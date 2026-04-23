@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import type { ExperienceSort, ExperienceType } from "@/types/experience";
 
 interface FiltersProps {
@@ -43,6 +44,7 @@ export function Filters({
   onFeaturedChange,
   onClearFilters,
 }: FiltersProps) {
+  const { t } = useSiteI18n();
   const [open, setOpen] = React.useState(false);
 
   // Local state for pending changes
@@ -93,19 +95,29 @@ export function Filters({
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md flex flex-col p-0 gap-0">
         <SheetHeader className="px-6 py-4 border-b">
-          <SheetTitle>Filters</SheetTitle>
-          <SheetDescription>Refine your search results</SheetDescription>
+          <SheetTitle>{t("explore.filters.title")}</SheetTitle>
+          <SheetDescription>
+            {t("explore.filters.description")}
+          </SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-6">
           <div className="py-6 space-y-8">
             {/* Experience Type */}
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Experience</Label>
+              <Label className="text-base font-semibold">
+                {t("explore.filters.activity.label")}
+              </Label>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { value: "all", label: "All" },
-                  { value: "lodging", label: "Lodge" },
+                  {
+                    value: "all",
+                    label: t("explore.filters.activity.options.all"),
+                  },
+                  {
+                    value: "lodging",
+                    label: t("explore.filters.activity.options.lodging"),
+                  },
                 ].map((type) => (
                   <Button
                     key={type.value}
@@ -122,18 +134,35 @@ export function Filters({
 
             {/* Sort By */}
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Sort By</Label>
+              <Label className="text-base font-semibold">
+                {t("explore.filters.sortBy")}
+              </Label>
               <RadioGroup
                 value={localSort}
                 onValueChange={(v) => setLocalSort(v as ExperienceSort)}
               >
                 <div className="grid grid-cols-1 gap-2">
                   {[
-                    { value: "newest", label: "Newest" },
-                    { value: "popular", label: "Popular" },
-                    { value: "rating", label: "Top Rated" },
-                    { value: "price_low", label: "Price: Low to High" },
-                    { value: "price_high", label: "Price: High to Low" },
+                    {
+                      value: "newest",
+                      label: t("explore.filters.sortOptions.newest"),
+                    },
+                    {
+                      value: "popular",
+                      label: t("explore.filters.sortOptions.popular"),
+                    },
+                    {
+                      value: "rating",
+                      label: t("explore.filters.sortOptions.topRated"),
+                    },
+                    {
+                      value: "price_low",
+                      label: t("explore.filters.sortOptions.priceLow"),
+                    },
+                    {
+                      value: "price_high",
+                      label: t("explore.filters.sortOptions.priceHigh"),
+                    },
                   ].map((option) => (
                     <div
                       key={option.value}
@@ -155,7 +184,9 @@ export function Filters({
             {/* Price Range */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Price Range</Label>
+                <Label className="text-base font-semibold">
+                  {t("explore.filters.priceRange")}
+                </Label>
                 <span className="text-sm text-muted-foreground">
                   ${localPrice[0]} - ${localPrice[1]}
                 </span>
@@ -176,7 +207,7 @@ export function Filters({
                 htmlFor="featured-mode"
                 className="text-base font-semibold"
               >
-                Featured Only
+                {t("explore.filters.featuredOnly")}
               </Label>
               <Switch
                 id="featured-mode"
@@ -196,10 +227,10 @@ export function Filters({
             }}
             className="flex-1"
           >
-            Clear All
+            {t("explore.filters.clearFilters")}
           </Button>
           <Button onClick={handleApply} className="flex-1">
-            Show Results
+            {t("explore.filters.apply")}
           </Button>
         </SheetFooter>
       </SheetContent>
