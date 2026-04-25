@@ -1,4 +1,5 @@
 import { BedDouble, DoorOpen, MapPin, Play, Star, Users } from "lucide-react";
+import parse from "html-react-parser";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,6 +13,7 @@ import { getIntlLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
+import { prepareExperienceRichText } from "@/lib/experience-rich-text";
 import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface RoomInfo {
@@ -229,9 +231,9 @@ export function ExperienceCard({
             {experience.title}
           </h3>
           {experience.description && (
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">
-              {experience.description}
-            </p>
+            <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1">
+              {parse(prepareExperienceRichText(experience.description).html)}
+            </div>
           )}
         </div>
 
