@@ -24,7 +24,8 @@
     "hostMode": "وضع المضيف",
     "travelerMode": "وضع المسافر",
     "switchToTraveler": "التبديل إلى وضع المسافر",
-    "switchToHost": "التبديل إلى وضع المضيف"
+    "switchToHost": "التبديل إلى وضع المضيف",
+    "blog": "المدونة"
   },
   "language": {
     "label": "اللغة",
@@ -146,7 +147,178 @@
     "and": "و"
   },
   "host": {
-    "loadingWorkspace": "جارٍ تحميل مساحة المضيف..."
+    "loadingWorkspace": "جارٍ تحميل مساحة المضيف...",
+    "dashboard": {
+      "subtitle": "لوحة تحكم المضيف",
+      "title": "تحليلات الأعمال",
+      "notHostMessage": "قم بالتبديل إلى وضع المضيف للوصول إلى التحليلات.",
+      "noBookingsMessage": "لا توجد حجوزات بعد. ستظهر تحليلاتك بعد أول حجز.",
+      "errorTitle": "تعذّر تحميل لوحة التحكم",
+      "emptyTitle": "لا توجد تحليلات بعد",
+      "exploreMarketplace": "استكشف السوق",
+      "viewBookings": "عرض الحجوزات"
+    },
+    "experiences": {
+      "title": "إدارة ظهور التجارب",
+      "subtitle": "انشر وأوقف نشر تجاربك دون مغادرة وضع المضيف.",
+      "searchPlaceholder": "ابحث عن التجارب",
+      "filters": {
+        "all": "الكل",
+        "published": "منشورة",
+        "draft": "مسودات",
+        "review": "قيد المراجعة"
+      },
+      "errorTitle": "تعذّر تحميل التجارب",
+      "errorRetry": "يرجى المحاولة مجددًا.",
+      "emptyTitle": "ليس لديك أي تجارب بعد.",
+      "emptySubtitle": "أنشئ أو انشر تجربة من التطبيق لإدارتها هنا.",
+      "noMatchTitle": "لا توجد تجارب تطابق هذا الفلتر.",
+      "noMatchSubtitle": "جرّب علامة تبويب أخرى أو امسح مصطلح البحث.",
+      "unpublishTitle": "إيقاف نشر هذه التجربة؟",
+      "unpublishDescriptionWithBookings": "تحتوي هذه التجربة حاليًا على {count} حجز نشط. الحجوزات الموجودة محفوظة، لكن سيتوقف قبول حجوزات جديدة أثناء إيقاف النشر.",
+      "unpublishDescription": "سيؤدي هذا إلى إخفاء القائمة من الاستكشاف ومنع الحجوزات الجديدة حتى تعيد نشرها.",
+      "keepPublished": "إبقاء منشورة",
+      "unpublish": "إيقاف النشر"
+    },
+    "availability": {
+      "title": "توفر المضيف",
+      "comingSoon": "إدارة التوفر الكاملة ستكون متاحة قريبًا."
+    },
+    "experienceCard": {
+      "noThumbnail": "لا توجد صورة مصغرة",
+      "statuses": {
+        "published": "منشورة",
+        "review": "قيد المراجعة",
+        "draft": "مسودة",
+        "archived": "مؤرشفة"
+      },
+      "types": {
+        "lodging": "إقامة",
+        "trip": "رحلة",
+        "activity": "نشاط"
+      },
+      "locationUnavailable": "الموقع غير متاح",
+      "rating": "التقييم",
+      "noRating": "لا يوجد تقييم",
+      "bookings": "الحجوزات",
+      "activeBookingOne": "{count} حجز نشط",
+      "activeBookingOther": "{count} حجوزات نشطة",
+      "viewDetails": "عرض التفاصيل",
+      "publish": "نشر",
+      "unpublish": "إيقاف النشر"
+    },
+    "stats": {
+      "totalBookings": "إجمالي الحجوزات",
+      "revenue": "الإيرادات",
+      "guestsHosted": "الضيوف المستضافون",
+      "averageRating": "متوسط التقييم",
+      "noRatings": "لا توجد تقييمات"
+    },
+    "recentBookings": {
+      "title": "النشاط الأخير",
+      "guest": "الضيف",
+      "viewBooking": "عرض الحجز",
+      "manageExperience": "إدارة التجربة",
+      "statuses": {
+        "draft": "مسودة",
+        "pending_host": "في انتظار المضيف",
+        "approved": "موافق عليه",
+        "declined": "مرفوض",
+        "pending_payment": "في انتظار الدفع",
+        "confirmed": "مؤكد",
+        "cancelled": "ملغى",
+        "completed": "مكتمل",
+        "refunded": "مسترد",
+        "unknown": "غير معروف"
+      }
+    },
+    "charts": {
+      "bookingsTrend": "اتجاه الحجوزات والإيرادات",
+      "bookings": "الحجوزات",
+      "revenue": "الإيرادات",
+      "statusBreakdown": "توزيع الحجوزات حسب الحالة",
+      "topExperiences": "أفضل التجارب حسب الحجوزات"
+    },
+    "becomeHost": {
+      "pageTitle": "كن مضيفًا",
+      "editTitle": "تعديل ملف المضيف",
+      "stepIndicator": "الخطوة {current} من {total}",
+      "steps": {
+        "identity": {
+          "title": "هويتك",
+          "subtitle": "أخبرنا عن علامتك التجارية وكيف يمكن للضيوف الوصول إليك."
+        },
+        "location": {
+          "title": "موقعك",
+          "subtitle": "أين تجري تجاربك؟"
+        },
+        "expertise": {
+          "title": "خبرتك",
+          "subtitle": "ما اللغات التي تستضيف بها وما هي تخصصاتك؟"
+        },
+        "cover": {
+          "title": "صورة الغلاف",
+          "subtitle": "صورة غلاف رائعة تساعد الضيوف في اكتشاف ملفك الشخصي."
+        }
+      },
+      "fields": {
+        "logo": "الشعار / صورة الملف الشخصي",
+        "brandName": "اسم العلامة التجارية",
+        "brandNamePlaceholder": "مثال: رحلات الأطلس",
+        "bio": "نبذة مختصرة",
+        "bioPlaceholder": "أخبر الضيوف ما الذي يجعل تجاربك فريدة...",
+        "contactEmail": "البريد الإلكتروني للتواصل",
+        "contactEmailPlaceholder": "guests@yourdomain.com",
+        "contactPhone": "رقم الهاتف (اختياري)",
+        "contactPhoneHelper": "قد يستخدم الضيوف هذا الرقم للتواصل معك مباشرة.",
+        "country": "البلد",
+        "countryPlaceholder": "مثال: المغرب",
+        "city": "المدينة",
+        "cityPlaceholder": "مثال: مراكش",
+        "languages": "لغات الاستضافة",
+        "specialties": "التخصصات (اختياري)"
+      },
+      "helpers": {
+        "location": "موقعك يساعد الضيوف على فهم أين تجري تجاربك. لن يُعرض كعنوان دقيق.",
+        "expertise": "لغاتك وتخصصاتك تساعد المسافرين في إيجاد المضيف المناسب لهم.",
+        "coverRatio": "النسبة المقترحة: 3:2",
+        "coverImpact": "صورة غلاف جذابة تزيد من ظهور ملفك الشخصي بشكل ملحوظ."
+      },
+      "upload": {
+        "tapToUploadLogo": "انقر للرفع",
+        "uploading": "جارٍ الرفع... {progress}%",
+        "uploadImage": "رفع صورة الغلاف",
+        "replaceImage": "استبدال صورة الغلاف"
+      },
+      "buttons": {
+        "back": "رجوع",
+        "continue": "متابعة",
+        "publishProfile": "نشر الملف الشخصي",
+        "saveChanges": "حفظ التغييرات"
+      },
+      "validation": {
+        "nameRequired": "يرجى إدخال اسم علامتك التجارية.",
+        "emailRequired": "يرجى إدخال البريد الإلكتروني للتواصل.",
+        "invalidPhone": "يرجى إدخال رقم هاتف صالح.",
+        "countryRequired": "يرجى إدخال بلدك.",
+        "languageRequired": "يرجى اختيار لغة واحدة على الأقل."
+      },
+      "errors": {
+        "uploadFailed": "فشل الرفع. يرجى المحاولة مجددًا.",
+        "saveFailed": "تعذّر حفظ ملفك الشخصي. يرجى التحقق من بياناتك والمحاولة مجددًا."
+      },
+      "success": {
+        "createdTitle": "تم نشر الملف الشخصي!",
+        "createdMessage": "أنت الآن مضيف. أهلاً بك!",
+        "updatedTitle": "تم تحديث الملف الشخصي!",
+        "updatedMessage": "تم حفظ ملف المضيف الخاص بك."
+      },
+      "alreadyHost": {
+        "title": "أنت بالفعل مضيف",
+        "subtitle": "ملفك الشخصي كمضيف نشط. تفضل بزيارة لوحة التحكم لإدارة تجاربك.",
+        "goToDashboard": "الذهاب إلى لوحة التحكم"
+      }
+    }
   },
   "review": {
     "helpText": "ملاحظاتك تساعد المسافرين المستقبليين.",
@@ -237,6 +409,7 @@
       "links": {
         "explore": "استكشف",
         "about": "من نحن",
+        "blog": "المدونة",
         "privacy": "سياسة الخصوصية",
         "terms": "شروط الاستخدام",
         "support": "الدعم"
@@ -297,6 +470,11 @@
     "privacy": {
       "title": "سياسة الخصوصية | Okeyo Travel",
       "description": "اطلع على سياسة خصوصية Okeyo Travel وكيفية استخدام بياناتك وحمايتها."
+    },
+    "blog": {
+      "title": "المدونة — Okeyo Travel",
+      "description": "نصائح سفر وأدلة وجهات وقصص لإلهام رحلتك القادمة.",
+      "fallbackTitle": "المقال غير موجود — Okeyo Travel"
     }
   },
   "about": {
@@ -956,7 +1134,104 @@
     "viewPhotos": "عرض {count} صور"
   },
   "booking": {
+    "modal": {
+      "back": "رجوع",
+      "stepLabels": {
+        "guests": "الضيوف",
+        "options": "الخيارات",
+        "dates": "التواريخ",
+        "promo": "بروموكود",
+        "review": "المراجعة"
+      },
+      "stepTitles": {
+        "guests": "من سيأتي؟",
+        "options": "اختر خياراتك",
+        "dates": "اختر تواريخك",
+        "promo": "رمز الخصم",
+        "review": "مراجعة الحجز"
+      },
+      "footer": {
+        "calculating": "جارٍ الحساب…",
+        "priceUnavailable": "السعر غير متاح",
+        "totalEstimate": "الإجمالي التقديري",
+        "promoApplied": "تم تطبيق الخصم",
+        "completeDetails": "أكمل جميع التفاصيل لرؤية السعر",
+        "continue": "متابعة"
+      }
+    },
+    "cancellationDialog": {
+      "title": "إلغاء هذا الحجز؟",
+      "description": "يرجى مراجعة سياسة الإلغاء قبل المتابعة. هذا الإجراء لا يمكن التراجع عنه.",
+      "warningTitle": "لا يمكن التراجع عن هذا الإجراء",
+      "warningDescription": "بمجرد الإلغاء، سيتم إلغاء حجزك نهائياً ولا يمكن استعادته.",
+      "policy": "سياسة الإلغاء",
+      "refund": "الاسترداد",
+      "reasonLabel": "سبب الإلغاء (اختياري)",
+      "reasonPlaceholder": "اختر سبباً",
+      "reasonSkip": "أفضل عدم الإفصاح",
+      "detailsLabel": "تفاصيل إضافية (اختياري)",
+      "detailsPlaceholder": "أخبرنا المزيد عن سبب إلغائك…",
+      "keep": "الاحتفاظ بالحجز",
+      "confirm": "نعم، إلغاء الحجز",
+      "reasons": {
+        "changedPlans": "تغيير الخطط",
+        "foundAlternative": "وجدت خياراً أفضل",
+        "priceTooHigh": "السعر مرتفع جداً",
+        "personalReasons": "أسباب شخصية",
+        "other": "أخرى"
+      }
+    },
     "steps": {
+      "dates": {
+        "title": "متى ستذهب؟",
+        "description": "اختر تاريخَي الوصول والمغادرة."
+      },
+      "guests": {
+        "question": "كم عدد الضيوف؟",
+        "maxGuests": "هذه التجربة محدودة بـ {count} ضيوف",
+        "maxReached": "تم الوصول للحد الأقصى وهو {count} ضيوف",
+        "labels": {
+          "adults": "البالغون",
+          "children": "الأطفال",
+          "infants": "الرضّع"
+        },
+        "descriptions": {
+          "adults": "13 سنة فأكثر",
+          "children": "من 2 إلى 12 سنة",
+          "infants": "أقل من سنتين"
+        }
+      },
+      "promo": {
+        "title": "لديك رمز خصم؟",
+        "description": "أدخل رمز الخصم للحصول على تخفيض على حجزك.",
+        "label": "رمز الخصم",
+        "placeholder": "مثال: SUMMER20",
+        "apply": "تطبيق",
+        "loading": "جارٍ التحقق…",
+        "applied": "تم تطبيق الخصم!",
+        "errorCalculating": "تعذّر تطبيق رمز الخصم. يرجى المحاولة مجدداً."
+      },
+      "options": {
+        "noneAvailable": "لا توجد خيارات متاحة لهذه التجربة.",
+        "trip": {
+          "noneAvailable": "لا توجد مواعيد مغادرة متاحة.",
+          "select": "اختر تاريخ المغادرة",
+          "returns": "العودة",
+          "soldOut": "نفدت التذاكر",
+          "seatsLeft": "{count} مقاعد متبقية",
+          "standardPrice": "السعر العادي"
+        },
+        "lodging": {
+          "noneAvailable": "لا توجد غرف متاحة.",
+          "select": "اختر الغرف",
+          "guestCount": "{count} ضيوف",
+          "roomFallback": "غرفة",
+          "upToGuests": "حتى {count} أشخاص",
+          "perNight": "ليلة",
+          "addRoom": "إضافة غرفة",
+          "removeRoom": "إزالة غرفة"
+        }
+      },
       "review": {
         "messageToHost": "رسالة للمضيف",
         "notePlaceholder": "اكتب رسالة للمضيف (اختياري)",
@@ -965,6 +1240,7 @@
           "two": "يرجى إخباري بتفاصيل تسجيل الدخول.",
           "three": "أسافر مع عائلتي."
         },
+        "rooms": "الغرف",
         "roomFallback": "غرفة",
         "promoDiscount": "خصم ترويجي",
         "total": "الإجمالي",
@@ -1030,5 +1306,24 @@
     "rooms": {
       "beds": "أسرة"
     }
+  },
+  "experience": {
+    "bookingSection": {
+      "startingFrom": "ابتداءً من",
+      "nextDeparture": "أقرب موعد مغادرة",
+      "book": "احجز"
+    }
+  },
+  "blog": {
+    "title": "مدونتنا",
+    "subtitle": "نصائح سفر وإرشادات وقصص لإلهام مغامرتك القادمة.",
+    "categories": "التصنيفات",
+    "allCategories": "جميع التصنيفات",
+    "readMore": "اقرأ المزيد",
+    "noPosts": "لم يتم العثور على مقالات.",
+    "backToBlog": "العودة إلى المدونة",
+    "similarPosts": "مقالات مشابهة",
+    "publishedOn": "نُشر في {date}",
+    "by": "بواسطة {author}"
   }
 }

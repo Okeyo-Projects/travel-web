@@ -31,10 +31,19 @@
       "Bash(pnpm build:*)",
       "Bash(ffmpeg -i /Users/naimabdelkerim/Code/travel-web/public/hero-video.mp4 -vframes 1 -vcodec libwebp /Users/naimabdelkerim/Code/travel-web/public/hero-video-poster.webp -y)",
       "Bash(ffmpeg -i /Users/naimabdelkerim/Code/travel-web/public/hero-video.mp4 -vframes 1 /Users/naimabdelkerim/Code/travel-web/public/hero-video-poster.jpg -y)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "WebFetch(domain:)",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import json; json.load\\(open\\('/Users/naimabdelkerim/Code/travel-web/src/locales/fr.json'\\)\\); print\\('fr OK'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('/Users/naimabdelkerim/Code/travel-web/src/locales/ar.json'\\)\\); print\\('ar OK'\\)\")",
+      "Bash(python3 -c \"import json; json.load\\(open\\('/Users/naimabdelkerim/Code/travel-web/src/locales/en.json'\\)\\); print\\('en OK'\\)\")",
+      "Bash(python3 -)",
+      "Bash(xargs ls *)"
     ],
     "additionalDirectories": [
-      "/Users/naimabdelkerim/Code"
+      "/Users/naimabdelkerim/Code",
+      "/Users/naimabdelkerim/Code/travel/infra/supabase"
     ]
   }
 }

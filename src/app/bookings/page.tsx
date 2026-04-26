@@ -23,7 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getIntlLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
-import { getImageUrl } from "@/utils/functions";
+import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
 
 type BookingStatus =
   | "draft"
@@ -510,6 +510,8 @@ export default function BookingsPage() {
                               t("bookings.page.experienceFallback")
                             }
                             fill
+                            placeholder="blur"
+                            blurDataURL={IMAGE_BLUR_DATA_URL}
                             className="object-cover"
                           />
                         </div>
@@ -733,6 +735,8 @@ export default function BookingsPage() {
                                   t("bookings.page.experienceFallback")
                                 }
                                 fill
+                                placeholder="blur"
+                                blurDataURL={IMAGE_BLUR_DATA_URL}
                                 className="object-cover"
                               />
                             </div>

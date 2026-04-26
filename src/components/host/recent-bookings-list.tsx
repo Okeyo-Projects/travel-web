@@ -4,22 +4,12 @@ import { CalendarDays, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { getIntlLocale } from "@/lib/i18n";
 import type {
   HostBookingStatus,
   RecentBookingItem,
 } from "@/types/host-analytics";
-
-const STATUS_LABELS: Record<HostBookingStatus, string> = {
-  draft: "Draft",
-  pending_host: "Pending host",
-  approved: "Approved",
-  declined: "Declined",
-  pending_payment: "Pending payment",
-  confirmed: "Confirmed",
-  cancelled: "Cancelled",
-  completed: "Completed",
-  refunded: "Refunded",
-};
 
 function statusVariant(
   status: HostBookingStatus | null,
@@ -49,10 +39,25 @@ type RecentBookingsListProps = {
 };
 
 export function RecentBookingsList({ bookings }: RecentBookingsListProps) {
+  const { t, locale } = useSiteI18n();
+  const intlLocale = getIntlLocale(locale);
+
+  const STATUS_LABELS: Record<HostBookingStatus, string> = {
+    draft: t("host.recentBookings.statuses.draft"),
+    pending_host: t("host.recentBookings.statuses.pending_host"),
+    approved: t("host.recentBookings.statuses.approved"),
+    declined: t("host.recentBookings.statuses.declined"),
+    pending_payment: t("host.recentBookings.statuses.pending_payment"),
+    confirmed: t("host.recentBookings.statuses.confirmed"),
+    cancelled: t("host.recentBookings.statuses.cancelled"),
+    completed: t("host.recentBookings.statuses.completed"),
+    refunded: t("host.recentBookings.statuses.refunded"),
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Activity</CardTitle>
+        <CardTitle>{t("host.recentBookings.title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {bookings.map((booking) => (
@@ -66,20 +71,20 @@ export function RecentBookingsList({ bookings }: RecentBookingsListProps) {
                   {booking.experienceTitle}
                 </p>
                 <Badge variant={statusVariant(booking.status)}>
-                  {booking.status ? STATUS_LABELS[booking.status] : "Unknown"}
+                  {booking.status ? STATUS_LABELS[booking.status] : t("host.recentBookings.statuses.unknown")}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                Guest: {booking.guestName}
+                {t("host.recentBookings.guest")}: {booking.guestName}
               </p>
               <p className="flex items-center gap-1 text-sm text-muted-foreground">
                 <CalendarDays className="h-4 w-4" />
-                {new Date(booking.fromDate).toLocaleDateString("en-US", {
+                {new Date(booking.fromDate).toLocaleDateString(intlLocale, {
                   month: "short",
                   day: "numeric",
                 })}
                 {" - "}
-                {new Date(booking.toDate).toLocaleDateString("en-US", {
+                {new Date(booking.toDate).toLocaleDateString(intlLocale, {
                   month: "short",
                   day: "numeric",
                 })}
@@ -95,14 +100,14 @@ export function RecentBookingsList({ bookings }: RecentBookingsListProps) {
                   href={`/bookings/${booking.id}`}
                   className="text-xs text-primary hover:underline"
                 >
-                  View booking
+                  {t("host.recentBookings.viewBooking")}
                 </Link>
                 {booking.experienceId ? (
                   <Link
                     href={`/experience/${booking.experienceId}`}
                     className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                   >
-                    Manage experience
+                    {t("host.recentBookings.manageExperience")}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 ) : null}

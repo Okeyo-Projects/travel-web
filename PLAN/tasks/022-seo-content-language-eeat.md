@@ -71,7 +71,7 @@ The site declares `lang="fr"` but uses English H2/H3/H4 headings throughout the 
 - [~] Homepage experience cards are real data fetched from Supabase (ExploreSection uses live API — no hardcoded "Bangli" cards found in source)
 - [x] Footer links point to valid routes (already correct: /explore, /privacy, /terms, /support)
 - [x] "Comment ça marche" label present in ExploreSection and AISection with real French text
-- [x] Contact email visible in footer (contact@okeyotravel.com)
+- [x] Contact email visible in footer (contact@okeyo.ma)
 - [x] `lang="fr"` matches the actual page language
 
 ## Context
@@ -93,7 +93,7 @@ The site declares `lang="fr"` but uses English H2/H3/H4 headings throughout the 
 - [~] Step 6: ExploreSection fetches real experiences from Supabase — no hardcoded destination cards
 - [x] Step 7: Footer links already pointed to correct routes; translated link labels to French
 - [x] Step 8: "Comment ça marche" label in both ExploreSection and AISection with real French text
-- [x] Step 9: Contact email added to footer (contact@okeyotravel.com)
+- [x] Step 9: Contact email added to footer (contact@okeyo.ma)
 - [x] Step 10: `lang="fr"` in root layout — confirmed correct
 
 ## Review Notes

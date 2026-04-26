@@ -25,28 +25,30 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHostStats } from "@/hooks/use-host-stats";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import type { HostDashboardPeriod } from "@/types/host-analytics";
 
 export default function HostDashboardPage() {
+  const { t } = useSiteI18n();
   const [period, setPeriod] = useState<HostDashboardPeriod>("6m");
   const { dashboard, isPending, error } = useHostStats(period);
 
   const emptyMessage = useMemo(() => {
     if (!dashboard?.isHost) {
-      return "Switch your account to host mode to access analytics.";
+      return t("host.dashboard.notHostMessage");
     }
-    return "No bookings yet. Your analytics will appear after your first reservation.";
-  }, [dashboard?.isHost]);
+    return t("host.dashboard.noBookingsMessage");
+  }, [dashboard?.isHost, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-slate-500">
-            Host Dashboard
+            {t("host.dashboard.subtitle")}
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Business Analytics
+            {t("host.dashboard.title")}
           </h1>
         </div>
         <TimePeriodSelector value={period} onChange={setPeriod} />
@@ -58,7 +60,7 @@ export default function HostDashboardPage() {
           className="border-red-200 bg-red-50 text-red-800"
         >
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Could not load dashboard</AlertTitle>
+          <AlertTitle>{t("host.dashboard.errorTitle")}</AlertTitle>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       ) : null}
@@ -90,15 +92,15 @@ export default function HostDashboardPage() {
         <Card className="p-10 text-center">
           <BarChart3 className="mx-auto mb-4 h-12 w-12 text-slate-500" />
           <h2 className="text-xl font-semibold text-slate-900">
-            No analytics yet
+            {t("host.dashboard.emptyTitle")}
           </h2>
           <p className="mt-2 text-sm text-slate-600">{emptyMessage}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild variant="secondary">
-              <Link href="/explore">Explore marketplace</Link>
+              <Link href="/explore">{t("host.dashboard.exploreMarketplace")}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href="/bookings">View bookings</Link>
+              <Link href="/bookings">{t("host.dashboard.viewBookings")}</Link>
             </Button>
           </div>
         </Card>

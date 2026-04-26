@@ -1,6 +1,7 @@
 // Export all AI tools
 
 export { checkAvailability } from "./check-availability";
+export { getWeather } from "./get-weather";
 export { createBookingIntent } from "./create-booking-intent";
 export { findSimilar } from "./find-similar";
 export { getExperienceDetails } from "./get-experience-details";

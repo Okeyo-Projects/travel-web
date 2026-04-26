@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface CollectionCardProps {
   title: string;
@@ -31,6 +32,8 @@ export function CollectionCard({
             src={imageUrl}
             alt={title}
             fill
+            placeholder="blur"
+            blurDataURL={IMAGE_BLUR_DATA_URL}
             className="object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (

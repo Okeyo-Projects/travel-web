@@ -24,7 +24,8 @@
     "hostMode": "Mode hôte",
     "travelerMode": "Mode voyageur",
     "switchToTraveler": "Passer en mode voyageur",
-    "switchToHost": "Passer en mode hôte"
+    "switchToHost": "Passer en mode hôte",
+    "blog": "Blog"
   },
   "language": {
     "label": "Langue",
@@ -146,7 +147,178 @@
     "and": "et"
   },
   "host": {
-    "loadingWorkspace": "Chargement de l'espace hôte..."
+    "loadingWorkspace": "Chargement de l'espace hôte...",
+    "dashboard": {
+      "subtitle": "Tableau de bord hôte",
+      "title": "Analytiques de l'activité",
+      "notHostMessage": "Basculez votre compte en mode hôte pour accéder aux analytiques.",
+      "noBookingsMessage": "Aucune réservation pour l'instant. Vos analytiques apparaîtront après votre première réservation.",
+      "errorTitle": "Impossible de charger le tableau de bord",
+      "emptyTitle": "Pas encore d'analytiques",
+      "exploreMarketplace": "Explorer la marketplace",
+      "viewBookings": "Voir les réservations"
+    },
+    "experiences": {
+      "title": "Gérer la visibilité des expériences",
+      "subtitle": "Publiez et dépubliez vos expériences sans quitter le mode hôte.",
+      "searchPlaceholder": "Rechercher des expériences",
+      "filters": {
+        "all": "Tout",
+        "published": "Publiées",
+        "draft": "Brouillons",
+        "review": "En révision"
+      },
+      "errorTitle": "Impossible de charger les expériences",
+      "errorRetry": "Veuillez réessayer dans un instant.",
+      "emptyTitle": "Vous n'avez pas encore d'expériences.",
+      "emptySubtitle": "Créez ou publiez une expérience depuis l'application mobile pour la gérer ici.",
+      "noMatchTitle": "Aucune expérience ne correspond à ce filtre.",
+      "noMatchSubtitle": "Essayez un autre onglet de statut ou effacez le terme de recherche.",
+      "unpublishTitle": "Dépublier cette expérience ?",
+      "unpublishDescriptionWithBookings": "Cette expérience a actuellement {count} réservation(s) active(s). Les réservations existantes sont préservées, mais les nouvelles réservations seront arrêtées tant que l'annonce est dépubliée.",
+      "unpublishDescription": "Cela masquera l'annonce de la découverte et empêchera de nouvelles réservations jusqu'à ce que vous la publiiez à nouveau.",
+      "keepPublished": "Garder publiée",
+      "unpublish": "Dépublier"
+    },
+    "availability": {
+      "title": "Disponibilités hôte",
+      "comingSoon": "La gestion complète des disponibilités arrive bientôt."
+    },
+    "experienceCard": {
+      "noThumbnail": "Pas de miniature",
+      "statuses": {
+        "published": "Publiée",
+        "review": "En révision",
+        "draft": "Brouillon",
+        "archived": "Archivée"
+      },
+      "types": {
+        "lodging": "Hébergement",
+        "trip": "Voyage",
+        "activity": "Activité"
+      },
+      "locationUnavailable": "Localisation indisponible",
+      "rating": "Note",
+      "noRating": "Pas de note",
+      "bookings": "Réservations",
+      "activeBookingOne": "{count} réservation active",
+      "activeBookingOther": "{count} réservations actives",
+      "viewDetails": "Voir les détails",
+      "publish": "Publier",
+      "unpublish": "Dépublier"
+    },
+    "stats": {
+      "totalBookings": "Réservations totales",
+      "revenue": "Revenus",
+      "guestsHosted": "Voyageurs accueillis",
+      "averageRating": "Note moyenne",
+      "noRatings": "Pas de notes"
+    },
+    "recentBookings": {
+      "title": "Activité récente",
+      "guest": "Voyageur",
+      "viewBooking": "Voir la réservation",
+      "manageExperience": "Gérer l'expérience",
+      "statuses": {
+        "draft": "Brouillon",
+        "pending_host": "En attente hôte",
+        "approved": "Approuvée",
+        "declined": "Refusée",
+        "pending_payment": "En attente de paiement",
+        "confirmed": "Confirmée",
+        "cancelled": "Annulée",
+        "completed": "Terminée",
+        "refunded": "Remboursée",
+        "unknown": "Inconnu"
+      }
+    },
+    "charts": {
+      "bookingsTrend": "Tendance réservations et revenus",
+      "bookings": "Réservations",
+      "revenue": "Revenus",
+      "statusBreakdown": "Répartition par statut",
+      "topExperiences": "Top expériences par réservations"
+    },
+    "becomeHost": {
+      "pageTitle": "Devenir hôte",
+      "editTitle": "Modifier le profil hôte",
+      "stepIndicator": "Étape {current} sur {total}",
+      "steps": {
+        "identity": {
+          "title": "Votre identité",
+          "subtitle": "Parlez-nous de votre marque et comment les voyageurs peuvent vous contacter."
+        },
+        "location": {
+          "title": "Votre base",
+          "subtitle": "Où se déroulent vos expériences ?"
+        },
+        "expertise": {
+          "title": "Votre expertise",
+          "subtitle": "Dans quelles langues accueillez-vous et quelles sont vos spécialités ?"
+        },
+        "cover": {
+          "title": "Votre couverture",
+          "subtitle": "Une belle photo de couverture aide les voyageurs à découvrir votre profil."
+        }
+      },
+      "fields": {
+        "logo": "Logo / Photo de profil",
+        "brandName": "Nom de la marque",
+        "brandNamePlaceholder": "ex. Atlas Journeys",
+        "bio": "Courte biographie",
+        "bioPlaceholder": "Dites aux voyageurs ce qui rend vos expériences uniques…",
+        "contactEmail": "Email de contact",
+        "contactEmailPlaceholder": "voyageurs@votredomaine.com",
+        "contactPhone": "Téléphone de contact (optionnel)",
+        "contactPhoneHelper": "Les voyageurs pourront vous contacter directement sur ce numéro.",
+        "country": "Pays",
+        "countryPlaceholder": "ex. Maroc",
+        "city": "Ville",
+        "cityPlaceholder": "ex. Marrakech",
+        "languages": "Langues d'accueil",
+        "specialties": "Spécialités (optionnel)"
+      },
+      "helpers": {
+        "location": "Votre localisation aide les voyageurs à comprendre où se déroulent vos expériences. L'adresse exacte ne sera pas divulguée.",
+        "expertise": "Vos langues et spécialités aident les voyageurs à trouver le bon hôte.",
+        "coverRatio": "Ratio recommandé : 3:2",
+        "coverImpact": "Une photo de couverture convaincante augmente considérablement la visibilité de votre profil."
+      },
+      "upload": {
+        "tapToUploadLogo": "Appuyer pour uploader",
+        "uploading": "Envoi… {progress}%",
+        "uploadImage": "Uploader la photo de couverture",
+        "replaceImage": "Remplacer la photo de couverture"
+      },
+      "buttons": {
+        "back": "Retour",
+        "continue": "Continuer",
+        "publishProfile": "Publier le profil",
+        "saveChanges": "Enregistrer"
+      },
+      "validation": {
+        "nameRequired": "Veuillez entrer le nom de votre marque.",
+        "emailRequired": "Veuillez entrer un email de contact.",
+        "invalidPhone": "Veuillez entrer un numéro de téléphone valide.",
+        "countryRequired": "Veuillez entrer votre pays.",
+        "languageRequired": "Veuillez sélectionner au moins une langue."
+      },
+      "errors": {
+        "uploadFailed": "Échec de l'envoi. Veuillez réessayer.",
+        "saveFailed": "Impossible d'enregistrer votre profil. Vérifiez vos informations et réessayez."
+      },
+      "success": {
+        "createdTitle": "Profil publié !",
+        "createdMessage": "Vous êtes maintenant hôte. Bienvenue !",
+        "updatedTitle": "Profil mis à jour !",
+        "updatedMessage": "Votre profil hôte a été enregistré."
+      },
+      "alreadyHost": {
+        "title": "Vous êtes déjà hôte",
+        "subtitle": "Votre profil hôte est actif. Visitez votre tableau de bord pour gérer vos expériences.",
+        "goToDashboard": "Aller au tableau de bord"
+      }
+    }
   },
   "review": {
     "helpText": "Votre retour aide les prochains voyageurs.",
@@ -237,6 +409,7 @@
       "links": {
         "explore": "Explorer",
         "about": "À propos",
+        "blog": "Blog",
         "privacy": "Politique de confidentialité",
         "terms": "Conditions d'utilisation",
         "support": "Support"
@@ -297,6 +470,11 @@
     "privacy": {
       "title": "Politique de confidentialité | Okeyo Travel",
       "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+    },
+    "blog": {
+      "title": "Blog — Okeyo Travel",
+      "description": "Conseils de voyage, guides de destination et histoires pour inspirer votre prochain voyage.",
+      "fallbackTitle": "Article introuvable — Okeyo Travel"
     }
   },
   "about": {
@@ -956,7 +1134,104 @@
     "viewPhotos": "Voir {count} photos"
   },
   "booking": {
+    "modal": {
+      "back": "Retour",
+      "stepLabels": {
+        "guests": "Voyageurs",
+        "options": "Options",
+        "dates": "Dates",
+        "promo": "Promo",
+        "review": "Récapitulatif"
+      },
+      "stepTitles": {
+        "guests": "Qui vient ?",
+        "options": "Choisissez vos options",
+        "dates": "Sélectionnez vos dates",
+        "promo": "Code promo",
+        "review": "Récapitulatif de la réservation"
+      },
+      "footer": {
+        "calculating": "Calcul en cours…",
+        "priceUnavailable": "Prix indisponible",
+        "totalEstimate": "Total estimé",
+        "promoApplied": "Promo appliquée",
+        "completeDetails": "Complétez tous les détails pour voir le prix",
+        "continue": "Continuer"
+      }
+    },
+    "cancellationDialog": {
+      "title": "Annuler cette réservation ?",
+      "description": "Veuillez consulter la politique d'annulation avant de continuer. Cette action est irréversible.",
+      "warningTitle": "Cette action est irréversible",
+      "warningDescription": "Une fois annulée, votre réservation sera définitivement supprimée et ne pourra pas être rétablie.",
+      "policy": "Politique d'annulation",
+      "refund": "Remboursement",
+      "reasonLabel": "Raison de l'annulation (optionnel)",
+      "reasonPlaceholder": "Sélectionner une raison",
+      "reasonSkip": "Préfère ne pas dire",
+      "detailsLabel": "Détails supplémentaires (optionnel)",
+      "detailsPlaceholder": "Dites-nous en plus sur votre raison d'annulation…",
+      "keep": "Garder la réservation",
+      "confirm": "Oui, annuler la réservation",
+      "reasons": {
+        "changedPlans": "Changement de plans",
+        "foundAlternative": "Trouvé une meilleure option",
+        "priceTooHigh": "Prix trop élevé",
+        "personalReasons": "Raisons personnelles",
+        "other": "Autre"
+      }
+    },
     "steps": {
+      "dates": {
+        "title": "Quand partez-vous ?",
+        "description": "Sélectionnez vos dates d'arrivée et de départ."
+      },
+      "guests": {
+        "question": "Combien de voyageurs ?",
+        "maxGuests": "Cette expérience est limitée à {count} voyageurs",
+        "maxReached": "Maximum de {count} voyageurs atteint",
+        "labels": {
+          "adults": "Adultes",
+          "children": "Enfants",
+          "infants": "Bébés"
+        },
+        "descriptions": {
+          "adults": "13 ans et plus",
+          "children": "2 à 12 ans",
+          "infants": "Moins de 2 ans"
+        }
+      },
+      "promo": {
+        "title": "Vous avez un code promo ?",
+        "description": "Saisissez votre code promo pour bénéficier d'une réduction.",
+        "label": "Code promo",
+        "placeholder": "ex. ETE20",
+        "apply": "Appliquer",
+        "loading": "Vérification…",
+        "applied": "Promo appliquée !",
+        "errorCalculating": "Impossible d'appliquer le code promo. Veuillez réessayer."
+      },
+      "options": {
+        "noneAvailable": "Aucune option disponible pour cette expérience.",
+        "trip": {
+          "noneAvailable": "Aucune date de départ disponible.",
+          "select": "Sélectionner une date de départ",
+          "returns": "Retour",
+          "soldOut": "Complet",
+          "seatsLeft": "{count} places restantes",
+          "standardPrice": "Prix standard"
+        },
+        "lodging": {
+          "noneAvailable": "Aucune chambre disponible.",
+          "select": "Sélectionner des chambres",
+          "guestCount": "{count} voyageurs",
+          "roomFallback": "Chambre",
+          "upToGuests": "Jusqu'à {count} personnes",
+          "perNight": "nuit",
+          "addRoom": "Ajouter une chambre",
+          "removeRoom": "Retirer une chambre"
+        }
+      },
       "review": {
         "messageToHost": "Message à l'hôte",
         "notePlaceholder": "Écrivez un message à votre hôte (optionnel)",
@@ -965,6 +1240,7 @@
           "two": "Merci de me donner les détails d'enregistrement.",
           "three": "Je voyage en famille."
         },
+        "rooms": "Chambres",
         "roomFallback": "Chambre",
         "promoDiscount": "Réduction promo",
         "total": "Total",
@@ -1030,5 +1306,24 @@
     "rooms": {
       "beds": "lits"
     }
+  },
+  "experience": {
+    "bookingSection": {
+      "startingFrom": "À partir de",
+      "nextDeparture": "Prochain départ",
+      "book": "Réserver"
+    }
+  },
+  "blog": {
+    "title": "Notre Blog",
+    "subtitle": "Conseils de voyage, guides et histoires pour inspirer votre prochaine aventure.",
+    "categories": "Catégories",
+    "allCategories": "Toutes les catégories",
+    "readMore": "Lire la suite",
+    "noPosts": "Aucun article trouvé.",
+    "backToBlog": "Retour au blog",
+    "similarPosts": "Articles similaires",
+    "publishedOn": "Publié le {date}",
+    "by": "par {author}"
   }
 }

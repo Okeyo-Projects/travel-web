@@ -1,8 +1,8 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useSiteI18n } from "@/components/site/site-i18n";
 
 type PayzoneBadgeProps = {
   title?: string;
@@ -39,7 +39,7 @@ export function PayzoneBadge({
       )}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {resolvedTitle || resolvedDescription ? (
+        {/* {resolvedTitle || resolvedDescription ? (
           <div className="space-y-1.5">
             {resolvedTitle ? (
               <p
@@ -62,7 +62,7 @@ export function PayzoneBadge({
               </p>
             ) : null}
           </div>
-        ) : null}
+        ) : null} */}
 
         <div
           className={cn("w-full min-w-[320px] shrink-0", imageWrapperClassName)}

@@ -24,7 +24,8 @@
     "hostMode": "Host mode",
     "travelerMode": "Traveler mode",
     "switchToTraveler": "Switch to traveler mode",
-    "switchToHost": "Switch to host mode"
+    "switchToHost": "Switch to host mode",
+    "blog": "Blog"
   },
   "language": {
     "label": "Language",
@@ -146,7 +147,178 @@
     "and": "and"
   },
   "host": {
-    "loadingWorkspace": "Loading host workspace..."
+    "loadingWorkspace": "Loading host workspace...",
+    "dashboard": {
+      "subtitle": "Host Dashboard",
+      "title": "Business Analytics",
+      "notHostMessage": "Switch your account to host mode to access analytics.",
+      "noBookingsMessage": "No bookings yet. Your analytics will appear after your first reservation.",
+      "errorTitle": "Could not load dashboard",
+      "emptyTitle": "No analytics yet",
+      "exploreMarketplace": "Explore marketplace",
+      "viewBookings": "View bookings"
+    },
+    "experiences": {
+      "title": "Manage experience visibility",
+      "subtitle": "Publish and unpublish your experiences without leaving host mode.",
+      "searchPlaceholder": "Search experiences",
+      "filters": {
+        "all": "All",
+        "published": "Published",
+        "draft": "Drafts",
+        "review": "In Review"
+      },
+      "errorTitle": "Could not load experiences",
+      "errorRetry": "Please retry in a moment.",
+      "emptyTitle": "You do not have any experiences yet.",
+      "emptySubtitle": "Create or publish an experience from mobile to manage it here.",
+      "noMatchTitle": "No experiences match this filter.",
+      "noMatchSubtitle": "Try another status tab or clear the search term.",
+      "unpublishTitle": "Unpublish this experience?",
+      "unpublishDescriptionWithBookings": "This experience currently has {count} active booking(s). Existing bookings are preserved, but new bookings will stop while the listing is unpublished.",
+      "unpublishDescription": "This will hide the listing from discovery and prevent new bookings until you publish it again.",
+      "keepPublished": "Keep published",
+      "unpublish": "Unpublish"
+    },
+    "availability": {
+      "title": "Host Availability",
+      "comingSoon": "Full availability management is coming soon."
+    },
+    "experienceCard": {
+      "noThumbnail": "No thumbnail",
+      "statuses": {
+        "published": "Published",
+        "review": "In review",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "types": {
+        "lodging": "Lodging",
+        "trip": "Trip",
+        "activity": "Activity"
+      },
+      "locationUnavailable": "Location unavailable",
+      "rating": "Rating",
+      "noRating": "No rating",
+      "bookings": "Bookings",
+      "activeBookingOne": "{count} active booking",
+      "activeBookingOther": "{count} active bookings",
+      "viewDetails": "View details",
+      "publish": "Publish",
+      "unpublish": "Unpublish"
+    },
+    "stats": {
+      "totalBookings": "Total bookings",
+      "revenue": "Revenue",
+      "guestsHosted": "Guests hosted",
+      "averageRating": "Average rating",
+      "noRatings": "No ratings"
+    },
+    "recentBookings": {
+      "title": "Recent Activity",
+      "guest": "Guest",
+      "viewBooking": "View booking",
+      "manageExperience": "Manage experience",
+      "statuses": {
+        "draft": "Draft",
+        "pending_host": "Pending host",
+        "approved": "Approved",
+        "declined": "Declined",
+        "pending_payment": "Pending payment",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled",
+        "completed": "Completed",
+        "refunded": "Refunded",
+        "unknown": "Unknown"
+      }
+    },
+    "charts": {
+      "bookingsTrend": "Bookings and Revenue Trend",
+      "bookings": "Bookings",
+      "revenue": "Revenue",
+      "statusBreakdown": "Booking Status Breakdown",
+      "topExperiences": "Top Experiences by Bookings"
+    },
+    "becomeHost": {
+      "pageTitle": "Become a host",
+      "editTitle": "Edit host profile",
+      "stepIndicator": "Step {current} of {total}",
+      "steps": {
+        "identity": {
+          "title": "Your identity",
+          "subtitle": "Tell us about your brand and how guests can reach you."
+        },
+        "location": {
+          "title": "Your base",
+          "subtitle": "Where do your experiences take place?"
+        },
+        "expertise": {
+          "title": "Your expertise",
+          "subtitle": "What languages do you host in and what are your specialties?"
+        },
+        "cover": {
+          "title": "Your cover",
+          "subtitle": "A great cover photo helps guests discover your profile."
+        }
+      },
+      "fields": {
+        "logo": "Logo / Profile photo",
+        "brandName": "Brand name",
+        "brandNamePlaceholder": "e.g. Atlas Journeys",
+        "bio": "Short bio",
+        "bioPlaceholder": "Tell guests what makes your experiences unique…",
+        "contactEmail": "Contact email",
+        "contactEmailPlaceholder": "guests@yourdomain.com",
+        "contactPhone": "Contact phone (optional)",
+        "contactPhoneHelper": "Guests may use this number to reach you directly.",
+        "country": "Country",
+        "countryPlaceholder": "e.g. Morocco",
+        "city": "City",
+        "cityPlaceholder": "e.g. Marrakech",
+        "languages": "Hosting languages",
+        "specialties": "Specialties (optional)"
+      },
+      "helpers": {
+        "location": "Your location helps guests understand where your experiences take place. It won't be shown as an exact address.",
+        "expertise": "Your languages and specialties help travelers find the right host for them.",
+        "coverRatio": "Recommended ratio: 3:2",
+        "coverImpact": "A compelling cover photo significantly increases your profile's visibility."
+      },
+      "upload": {
+        "tapToUploadLogo": "Tap to upload",
+        "uploading": "Uploading… {progress}%",
+        "uploadImage": "Upload cover image",
+        "replaceImage": "Replace cover image"
+      },
+      "buttons": {
+        "back": "Back",
+        "continue": "Continue",
+        "publishProfile": "Publish profile",
+        "saveChanges": "Save changes"
+      },
+      "validation": {
+        "nameRequired": "Please enter your brand name.",
+        "emailRequired": "Please enter a contact email.",
+        "invalidPhone": "Please enter a valid phone number.",
+        "countryRequired": "Please enter your country.",
+        "languageRequired": "Please select at least one language."
+      },
+      "errors": {
+        "uploadFailed": "Upload failed. Please try again.",
+        "saveFailed": "Could not save your profile. Please check your details and try again."
+      },
+      "success": {
+        "createdTitle": "Profile published!",
+        "createdMessage": "You're now a host. Welcome aboard!",
+        "updatedTitle": "Profile updated!",
+        "updatedMessage": "Your host profile has been saved."
+      },
+      "alreadyHost": {
+        "title": "You're already a host",
+        "subtitle": "Your host profile is active. Visit your dashboard to manage your experiences.",
+        "goToDashboard": "Go to dashboard"
+      }
+    }
   },
   "review": {
     "helpText": "Your feedback helps future travelers.",
@@ -237,6 +409,7 @@
       "links": {
         "explore": "Explore",
         "about": "About Us",
+        "blog": "Blog",
         "privacy": "Privacy Policy",
         "terms": "Terms of Service",
         "support": "Support"
@@ -297,6 +470,11 @@
     "privacy": {
       "title": "Privacy Policy | Okeyo Travel",
       "description": "Review Okeyo Travel's privacy policy and how your data is used and protected."
+    },
+    "blog": {
+      "title": "Blog — Okeyo Travel",
+      "description": "Travel tips, destination guides, and stories to inspire your next trip.",
+      "fallbackTitle": "Article not found — Okeyo Travel"
     }
   },
   "about": {
@@ -956,7 +1134,104 @@
     "viewPhotos": "View {count} photos"
   },
   "booking": {
+    "modal": {
+      "back": "Back",
+      "stepLabels": {
+        "guests": "Guests",
+        "options": "Options",
+        "dates": "Dates",
+        "promo": "Promo",
+        "review": "Review"
+      },
+      "stepTitles": {
+        "guests": "Who's coming?",
+        "options": "Choose your options",
+        "dates": "Select your dates",
+        "promo": "Promo code",
+        "review": "Review your booking"
+      },
+      "footer": {
+        "calculating": "Calculating…",
+        "priceUnavailable": "Price unavailable",
+        "totalEstimate": "Estimated total",
+        "promoApplied": "Promo applied",
+        "completeDetails": "Complete all details to see price",
+        "continue": "Continue"
+      }
+    },
+    "cancellationDialog": {
+      "title": "Cancel this booking?",
+      "description": "Please review the cancellation policy before proceeding. This action cannot be undone.",
+      "warningTitle": "This cannot be undone",
+      "warningDescription": "Once cancelled, your booking will be permanently cancelled and cannot be reinstated.",
+      "policy": "Cancellation policy",
+      "refund": "Refund",
+      "reasonLabel": "Reason for cancellation (optional)",
+      "reasonPlaceholder": "Select a reason",
+      "reasonSkip": "Prefer not to say",
+      "detailsLabel": "Additional details (optional)",
+      "detailsPlaceholder": "Tell us more about your reason for cancelling…",
+      "keep": "Keep booking",
+      "confirm": "Yes, cancel booking",
+      "reasons": {
+        "changedPlans": "Changed plans",
+        "foundAlternative": "Found a better option",
+        "priceTooHigh": "Price too high",
+        "personalReasons": "Personal reasons",
+        "other": "Other"
+      }
+    },
     "steps": {
+      "dates": {
+        "title": "When are you going?",
+        "description": "Select your check-in and check-out dates."
+      },
+      "guests": {
+        "question": "How many guests?",
+        "maxGuests": "This experience is limited to {count} guests",
+        "maxReached": "Maximum of {count} guests reached",
+        "labels": {
+          "adults": "Adults",
+          "children": "Children",
+          "infants": "Infants"
+        },
+        "descriptions": {
+          "adults": "Age 13+",
+          "children": "Ages 2–12",
+          "infants": "Under 2"
+        }
+      },
+      "promo": {
+        "title": "Have a promo code?",
+        "description": "Enter your promo code to apply a discount to your booking.",
+        "label": "Promo code",
+        "placeholder": "e.g. SUMMER20",
+        "apply": "Apply",
+        "loading": "Checking…",
+        "applied": "Promo applied!",
+        "errorCalculating": "Could not apply the promo code. Please try again."
+      },
+      "options": {
+        "noneAvailable": "No options available for this experience.",
+        "trip": {
+          "noneAvailable": "No departure dates available.",
+          "select": "Select a departure date",
+          "returns": "Returns",
+          "soldOut": "Sold out",
+          "seatsLeft": "{count} seats left",
+          "standardPrice": "Standard price"
+        },
+        "lodging": {
+          "noneAvailable": "No rooms available.",
+          "select": "Select rooms",
+          "guestCount": "{count} guests",
+          "roomFallback": "Room",
+          "upToGuests": "Up to {count} guests",
+          "perNight": "night",
+          "addRoom": "Add room",
+          "removeRoom": "Remove room"
+        }
+      },
       "review": {
         "messageToHost": "Message to host",
         "notePlaceholder": "Write a message to your host (optional)",
@@ -965,6 +1240,7 @@
           "two": "Please let me know about check-in details.",
           "three": "I'm traveling with family."
         },
+        "rooms": "Rooms",
         "roomFallback": "Room",
         "promoDiscount": "Promo discount",
         "total": "Total",
@@ -1030,5 +1306,24 @@
     "rooms": {
       "beds": "beds"
     }
+  },
+  "experience": {
+    "bookingSection": {
+      "startingFrom": "Starting from",
+      "nextDeparture": "Next departure",
+      "book": "Book"
+    }
+  },
+  "blog": {
+    "title": "Our Blog",
+    "subtitle": "Travel tips, guides, and stories to inspire your next adventure.",
+    "categories": "Categories",
+    "allCategories": "All categories",
+    "readMore": "Read more",
+    "noPosts": "No articles found.",
+    "backToBlog": "Back to blog",
+    "similarPosts": "Similar articles",
+    "publishedOn": "Published on {date}",
+    "by": "by {author}"
   }
 }

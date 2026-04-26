@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import type { StatusBreakdownPoint } from "@/types/host-analytics";
 
 const STATUS_COLORS = [
@@ -39,12 +40,13 @@ type StatusBreakdownChartProps = {
 };
 
 export function StatusBreakdownChart({ data }: StatusBreakdownChartProps) {
+  const { t } = useSiteI18n();
   const chartConfig = buildConfig(data);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Booking Status Breakdown</CardTitle>
+        <CardTitle>{t("host.charts.statusBreakdown")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[280px] w-full">

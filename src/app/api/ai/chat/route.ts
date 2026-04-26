@@ -25,6 +25,7 @@ import {
   getExperienceOptionDetails,
   getExperiencePromos,
   getLinkedExperiences,
+  getWeather,
   requestUserLocation,
   searchExperiences,
   validatePromoCode,
@@ -379,6 +380,7 @@ export async function POST(req: Request) {
       suggestDateOptions,
       selectRoomType,
       getExperienceOptionDetails,
+      getWeather,
     };
 
     // Keep interactive quick replies available even if older config versions

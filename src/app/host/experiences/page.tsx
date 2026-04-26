@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import {
   useHostExperienceCounts,
   useHostExperiences,
@@ -29,18 +30,12 @@ type UnpublishDialogState = {
   experience: HostExperience | null;
 };
 
-const FILTERS: Array<{ id: HostExperienceFilter; label: string }> = [
-  { id: "all", label: "All" },
-  { id: "published", label: "Published" },
-  { id: "draft", label: "Drafts" },
-  { id: "review", label: "In Review" },
-];
-
 function normalizeTerm(value: string) {
   return value.trim().toLowerCase();
 }
 
 export default function HostExperiencesPage() {
+  const { t } = useSiteI18n();
   const [filter, setFilter] = useState<HostExperienceFilter>("all");
   const [search, setSearch] = useState("");
   const [dialogState, setDialogState] = useState<UnpublishDialogState>({
@@ -57,6 +52,13 @@ export default function HostExperiencesPage() {
   const visibilityMutation = useToggleExperienceVisibility();
 
   const counts = useHostExperienceCounts(experiences);
+
+  const FILTERS: Array<{ id: HostExperienceFilter; labelKey: string }> = [
+    { id: "all", labelKey: "host.experiences.filters.all" },
+    { id: "published", labelKey: "host.experiences.filters.published" },
+    { id: "draft", labelKey: "host.experiences.filters.draft" },
+    { id: "review", labelKey: "host.experiences.filters.review" },
+  ];
 
   const filteredExperiences = useMemo(() => {
     const term = normalizeTerm(search);
@@ -118,18 +120,18 @@ export default function HostExperiencesPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">
-              Manage experience visibility
+              {t("host.experiences.title")}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Publish and unpublish your experiences without leaving host mode.
+              {t("host.experiences.subtitle")}
             </p>
           </div>
           <div className="w-full max-w-xs">
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search experiences"
-              aria-label="Search experiences"
+              placeholder={t("host.experiences.searchPlaceholder")}
+              aria-label={t("host.experiences.searchPlaceholder")}
             />
           </div>
         </div>
@@ -149,7 +151,7 @@ export default function HostExperiencesPage() {
                 }
                 onClick={() => setFilter(tab.id)}
               >
-                {tab.label} ({count})
+                {t(tab.labelKey)} ({count})
               </Button>
             );
           })}
@@ -170,12 +172,12 @@ export default function HostExperiencesPage() {
       {!isLoading && isError ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
           <h3 className="text-sm font-semibold text-rose-700">
-            Could not load experiences
+            {t("host.experiences.errorTitle")}
           </h3>
           <p className="mt-1 text-sm text-rose-600">
             {error instanceof Error
               ? error.message
-              : "Please retry in a moment."}
+              : t("host.experiences.errorRetry")}
           </p>
         </div>
       ) : null}
@@ -184,13 +186,13 @@ export default function HostExperiencesPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
           <p className="text-base font-medium text-slate-900">
             {experiences.length === 0
-              ? "You do not have any experiences yet."
-              : "No experiences match this filter."}
+              ? t("host.experiences.emptyTitle")
+              : t("host.experiences.noMatchTitle")}
           </p>
           <p className="mt-1 text-sm text-slate-600">
             {experiences.length === 0
-              ? "Create or publish an experience from mobile to manage it here."
-              : "Try another status tab or clear the search term."}
+              ? t("host.experiences.emptySubtitle")
+              : t("host.experiences.noMatchSubtitle")}
           </p>
         </div>
       ) : null}
@@ -217,16 +219,18 @@ export default function HostExperiencesPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unpublish this experience?</AlertDialogTitle>
+            <AlertDialogTitle>{t("host.experiences.unpublishTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {dialogState.experience?.activeBookingsCount
-                ? `This experience currently has ${dialogState.experience.activeBookingsCount} active booking(s). Existing bookings are preserved, but new bookings will stop while the listing is unpublished.`
-                : "This will hide the listing from discovery and prevent new bookings until you publish it again."}
+                ? t("host.experiences.unpublishDescriptionWithBookings", {
+                    count: dialogState.experience.activeBookingsCount,
+                  })
+                : t("host.experiences.unpublishDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={visibilityMutation.isPending}>
-              Keep published
+              {t("host.experiences.keepPublished")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
@@ -236,7 +240,7 @@ export default function HostExperiencesPage() {
               disabled={visibilityMutation.isPending}
               className="bg-rose-600 text-white hover:bg-rose-700"
             >
-              Unpublish
+              {t("host.experiences.unpublish")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

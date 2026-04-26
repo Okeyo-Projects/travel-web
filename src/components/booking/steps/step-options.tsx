@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Users } from "lucide-react";
+import { Check, Minus, Plus, Users } from "lucide-react";
 import Image from "next/image";
 import { useBookingContext } from "@/components/booking/booking-context";
 import { useSiteI18n } from "@/components/site/site-i18n";
@@ -133,7 +133,7 @@ function TripOptions() {
   );
 }
 
-/* ─── Lodging: room selection (single-select mode like mobile) ───── */
+/* ─── Lodging: room selection (multi-select with quantity steppers) ── */
 
 function LodgingOptions() {
   const { locale, t } = useSiteI18n();
@@ -156,28 +156,9 @@ function LodgingOptions() {
     );
   }
 
-  const selectedRoomId = roomSelections[0]?.roomId ?? null;
-
-  const handleSelect = (roomId: string) => {
-    if (selectedRoomId === roomId) {
-      // Deselect
-      setRoomSelection(roomId, 0);
-      return;
-    }
-
-    // Calculate required quantity (matching mobile logic)
-    const room = rooms.find((r) => r.id === roomId);
-    if (!room) return;
-
-    const roomsForInfants = infants;
-    const roomsForCapacity = Math.ceil(
-      (adults + children) / (room.max_persons || 2),
-    );
-    const required = Math.max(roomsForInfants, roomsForCapacity, 1);
-
-    // Clear previous selection and set new one (single-select)
-    if (selectedRoomId) setRoomSelection(selectedRoomId, 0);
-    setRoomSelection(roomId, required);
+  const calcInitialQty = (room: (typeof rooms)[0]) => {
+    const forCapacity = Math.ceil((adults + children) / (room.max_persons || 2));
+    return Math.max(infants, forCapacity, 1);
   };
 
   return (
@@ -194,23 +175,22 @@ function LodgingOptions() {
       </p>
 
       {rooms.map((room) => {
-        const selected = selectedRoomId === room.id;
         const selection = roomSelections.find((r) => r.roomId === room.id);
         const qty = selection?.quantity ?? 0;
+        const selected = qty > 0;
         const roomImageUrl = room.photoUrls?.[0]
           ? getImageUrl(room.photoUrls[0])
           : null;
 
         return (
-          <button
+          <div
             key={room.id}
-            type="button"
-            onClick={() => handleSelect(room.id)}
+            onClick={() => !selected && setRoomSelection(room.id, calcInitialQty(room))}
             className={cn(
               "w-full rounded-xl border text-left transition-all overflow-hidden",
               selected
                 ? "border-primary ring-1 ring-primary"
-                : "hover:border-foreground/30",
+                : "cursor-pointer hover:border-foreground/30",
             )}
           >
             {roomImageUrl && (
@@ -241,16 +221,35 @@ function LodgingOptions() {
                     </span>
                   </div>
                 </div>
-                <div
-                  className={cn(
-                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                    selected
-                      ? "border-primary bg-primary"
-                      : "border-muted-foreground/30",
-                  )}
-                >
-                  {selected && <Check className="h-3 w-3 text-white" />}
-                </div>
+
+                {selected ? (
+                  <div
+                    className="flex items-center gap-1 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      aria-label={t("booking.steps.options.lodging.removeRoom")}
+                      onClick={() => setRoomSelection(room.id, qty - 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span className="w-5 text-center text-sm font-semibold">
+                      {qty}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={t("booking.steps.options.lodging.addRoom")}
+                      onClick={() => setRoomSelection(room.id, qty + 1)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-primary text-white hover:bg-primary/90 transition-colors"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-muted-foreground/30" />
+                )}
               </div>
 
               <div className="flex items-center justify-between">
@@ -265,16 +264,9 @@ function LodgingOptions() {
                     / {t("booking.steps.options.lodging.perNight")}
                   </span>
                 </span>
-                {selected && qty > 1 && (
-                  <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-0.5 rounded-full">
-                    {t("booking.steps.options.lodging.roomsNeeded", {
-                      count: qty,
-                    })}
-                  </span>
-                )}
               </div>
             </div>
-          </button>
+          </div>
         );
       })}
     </div>

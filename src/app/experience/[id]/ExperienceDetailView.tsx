@@ -1,3 +1,21 @@
+import { ExperienceAnalytics } from "@/components/experience/ExperienceAnalytics";
+import { ExperienceBookingSection } from "@/components/experience/ExperienceBookingSection";
+import { ExperienceDetailHeader } from "@/components/experience/ExperienceDetailHeader";
+import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
+import { RoomBookingButton } from "@/components/experience/RoomBookingButton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getLowestPricedRoom } from "@/lib/experience-pricing";
+import type { Translator } from "@/lib/i18n";
+import type { ExperienceDetail } from "@/types/experience-detail";
 import {
   BedDouble,
   Check,
@@ -10,27 +28,6 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { ExperienceAnalytics } from "@/components/experience/ExperienceAnalytics";
-import { ExperienceBookingSection } from "@/components/experience/ExperienceBookingSection";
-import { ExperienceDescription } from "@/components/experience/ExperienceDescription";
-import { ExperienceDetailHeader } from "@/components/experience/ExperienceDetailHeader";
-import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
-import { ReviewList } from "@/components/experience/ReviewList";
-import { RoomBookingButton } from "@/components/experience/RoomBookingButton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getLowestPricedRoom } from "@/lib/experience-pricing";
-import type { ExperienceDetail } from "@/types/experience-detail";
-import type { Translator, TranslationValues } from "@/lib/i18n";
 
 function formatMoney(
   cents: number | null | undefined,
@@ -60,32 +57,6 @@ function formatDuration(
     return `${hours} ${t("experienceDetails.info.hours")}`;
   }
   return t("experienceDetails.info.flexible");
-}
-
-function buildMapLinks(
-  latitude: number | null,
-  longitude: number | null,
-  locationLabel: string,
-) {
-  if (typeof latitude !== "number" || typeof longitude !== "number") {
-    const encodedQuery = encodeURIComponent(locationLabel);
-    return {
-      embedUrl:
-        "https://www.openstreetmap.org/export/embed.html?bbox=-10.5%2C27.5%2C-0.5%2C36.5&layer=mapnik",
-      externalUrl: `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`,
-    };
-  }
-
-  const delta = 0.035;
-  const left = longitude - delta;
-  const right = longitude + delta;
-  const top = latitude + delta;
-  const bottom = latitude - delta;
-
-  return {
-    embedUrl: `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latitude}%2C${longitude}`,
-    externalUrl: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=12/${latitude}/${longitude}`,
-  };
 }
 
 export function ExperienceDetailView({
@@ -120,14 +91,6 @@ export function ExperienceDetailView({
     return t("experienceDetails.info.photoOf", { number: photoNumber, total });
   });
 
-  const latitude = experience.location?.latitude ?? null;
-  const longitude = experience.location?.longitude ?? null;
-  const mapLinks = buildMapLinks(
-    latitude,
-    longitude,
-    locationLabel || "Morocco",
-  );
-
   const nightsLabel = trip ? "pers." : t("experienceDetails.info.night");
   const lowestPricedRoom = getLowestPricedRoom(lodging?.rooms);
   const basePrice = trip?.price_cents ?? lowestPricedRoom?.price_cents ?? null;
@@ -140,32 +103,7 @@ export function ExperienceDetailView({
       ? lodging.rooms.reduce((acc, room) => acc + (room.max_persons || 0), 0)
       : null;
 
-  const description = experience.longDescription || experience.shortDescription;
-
-  const itineraryByDay = (() => {
-    if (!trip?.itinerary?.length) {
-      return [] as Array<{
-        day: number;
-        items: NonNullable<typeof trip>["itinerary"];
-      }>;
-    }
-
-    const grouped = new Map<number, typeof trip.itinerary>();
-    for (const item of trip?.itinerary ?? []) {
-      const day = item.day_number || 1;
-      const current = grouped.get(day) ?? [];
-      current.push(item);
-      grouped.set(day, current);
-    }
-
-    return Array.from(grouped.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([day, items]) => ({ day, items }));
-  })();
-
-  const hasStayTab = Boolean(lodging);
   const hasRoomsTab = Boolean(lodging?.rooms?.length);
-  const hasItineraryTab = Boolean(trip?.itinerary?.length || trip);
 
   const allRoomItems = Array.from(
     new Map(
@@ -175,6 +113,292 @@ export function ExperienceDetailView({
     ).values(),
   );
   const allEquipment = [...experience.amenities, ...allRoomItems];
+
+  /* ── Shared section components ────────────────────────────────── */
+
+  const InfoCard = () => (
+    <Card className="rounded-2xl border-muted">
+      <CardContent className="divide-y p-0">
+        <div className="flex items-center gap-3 p-4">
+          <Clock3 className="h-5 w-5 shrink-0 text-primary" />
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("experienceDetails.info.duration")}
+            </p>
+            <p className="font-medium">
+              {formatDuration(
+                trip?.duration_days ?? null,
+                trip?.duration_hours ?? null,
+                t,
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-4">
+          <Users className="h-5 w-5 shrink-0 text-primary" />
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("experienceDetails.info.maxCapacity")}
+            </p>
+            <p className="font-medium">
+              {capacity ?? t("experienceDetails.info.flexible")}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 p-4">
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("experienceDetails.type")}
+            </p>
+            <p className="font-medium capitalize">{t(`experienceDetails.type.${experience.type}`)}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const StayContent = () =>
+    lodging ? (
+      <div className="space-y-4">
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t("experienceDetails.info.scheduleAndCancellation")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              {t("experienceDetails.info.checkIn")}:{" "}
+              <span className="font-medium text-foreground">
+                {lodging.check_in_time ?? t("experienceDetails.info.flexible")}
+              </span>
+            </p>
+            <p>
+              {t("experienceDetails.info.checkOut")}:{" "}
+              <span className="font-medium text-foreground">
+                {lodging.check_out_time ??
+                  t("experienceDetails.info.flexible")}
+              </span>
+            </p>
+            <p>
+              {t("experienceDetails.info.cancellationPolicy")}:{" "}
+              <span className="font-medium capitalize text-foreground">
+                {experience.cancellationPolicy}
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-base">Règles de la maison</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2">
+              {lodging.non_fumeur ? (
+                <Check className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <X className="h-4 w-4 text-rose-600" />
+              )}
+              {t("experienceDetails.info.nonSmoking")}
+            </p>
+            <p className="flex items-center gap-2">
+              {lodging.animaux_acceptes ? (
+                <Check className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <X className="h-4 w-4 text-rose-600" />
+              )}
+              {t("experienceDetails.info.petsAllowed")}
+            </p>
+            <p>
+              <span className="font-medium text-foreground">
+                {t("experienceDetails.info.minStay")}:
+              </span>{" "}
+              {lodging.min_stay_nights ?? 1}{" "}
+              {t("experienceDetails.info.nights")}
+            </p>
+            {lodging.house_rules && (
+              <p className="whitespace-pre-wrap">{lodging.house_rules}</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    ) : null;
+
+  const EquipmentSection = () => (
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold">Équipements de l&apos;auberge</h3>
+      {allEquipment.length > 0 ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {allEquipment.map((item) => (
+            <div
+              key={item.key}
+              className="flex items-center gap-3 rounded-xl border bg-card p-3"
+            >
+              <Check className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Aucun équipement renseigné.
+        </p>
+      )}
+    </div>
+  );
+
+  const ServicesSection = () =>
+    experience.servicesIncluded.length || experience.servicesExcluded.length ? (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-base">Ce qui est inclus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {experience.servicesIncluded.length ? (
+              experience.servicesIncluded.map((service) => (
+                <p key={service.key} className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-emerald-600" />
+                  {service.label}
+                </p>
+              ))
+            ) : (
+              <p className="text-muted-foreground">Aucun détail fourni</p>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t("experienceDetails.servicesExcluded")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {experience.servicesExcluded.length ? (
+              experience.servicesExcluded.map((service) => (
+                <p key={service.key} className="flex items-center gap-2">
+                  <Minus className="h-4 w-4 text-amber-600" />
+                  {service.label}
+                </p>
+              ))
+            ) : (
+              <p className="text-muted-foreground">Aucun détail fourni</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    ) : null;
+
+  const RoomsContent = () =>
+    lodging?.rooms?.length ? (
+      <div className="space-y-4">
+        {lodging.rooms.map((room) => (
+          <Card key={room.id} className="overflow-hidden rounded-2xl">
+            <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
+              <div className="bg-muted/30 p-2">
+                {room.photoUrls.length ? (
+                  <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
+                    <CarouselContent className="ml-0">
+                      {room.photoUrls.map((photoUrl, index) => (
+                        <CarouselItem
+                          key={`${room.id}-${index}`}
+                          className="pl-0"
+                        >
+                          <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
+                            <Image
+                              src={photoUrl}
+                              alt={room.name || "Room"}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                  </Carousel>
+                ) : (
+                  <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-muted">
+                    <BedDouble className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-3 p-4">
+                <h3 className="text-lg font-semibold">
+                  {room.name ?? t("experienceDetails.info.noDetails")}
+                </h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {room.description ?? t("experienceDetails.info.noDetails")}
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="secondary" className="gap-1">
+                    <Users className="h-3 w-3" />
+                    {room.max_persons} pers. max
+                  </Badge>
+                  <Badge variant="secondary" className="gap-1">
+                    <BedDouble className="h-3 w-3" />
+                    {room.capacity_beds} {t("experienceDetails.rooms.beds")}
+                  </Badge>
+                </div>
+                {room.items.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {room.items.map((equip) => (
+                      <Badge key={equip.key} variant="outline" className="text-xs">
+                        {equip.label}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <p className="text-lg font-semibold">
+                    {formatMoney(room.price_cents, room.currency, t)}{" "}
+                    /{t("experienceDetails.info.night")}
+                  </p>
+                  <RoomBookingButton experience={experience} roomId={room.id} />
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        {t("experienceDetails.info.noRooms")}
+      </div>
+    );
+
+  const tabTriggerClass =
+    "rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none";
+
+  const HostCard = () =>
+    host ? (
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-14 w-14 border">
+            <AvatarImage src={host.avatarUrl ?? undefined} />
+            <AvatarFallback>{host.name.slice(0, 1)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t("experienceDetails.hostedBy")}
+            </p>
+            <p className="text-lg font-semibold">{host.name}</p>
+            {host.verified && (
+              <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {t("experienceDetails.verified")}
+              </span>
+            )}
+          </div>
+        </div>
+        {experience.shortDescription && (
+          <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+            {experience.shortDescription}
+          </p>
+        )}
+      </div>
+    ) : null;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -193,9 +417,9 @@ export function ExperienceDetailView({
       />
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        {/* ── Desktop: 2-column layout (media left, content right) ── */}
+        {/* ── Desktop: 2-column layout ── */}
         <div className="hidden lg:grid lg:grid-cols-12 lg:gap-10">
-          {/* LEFT COLUMN — Video + Photos (sticky) */}
+          {/* LEFT COLUMN — Gallery (sticky) */}
           <div className="lg:col-span-5">
             <div className="sticky top-24 space-y-4">
               <ExperienceGallery
@@ -206,7 +430,7 @@ export function ExperienceDetailView({
             </div>
           </div>
 
-          {/* RIGHT COLUMN — All content */}
+          {/* RIGHT COLUMN */}
           <div className="lg:col-span-7 space-y-6">
             {/* Title & Meta */}
             <div className="space-y-3">
@@ -217,11 +441,9 @@ export function ExperienceDetailView({
                   </Badge>
                 ))}
               </div>
-
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {experience.title}
               </h1>
-
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1 text-foreground">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -241,33 +463,8 @@ export function ExperienceDetailView({
               </div>
             </div>
 
-            {/* Host Card */}
-            {host ? (
-              <div className="rounded-2xl border bg-card p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-14 w-14 border">
-                      <AvatarImage src={host.avatarUrl ?? undefined} />
-                      <AvatarFallback>{host.name.slice(0, 1)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {t("experienceDetails.hostedBy")}
-                      </p>
-                      <p className="text-lg font-semibold">{host.name}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        {host.verified ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                            {t("experienceDetails.verified")}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
+            {/* Host card + short description */}
+            <HostCard />
 
             {/* Booking CTA */}
             <ExperienceBookingSection
@@ -276,431 +473,42 @@ export function ExperienceDetailView({
               nightsLabel={nightsLabel}
             />
 
-            {/* Tabs */}
+            {/* Tabs: Aperçu + Chambres */}
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0">
-                <TabsTrigger
-                  value="overview"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                >
+                <TabsTrigger value="overview" className={tabTriggerClass}>
                   {t("experienceDetails.tabs.overview")}
                 </TabsTrigger>
-                {hasItineraryTab ? (
-                  <TabsTrigger
-                    value="itinerary"
-                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                  >
-                    {t("experienceDetails.tabs.itinerary")}
-                  </TabsTrigger>
-                ) : null}
-                {hasStayTab ? (
-                  <TabsTrigger
-                    value="stay"
-                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                  >
-                    {t("experienceDetails.tabs.stay")}
-                  </TabsTrigger>
-                ) : null}
-                {hasRoomsTab ? (
-                  <TabsTrigger
-                    value="rooms"
-                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                  >
+                {hasRoomsTab && (
+                  <TabsTrigger value="rooms" className={tabTriggerClass}>
                     {t("experienceDetails.tabs.rooms")}
                   </TabsTrigger>
-                ) : null}
-                <TabsTrigger
-                  value="location"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                >
-                  {t("experienceDetails.tabs.location")}
-                </TabsTrigger>
-                {experience.metrics.reviews > 0 ? (
-                  <TabsTrigger
-                    value="reviews"
-                    className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                  >
-                    {t("experienceDetails.tabs.reviews")}
-                  </TabsTrigger>
-                ) : null}
+                )}
               </TabsList>
 
               <TabsContent value="overview" className="mt-5 space-y-6">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Card className="rounded-2xl border-muted">
-                    <CardContent className="flex items-center gap-3 p-4">
-                      <Clock3 className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Durée</p>
-                        <p className="font-medium">
-                          {formatDuration(
-                            trip?.duration_days ?? null,
-                            trip?.duration_hours ?? null,
-                            t,
-                          )}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-2xl border-muted">
-                    <CardContent className="flex items-center gap-3 p-4">
-                      <Users className="h-5 w-5 text-primary" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          {t("experienceDetails.info.maxCapacity")}
-                        </p>
-                        <p className="font-medium">
-                          {capacity ?? t("experienceDetails.info.flexible")}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-2xl border-muted">
-                    <CardContent className="flex items-center gap-3 p-4">
-                      <Badge
-                        className="h-6 rounded-full px-2 text-xs"
-                        variant="secondary"
-                      >
-                        {experience.type}
-                      </Badge>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          {t("experienceDetails.type")}
-                        </p>
-                        <p className="font-medium capitalize">
-                          {experience.type}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <ExperienceDescription description={description} />
-
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold">
-                    {t("experienceDetails.info.amenities")}
-                  </h3>
-                  {allEquipment.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {allEquipment.map((item) => (
-                        <div
-                          key={item.key}
-                          className="flex items-center gap-3 rounded-xl border bg-card p-3"
-                        >
-                          <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-medium">
-                            {item.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Aucun équipement renseigné.
-                    </p>
-                  )}
-                </div>
-
-                {experience.servicesIncluded.length ||
-                experience.servicesExcluded.length ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Card className="rounded-2xl">
-                      <CardHeader>
-                        <CardTitle className="text-base">
-                          Ce qui est inclus
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2 text-sm">
-                        {experience.servicesIncluded.length ? (
-                          experience.servicesIncluded.map((service) => (
-                            <p
-                              key={service.key}
-                              className="flex items-center gap-2"
-                            >
-                              <Check className="h-4 w-4 text-emerald-600" />
-                              {service.label}
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-muted-foreground">
-                            Aucun détail fourni
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                    <Card className="rounded-2xl">
-                      <CardHeader>
-                        <CardTitle className="text-base">
-                          {t("experienceDetails.servicesExcluded")}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2 text-sm">
-                        {experience.servicesExcluded.length ? (
-                          experience.servicesExcluded.map((service) => (
-                            <p
-                              key={service.key}
-                              className="flex items-center gap-2"
-                            >
-                              <Minus className="h-4 w-4 text-amber-600" />
-                              {service.label}
-                            </p>
-                          ))
-                        ) : (
-                          <p className="text-muted-foreground">
-                            Aucun détail fourni
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                ) : null}
+                <InfoCard />
+                {lodging && <StayContent />}
+                <EquipmentSection />
+                <ServicesSection />
               </TabsContent>
 
-              <TabsContent value="itinerary" className="mt-5 space-y-4">
-                {itineraryByDay.length ? (
-                  itineraryByDay.map(({ day, items }) => (
-                    <Card key={day} className="rounded-2xl">
-                      <CardHeader>
-                        <CardTitle className="text-base">
-                          {t("experienceDetails.info.day")} {day}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        {items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="rounded-xl border bg-muted/20 p-3"
-                          >
-                            <p className="font-medium">{item.title}</p>
-                            <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                              {item.details}
-                            </p>
-                            <p className="mt-2 text-xs text-muted-foreground">
-                              {item.location_name ?? "Lieu à confirmer"}
-                            </p>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                    Détails d&apos;itinéraire indisponibles pour cette
-                    expérience.
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="stay" className="mt-5 space-y-4">
-                {lodging ? (
-                  <>
-                    <Card className="rounded-2xl">
-                      <CardHeader>
-                        <CardTitle className="text-base">
-                          Règles de la maison
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2 text-sm text-muted-foreground">
-                        <p className="flex items-center gap-2">
-                          {lodging.non_fumeur ? (
-                            <Check className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <X className="h-4 w-4 text-rose-600" />
-                          )}
-                          {t("experienceDetails.info.nonSmoking")}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          {lodging.animaux_acceptes ? (
-                            <Check className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <X className="h-4 w-4 text-rose-600" />
-                          )}
-                          {t("experienceDetails.info.petsAllowed")}
-                        </p>
-                        <p>
-                          <span className="font-medium text-foreground">
-                            {t("experienceDetails.info.minStay")}:
-                          </span>{" "}
-                          {lodging.min_stay_nights ?? 1}{" "}
-                          {t("experienceDetails.info.nights")}
-                        </p>
-                        <p className="whitespace-pre-wrap">
-                          {lodging.house_rules ??
-                            t("experienceDetails.info.additionalRules")}
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="rounded-2xl">
-                      <CardHeader>
-                        <CardTitle className="text-base">
-                          {t("experienceDetails.info.scheduleAndCancellation")}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-2 text-sm text-muted-foreground">
-                        <p>
-                          {t("experienceDetails.info.checkIn")}:{" "}
-                          <span className="font-medium text-foreground">
-                            {lodging.check_in_time ??
-                              t("experienceDetails.info.flexible")}
-                          </span>
-                        </p>
-                        <p>
-                          {t("experienceDetails.info.checkOut")}:{" "}
-                          <span className="font-medium text-foreground">
-                            {lodging.check_out_time ??
-                              t("experienceDetails.info.flexible")}
-                          </span>
-                        </p>
-                        <p>
-                          {t("experienceDetails.info.cancellationPolicy")}:{" "}
-                          <span className="font-medium capitalize text-foreground">
-                            {experience.cancellationPolicy}
-                          </span>
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </>
-                ) : (
-                  <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                    Informations de séjour indisponibles.
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="rooms" className="mt-5 space-y-4">
-                {lodging?.rooms?.length ? (
-                  lodging.rooms.map((room) => (
-                    <Card key={room.id} className="overflow-hidden rounded-2xl">
-                      <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
-                        <div className="bg-muted/30 p-2">
-                          {room.photoUrls.length ? (
-                            <Carousel
-                              opts={{ loop: room.photoUrls.length > 1 }}
-                            >
-                              <CarouselContent className="ml-0">
-                                {room.photoUrls.map((photoUrl, index) => (
-                                  <CarouselItem
-                                    key={`${room.id}-${index}`}
-                                    className="pl-0"
-                                  >
-                                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                                      <Image
-                                        src={photoUrl}
-                                        alt={room.name || "Room"}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  </CarouselItem>
-                                ))}
-                              </CarouselContent>
-                            </Carousel>
-                          ) : (
-                            <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-muted">
-                              <BedDouble className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="space-y-3 p-4">
-                          <h3 className="text-lg font-semibold">
-                            {room.name ?? "Chambre"}
-                          </h3>
-                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {room.description ?? "Description non renseignée."}
-                          </p>
-                          <div className="flex flex-wrap gap-2 text-xs">
-                            <Badge variant="secondary" className="gap-1">
-                              <Users className="h-3 w-3" />
-                              {room.max_persons} pers. max
-                            </Badge>
-                            <Badge variant="secondary" className="gap-1">
-                              <BedDouble className="h-3 w-3" />
-                              {room.capacity_beds}{" "}
-                              {t("experienceDetails.rooms.beds")}
-                            </Badge>
-                          </div>
-                          {room.items.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {room.items.map((equip) => (
-                                <Badge
-                                  key={equip.key}
-                                  variant="outline"
-                                  className="text-xs"
-                                >
-                                  {equip.label}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          <Separator />
-                          <div className="flex items-center justify-between">
-                            <p className="text-lg font-semibold">
-                              {formatMoney(room.price_cents, room.currency, t)}{" "}
-                              /{t("experienceDetails.info.night")}
-                            </p>
-                            <RoomBookingButton
-                              experience={experience}
-                              roomId={room.id}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                    Aucune chambre disponible.
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="location" className="mt-5 space-y-4">
-                <Card className="rounded-2xl">
-                  <CardContent className="space-y-4 p-4">
-                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <MapPin className="mt-0.5 h-4 w-4 text-primary" />
-                      <span>
-                        {locationLabel ||
-                          t("experienceDetails.addressNotProvided")}
-                      </span>
-                    </div>
-                    <div className="overflow-hidden rounded-xl border">
-                      <iframe
-                        title="Carte de l'expérience"
-                        src={mapLinks.embedUrl}
-                        className="h-72 w-full"
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                      />
-                    </div>
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="w-full sm:w-auto"
-                    >
-                      <a
-                        href={mapLinks.externalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Ouvrir dans Maps
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {experience.metrics.reviews > 0 ? (
-                <TabsContent
-                  value="reviews"
-                  className="mt-0 animate-in fade-in pb-8 duration-300 focus-visible:outline-none"
-                >
-                  <ReviewList experienceId={experience.id} />
+              {hasRoomsTab && (
+                <TabsContent value="rooms" className="mt-5">
+                  <RoomsContent />
                 </TabsContent>
-              ) : null}
+              )}
             </Tabs>
+
+            {/* Long description — last element */}
+            {experience.longDescription && (
+              <div className="space-y-2 pt-2">
+                <h3 className="text-lg font-semibold">À propos</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {experience.longDescription}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -715,11 +523,9 @@ export function ExperienceDetailView({
                   </Badge>
                 ))}
               </div>
-
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {experience.title}
               </h1>
-
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1 text-foreground">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -738,441 +544,55 @@ export function ExperienceDetailView({
                 </span>
               </div>
             </div>
-
             <ExperienceGallery images={heroImages} video={experience.video} />
           </section>
 
-          {host ? (
-            <div className="rounded-2xl border bg-card p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-14 w-14 border">
-                    <AvatarImage src={host.avatarUrl ?? undefined} />
-                    <AvatarFallback>{host.name.slice(0, 1)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {t("experienceDetails.hostedBy")}
-                    </p>
-                    <p className="text-lg font-semibold">{host.name}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {host.verified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          {t("experienceDetails.verified")}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
+          {/* Host card + short description */}
+          <HostCard />
 
-          {/* Booking CTA for Mobile */}
+          {/* Booking CTA */}
           <ExperienceBookingSection
             experience={experience}
             formattedPrice={formattedPrice}
             nightsLabel={nightsLabel}
           />
 
+          {/* Tabs: Aperçu + Chambres */}
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0">
-              <TabsTrigger
-                value="overview"
-                className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-              >
-                Aperçu
+              <TabsTrigger value="overview" className={tabTriggerClass}>
+                {t("experienceDetails.tabs.overview")}
               </TabsTrigger>
-              {hasItineraryTab ? (
-                <TabsTrigger
-                  value="itinerary"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                >
-                  Itinéraire
+              {hasRoomsTab && (
+                <TabsTrigger value="rooms" className={tabTriggerClass}>
+                  {t("experienceDetails.tabs.rooms")}
                 </TabsTrigger>
-              ) : null}
-              {hasStayTab ? (
-                <TabsTrigger
-                  value="stay"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                >
-                  Séjour
-                </TabsTrigger>
-              ) : null}
-              {hasRoomsTab ? (
-                <TabsTrigger
-                  value="rooms"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                >
-                  Chambres
-                </TabsTrigger>
-              ) : null}
-              <TabsTrigger
-                value="location"
-                className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-              >
-                Emplacement
-              </TabsTrigger>
-              {experience.metrics.reviews > 0 ? (
-                <TabsTrigger
-                  value="reviews"
-                  className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-                >
-                  Avis
-                </TabsTrigger>
-              ) : null}
+              )}
             </TabsList>
 
             <TabsContent value="overview" className="mt-5 space-y-6">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Card className="rounded-2xl border-muted">
-                  <CardContent className="flex items-center gap-3 p-4">
-                    <Clock3 className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("experienceDetails.info.duration")}
-                      </p>
-                      <p className="font-medium">
-                        {formatDuration(
-                          trip?.duration_days ?? null,
-                          trip?.duration_hours ?? null,
-                          t,
-                        )}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-2xl border-muted">
-                  <CardContent className="flex items-center gap-3 p-4">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Capacité max
-                      </p>
-                      <p className="font-medium">{capacity ?? "Flexible"}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="rounded-2xl border-muted">
-                  <CardContent className="flex items-center gap-3 p-4">
-                    <Badge
-                      className="h-6 rounded-full px-2 text-xs"
-                      variant="secondary"
-                    >
-                      {experience.type}
-                    </Badge>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        {t("experienceDetails.type")}
-                      </p>
-                      <p className="font-medium capitalize">
-                        {experience.type}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <ExperienceDescription description={description} />
-
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Équipements</h3>
-                {allEquipment.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {allEquipment.map((item) => (
-                      <div
-                        key={item.key}
-                        className="flex items-center gap-3 rounded-xl border bg-card p-3"
-                      >
-                        <Check className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Aucun équipement renseigné.
-                  </p>
-                )}
-              </div>
-
-              {experience.servicesIncluded.length ||
-              experience.servicesExcluded.length ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Card className="rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Ce qui est inclus
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      {experience.servicesIncluded.length ? (
-                        experience.servicesIncluded.map((service) => (
-                          <p
-                            key={service.key}
-                            className="flex items-center gap-2"
-                          >
-                            <Check className="h-4 w-4 text-emerald-600" />
-                            {service.label}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-muted-foreground">
-                          Aucun détail fourni
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card className="rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        {t("experienceDetails.servicesExcluded")}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      {experience.servicesExcluded.length ? (
-                        experience.servicesExcluded.map((service) => (
-                          <p
-                            key={service.key}
-                            className="flex items-center gap-2"
-                          >
-                            <Minus className="h-4 w-4 text-amber-600" />
-                            {service.label}
-                          </p>
-                        ))
-                      ) : (
-                        <p className="text-muted-foreground">
-                          Aucun détail fourni
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : null}
+              <InfoCard />
+              {lodging && <StayContent />}
+              <EquipmentSection />
+              <ServicesSection />
             </TabsContent>
 
-            <TabsContent value="itinerary" className="mt-5 space-y-4">
-              {itineraryByDay.length ? (
-                itineraryByDay.map(({ day, items }) => (
-                  <Card key={day} className="rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">Jour {day}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-xl border bg-muted/20 p-3"
-                        >
-                          <p className="font-medium">{item.title}</p>
-                          <p className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
-                            {item.details}
-                          </p>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {item.location_name ?? "Lieu à confirmer"}
-                          </p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Détails d&apos;itinéraire indisponibles pour cette expérience.
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="stay" className="mt-5 space-y-4">
-              {lodging ? (
-                <>
-                  <Card className="rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Règles de la maison
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm text-muted-foreground">
-                      <p className="flex items-center gap-2">
-                        {lodging.non_fumeur ? (
-                          <Check className="h-4 w-4 text-emerald-600" />
-                        ) : (
-                          <X className="h-4 w-4 text-rose-600" />
-                        )}
-                        Non-fumeur
-                      </p>
-                      <p className="flex items-center gap-2">
-                        {lodging.animaux_acceptes ? (
-                          <Check className="h-4 w-4 text-emerald-600" />
-                        ) : (
-                          <X className="h-4 w-4 text-rose-600" />
-                        )}
-                        Animaux acceptés
-                      </p>
-                      <p>
-                        <span className="font-medium text-foreground">
-                          Séjour minimum:
-                        </span>{" "}
-                        {lodging.min_stay_nights ?? 1} nuit(s)
-                      </p>
-                      <p className="whitespace-pre-wrap">
-                        {lodging.house_rules ??
-                          "Règles supplémentaires à confirmer avec l&apos;hôte."}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Horaires et annulation
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm text-muted-foreground">
-                      <p>
-                        Check-in:{" "}
-                        <span className="font-medium text-foreground">
-                          {lodging.check_in_time ?? "Flexible"}
-                        </span>
-                      </p>
-                      <p>
-                        Check-out:{" "}
-                        <span className="font-medium text-foreground">
-                          {lodging.check_out_time ?? "Flexible"}
-                        </span>
-                      </p>
-                      <p>
-                        Politique d&apos;annulation:{" "}
-                        <span className="font-medium capitalize text-foreground">
-                          {experience.cancellationPolicy}
-                        </span>
-                      </p>
-                    </CardContent>
-                  </Card>
-                </>
-              ) : (
-                <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  Informations de séjour indisponibles.
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="rooms" className="mt-5 space-y-4">
-              {lodging?.rooms?.length ? (
-                lodging.rooms.map((room) => (
-                  <Card key={room.id} className="overflow-hidden rounded-2xl">
-                    <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
-                      <div className="bg-muted/30 p-2">
-                        {room.photoUrls.length ? (
-                          <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
-                            <CarouselContent className="ml-0">
-                              {room.photoUrls.map((photoUrl, index) => (
-                                <CarouselItem
-                                  key={`${room.id}-${index}`}
-                                  className="pl-0"
-                                >
-                                  <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                                    <Image
-                                      src={photoUrl}
-                                      alt={room.name || "Room"}
-                                      fill
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                </CarouselItem>
-                              ))}
-                            </CarouselContent>
-                          </Carousel>
-                        ) : (
-                          <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-muted">
-                            <BedDouble className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-3 p-4">
-                        <h3 className="text-lg font-semibold">
-                          {room.name ?? "Chambre"}
-                        </h3>
-                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {room.description ?? "Description non renseignée."}
-                        </p>
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <Badge variant="secondary" className="gap-1">
-                            <Users className="h-3 w-3" />
-                            {room.max_persons} pers. max
-                          </Badge>
-                          <Badge variant="secondary" className="gap-1">
-                            <BedDouble className="h-3 w-3" />
-                            {room.capacity_beds} lit(s)
-                          </Badge>
-                        </div>
-                        <Separator />
-                        <div className="flex items-center justify-between">
-                          <p className="text-lg font-semibold">
-                            {formatMoney(room.price_cents, room.currency, t)} /
-                            {t("experienceDetails.info.night")}
-                          </p>
-                          <RoomBookingButton
-                            experience={experience}
-                            roomId={room.id}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  {t("experienceDetails.noRooms")}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="location" className="mt-5 space-y-4">
-              <Card className="rounded-2xl">
-                <CardContent className="space-y-4 p-4">
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                    <MapPin className="mt-0.5 h-4 w-4 text-primary" />
-                    <span>{locationLabel || "Adresse non renseignée"}</span>
-                  </div>
-                  <div className="overflow-hidden rounded-xl border">
-                    <iframe
-                      title="Carte de l'expérience"
-                      src={mapLinks.embedUrl}
-                      className="h-72 w-full"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                    />
-                  </div>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="w-full sm:w-auto"
-                  >
-                    <a
-                      href={mapLinks.externalUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Ouvrir dans Maps
-                    </a>
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {experience.metrics.reviews > 0 ? (
-              <TabsContent
-                value="reviews"
-                className="mt-0 animate-in fade-in pb-8 duration-300 focus-visible:outline-none"
-              >
-                <ReviewList experienceId={experience.id} />
+            {hasRoomsTab && (
+              <TabsContent value="rooms" className="mt-5">
+                <RoomsContent />
               </TabsContent>
-            ) : null}
+            )}
           </Tabs>
+
+          {/* Long description — last element */}
+          {experience.longDescription && (
+            <div className="space-y-2 pt-2">
+              <h3 className="text-lg font-semibold">À propos</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {experience.longDescription}
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>

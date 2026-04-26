@@ -7,14 +7,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import type { ExperienceBreakdownPoint } from "@/types/host-analytics";
-
-const chartConfig = {
-  bookings: {
-    label: "Bookings",
-    color: "#0f766e",
-  },
-};
 
 type ExperienceBreakdownChartProps = {
   data: ExperienceBreakdownPoint[];
@@ -23,6 +17,15 @@ type ExperienceBreakdownChartProps = {
 export function ExperienceBreakdownChart({
   data,
 }: ExperienceBreakdownChartProps) {
+  const { t } = useSiteI18n();
+
+  const chartConfig = {
+    bookings: {
+      label: t("host.charts.bookings"),
+      color: "#0f766e",
+    },
+  };
+
   const normalized = data.map((item) => ({
     ...item,
     shortTitle:
@@ -34,7 +37,7 @@ export function ExperienceBreakdownChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Experiences by Bookings</CardTitle>
+        <CardTitle>{t("host.charts.topExperiences")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[280px] w-full">

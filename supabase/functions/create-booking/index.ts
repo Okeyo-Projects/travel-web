@@ -36,7 +36,7 @@ async function createBooking(supabase: any, request: CreateBookingRequest) {
     p_infants: request.infants,
     p_departure_id: request.departureId ?? null,
     p_session_id: null, // TODO: Add session_id support for activities
-    p_rooms: request.rooms ? (request.rooms as unknown as any) : null,
+    p_rooms: request.rooms ? JSON.stringify(request.rooms) : null,
     p_price_subtotal_cents: request.subtotalCents,
     p_price_fees_cents: request.feesCents,
     p_price_taxes_cents: request.taxesCents,

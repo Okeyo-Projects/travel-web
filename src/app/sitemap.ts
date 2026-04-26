@@ -3,6 +3,10 @@ import { LOCALES } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildCategorySlug, buildExperienceSlug } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/server";
+import {
+  fetchAllCategoriesForSitemap,
+  fetchAllPostsForSitemap,
+} from "@/lib/wordpress";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
@@ -11,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths = [
     "/",
     "/explore",
+    "/blog",
     "/about",
     "/support",
     "/terms",
@@ -46,6 +51,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let categoryRoutes: MetadataRoute.Sitemap = [];
   let experienceRoutes: MetadataRoute.Sitemap = [];
+  let blogPostRoutes: MetadataRoute.Sitemap = [];
+  let blogCategoryRoutes: MetadataRoute.Sitemap = [];
+
+  const [wpPosts, wpCategories] = await Promise.allSettled([
+    fetchAllPostsForSitemap(),
+    fetchAllCategoriesForSitemap(),
+  ]);
+
+  if (wpPosts.status === "fulfilled") {
+    blogPostRoutes = wpPosts.value.flatMap(({ slug, modified }) =>
+      LOCALES.map((locale) => ({
+        url: `${SITE_URL}${localizeHref(`/blog/${slug}`, locale)}`,
+        lastModified: new Date(modified),
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+    );
+  }
+
+  if (wpCategories.status === "fulfilled") {
+    blogCategoryRoutes = wpCategories.value.flatMap(({ slug }) =>
+      LOCALES.map((locale) => ({
+        url: `${SITE_URL}${localizeHref(`/blog/category/${slug}`, locale)}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.5,
+      })),
+    );
+  }
 
   try {
     const supabase = await createClient();

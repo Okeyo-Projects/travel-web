@@ -1,12 +1,12 @@
 "use client";
 
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { useT } from "@/providers/translations-provider";
 import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { useT } from "@/providers/translations-provider";
 
 export function FooterSection() {
   const pathname = usePathname();
@@ -14,6 +14,7 @@ export function FooterSection() {
   const companyLinks = [
     { label: t("home.footer.links.explore"), href: "/explore" },
     { label: t("home.footer.links.about"), href: "/about" },
+    { label: t("home.footer.links.blog"), href: "/blog" },
     { label: t("home.footer.links.privacy"), href: "/privacy" },
     { label: t("home.footer.links.terms"), href: "/terms" },
     { label: t("home.footer.links.support"), href: "/support" },
@@ -109,10 +110,10 @@ export function FooterSection() {
             <p className="mt-5 text-sm text-white/60">
               {t("home.footer.contact")} :{" "}
               <a
-                href="mailto:contact@okeyotravel.com"
+                href="mailto:contact@okeyo.ma"
                 className="underline hover:text-white/90 transition-colors"
               >
-                contact@okeyotravel.com
+                contact@okeyo.ma
               </a>
             </p>
             <div className="w-full flex justify-end mt-4">

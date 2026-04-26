@@ -1,3 +1,5 @@
+"use client";
+
 import { CalendarDays, Eye, Loader2, MapPin, Star, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +11,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 import type { HostExperience } from "@/types/host-experiences";
 
@@ -18,52 +21,20 @@ type HostExperienceCardProps = {
   busy: boolean;
 };
 
-function statusCopy(status: HostExperience["status"]) {
+function statusClassName(status: HostExperience["status"]): string {
   switch (status) {
     case "published":
-      return {
-        label: "Published",
-        className: "bg-emerald-100 text-emerald-700 border-emerald-200",
-      };
+      return "bg-emerald-100 text-emerald-700 border-emerald-200";
     case "review":
-      return {
-        label: "In review",
-        className: "bg-amber-100 text-amber-700 border-amber-200",
-      };
+      return "bg-amber-100 text-amber-700 border-amber-200";
     case "draft":
-      return {
-        label: "Draft",
-        className: "bg-slate-100 text-slate-700 border-slate-200",
-      };
+      return "bg-slate-100 text-slate-700 border-slate-200";
     case "paused":
     case "rejected":
-      return {
-        label: "Archived",
-        className: "bg-rose-100 text-rose-700 border-rose-200",
-      };
+      return "bg-rose-100 text-rose-700 border-rose-200";
     default:
-      return {
-        label: status,
-        className: "bg-slate-100 text-slate-700 border-slate-200",
-      };
+      return "bg-slate-100 text-slate-700 border-slate-200";
   }
-}
-
-function typeCopy(type: HostExperience["type"]) {
-  switch (type) {
-    case "lodging":
-      return "Lodging";
-    case "trip":
-      return "Trip";
-    case "activity":
-      return "Activity";
-    default:
-      return type;
-  }
-}
-
-function pluralize(value: number, singular: string, plural: string) {
-  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 export function HostExperienceCard({
@@ -71,7 +42,32 @@ export function HostExperienceCard({
   onToggleVisibility,
   busy,
 }: HostExperienceCardProps) {
-  const status = statusCopy(experience.status);
+  const { t } = useSiteI18n();
+
+  function statusLabel(status: HostExperience["status"]): string {
+    switch (status) {
+      case "published": return t("host.experienceCard.statuses.published");
+      case "review": return t("host.experienceCard.statuses.review");
+      case "draft": return t("host.experienceCard.statuses.draft");
+      case "paused":
+      case "rejected": return t("host.experienceCard.statuses.archived");
+      default: return status;
+    }
+  }
+
+  function typeLabel(type: HostExperience["type"]): string {
+    switch (type) {
+      case "lodging": return t("host.experienceCard.types.lodging");
+      case "trip": return t("host.experienceCard.types.trip");
+      case "activity": return t("host.experienceCard.types.activity");
+      default: return type;
+    }
+  }
+
+  const activeCount = experience.activeBookingsCount;
+  const activeBookingsText = activeCount === 1
+    ? t("host.experienceCard.activeBookingOne", { count: activeCount })
+    : t("host.experienceCard.activeBookingOther", { count: activeCount });
 
   return (
     <Card className="overflow-hidden border-slate-200 shadow-sm">
@@ -88,7 +84,7 @@ export function HostExperienceCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-            No thumbnail
+            {t("host.experienceCard.noThumbnail")}
           </div>
         )}
       </div>
@@ -100,15 +96,17 @@ export function HostExperienceCard({
               {experience.title}
             </h3>
             <p className="text-xs uppercase tracking-wide text-slate-500">
-              {typeCopy(experience.type)}
+              {typeLabel(experience.type)}
             </p>
           </div>
-          <Badge className={status.className}>{status.label}</Badge>
+          <Badge className={statusClassName(experience.status)}>
+            {statusLabel(experience.status)}
+          </Badge>
         </div>
 
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <MapPin className="size-3.5" />
-          <span>{experience.city ?? "Location unavailable"}</span>
+          <span>{experience.city ?? t("host.experienceCard.locationUnavailable")}</span>
         </div>
       </CardHeader>
 
@@ -117,19 +115,19 @@ export function HostExperienceCard({
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <Star className="size-3.5" />
-              Rating
+              {t("host.experienceCard.rating")}
             </div>
             <p className="mt-1 font-medium">
               {experience.avgRating
                 ? experience.avgRating.toFixed(1)
-                : "No rating"}
+                : t("host.experienceCard.noRating")}
             </p>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <Users className="size-3.5" />
-              Bookings
+              {t("host.experienceCard.bookings")}
             </div>
             <p className="mt-1 font-medium">{experience.bookingsCount}</p>
           </div>
@@ -137,13 +135,7 @@ export function HostExperienceCard({
 
         <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
           <CalendarDays className="size-3.5" />
-          <span>
-            {pluralize(
-              experience.activeBookingsCount,
-              "active booking",
-              "active bookings",
-            )}
-          </span>
+          <span>{activeBookingsText}</span>
         </div>
       </CardContent>
 
@@ -155,7 +147,7 @@ export function HostExperienceCard({
             rel="noreferrer"
           >
             <Eye className="size-3.5" />
-            View details
+            {t("host.experienceCard.viewDetails")}
           </Link>
         </Button>
 
@@ -167,7 +159,9 @@ export function HostExperienceCard({
           className="ml-auto gap-1.5"
         >
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
-          {experience.status === "published" ? "Unpublish" : "Publish"}
+          {experience.status === "published"
+            ? t("host.experienceCard.unpublish")
+            : t("host.experienceCard.publish")}
         </Button>
       </CardFooter>
     </Card>

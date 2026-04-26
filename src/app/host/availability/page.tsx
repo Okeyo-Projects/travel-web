@@ -12,9 +12,8 @@ export default function HostAvailabilityPage() {
       </CardHeader>
       <CardContent className="flex items-center gap-2 text-sm text-slate-600">
         <Wrench className="size-4" />
-        Full availability management is planned in Task 015.
+        Full availability management is coming soon.
       </CardContent>
     </Card>
   );
 }
-

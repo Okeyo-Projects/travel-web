@@ -13,7 +13,8 @@ export type AgentToolName =
   | "offerQuickReplies"
   | "suggestDateOptions"
   | "selectRoomType"
-  | "getExperienceOptionDetails";
+  | "getExperienceOptionDetails"
+  | "getWeather";
 
 export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
   "searchExperiences",
@@ -29,6 +30,7 @@ export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
   "suggestDateOptions",
   "selectRoomType",
   "getExperienceOptionDetails",
+  "getWeather",
 ];
 
 export type AgentWelcomeMessages = Record<
@@ -39,7 +41,12 @@ export type AgentWelcomeMessages = Record<
   }
 >;
 
-export type AgentSuggestedPrompts = Record<string, string[]>;
+export type AgentSuggestedPrompt = {
+  title: string;
+  prompt: string;
+};
+
+export type AgentSuggestedPrompts = Record<string, AgentSuggestedPrompt[]>;
 
 export interface AgentRuntimeConfig {
   configId: string | null;
@@ -66,40 +73,77 @@ const DEFAULT_SUPPORTED_LANGUAGES = ["fr", "en", "ar"];
 
 const DEFAULT_WELCOME_MESSAGES: AgentWelcomeMessages = {
   fr: {
-    title: "Bonjour, je suis votre Assistant Voyage",
+    title: "Bonjour, je suis votre assistant voyage",
     description:
-      "Je peux vous aider à trouver le lodge idéal au Maroc, comparer les chambres et préparer votre réservation.",
+      "Je peux vous aider à trouver le bon séjour au Maroc, comparer les chambres et préparer votre réservation.",
   },
   en: {
-    title: "Hi, I am your Travel Assistant",
+    title: "Hello, I am your travel assistant",
     description:
-      "I can help you find the right lodge in Morocco, compare rooms, and prepare your booking.",
+      "I can help you find the right stay in Morocco, compare rooms, and prepare your booking.",
   },
   ar: {
-    title: "مرحبا، أنا مساعد السفر الخاص بك",
+    title: "مرحبًا، أنا مساعدك في السفر",
     description:
-      "يمكنني مساعدتك في العثور على السكن المناسب في المغرب ومقارنة الغرف وتجهيز الحجز.",
+      "يمكنني مساعدتك في العثور على الإقامة المناسبة في المغرب ومقارنة الغرف وتحضير الحجز.",
   },
 };
 
 const DEFAULT_SUGGESTED_PROMPTS: AgentSuggestedPrompts = {
   fr: [
-    "Je cherche un riad romantique à Marrakech pour ce weekend.",
-    "Je veux une maison d'hôtes calme à Chefchaouen pour 2 nuits.",
-    "Montre-moi des lodges avec piscine près de Marrakech.",
-    "Je cherche un hébergement petit budget à Imlil.",
+    {
+      title: "Riad romantique",
+      prompt: "Je cherche un riad romantique à Marrakech pour ce week-end.",
+    },
+    {
+      title: "Lodge calme dans l’Atlas",
+      prompt: "Je cherche un lodge calme dans l’Atlas pour 2 nuits.",
+    },
+    {
+      title: "Piscine et détente",
+      prompt:
+        "Montre-moi un hébergement avec piscine et hammam près de Marrakech.",
+    },
+    {
+      title: "Petit budget",
+      prompt: "Je veux une maison d’hôtes petit budget à Chefchaouen.",
+    },
   ],
   en: [
-    "I am looking for a romantic riad in Marrakech this weekend.",
-    "I need a quiet guesthouse in Chefchaouen for 2 nights.",
-    "Show me lodges with a pool near Marrakech.",
-    "I am looking for a budget stay in Imlil.",
+    {
+      title: "Romantic riad",
+      prompt: "I am looking for a romantic riad in Marrakech for this weekend.",
+    },
+    {
+      title: "Quiet Atlas lodge",
+      prompt: "I am looking for a quiet lodge in the Atlas for 2 nights.",
+    },
+    {
+      title: "Pool and relaxation",
+      prompt: "Show me a stay with a pool and hammam near Marrakech.",
+    },
+    {
+      title: "Budget stay",
+      prompt: "I want a budget guesthouse in Chefchaouen.",
+    },
   ],
   ar: [
-    "أبحث عن رياض رومانسي في مراكش نهاية هذا الأسبوع.",
-    "أريد دار ضيافة هادئة في شفشاون ليلتين.",
-    "اعرض لي نُزلاً مع مسبح قرب مراكش.",
-    "أبحث عن إقامة اقتصادية في إمليل.",
+    {
+      title: "رياض رومانسي",
+      prompt: "أبحث عن رياض رومانسي في مراكش لعطلة نهاية الأسبوع.",
+    },
+    {
+      title: "لودج هادئ في الأطلس",
+      prompt: "أبحث عن لودج هادئ في الأطلس لمدة ليلتين.",
+    },
+    {
+      title: "مسبح واسترخاء",
+      prompt: "اعرض لي إقامة مع مسبح وحمام قرب مراكش.",
+    },
+    {
+      title: "ميزانية محدودة",
+      prompt: "أريد دار ضيافة اقتصادية في شفشاون.",
+    },
   ],
 };
 
@@ -111,6 +155,30 @@ type CachedConfig = {
 };
 
 const runtimeCache = new Map<string, CachedConfig>();
+
+type SupabaseSingleResult = {
+  data: Record<string, unknown> | null;
+  error: unknown;
+};
+
+type SupabaseQueryBuilder = {
+  select(columns: string): SupabaseQueryBuilder;
+  eq(column: string, value: unknown): SupabaseQueryBuilder;
+  order(
+    column: string,
+    options?: {
+      ascending?: boolean;
+    },
+  ): SupabaseQueryBuilder;
+  limit(count: number): SupabaseQueryBuilder;
+  maybeSingle(): Promise<SupabaseSingleResult>;
+};
+
+type AgentConfigDatabaseClient = {
+  from(
+    table: "ai_agent_configs" | "ai_agent_config_versions",
+  ): SupabaseQueryBuilder;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -176,10 +244,30 @@ function sanitizeSuggestedPrompts(input: unknown): AgentSuggestedPrompts {
 
   const output: AgentSuggestedPrompts = { ...DEFAULT_SUGGESTED_PROMPTS };
   for (const [language, value] of Object.entries(input)) {
-    const prompts = sanitizeStringArray(value);
+    const prompts = sanitizeSuggestedPromptArray(value);
     if (prompts.length > 0) {
       output[language] = prompts;
     }
+  }
+
+  return output;
+}
+
+function sanitizeSuggestedPromptArray(input: unknown): AgentSuggestedPrompt[] {
+  if (!Array.isArray(input)) return [];
+
+  const output: AgentSuggestedPrompt[] = [];
+  const seen = new Set<string>();
+
+  for (const value of input) {
+    if (!isRecord(value)) continue;
+
+    const title = typeof value.title === "string" ? value.title.trim() : "";
+    const prompt = typeof value.prompt === "string" ? value.prompt.trim() : "";
+    if (!title || !prompt || seen.has(prompt)) continue;
+
+    seen.add(prompt);
+    output.push({ title, prompt });
   }
 
   return output;
@@ -251,7 +339,7 @@ export async function loadAgentRuntimeConfig({
 
   try {
     const supabase = await createClient();
-    const db = supabase as any;
+    const db = supabase as unknown as AgentConfigDatabaseClient;
 
     const { data: configRow, error: configError } = await db
       .from("ai_agent_configs")

@@ -2,6 +2,7 @@
 
 import { DollarSign, Star, Ticket, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import type { HostDashboardSummary } from "@/types/host-analytics";
 
 function formatMoney(cents: number, currency: string) {
@@ -17,27 +18,29 @@ type StatisticsCardsProps = {
 };
 
 export function StatisticsCards({ summary }: StatisticsCardsProps) {
+  const { t } = useSiteI18n();
+
   const cards = [
     {
-      title: "Total bookings",
+      title: t("host.stats.totalBookings"),
       value: summary.totalBookings.toLocaleString(),
       icon: Ticket,
     },
     {
-      title: "Revenue",
+      title: t("host.stats.revenue"),
       value: formatMoney(summary.totalRevenueCents, summary.currency),
       icon: DollarSign,
     },
     {
-      title: "Guests hosted",
+      title: t("host.stats.guestsHosted"),
       value: summary.totalGuests.toLocaleString(),
       icon: Users,
     },
     {
-      title: "Average rating",
+      title: t("host.stats.averageRating"),
       value: summary.averageRating
         ? summary.averageRating.toFixed(1)
-        : "No ratings",
+        : t("host.stats.noRatings"),
       icon: Star,
     },
   ] as const;

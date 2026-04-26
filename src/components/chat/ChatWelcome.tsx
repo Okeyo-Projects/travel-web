@@ -1,16 +1,36 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Compass, Hotel, Map as MapIcon, Tag } from "lucide-react";
+import {
+  Compass,
+  Hotel,
+  type LucideIcon,
+  Map as MapIcon,
+  Tag,
+} from "lucide-react";
 import { useSiteI18n } from "@/components/site/site-i18n";
+
+type SuggestedPrompt =
+  | string
+  | {
+      title?: string;
+      prompt?: string;
+    };
 
 interface ChatWelcomeProps {
   onSelectSuggestion: (suggestion: string) => void;
   disabled?: boolean;
   welcomeTitle?: string;
   welcomeDescription?: string;
-  suggestedPrompts?: string[];
+  suggestedPrompts?: SuggestedPrompt[];
 }
+
+type WelcomeSuggestion = {
+  icon: LucideIcon;
+  title: string;
+  prompt: string;
+  color: string;
+};
 
 export function ChatWelcome({
   onSelectSuggestion,
@@ -20,7 +40,7 @@ export function ChatWelcome({
   suggestedPrompts,
 }: ChatWelcomeProps) {
   const { t, dir } = useSiteI18n();
-  const defaultSuggestions = [
+  const defaultSuggestions: WelcomeSuggestion[] = [
     {
       icon: Hotel,
       title: t("chat.welcome.suggestions.one.title"),
@@ -55,14 +75,40 @@ export function ChatWelcome({
     "text-amber-500 bg-amber-500/10",
   ];
 
-  const suggestions =
+  const configuredSuggestions =
     Array.isArray(suggestedPrompts) && suggestedPrompts.length > 0
-      ? suggestedPrompts.slice(0, 4).map((prompt, index) => ({
-          icon: iconPalette[index % iconPalette.length],
-          title: t("chat.welcome.suggestionLabel", { count: index + 1 }),
-          prompt,
-          color: colorPalette[index % colorPalette.length],
-        }))
+      ? suggestedPrompts
+          .slice(0, 4)
+          .map((entry, index): WelcomeSuggestion | null => {
+            const configuredTitle =
+              typeof entry === "object" && entry !== null
+                ? entry.title?.trim()
+                : "";
+            const prompt =
+              typeof entry === "string"
+                ? entry.trim()
+                : entry?.prompt?.trim() || "";
+
+            if (!prompt) return null;
+
+            return {
+              icon: iconPalette[index % iconPalette.length],
+              title:
+                configuredTitle ||
+                defaultSuggestions[index]?.title ||
+                t("chat.welcome.suggestionLabel", { count: index + 1 }),
+              prompt,
+              color: colorPalette[index % colorPalette.length],
+            };
+          })
+          .filter((suggestion): suggestion is WelcomeSuggestion =>
+            Boolean(suggestion),
+          )
+      : [];
+
+  const suggestions =
+    configuredSuggestions.length > 0
+      ? configuredSuggestions
       : defaultSuggestions;
 
   const title = welcomeTitle || t("chat.welcome.defaultTitle");

@@ -39,11 +39,13 @@ import {
   type PayzoneSession,
 } from "@/lib/payzone";
 import { createClient } from "@/lib/supabase/client";
+import { getImageUrl } from "@/utils/functions";
 import type { Database } from "@/types/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
+  BedDouble,
   BriefcaseBusiness,
   CalendarDays,
   CheckCircle2,
@@ -99,6 +101,7 @@ type BookingDetail = {
   cancelled_at: string | null;
   guest_notes: string | null;
   host_notes: string | null;
+  rooms: Database["public"]["Tables"]["bookings"]["Row"]["rooms"];
   created_at: string;
   updated_at: string;
   responded_at: string | null;
@@ -115,6 +118,19 @@ type BookingDetail = {
     type: string | null;
     cancellation_policy: CancellationPolicy | null;
   } | null;
+};
+
+type RoomEntry = { room_type_id: string; quantity: number };
+
+type RoomDetail = {
+  id: string;
+  name: string | null;
+  photos: string[] | null;
+  price_cents: number;
+  currency: string;
+  capacity_beds: number;
+  max_persons: number;
+  room_type: Database["public"]["Enums"]["room_type"];
 };
 
 function formatDateRange(from: string, to: string, locale: string) {
@@ -433,28 +449,29 @@ export default function BookingDetailPage() {
         .select(
           `
           id,
-          guest_id,
-          host_id,
-          from_date,
-          to_date,
-          adults,
-          children,
-          infants,
-          price_subtotal_cents,
-          price_fees_cents,
-          price_taxes_cents,
-          price_total_cents,
-          currency,
-          status,
-          cancellation_reason,
-          cancelled_at,
-          guest_notes,
-          host_notes,
-          created_at,
-          updated_at,
-          responded_at,
-          guest:profiles!bookings_guest_id_fkey(id, display_name, avatar_url),
-          experience:experiences(id, title, city, thumbnail_url, type, cancellation_policy)
+           guest_id,
+           host_id,
+           from_date,
+           to_date,
+           adults,
+           children,
+           infants,
+           rooms,
+           price_subtotal_cents,
+           price_fees_cents,
+           price_taxes_cents,
+           price_total_cents,
+           currency,
+           status,
+           cancellation_reason,
+           cancelled_at,
+           guest_notes,
+           host_notes,
+           created_at,
+           updated_at,
+           responded_at,
+           guest:profiles!bookings_guest_id_fkey(id, display_name, avatar_url),
+           experience:experiences(id, title, city, thumbnail_url, type, cancellation_policy)
         `,
         )
         .eq("id", bookingId)
@@ -470,6 +487,48 @@ export default function BookingDetailPage() {
   const bookingReviewQuery = useReviewForBooking(
     isGuestView ? bookingId : null,
   );
+
+  const parsedRooms: RoomEntry[] = useMemo(() => {
+    if (!booking?.rooms) return [];
+    try {
+      const parsed =
+        typeof booking.rooms === "string"
+          ? JSON.parse(booking.rooms)
+          : booking.rooms;
+      if (Array.isArray(parsed)) return parsed as RoomEntry[];
+      return [];
+    } catch {
+      return [];
+    }
+  }, [booking?.rooms]);
+
+  const { data: roomDetails } = useQuery({
+    queryKey: ["booking-room-details", bookingId, parsedRooms.map((r) => r.room_type_id).join(",")],
+    enabled: parsedRooms.length > 0,
+    queryFn: async () => {
+      const supabase = createClient();
+      const ids = parsedRooms.map((r) => r.room_type_id);
+      const { data, error } = await supabase
+        .from("lodging_room_types")
+        .select("id, name, photos, price_cents, currency, capacity_beds, max_persons, room_type")
+        .in("id", ids);
+      if (error) throw error;
+      return (data ?? []) as RoomDetail[];
+    },
+  });
+
+  const roomDisplayList = useMemo(() => {
+    if (parsedRooms.length === 0 || !roomDetails) return [];
+    return parsedRooms
+      .map((entry) => {
+        const detail = roomDetails.find((d) => d.id === entry.room_type_id);
+        if (!detail) return null;
+        return { ...detail, quantity: entry.quantity };
+      })
+      .filter(Boolean) as (RoomDetail & { quantity: number })[];
+  }, [parsedRooms, roomDetails]);
+
+  const isLodging = booking?.experience?.type === "lodging";
 
   const persistPendingPaymentId = useCallback(
     (paymentId: string) => {
@@ -1011,6 +1070,82 @@ export default function BookingDetailPage() {
                     </p>
                   </div>
                 </div>
+                {(isLodging && roomDisplayList.length > 0) && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-3 text-sm">
+                      <BedDouble className="size-4 text-muted-foreground mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-medium">
+                          {t("booking.steps.review.rooms")}
+                        </p>
+                        <div className="space-y-3 mt-2">
+                          {roomDisplayList.map((room) => {
+                            const photoUrl = room.photos?.[0]
+                              ? getImageUrl(room.photos[0])
+                              : null;
+                            return (
+                              <div
+                                key={room.id}
+                                className="flex items-center gap-3 rounded-lg border bg-muted/30 p-2"
+                              >
+                                {photoUrl ? (
+                                  <div className="relative size-14 shrink-0 rounded-md overflow-hidden bg-muted">
+                                    <Image
+                                      src={photoUrl}
+                                      alt={room.name ?? "Room"}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex size-14 shrink-0 items-center justify-center rounded-md bg-muted">
+                                    <BedDouble className="size-5 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {room.name ?? "Room"}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span>
+                                      {room.capacity_beds}{" "}
+                                      {room.capacity_beds > 1 ? "beds" : "bed"}
+                                    </span>
+                                    <span>·</span>
+                                    <span>
+                                      {room.max_persons}{" "}
+                                      {room.max_persons > 1 ? "guests" : "guest"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-sm font-semibold">
+                                    x{room.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {isLodging && parsedRooms.length === 0 && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-3 text-sm">
+                      <BedDouble className="size-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="font-medium">
+                          {t("booking.steps.review.rooms")}
+                        </p>
+                        <p className="text-muted-foreground">1 room</p>
+                      </div>
+                    </div>
+                  </>
+                )}
                 <Separator />
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">

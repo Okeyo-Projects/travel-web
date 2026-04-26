@@ -161,6 +161,14 @@ export function UserMenu({ variant = "dark" }: UserMenuProps) {
             </DropdownMenuItem>
           </>
         )}
+        {!canHost && (
+          <DropdownMenuItem asChild>
+            <Link href={localizeHref("/become-host", pathname)}>
+              <BriefcaseBusiness className="mr-2 h-4 w-4" />
+              {t("host.becomeHost.pageTitle")}
+            </Link>
+          </DropdownMenuItem>
+        )}
         {canHost && (
           <DropdownMenuItem
             onSelect={() => {

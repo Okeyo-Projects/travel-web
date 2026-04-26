@@ -7,28 +7,31 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import type { BookingTrendPoint } from "@/types/host-analytics";
-
-const chartConfig = {
-  bookings: {
-    label: "Bookings",
-    color: "#0f766e",
-  },
-  revenue: {
-    label: "Revenue",
-    color: "#0284c7",
-  },
-};
 
 type BookingsChartProps = {
   data: BookingTrendPoint[];
 };
 
 export function BookingsChart({ data }: BookingsChartProps) {
+  const { t } = useSiteI18n();
+
+  const chartConfig = {
+    bookings: {
+      label: t("host.charts.bookings"),
+      color: "#0f766e",
+    },
+    revenue: {
+      label: t("host.charts.revenue"),
+      color: "#0284c7",
+    },
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bookings and Revenue Trend</CardTitle>
+        <CardTitle>{t("host.charts.bookingsTrend")}</CardTitle>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[280px] w-full">

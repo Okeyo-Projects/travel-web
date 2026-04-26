@@ -46,7 +46,13 @@ interface PublicAgentConfigResponse {
       description: string;
     }
   >;
-  suggested_prompts: Record<string, string[]>;
+  suggested_prompts: Record<
+    string,
+    Array<{
+      title: string;
+      prompt: string;
+    }>
+  >;
 }
 
 type ChatSendSource =

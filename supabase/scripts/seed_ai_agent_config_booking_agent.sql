@@ -410,16 +410,72 @@ BEGIN
       ]::TEXT[],
       '{
         "fr": {
-          "title": "Bonjour, je suis votre Assistant Voyage",
-          "description": "Je peux vous aider à planifier votre séjour au Maroc, trouver des hébergements uniques et réserver des expériences inoubliables."
+          "title": "Bonjour, je suis votre assistant voyage",
+          "description": "Je peux vous aider à trouver le bon séjour au Maroc, comparer les chambres et préparer votre réservation."
+        },
+        "en": {
+          "title": "Hello, I am your travel assistant",
+          "description": "I can help you find the right stay in Morocco, compare rooms, and prepare your booking."
+        },
+        "ar": {
+          "title": "مرحبًا، أنا مساعدك في السفر",
+          "description": "يمكنني مساعدتك في العثور على الإقامة المناسبة في المغرب ومقارنة الغرف وتحضير الحجز."
         }
       }'::jsonb,
       '{
         "fr": [
-          "Je cherche un riad romantique à Marrakech pour ce weekend.",
-          "Propose-moi une randonnée de 2 jours dans l''Atlas.",
-          "Quelles sont les meilleures activités culturelles à Fès ?",
-          "Montre-moi les offres de dernière minute pour Agadir."
+          {
+            "title": "Riad romantique",
+            "prompt": "Je cherche un riad romantique à Marrakech pour ce week-end."
+          },
+          {
+            "title": "Lodge calme dans l’Atlas",
+            "prompt": "Je cherche un lodge calme dans l’Atlas pour 2 nuits."
+          },
+          {
+            "title": "Piscine et détente",
+            "prompt": "Montre-moi un hébergement avec piscine et hammam près de Marrakech."
+          },
+          {
+            "title": "Petit budget",
+            "prompt": "Je veux une maison d’hôtes petit budget à Chefchaouen."
+          }
+        ],
+        "en": [
+          {
+            "title": "Romantic riad",
+            "prompt": "I am looking for a romantic riad in Marrakech for this weekend."
+          },
+          {
+            "title": "Quiet Atlas lodge",
+            "prompt": "I am looking for a quiet lodge in the Atlas for 2 nights."
+          },
+          {
+            "title": "Pool and relaxation",
+            "prompt": "Show me a stay with a pool and hammam near Marrakech."
+          },
+          {
+            "title": "Budget stay",
+            "prompt": "I want a budget guesthouse in Chefchaouen."
+          }
+        ],
+        "ar": [
+          {
+            "title": "رياض رومانسي",
+            "prompt": "أبحث عن رياض رومانسي في مراكش لعطلة نهاية الأسبوع."
+          },
+          {
+            "title": "لودج هادئ في الأطلس",
+            "prompt": "أبحث عن لودج هادئ في الأطلس لمدة ليلتين."
+          },
+          {
+            "title": "مسبح واسترخاء",
+            "prompt": "اعرض لي إقامة مع مسبح وحمام قرب مراكش."
+          },
+          {
+            "title": "ميزانية محدودة",
+            "prompt": "أريد دار ضيافة اقتصادية في شفشاون."
+          }
         ]
       }'::jsonb,
       '{}'::jsonb,
