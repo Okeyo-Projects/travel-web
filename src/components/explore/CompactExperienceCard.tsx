@@ -85,9 +85,6 @@ export function CompactExperienceCard({
       } else if (Hls.isSupported()) {
         console.log("[Video] Using HLS.js");
         hls = new Hls();
-        hls.on("hlsError", (event, data) => {
-          console.error("[Video] HLS Error:", data);
-        });
         hls.loadSource(videoUrl);
         hls.attachMedia(video);
       } else {

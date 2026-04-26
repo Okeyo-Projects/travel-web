@@ -1177,6 +1177,17 @@
     }
   },
   "booking": {
+    "status": {
+      "pendingReview": "En attente d'examen",
+      "approved": "Approuvée",
+      "awaitingPayment": "En attente de paiement",
+      "confirmed": "Confirmée",
+      "completed": "Complétée",
+      "cancelled": "Annulée",
+      "declined": "Refusée",
+      "refunded": "Remboursée",
+      "unknown": "Inconnue"
+    },
     "modal": {
       "back": "Retour",
       "stepLabels": {
@@ -1341,11 +1352,6 @@
         "loginRequired": "Veuillez vous connecter pour compléter votre réservation",
         "successToast": "Réservation envoyée avec succès !",
         "errorToast": "Échec de l'envoi de la réservation. Veuillez réessayer."
-      }
-    },
-    "steps": {
-      "review": {
-        "rooms": "Chambres"
       }
     },
     "details": {

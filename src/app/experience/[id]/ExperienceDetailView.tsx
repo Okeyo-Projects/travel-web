@@ -222,7 +222,7 @@ export function ExperienceDetailView({
 
   const EquipmentSection = () => (
     <div className="space-y-3">
-      <h3 className="text-lg font-semibold">Équipements de l&apos;auberge</h3>
+      <h2 className="text-lg font-semibold">Équipements de l&apos;auberge</h2>
       {allEquipment.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {allEquipment.map((item) => (
@@ -295,9 +295,9 @@ export function ExperienceDetailView({
                 <RoomGallery photoUrls={room.photoUrls} name={room.name} />
               </div>
               <div className="space-y-3 p-4">
-                <h3 className="text-lg font-semibold">
+                <h2 className="text-lg font-semibold">
                   {room.name ?? t("experienceDetails.info.noDetails")}
-                </h3>
+                </h2>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                   {room.description ?? t("experienceDetails.info.noDetails")}
                 </p>
@@ -474,7 +474,7 @@ export function ExperienceDetailView({
             {/* Long description — last element */}
             {experience.longDescription && (
               <div className="space-y-2 pt-2">
-                <h3 className="text-lg font-semibold">À propos</h3>
+                <h2 className="text-lg font-semibold">À propos</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {experience.longDescription}
                 </p>
@@ -494,9 +494,6 @@ export function ExperienceDetailView({
                   </Badge>
                 ))}
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {experience.title}
-              </h1>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1 text-foreground">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -558,7 +555,7 @@ export function ExperienceDetailView({
           {/* Long description — last element */}
           {experience.longDescription && (
             <div className="space-y-2 pt-2">
-              <h3 className="text-lg font-semibold">À propos</h3>
+              <h2 className="text-lg font-semibold">À propos</h2>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {experience.longDescription}
               </p>

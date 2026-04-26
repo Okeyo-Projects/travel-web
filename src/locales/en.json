@@ -1177,6 +1177,17 @@
     }
   },
   "booking": {
+    "status": {
+      "pendingReview": "Pending review",
+      "approved": "Approved",
+      "awaitingPayment": "Awaiting payment",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "declined": "Declined",
+      "refunded": "Refunded",
+      "unknown": "Unknown"
+    },
     "modal": {
       "back": "Back",
       "stepLabels": {

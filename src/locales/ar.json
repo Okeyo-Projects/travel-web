@@ -1177,6 +1177,17 @@
     }
   },
   "booking": {
+    "status": {
+      "pendingReview": "في انتظار المراجعة",
+      "approved": "موافق عليه",
+      "awaitingPayment": "في انتظار الدفع",
+      "confirmed": "مؤكد",
+      "completed": "مكتمل",
+      "cancelled": "ملغى",
+      "declined": "مرفوض",
+      "refunded": "مسترد",
+      "unknown": "غير معروف"
+    },
     "modal": {
       "back": "رجوع",
       "stepLabels": {
@@ -1341,11 +1352,6 @@
         "loginRequired": "يرجى تسجيل الدخول لإكمال حجزك",
         "successToast": "تم إرسال الحجز بنجاح!",
         "errorToast": "فشل إرسال الحجز. يرجى المحاولة مرة أخرى."
-      }
-    },
-    "steps": {
-      "review": {
-        "rooms": "الغرف"
       }
     },
     "details": {
