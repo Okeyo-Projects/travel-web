@@ -47,7 +47,7 @@ export async function generateMetadata({
   return {
     title: seoTitle,
     description: plainDescription || t("seo.blog.description"),
-    alternates: buildLocaleAlternates(`/blog/category/${slug}`, locale),
+    alternates: buildLocaleAlternates(`/blog/category/${slug}`),
     openGraph: {
       title: seoTitle,
       description: plainDescription || t("seo.blog.description"),

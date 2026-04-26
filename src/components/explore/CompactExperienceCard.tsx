@@ -1,18 +1,18 @@
 "use client";
 
-import Hls from "hls.js";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
-import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
-import { useSiteI18n } from "@/components/site/site-i18n";
+import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
+import Hls from "hls.js";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 interface CompactExperienceCardProps {
   experience: ExperienceListItem;
@@ -37,13 +37,13 @@ export function CompactExperienceCard({
     : experience.lodging?.price_cents
       ? Math.round(experience.lodging.price_cents / 100)
       : null;
-  const videoUrl = experience.video_url ?? experience.video_hls_url ?? null;
+  const videoUrl = experience.video_hls_url ?? experience.video_url ?? null;
   const experienceSlug = buildExperienceSlug({
     title: experience.title,
     id: experience.id,
   });
   const href = localizeHref(`/experience/${experienceSlug}`, pathname);
-
+  
   const handleVideoClick = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -71,19 +71,47 @@ export function CompactExperienceCard({
 
     let hls: Hls | null = null;
 
-    if (videoUrl.includes(".m3u8")) {
+    const isHls =
+      videoUrl.includes(".m3u8") ||
+      videoUrl.includes("cloudflarestream.com") ||
+      videoUrl.includes("stream.mux.com");
+
+    console.log("[Video] URL:", videoUrl, "Is HLS:", isHls);
+
+    if (isHls) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        console.log("[Video] Using native HLS (Safari)");
         video.src = videoUrl;
       } else if (Hls.isSupported()) {
+        console.log("[Video] Using HLS.js");
         hls = new Hls();
+        hls.on("hlsError", (event, data) => {
+          console.error("[Video] HLS Error:", data);
+        });
         hls.loadSource(videoUrl);
         hls.attachMedia(video);
+      } else {
+        console.log("[Video] No HLS support, falling back to direct src");
+        video.src = videoUrl;
       }
     } else {
+      console.log("[Video] Direct video src");
       video.src = videoUrl;
     }
 
+    const handleError = () => {
+      console.error("[Video] Video error event:", {
+        error: video.error,
+        src: video.src,
+        networkState: video.networkState,
+        readyState: video.readyState,
+      });
+    };
+
+    video.addEventListener("error", handleError);
+
     return () => {
+      video.removeEventListener("error", handleError);
       hls?.destroy();
     };
   }, [videoUrl, onOpenDetails]);
@@ -114,6 +142,7 @@ export function CompactExperienceCard({
             playsInline
             loop
             muted
+            crossOrigin="anonymous"
           />
         )}
 

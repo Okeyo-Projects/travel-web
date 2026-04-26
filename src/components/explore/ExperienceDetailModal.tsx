@@ -44,7 +44,7 @@ type ExperienceDetailModalProps = {
 };
 
 type ModalMediaItem =
-  | { type: "video"; src: string }
+  | { type: "video"; src: string; poster?: string | null }
   | { type: "image"; src: string };
 
 function formatPrice(experience: ExperienceListItem) {
@@ -114,25 +114,27 @@ export function ExperienceDetailModal({
     if (!currentExperience) return [];
     const items: ModalMediaItem[] = [];
 
+    const thumbnail = currentExperience.thumbnail_url
+      ? getImageUrl(currentExperience.thumbnail_url)
+      : null;
+
     if (currentExperience.video_url || currentExperience.video_hls_url) {
       items.push({
         type: "video",
         src:
-          currentExperience.video_url ?? currentExperience.video_hls_url ?? "",
+          currentExperience.video_hls_url ?? currentExperience.video_url ?? "",
+        poster: thumbnail,
       });
     }
-
-    const thumbnail = currentExperience.thumbnail_url
-      ? getImageUrl(currentExperience.thumbnail_url)
-      : null;
     if (thumbnail) {
       items.push({ type: "image", src: thumbnail });
     }
 
     for (const room of currentExperience.rooms ?? []) {
       for (const image of room.photo_urls ?? []) {
-        if (!items.some((item) => item.src === image)) {
-          items.push({ type: "image", src: image });
+        const imageUrl = getImageUrl(image);
+        if (imageUrl && !items.some((item) => item.src === imageUrl)) {
+          items.push({ type: "image", src: imageUrl });
         }
       }
     }
@@ -184,8 +186,13 @@ export function ExperienceDetailModal({
     let hlsMain: Hls | null = null;
     let hlsBlur: Hls | null = null;
 
+    const isHls = (s: string) =>
+      s.includes(".m3u8") ||
+      s.includes("cloudflarestream.com") ||
+      s.includes("stream.mux.com");
+
     const attach = (el: HTMLVideoElement): Hls | null => {
-      if (src.includes(".m3u8")) {
+      if (isHls(src)) {
         if (el.canPlayType("application/vnd.apple.mpegurl")) {
           el.src = src;
           return null;
@@ -329,6 +336,8 @@ export function ExperienceDetailModal({
                     muted
                     loop
                     playsInline
+                    crossOrigin="anonymous"
+                    poster={currentMedia.type === "video" ? (currentMedia.poster ?? undefined) : undefined}
                     className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl pointer-events-none"
                   />
                   {/* Main video */}
@@ -337,8 +346,11 @@ export function ExperienceDetailModal({
                     ref={videoRef}
                     key={currentMedia.src}
                     autoPlay
+                    muted
                     loop
                     playsInline
+                    crossOrigin="anonymous"
+                    poster={currentMedia.type === "video" ? (currentMedia.poster ?? undefined) : undefined}
                     className={cn(
                       "relative h-full w-full object-contain transition-opacity duration-300 cursor-pointer",
                       isMediaVisible ? "opacity-100" : "opacity-0",

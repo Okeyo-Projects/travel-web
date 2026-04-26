@@ -1133,6 +1133,49 @@
   "experienceGallery": {
     "viewPhotos": "Voir {count} photos"
   },
+  "bookings": {
+    "page": {
+      "title": "Mes réservations",
+      "view": {
+        "list": "Liste",
+        "calendar": "Calendrier"
+      },
+      "tabs": {
+        "all": "Toutes",
+        "pending": "En attente",
+        "upcoming": "À venir",
+        "past": "Passées",
+        "cancelled": "Annulées"
+      },
+      "legend": {
+        "title": "Légende",
+        "pendingHost": "En attente hôte",
+        "awaitingPayment": "En attente de paiement",
+        "cancelledDeclined": "Annulées / Refusées"
+      },
+      "empty": {
+        "title": "Aucune réservation",
+        "all": "Vous n'avez pas encore effectué de réservation.",
+        "filtered": "Aucune réservation ne correspond à ce filtre.",
+        "cta": "Explorer les expériences"
+      },
+      "experienceFallback": "Expérience",
+      "previousMonth": "Mois précédent",
+      "nextMonth": "Mois suivant",
+      "agenda": "Votre agenda",
+      "noBookingsForDate": {
+        "title": "Aucune réservation pour cette date",
+        "pickAnother": "Choisissez une autre date avec des réservations",
+        "emptyMonth": "Aucune réservation ce mois-ci"
+      },
+      "dayIndicator": {
+        "checkInOut": "Arrivée et départ",
+        "checkIn": "Arrivée",
+        "checkOut": "Départ",
+        "dayOf": "Jour {day} sur {total}"
+      }
+    }
+  },
   "booking": {
     "modal": {
       "back": "Retour",
@@ -1157,6 +1200,55 @@
         "promoApplied": "Promo appliquée",
         "completeDetails": "Complétez tous les détails pour voir le prix",
         "continue": "Continuer"
+      }
+    },
+    "detail": {
+      "status": {
+        "pendingHost": {
+          "host": "En attente de votre réponse",
+          "guest": "En attente de l'approbation de l'hôte"
+        },
+        "approved": {
+          "host": "Approuvée, en attente de paiement",
+          "guest": "Approuvée, en attente de votre paiement"
+        },
+        "pendingPayment": {
+          "host": "Paiement en attente",
+          "guest": "Paiement en attente"
+        },
+        "confirmed": "Confirmée",
+        "completed": "Complétée",
+        "declined": "Refusée",
+        "cancelled": "Annulée",
+        "refunded": "Remboursée",
+        "draft": "Brouillon",
+        "unknown": "Inconnue"
+      },
+      "cancellation": {
+        "badge": {
+          "free": "Annulation gratuite",
+          "flexible": "Flexible",
+          "strict": "Stricte",
+          "nonRefundable": "Non remboursable",
+          "moderate": "Modérée",
+          "standard": "Standard"
+        },
+        "summary": {
+          "free": "Annulation gratuite jusqu'au {date}",
+          "flexible": "Politique d'annulation flexible",
+          "strict": "Politique d'annulation stricte",
+          "nonRefundable": "Non remboursable",
+          "moderate": "Politique d'annulation modérée",
+          "standard": "Politique d'annulation standard"
+        },
+        "refund": {
+          "freeActive": "Remboursement complet de {amount} en cas d'annulation avant votre arrivée",
+          "started": "Aucun remboursement après le début de votre séjour",
+          "beforeDeadline": "Remboursement complet de {amount} jusqu'au {date}",
+          "deadlinePassed": "Aucun remboursement disponible après le {date}",
+          "none": "Aucun remboursement disponible",
+          "standard": "Remboursement partiel ou complet de {amount} selon le délai d'annulation"
+        }
       }
     },
     "cancellationDialog": {
@@ -1249,6 +1341,11 @@
         "loginRequired": "Veuillez vous connecter pour compléter votre réservation",
         "successToast": "Réservation envoyée avec succès !",
         "errorToast": "Échec de l'envoi de la réservation. Veuillez réessayer."
+      }
+    },
+    "steps": {
+      "review": {
+        "rooms": "Chambres"
       }
     },
     "details": {

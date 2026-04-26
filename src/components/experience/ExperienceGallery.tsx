@@ -11,6 +11,7 @@ interface ExperienceGalleryProps {
   video?: {
     url: string | null;
     hlsUrl: string | null;
+    thumbnailUrl?: string | null;
   } | null;
   imageAlts?: string[];
 }
@@ -31,7 +32,7 @@ export function ExperienceGallery({
 
   return (
     <div className="space-y-3">
-      {videoUrl ? <CustomVideoPlayer src={videoUrl} /> : null}
+      {videoUrl ? <CustomVideoPlayer src={videoUrl} poster={video?.thumbnailUrl} /> : null}
 
       {images.length > 0 && (
         <div className="flex justify-end">

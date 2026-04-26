@@ -44,7 +44,7 @@ export async function generateMetadata({
   return {
     title: `${plainTitle} — ${t("app.name")}`,
     description: plainExcerpt,
-    alternates: buildLocaleAlternates(`/blog/${slug}`, locale),
+    alternates: buildLocaleAlternates(`/blog/${slug}`),
     openGraph: {
       title: plainTitle,
       description: plainExcerpt,

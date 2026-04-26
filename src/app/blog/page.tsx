@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("seo.blog.title"),
     description: t("seo.blog.description"),
-    alternates: buildLocaleAlternates("/blog", locale),
+    alternates: buildLocaleAlternates("/blog"),
     openGraph: {
       title: t("seo.blog.title"),
       description: t("seo.blog.description"),

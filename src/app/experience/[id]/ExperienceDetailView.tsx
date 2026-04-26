@@ -3,23 +3,19 @@ import { ExperienceBookingSection } from "@/components/experience/ExperienceBook
 import { ExperienceDetailHeader } from "@/components/experience/ExperienceDetailHeader";
 import { ExperienceGallery } from "@/components/experience/ExperienceGallery";
 import { RoomBookingButton } from "@/components/experience/RoomBookingButton";
+import { RoomGallery } from "@/components/experience/RoomGallery";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLowestPricedRoom } from "@/lib/experience-pricing";
 import type { Translator } from "@/lib/i18n";
 import type { ExperienceDetail } from "@/types/experience-detail";
 import {
-  BedDouble,
   Check,
   Clock3,
+  BedDouble,
   MapPin,
   Minus,
   ShieldCheck,
@@ -27,7 +23,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-import Image from "next/image";
 
 function formatMoney(
   cents: number | null | undefined,
@@ -297,31 +292,7 @@ export function ExperienceDetailView({
           <Card key={room.id} className="overflow-hidden rounded-2xl">
             <div className="grid grid-cols-1 gap-0 lg:grid-cols-2">
               <div className="bg-muted/30 p-2">
-                {room.photoUrls.length ? (
-                  <Carousel opts={{ loop: room.photoUrls.length > 1 }}>
-                    <CarouselContent className="ml-0">
-                      {room.photoUrls.map((photoUrl, index) => (
-                        <CarouselItem
-                          key={`${room.id}-${index}`}
-                          className="pl-0"
-                        >
-                          <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                            <Image
-                              src={photoUrl}
-                              alt={room.name || "Room"}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                  </Carousel>
-                ) : (
-                  <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-muted">
-                    <BedDouble className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
+                <RoomGallery photoUrls={room.photoUrls} name={room.name} />
               </div>
               <div className="space-y-3 p-4">
                 <h3 className="text-lg font-semibold">

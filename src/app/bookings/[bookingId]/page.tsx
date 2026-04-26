@@ -39,8 +39,8 @@ import {
   type PayzoneSession,
 } from "@/lib/payzone";
 import { createClient } from "@/lib/supabase/client";
-import { getImageUrl } from "@/utils/functions";
 import type { Database } from "@/types/supabase";
+import { getImageUrl } from "@/utils/functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -977,19 +977,22 @@ export default function BookingDetailPage() {
       </div>
 
       <div className="mx-auto max-w-5xl px-4 py-8 space-y-6 flex-1">
-        {booking.experience?.thumbnail_url && (
-          <Card className="overflow-hidden">
-            <div className="relative aspect-video sm:aspect-[21/9]">
-              <Image
-                src={booking.experience.thumbnail_url}
-                alt={booking.experience.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-          </Card>
-        )}
+        {/* {(() => {
+          const thumbnailUrl = booking.experience?.thumbnail_url ? getImageUrl(booking.experience?.thumbnail_url): null;
+          return thumbnailUrl ? (
+            <Card className="overflow-hidden">
+              <div className="relative aspect-video sm:aspect-[21/9]">
+                <Image
+                  src={thumbnailUrl}
+                  alt={booking?.experience?.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            </Card>
+          ) : null;
+        })()} */}
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">

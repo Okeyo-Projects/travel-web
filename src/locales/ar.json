@@ -1133,6 +1133,49 @@
   "experienceGallery": {
     "viewPhotos": "عرض {count} صور"
   },
+  "bookings": {
+    "page": {
+      "title": "حجوزاتي",
+      "view": {
+        "list": "قائمة",
+        "calendar": "تقويم"
+      },
+      "tabs": {
+        "all": "الكل",
+        "pending": "قيد الانتظار",
+        "upcoming": "القادمة",
+        "past": "السابقة",
+        "cancelled": "الملغاة"
+      },
+      "legend": {
+        "title": "المفتاح",
+        "pendingHost": "في انتظار المضيف",
+        "awaitingPayment": "في انتظار الدفع",
+        "cancelledDeclined": "ملغاة / مرفوضة"
+      },
+      "empty": {
+        "title": "لا توجد حجوزات بعد",
+        "all": "لم تقم بأي حجوزات حتى الآن.",
+        "filtered": "لا توجد حجوزات تطابق هذا الفلتر.",
+        "cta": "استكشف التجارب"
+      },
+      "experienceFallback": "تجربة",
+      "previousMonth": "الشهر السابق",
+      "nextMonth": "الشهر التالي",
+      "agenda": "جدولك الزمني",
+      "noBookingsForDate": {
+        "title": "لا توجد حجوزات لهذا التاريخ",
+        "pickAnother": "اختر تاريخاً آخر به حجوزات",
+        "emptyMonth": "لا توجد حجوزات هذا الشهر"
+      },
+      "dayIndicator": {
+        "checkInOut": "تسجيل الوصول والمغادرة",
+        "checkIn": "تسجيل الوصول",
+        "checkOut": "تسجيل المغادرة",
+        "dayOf": "اليوم {day} من {total}"
+      }
+    }
+  },
   "booking": {
     "modal": {
       "back": "رجوع",
@@ -1157,6 +1200,55 @@
         "promoApplied": "تم تطبيق الخصم",
         "completeDetails": "أكمل جميع التفاصيل لرؤية السعر",
         "continue": "متابعة"
+      }
+    },
+    "detail": {
+      "status": {
+        "pendingHost": {
+          "host": "في انتظار ردك",
+          "guest": "في انتظار موافقة المضيف"
+        },
+        "approved": {
+          "host": "موافق عليه، في انتظار الدفع",
+          "guest": "موافق عليه، في انتظار دفعتك"
+        },
+        "pendingPayment": {
+          "host": "الدفع قيد الانتظار",
+          "guest": "الدفع قيد الانتظار"
+        },
+        "confirmed": "مؤكد",
+        "completed": "مكتمل",
+        "declined": "مرفوض",
+        "cancelled": "ملغى",
+        "refunded": "مسترد",
+        "draft": "مسودة",
+        "unknown": "غير معروف"
+      },
+      "cancellation": {
+        "badge": {
+          "free": "إلغاء مجاني",
+          "flexible": "مرن",
+          "strict": "صارم",
+          "nonRefundable": "غير قابل للاسترجاع",
+          "moderate": "معتدل",
+          "standard": "معياري"
+        },
+        "summary": {
+          "free": "إلغاء مجاني حتى {date}",
+          "flexible": "سياسة إلغاء مرنة",
+          "strict": "سياسة إلغاء صارمة",
+          "nonRefundable": "غير قابل للاسترجاع",
+          "moderate": "سياسة إلغاء معتدلة",
+          "standard": "سياسة إلغاء معيارية"
+        },
+        "refund": {
+          "freeActive": "استرجاع كامل {amount} إذا تم الإلغاء قبل الوصول",
+          "started": "لا استرجاع بعد بدء إقامتك",
+          "beforeDeadline": "استرجاع كامل {amount} حتى {date}",
+          "deadlinePassed": "لا استرجاع متاح بعد {date}",
+          "none": "لا استرجاع متاح",
+          "standard": "استرجاع جزئي أو كامل {amount} حسب توقيت الإلغاء"
+        }
       }
     },
     "cancellationDialog": {
@@ -1249,6 +1341,11 @@
         "loginRequired": "يرجى تسجيل الدخول لإكمال حجزك",
         "successToast": "تم إرسال الحجز بنجاح!",
         "errorToast": "فشل إرسال الحجز. يرجى المحاولة مرة أخرى."
+      }
+    },
+    "steps": {
+      "review": {
+        "rooms": "الغرف"
       }
     },
     "details": {

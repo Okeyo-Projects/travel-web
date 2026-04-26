@@ -21,9 +21,9 @@ function buildCsp(nonce: string): string {
     `script-src 'self' 'unsafe-inline' https://connect.facebook.net`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co https://*.cloudflarestream.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflarestream.com https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net",
-    "media-src 'self' blob: https://*.supabase.co https://*.cloudflarestream.com",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com https://us-assets.i.posthog.com https://connect.facebook.net https:",
+    "media-src 'self' blob: https:",
     "frame-ancestors 'none'",
   ].join("; ");
 }

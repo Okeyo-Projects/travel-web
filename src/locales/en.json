@@ -1133,6 +1133,49 @@
   "experienceGallery": {
     "viewPhotos": "View {count} photos"
   },
+  "bookings": {
+    "page": {
+      "title": "My bookings",
+      "view": {
+        "list": "List",
+        "calendar": "Calendar"
+      },
+      "tabs": {
+        "all": "All",
+        "pending": "Pending",
+        "upcoming": "Upcoming",
+        "past": "Past",
+        "cancelled": "Cancelled"
+      },
+      "legend": {
+        "title": "Legend",
+        "pendingHost": "Pending host",
+        "awaitingPayment": "Awaiting payment",
+        "cancelledDeclined": "Cancelled / Declined"
+      },
+      "empty": {
+        "title": "No bookings yet",
+        "all": "You haven't made any bookings yet.",
+        "filtered": "No bookings match this filter.",
+        "cta": "Explore experiences"
+      },
+      "experienceFallback": "Experience",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "agenda": "Your schedule",
+      "noBookingsForDate": {
+        "title": "No bookings for this date",
+        "pickAnother": "Pick another date with bookings",
+        "emptyMonth": "No bookings this month"
+      },
+      "dayIndicator": {
+        "checkInOut": "Check-in & Check-out",
+        "checkIn": "Check-in",
+        "checkOut": "Check-out",
+        "dayOf": "Day {day} of {total}"
+      }
+    }
+  },
   "booking": {
     "modal": {
       "back": "Back",
@@ -1157,6 +1200,55 @@
         "promoApplied": "Promo applied",
         "completeDetails": "Complete all details to see price",
         "continue": "Continue"
+      }
+    },
+    "detail": {
+      "status": {
+        "pendingHost": {
+          "host": "Awaiting your response",
+          "guest": "Awaiting host approval"
+        },
+        "approved": {
+          "host": "Approved, awaiting payment",
+          "guest": "Approved, awaiting your payment"
+        },
+        "pendingPayment": {
+          "host": "Payment pending",
+          "guest": "Payment pending"
+        },
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "declined": "Declined",
+        "cancelled": "Cancelled",
+        "refunded": "Refunded",
+        "draft": "Draft",
+        "unknown": "Unknown"
+      },
+      "cancellation": {
+        "badge": {
+          "free": "Free cancellation",
+          "flexible": "Flexible",
+          "strict": "Strict",
+          "nonRefundable": "Non-refundable",
+          "moderate": "Moderate",
+          "standard": "Standard"
+        },
+        "summary": {
+          "free": "Free cancellation up until {date}",
+          "flexible": "Flexible cancellation policy",
+          "strict": "Strict cancellation policy",
+          "nonRefundable": "Non-refundable",
+          "moderate": "Moderate cancellation policy",
+          "standard": "Standard cancellation policy"
+        },
+        "refund": {
+          "freeActive": "Full refund of {amount} if cancelled before arrival",
+          "started": "No refund after your stay has started",
+          "beforeDeadline": "Full refund of {amount} until {date}",
+          "deadlinePassed": "No refund available after {date}",
+          "none": "No refund available",
+          "standard": "Partial or full refund of {amount} depending on cancellation timing"
+        }
       }
     },
     "cancellationDialog": {
@@ -1249,6 +1341,11 @@
         "loginRequired": "Please sign in to complete your booking",
         "successToast": "Booking submitted successfully!",
         "errorToast": "Failed to submit booking. Please try again."
+      }
+    },
+    "steps": {
+      "review": {
+        "rooms": "Rooms"
       }
     },
     "details": {

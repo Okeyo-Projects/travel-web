@@ -162,5 +162,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Supabase unavailable at build time — static routes still served
   }
 
-  return [...staticRoutes, ...categoryRoutes, ...experienceRoutes];
+  return [
+    ...staticRoutes,
+    ...blogPostRoutes,
+    ...blogCategoryRoutes,
+    ...categoryRoutes,
+    ...experienceRoutes,
+  ];
 }

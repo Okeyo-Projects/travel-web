@@ -39,14 +39,15 @@ function attachHls(video: HTMLVideoElement, src: string): Hls | null {
 
 interface CustomVideoPlayerProps {
   src: string;
+  poster?: string | null;
 }
 
-export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
+export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const blurVideoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -167,6 +168,7 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
         loop
         playsInline
         aria-hidden="true"
+        crossOrigin="anonymous"
         className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-80 pointer-events-none"
       />
 
@@ -177,6 +179,8 @@ export function CustomVideoPlayer({ src }: CustomVideoPlayerProps) {
         loop
         playsInline
         onClick={togglePlay}
+        poster={poster ?? undefined}
+        crossOrigin="anonymous"
         className="relative h-full w-full object-contain cursor-pointer"
       />
 
