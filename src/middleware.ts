@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
+import { EXPERIENCE_ROUTE_ALIASES } from "@/lib/routing/locale-path";
 
 const PUBLIC_FILE = /\.[^/]+$/;
 
@@ -68,8 +69,17 @@ export function middleware(request: NextRequest) {
   const firstSegment = pathname.split("/").filter(Boolean)[0] ?? "";
 
   if (isSupportedLocale(firstSegment)) {
-    const rewrittenPath =
+    let rewrittenPath =
       pathname.replace(new RegExp(`^/${firstSegment}`), "") || "/";
+
+    // Normalize locale-translated experience segment aliases → /hebergement/
+    for (const alias of EXPERIENCE_ROUTE_ALIASES) {
+      if (alias !== "hebergement" && rewrittenPath.startsWith(`/${alias}/`)) {
+        rewrittenPath = "/hebergement" + rewrittenPath.slice(alias.length + 1);
+        break;
+      }
+    }
+
     const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname = rewrittenPath;
     requestHeaders.set("x-locale", firstSegment);

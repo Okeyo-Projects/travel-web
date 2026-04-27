@@ -122,6 +122,7 @@ const SORT_DEFAULT: ExperienceSort = "newest";
 const EXPERIENCE_LIST_SELECT = `
   id,
   title,
+  slug,
   short_description,
   city,
   region,
@@ -286,6 +287,7 @@ function mapExperienceWithMeta(exp: RawExperience): ExploreExperienceWithMeta {
   return {
     id: exp.id,
     title: exp.title,
+    slug: (exp as Record<string, unknown>).slug as string | null ?? null,
     short_description: exp.short_description,
     city: exp.city,
     region: exp.region,
@@ -601,6 +603,54 @@ export async function fetchExploreSearchResults(
     items: availabilityFilteredItems.map(stripExperienceMeta),
     fetchedCount: (data || []).length,
   };
+}
+
+export async function fetchSimilarExperiences(input: {
+  excludeId: string;
+  city: string;
+  region?: string | null;
+  limit?: number;
+}): Promise<ExperienceListItem[]> {
+  const { excludeId, city, region, limit = 6 } = input;
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("experiences" as never)
+    .select(EXPERIENCE_LIST_SELECT)
+    .eq("status" as never, "published")
+    .is("deleted_at" as never, null)
+    .neq("id" as never, excludeId)
+    .order("avg_rating" as never, { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  // Prefer same region; fall back to same city only
+  if (region) {
+    query = query.eq("region" as never, region);
+  } else {
+    query = query.eq("city" as never, city);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data?.length) {
+    // If region returned nothing, retry with city only
+    if (region) {
+      const { data: fallback } = await supabase
+        .from("experiences" as never)
+        .select(EXPERIENCE_LIST_SELECT)
+        .eq("status" as never, "published")
+        .is("deleted_at" as never, null)
+        .neq("id" as never, excludeId)
+        .eq("city" as never, city)
+        .order("avg_rating" as never, { ascending: false, nullsFirst: false })
+        .limit(limit);
+
+      return ((fallback ?? []) as RawExperience[]).map(mapExperienceWithMeta).map(stripExperienceMeta);
+    }
+    return [];
+  }
+
+  return (data as RawExperience[]).map(mapExperienceWithMeta).map(stripExperienceMeta);
 }
 
 export async function fetchFeaturedExperiences(

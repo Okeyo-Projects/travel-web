@@ -1,6 +1,5 @@
 "use client";
 
-import Hls from "hls.js";
 import {
   Maximize,
   Minimize,
@@ -13,29 +12,7 @@ import { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
-
-function isHlsSrc(src: string) {
-  return (
-    src.includes(".m3u8") ||
-    src.includes("cloudflarestream.com") ||
-    src.includes("/playlist.m3u8") ||
-    src.includes("stream.mux.com")
-  );
-}
-
-function attachHls(video: HTMLVideoElement, src: string): Hls | null {
-  if (!isHlsSrc(src)) return null;
-  if (video.canPlayType("application/vnd.apple.mpegurl")) {
-    // Safari supports HLS natively
-    video.src = src;
-    return null;
-  }
-  if (!Hls.isSupported()) return null;
-  const hls = new Hls();
-  hls.loadSource(src);
-  hls.attachMedia(video);
-  return hls;
-}
+import { useHlsVideo } from "@/hooks/use-hls-video";
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -44,74 +21,59 @@ interface CustomVideoPlayerProps {
 
 export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const blurVideoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Attach HLS or set src directly
+  useHlsVideo(videoRef, src);
+
   useEffect(() => {
-    const video = videoRef.current;
-    const blurVideo = blurVideoRef.current;
-    if (!video) return;
-
-    let hlsMain: Hls | null = null;
-    let hlsBlur: Hls | null = null;
-
-    if (isHlsSrc(src)) {
-      hlsMain = attachHls(video, src);
-      if (blurVideo) hlsBlur = attachHls(blurVideo, src);
-    } else {
-      video.src = src;
-      if (blurVideo) blurVideo.src = src;
-    }
-
-    return () => {
-      hlsMain?.destroy();
-      hlsBlur?.destroy();
-    };
+    videoRef.current?.play().catch(() => {});
   }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
-    const blurVideo = blurVideoRef.current;
     if (!video) return;
 
-    if (isPlaying) {
-      video.play().catch(() => setIsPlaying(false));
-      blurVideo?.play().catch(() => {});
-    } else {
-      video.pause();
-      blurVideo?.pause();
-    }
-  }, [isPlaying]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => {
-      const progress = (video.currentTime / video.duration) * 100;
-      setProgress(progress || 0);
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onTimeUpdate = () => {
+      const d = video.duration;
+      setProgress(Number.isFinite(d) && d > 0 ? (video.currentTime / d) * 100 : 0);
     };
 
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    return () => video.removeEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    video.addEventListener("timeupdate", onTimeUpdate);
+    return () => {
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+      video.removeEventListener("timeupdate", onTimeUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
     const next = !isPlaying;
     captureEvent(
       next ? ANALYTICS_EVENT.VIDEO_PLAYED : ANALYTICS_EVENT.VIDEO_PAUSED,
-      {
-        src,
-        progress_pct: Math.round(progress),
-      },
+      { src, progress_pct: Math.round(progress) },
     );
-    setIsPlaying(next);
+    if (next) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
   };
 
   const toggleMute = (e: React.MouseEvent) => {
@@ -129,14 +91,19 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
 
   const toggleFullscreen = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
-    if (!document.fullscreenElement) {
-      await containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      await document.exitFullscreen();
-      setIsFullscreen(false);
+    try {
+      if (!document.fullscreenElement) {
+        if (typeof container.requestFullscreen === "function") {
+          await container.requestFullscreen();
+        }
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      // Fullscreen may be unsupported (iOS Safari) or rejected
     }
   };
 
@@ -161,16 +128,20 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
           : "rounded-2xl h-[60vh] md:h-[70vh] w-full",
       )}
     >
-      {/* Blurred background video */}
-      <video
-        ref={blurVideoRef}
-        muted
-        loop
-        playsInline
-        aria-hidden="true"
-        crossOrigin="anonymous"
-        className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-80 pointer-events-none"
-      />
+      {/* Blurred backdrop (poster only — avoids decoding the stream twice) */}
+      {poster ? (
+        <img
+          src={poster}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-80 pointer-events-none"
+        />
+      ) : (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-black pointer-events-none"
+        />
+      )}
 
       {/* Main video */}
       <video
@@ -180,7 +151,6 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
         playsInline
         onClick={togglePlay}
         poster={poster ?? undefined}
-        crossOrigin="anonymous"
         className="relative h-full w-full object-contain cursor-pointer"
       />
 
@@ -197,11 +167,14 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         {/* Progress Bar */}
         <div
+          role="progressbar"
+          aria-label="Seek"
           className="w-full h-1.5 bg-white/30 rounded-full mb-4 cursor-pointer relative"
           onClick={handleSeek}
         >
           <div
             className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-150 ease-linear"
+            // eslint-disable-next-line react/forbid-dom-props
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -211,6 +184,7 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
           <button
             type="button"
             onClick={togglePlay}
+            aria-label={isPlaying ? "Pause" : "Play"}
             className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
           >
             {isPlaying ? (
@@ -224,6 +198,7 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
             <button
               type="button"
               onClick={toggleMute}
+              aria-label={isMuted ? "Unmute" : "Mute"}
               className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
             >
               {isMuted ? (
@@ -236,6 +211,7 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
             <button
               type="button"
               onClick={toggleFullscreen}
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
             >
               {isFullscreen ? (

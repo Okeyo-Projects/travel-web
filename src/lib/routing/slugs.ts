@@ -63,9 +63,23 @@ export function buildExperienceSlug(input: {
   id: string;
   slug?: string | null;
 }): string {
+  if (input.slug) return slugify(input.slug) || `${slugify(input.title) || "experience"}-${getExperienceIdSegment(input.id)}`;
   const titlePart = slugify(input.title) || "experience";
   const idPart = getExperienceIdSegment(input.id);
   return `${titlePart}-${idPart}`;
+}
+
+export function buildExperienceHref(input: {
+  title: string;
+  id: string;
+  slug?: string | null;
+  region?: string | null;
+  city: string;
+}): string {
+  const regionSlug = input.region ? slugify(input.region) : slugify(input.city);
+  const citySlug = slugify(input.city);
+  const expSlug = buildExperienceSlug({ title: input.title, id: input.id, slug: input.slug });
+  return `/hebergement/${regionSlug}/${citySlug}/${expSlug}`;
 }
 
 export function buildCategorySlug(input: {

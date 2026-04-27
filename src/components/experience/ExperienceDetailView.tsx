@@ -411,12 +411,43 @@ export function ExperienceDetailView({
         experienceId={experience.id}
       />
 
-      <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        {/* ── Desktop: 2-column layout ── */}
-        <div className="hidden lg:grid lg:grid-cols-12 lg:gap-10">
-          {/* LEFT COLUMN — Gallery (sticky) */}
-          <div className="lg:col-span-5">
-            <div className="sticky top-24 space-y-4">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Title & Meta — rendered once for all breakpoints */}
+        <div className="mb-6 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {experience.tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="capitalize">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+            {experience.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1 text-foreground">
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+              <span className="font-semibold">
+                {experience.metrics.rating?.toFixed(1) ?? "Nouveau"}
+              </span>
+              {experience.metrics.reviews > 0 && (
+                <span className="underline underline-offset-2">
+                  ({experience.metrics.reviews} avis)
+                </span>
+              )}
+            </div>
+            <span className="flex items-center gap-1">
+              <MapPin className="h-4 w-4" />
+              {locationLabel}
+            </span>
+          </div>
+        </div>
+
+        {/* Responsive layout: 1-col on mobile, 2-col on desktop */}
+        <div className="lg:grid lg:grid-cols-12 lg:gap-10">
+          {/* Gallery — sticky on desktop, full-width on mobile */}
+          <div className="mb-6 lg:col-span-5 lg:mb-0">
+            <div className="lg:sticky lg:top-24 space-y-4">
               <ExperienceGallery
                 images={heroImages}
                 video={experience.video}
@@ -425,50 +456,16 @@ export function ExperienceDetailView({
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Title & Meta */}
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {experience.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="capitalize">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-                {experience.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1 text-foreground">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold">
-                    {experience.metrics.rating?.toFixed(1) ?? "Nouveau"}
-                  </span>
-                  {experience.metrics.reviews > 0 && (
-                    <span className="underline underline-offset-2">
-                      ({experience.metrics.reviews} avis)
-                    </span>
-                  )}
-                </div>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {locationLabel}
-                </span>
-              </div>
-            </div>
-
-            {/* Host card + short description */}
+          {/* Content column */}
+          <div className="space-y-6 lg:col-span-7">
             <HostCard />
 
-            {/* Booking CTA */}
             <ExperienceBookingSection
               experience={experience}
               formattedPrice={formattedPrice}
               nightsLabel={nightsLabel}
             />
 
-            {/* Tabs: Aperçu + Chambres */}
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0">
                 <TabsTrigger value="overview" className={tabTriggerClass}>
@@ -495,96 +492,17 @@ export function ExperienceDetailView({
               )}
             </Tabs>
 
-            {/* Long description — last element */}
             {longDesc && (
               <div className="space-y-2 pt-2">
                 <h2 className="text-lg font-semibold">À propos</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {longDesc}
-                </p>
+                <div
+                  className="prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-a:text-primary"
+                  // Content originates from our own DB (host-entered rich text)
+                  dangerouslySetInnerHTML={{ __html: longDesc }}
+                />
               </div>
             )}
           </div>
-        </div>
-
-        {/* ── Mobile / Tablet: stacked layout ── */}
-        <div className="lg:hidden space-y-6">
-          <section className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {experience.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="capitalize">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1 text-foreground">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold">
-                    {experience.metrics.rating?.toFixed(1) ?? "Nouveau"}
-                  </span>
-                  {experience.metrics.reviews > 0 && (
-                    <span className="underline underline-offset-2">
-                      ({experience.metrics.reviews} avis)
-                    </span>
-                  )}
-                </div>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {locationLabel}
-                </span>
-              </div>
-            </div>
-            <ExperienceGallery images={heroImages} video={experience.video} />
-          </section>
-
-          {/* Host card + short description */}
-          <HostCard />
-
-          {/* Booking CTA */}
-          <ExperienceBookingSection
-            experience={experience}
-            formattedPrice={formattedPrice}
-            nightsLabel={nightsLabel}
-          />
-
-          {/* Tabs: Aperçu + Chambres */}
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b bg-transparent p-0">
-              <TabsTrigger value="overview" className={tabTriggerClass}>
-                {t("experienceDetails.tabs.overview")}
-              </TabsTrigger>
-              {hasRoomsTab && (
-                <TabsTrigger value="rooms" className={tabTriggerClass}>
-                  {t("experienceDetails.tabs.rooms")}
-                </TabsTrigger>
-              )}
-            </TabsList>
-
-            <TabsContent value="overview" className="mt-5 space-y-6">
-              <InfoCard />
-              {lodging && <StayContent />}
-              <EquipmentSection />
-              <ServicesSection />
-            </TabsContent>
-
-            {hasRoomsTab && (
-              <TabsContent value="rooms" className="mt-5">
-                <RoomsContent />
-              </TabsContent>
-            )}
-          </Tabs>
-
-          {/* Long description — last element */}
-          {longDesc && (
-            <div className="space-y-2 pt-2">
-              <h2 className="text-lg font-semibold">À propos</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {longDesc}
-              </p>
-            </div>
-          )}
         </div>
       </main>
     </div>

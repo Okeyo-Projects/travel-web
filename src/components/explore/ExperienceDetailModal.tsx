@@ -1,7 +1,6 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
-import Hls from "hls.js";
 import {
   ChevronDown,
   ChevronLeft,
@@ -24,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "@/hooks/use-booking";
 import { useExperienceDetail } from "@/hooks/use-experience-detail";
+import { useHlsVideo } from "@/hooks/use-hls-video";
 import { useRequiredAuth } from "@/hooks/use-required-auth";
 import { useShare } from "@/hooks/use-share";
 import { useExperienceSocial } from "@/hooks/use-social";
@@ -31,7 +31,7 @@ import { useSiteI18n } from "@/components/site/site-i18n";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
 import { getImageUrl } from "@/utils/functions";
@@ -177,46 +177,9 @@ export function ExperienceDetailModal({
   }, [open, currentMedia?.src]);
 
   // Attach HLS or set src directly whenever the active video changes
-  useEffect(() => {
-    const src = currentMedia?.type === "video" ? currentMedia.src : null;
-    const video = videoRef.current;
-    const blurVideo = blurVideoRef.current;
-    if (!src || !video) return;
-
-    let hlsMain: Hls | null = null;
-    let hlsBlur: Hls | null = null;
-
-    const isHls = (s: string) =>
-      s.includes(".m3u8") ||
-      s.includes("cloudflarestream.com") ||
-      s.includes("stream.mux.com");
-
-    const attach = (el: HTMLVideoElement): Hls | null => {
-      if (isHls(src)) {
-        if (el.canPlayType("application/vnd.apple.mpegurl")) {
-          el.src = src;
-          return null;
-        }
-        if (Hls.isSupported()) {
-          const h = new Hls();
-          h.loadSource(src);
-          h.attachMedia(el);
-          return h;
-        }
-        return null;
-      }
-      el.src = src;
-      return null;
-    };
-
-    hlsMain = attach(video);
-    if (blurVideo) hlsBlur = attach(blurVideo);
-
-    return () => {
-      hlsMain?.destroy();
-      hlsBlur?.destroy();
-    };
-  }, [currentMedia]);
+  const videoSrc = currentMedia?.type === "video" ? currentMedia.src : null;
+  useHlsVideo(videoRef, videoSrc);
+  useHlsVideo(blurVideoRef, videoSrc);
 
   const social = useExperienceSocial(currentExperience?.id ?? null);
   const locationLabel = currentExperience
@@ -224,14 +187,11 @@ export function ExperienceDetailModal({
       ? `${currentExperience.city}, ${currentExperience.region}`
       : currentExperience.city
     : null;
-  const slug = currentExperience
-    ? buildExperienceSlug({
-        title: currentExperience.title,
-        id: currentExperience.id,
-      })
-    : "";
   const detailsHref = currentExperience
-    ? localizeHref(`/experience/${slug}`, pathname)
+    ? localizeHref(
+        buildExperienceHref({ title: currentExperience.title, id: currentExperience.id, slug: currentExperience.slug, region: currentExperience.region, city: currentExperience.city }),
+        pathname,
+      )
     : "";
   const sharePreviewImageUrl = currentExperience?.thumbnail_url
     ? getImageUrl(currentExperience.thumbnail_url)

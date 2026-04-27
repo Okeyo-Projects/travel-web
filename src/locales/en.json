@@ -1285,76 +1285,6 @@
       }
     },
     "steps": {
-      "dates": {
-        "title": "When are you going?",
-        "description": "Select your check-in and check-out dates."
-      },
-      "guests": {
-        "question": "How many guests?",
-        "maxGuests": "This experience is limited to {count} guests",
-        "maxReached": "Maximum of {count} guests reached",
-        "labels": {
-          "adults": "Adults",
-          "children": "Children",
-          "infants": "Infants"
-        },
-        "descriptions": {
-          "adults": "Age 13+",
-          "children": "Ages 2–12",
-          "infants": "Under 2"
-        }
-      },
-      "promo": {
-        "title": "Have a promo code?",
-        "description": "Enter your promo code to apply a discount to your booking.",
-        "label": "Promo code",
-        "placeholder": "e.g. SUMMER20",
-        "apply": "Apply",
-        "loading": "Checking…",
-        "applied": "Promo applied!",
-        "errorCalculating": "Could not apply the promo code. Please try again."
-      },
-      "options": {
-        "noneAvailable": "No options available for this experience.",
-        "trip": {
-          "noneAvailable": "No departure dates available.",
-          "select": "Select a departure date",
-          "returns": "Returns",
-          "soldOut": "Sold out",
-          "seatsLeft": "{count} seats left",
-          "standardPrice": "Standard price"
-        },
-        "lodging": {
-          "noneAvailable": "No rooms available.",
-          "select": "Select rooms",
-          "guestCount": "{count} guests",
-          "roomFallback": "Room",
-          "upToGuests": "Up to {count} guests",
-          "perNight": "night",
-          "addRoom": "Add room",
-          "removeRoom": "Remove room"
-        }
-      },
-      "review": {
-        "messageToHost": "Message to host",
-        "notePlaceholder": "Write a message to your host (optional)",
-        "noteTemplates": {
-          "one": "I'm looking forward to my stay!",
-          "two": "Please let me know about check-in details.",
-          "three": "I'm traveling with family."
-        },
-        "rooms": "Rooms",
-        "roomFallback": "Room",
-        "promoDiscount": "Promo discount",
-        "total": "Total",
-        "confirm": "Confirm booking",
-        "notice": "Your booking request will be sent to the host for approval. No payment will be charged right now.",
-        "loginRequired": "Please sign in to complete your booking",
-        "successToast": "Booking submitted successfully!",
-        "errorToast": "Failed to submit booking. Please try again."
-      }
-    },
-    "steps": {
       "review": {
         "rooms": "Rooms"
       }
@@ -1413,6 +1343,9 @@
     },
     "rooms": {
       "beds": "beds"
+    },
+    "similar": {
+      "title": "Similar accommodations"
     }
   },
   "experience": {

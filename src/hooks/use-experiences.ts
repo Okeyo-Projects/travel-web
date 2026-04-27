@@ -315,6 +315,7 @@ async function fetchExperiencesWithMeta(
   const baseFields = `
       id,
       title,
+      slug,
       short_description,
       city,
       region,
@@ -462,6 +463,7 @@ async function fetchExperiencesWithMeta(
       return {
         id: exp.id,
         title: exp.title,
+        slug: (exp as Record<string, unknown>).slug as string | null ?? null,
         short_description: exp.short_description,
         city: exp.city,
         region: exp.region,

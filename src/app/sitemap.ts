@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { LOCALES } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
-import { buildCategorySlug, buildExperienceSlug } from "@/lib/routing/slugs";
+import { buildCategorySlug, buildExperienceHref } from "@/lib/routing/slugs";
+import { localizeExperiencePath } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/server";
 import {
   fetchAllCategoriesForSitemap,
@@ -102,7 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .eq("is_active" as never, true),
       supabase
         .from("experiences" as never)
-        .select("id, title, updated_at")
+        .select("id, title, slug, city, region, updated_at")
         .eq("status" as never, "published"),
     ]);
 
@@ -119,6 +120,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const experiences = (experiencesResult.data ?? []) as Array<{
       id: string;
       title: string;
+      slug?: string | null;
+      city: string;
+      region?: string | null;
       updated_at: string;
     }>;
 
@@ -145,14 +149,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
 
     experienceRoutes = experiences.flatMap((exp) => {
-      const slug = buildExperienceSlug({
-        title: exp.title,
-        id: exp.id,
-      });
-      const path = `/experience/${slug}`;
+      const path = buildExperienceHref({ title: exp.title, id: exp.id, slug: exp.slug, city: exp.city, region: exp.region });
 
       return LOCALES.map((locale) => ({
-        url: `${SITE_URL}${localizeHref(path, locale)}`,
+        url: `${SITE_URL}${localizeHref(localizeExperiencePath(path, locale), locale)}`,
         lastModified: new Date(exp.updated_at),
         changeFrequency: "weekly" as const,
         priority: 0.8,

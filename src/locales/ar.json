@@ -1408,6 +1408,9 @@
     },
     "rooms": {
       "beds": "أسرة"
+    },
+    "similar": {
+      "title": "إقامات مشابهة"
     }
   },
   "experience": {

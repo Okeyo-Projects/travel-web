@@ -8,10 +8,11 @@ import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useHlsVideo } from "@/hooks/use-hls-video";
 import { useImageViewer } from "@/hooks/use-image-viewer";
 import { getIntlLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import { prepareExperienceRichText } from "@/lib/experience-rich-text";
 import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
@@ -32,6 +33,7 @@ interface ExperienceCardProps {
     description?: string;
     type: "lodging" | "trip" | "activity";
     city: string;
+    slug?: string | null;
     region?: string;
     price_mad: number;
     currency?: string;
@@ -62,7 +64,7 @@ export function ExperienceCard({
   const { openImageViewer, Viewer } = useImageViewer();
   const pathname = usePathname();
   const experienceHref = localizeHref(
-    `/experience/${buildExperienceSlug({ title: experience.title, id: experience.id })}`,
+    buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city }),
     pathname,
   );
   const intlLocale = getIntlLocale(locale);
@@ -88,6 +90,8 @@ export function ExperienceCard({
     setIsPlaying((prev) => !prev);
   };
 
+  useHlsVideo(videoRef, experience.video_url ?? null);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -109,7 +113,6 @@ export function ExperienceCard({
         {experience.video_url && (
           <video
             ref={videoRef}
-            src={experience.video_url}
             className={cn(
               "w-full h-full object-contain",
               isPlaying ? "block" : "hidden",

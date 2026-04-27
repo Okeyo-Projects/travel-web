@@ -54,6 +54,7 @@ type RawLodging = Pick<
 type RawExperience = {
   id: string;
   title: string;
+  slug?: string | null;
   short_description: string;
   city: string;
   region: string | null;
@@ -134,6 +135,7 @@ export function transformExperience(exp: RawExperience): ExperienceListItem {
   return {
     id: exp.id,
     title: exp.title,
+    slug: exp.slug ?? null,
     short_description: exp.short_description,
     city: exp.city,
     region: exp.region,
@@ -179,6 +181,7 @@ export function useExperiencesByCategory(
           experience:experiences!inner(
             id,
             title,
+            slug,
             short_description,
             city,
             region,
@@ -312,6 +315,7 @@ export function useAllCategoryGroups(
             experience:experiences!inner(
               id,
               title,
+              slug,
               short_description,
               city,
               region,

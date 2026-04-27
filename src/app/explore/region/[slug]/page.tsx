@@ -39,6 +39,7 @@ type CategoryRecord = {
 const EXPERIENCE_SELECT = `
   id,
   title,
+  slug,
   short_description,
   city,
   region,

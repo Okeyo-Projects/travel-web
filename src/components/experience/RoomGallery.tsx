@@ -10,13 +10,21 @@ const GRID_THRESHOLD = 2; // need at least 2 photos to show the strip
 interface RoomGalleryProps {
   photoUrls: string[];
   name: string | null;
+  fallbackUrl?: string | null;
 }
 
-export function RoomGallery({ photoUrls, name }: RoomGalleryProps) {
+export function RoomGallery({ photoUrls, name, fallbackUrl }: RoomGalleryProps) {
   const { openImageViewer, Viewer } = useImageViewer();
   const alt = name ?? "Room";
 
-  if (!photoUrls.length) {
+  const displayUrls =
+    photoUrls.length > 0
+      ? photoUrls
+      : fallbackUrl
+        ? [fallbackUrl]
+        : [];
+
+  if (!displayUrls.length) {
     return (
       <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-muted">
         <BedDouble className="h-8 w-8 text-muted-foreground" />
@@ -24,9 +32,9 @@ export function RoomGallery({ photoUrls, name }: RoomGalleryProps) {
     );
   }
 
-  const smallPhotos = photoUrls.slice(1, 1 + MAX_VISIBLE_SMALL);
-  const overflow = photoUrls.length - (1 + MAX_VISIBLE_SMALL);
-  const showStrip = photoUrls.length >= GRID_THRESHOLD;
+  const smallPhotos = displayUrls.slice(1, 1 + MAX_VISIBLE_SMALL);
+  const overflow = displayUrls.length - (1 + MAX_VISIBLE_SMALL);
+  const showStrip = displayUrls.length >= GRID_THRESHOLD;
 
   return (
     <div className="space-y-1.5">
@@ -34,14 +42,14 @@ export function RoomGallery({ photoUrls, name }: RoomGalleryProps) {
       <button
         type="button"
         className="relative block w-full overflow-hidden rounded-xl aspect-[4/3]"
-        onClick={() => openImageViewer(photoUrls, 0)}
+        onClick={() => openImageViewer(displayUrls, 0)}
       >
         <Image
-          src={photoUrls[0]}
+          src={displayUrls[0]}
           alt={alt}
           fill
           className="object-cover transition-transform duration-300 hover:scale-105"
-          unoptimized={photoUrls[0].includes("supabase")}
+          unoptimized={displayUrls[0].includes("supabase")}
         />
       </button>
 
@@ -58,7 +66,7 @@ export function RoomGallery({ photoUrls, name }: RoomGalleryProps) {
                 key={url}
                 type="button"
                 className="relative aspect-square overflow-hidden rounded-lg"
-                onClick={() => openImageViewer(photoUrls, globalIndex)}
+                onClick={() => openImageViewer(displayUrls, globalIndex)}
               >
                 <Image
                   src={url}

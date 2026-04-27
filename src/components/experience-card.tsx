@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
+import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
 import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
@@ -69,10 +69,7 @@ export function ExperienceCard({
         ? Bed
         : Activity;
   const href = localizeHref(
-    `/experience/${buildExperienceSlug({
-      title: experience.title,
-      id: experience.id,
-    })}`,
+    buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city }),
     pathname,
   );
 

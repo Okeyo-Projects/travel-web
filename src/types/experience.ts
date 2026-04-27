@@ -3,6 +3,7 @@ export type ExperienceType = "trip" | "lodging" | "activity";
 export interface ExperienceListItem {
   id: string;
   title: string;
+  slug: string | null;
   short_description: string;
   city: string;
   region: string | null;
