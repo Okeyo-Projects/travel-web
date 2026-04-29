@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useHlsVideo } from "@/hooks/use-hls-video";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 import { useImageViewer } from "@/hooks/use-image-viewer";
 import { getIntlLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
@@ -44,6 +46,7 @@ interface ExperienceCardProps {
     promo_badge?: string;
     thumbnail_url?: string;
     video_url?: string;
+    video_hls_url?: string;
     host_name?: string;
     rooms?: RoomInfo[];
     gallery?: string[];
@@ -90,7 +93,10 @@ export function ExperienceCard({
     setIsPlaying((prev) => !prev);
   };
 
-  useHlsVideo(videoRef, experience.video_url ?? null);
+  useHlsVideo(
+    videoRef,
+    experience.video_hls_url ?? experience.video_url ?? null,
+  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -110,7 +116,7 @@ export function ExperienceCard({
       <div
         className={`mx-auto sm:mx-4 rounded-t-lg sm:rounded-sm overflow-hidden relative w-[50vw] sm:w-[300px] group bg-muted ${experience.video_url ? "aspect-[9/16]" : "aspect-video"}`}
       >
-        {experience.video_url && (
+        {(experience.video_hls_url || experience.video_url) && (
           <video
             ref={videoRef}
             className={cn(
@@ -119,6 +125,14 @@ export function ExperienceCard({
             )}
             playsInline
             loop
+            muted
+            preload="none"
+            onError={() => {
+              captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
+                src: experience.video_hls_url ?? experience.video_url,
+                context: "chat_experience_card",
+              });
+            }}
           >
             <track
               kind="captions"
@@ -151,7 +165,7 @@ export function ExperienceCard({
           )}
         </div>
 
-        {!isPlaying && experience.video_url && (
+        {!isPlaying && (experience.video_hls_url || experience.video_url) && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-all pointer-events-none z-10">
             <button
               type="button"

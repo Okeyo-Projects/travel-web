@@ -176,6 +176,18 @@ function resolveVideoAssetUrl(
   );
 }
 
+function resolveHlsAssetUrl(
+  asset: {
+    hls_playlist_url?: string | null;
+    bucket?: string | null;
+  } | null,
+): string | null {
+  if (!asset?.hls_playlist_url) {
+    return null;
+  }
+  return getImageUrl(asset.hls_playlist_url, asset.bucket || "media");
+}
+
 async function executeSearch(
   db: any,
   queryEmbedding: number[] | null,
@@ -297,6 +309,7 @@ async function formatResults(results: any[], db: any) {
     host_name: exp.host_name,
     thumbnail_url: exp.thumbnail_url,
     video_url: undefined as string | undefined,
+    video_hls_url: undefined as string | undefined,
     gallery: undefined as string[] | undefined,
     rooms: undefined as any,
     _video_id: exp.video_id as string | null | undefined,
@@ -348,6 +361,13 @@ async function formatResults(results: any[], db: any) {
           }
         }
 
+        if (!experience.video_hls_url && linkedMedia.video?.hls_playlist_url) {
+          const linkedHlsUrl = resolveHlsAssetUrl(linkedMedia.video);
+          if (linkedHlsUrl) {
+            experience.video_hls_url = linkedHlsUrl;
+          }
+        }
+
         if (!experience._video_id && linkedMedia.video?.id) {
           experience._video_id = linkedMedia.video.id;
         }
@@ -383,6 +403,10 @@ async function formatResults(results: any[], db: any) {
       const asset = videoById.get(experience._video_id);
       const videoUrl = resolveVideoAssetUrl(asset);
       experience.video_url = videoUrl || undefined;
+      const hlsUrl = resolveHlsAssetUrl(asset);
+      if (hlsUrl) {
+        experience.video_hls_url = hlsUrl;
+      }
     }
   }
 
@@ -407,6 +431,7 @@ async function formatResults(results: any[], db: any) {
     if (media) {
       const galleryByExp: Record<string, string[]> = {};
       const fallbackVideoByExp: Record<string, string> = {};
+      const fallbackHlsByExp: Record<string, string> = {};
       for (const m of media) {
         if (!galleryByExp[m.experience_id]) galleryByExp[m.experience_id] = [];
         if (m.media_asset?.kind === "video") {
@@ -414,6 +439,12 @@ async function formatResults(results: any[], db: any) {
             const videoUrl = resolveVideoAssetUrl(m.media_asset);
             if (videoUrl) {
               fallbackVideoByExp[m.experience_id] = videoUrl;
+            }
+          }
+          if (!fallbackHlsByExp[m.experience_id]) {
+            const hlsUrl = resolveHlsAssetUrl(m.media_asset);
+            if (hlsUrl) {
+              fallbackHlsByExp[m.experience_id] = hlsUrl;
             }
           }
           continue;
@@ -428,6 +459,9 @@ async function formatResults(results: any[], db: any) {
       for (const exp of formatted) {
         if (!exp.video_url && fallbackVideoByExp[exp.id]) {
           exp.video_url = fallbackVideoByExp[exp.id];
+        }
+        if (!exp.video_hls_url && fallbackHlsByExp[exp.id]) {
+          exp.video_hls_url = fallbackHlsByExp[exp.id];
         }
         if (galleryByExp[exp.id]) {
           exp.gallery = galleryByExp[exp.id];

@@ -15,7 +15,14 @@ export function useHlsVideo(
 ): void {
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !src) return;
+    if (!video || !src) {
+      // If src was removed, clear the video element to stop buffering
+      if (video) {
+        video.removeAttribute("src");
+        video.load();
+      }
+      return;
+    }
 
     let hls: Hls | null = null;
 
@@ -35,6 +42,11 @@ export function useHlsVideo(
 
     return () => {
       hls?.destroy();
+      hls = null;
+      if (video) {
+        video.removeAttribute("src");
+        video.load();
+      }
     };
   }, [src, videoRef]);
 }

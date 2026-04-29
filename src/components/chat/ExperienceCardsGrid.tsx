@@ -27,6 +27,7 @@ export interface ExperienceGridItem {
   promo_badge?: string;
   thumbnail_url?: string;
   video_url?: string;
+  video_hls_url?: string;
   host_name?: string;
   rooms?: RoomInfo[];
 }

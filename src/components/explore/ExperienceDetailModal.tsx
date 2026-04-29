@@ -70,7 +70,6 @@ export function ExperienceDetailModal({
   const [isExperienceVisible, setIsExperienceVisible] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const blurVideoRef = useRef<HTMLVideoElement>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const pathname = usePathname();
   const { requireAuth } = useRequiredAuth();
@@ -180,7 +179,6 @@ export function ExperienceDetailModal({
   // Attach HLS or set src directly whenever the active video changes
   const videoSrc = currentMedia?.type === "video" ? currentMedia.src : null;
   useHlsVideo(videoRef, videoSrc);
-  useHlsVideo(blurVideoRef, videoSrc);
 
   const social = useExperienceSocial(currentExperience?.id ?? null);
   const locationLabel = currentExperience
@@ -293,18 +291,20 @@ export function ExperienceDetailModal({
             <div className="relative flex h-[42vh] items-center justify-center overflow-hidden bg-black md:h-full">
               {currentMedia?.type === "video" ? (
                 <>
-                  {/* Blurred background fill */}
-                  <video
-                    ref={blurVideoRef}
-                    key={`blur-${currentMedia.src}`}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    crossOrigin="anonymous"
-                    poster={currentMedia.type === "video" ? (currentMedia.poster ?? undefined) : undefined}
-                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl pointer-events-none"
-                  />
+                  {/* Blurred poster backdrop (avoids decoding the stream twice) */}
+                  {currentMedia.poster ? (
+                    <img
+                      src={currentMedia.poster}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl pointer-events-none"
+                    />
+                  ) : (
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 bg-black pointer-events-none"
+                    />
+                  )}
                   {/* Main video */}
                   {/* biome-ignore lint/a11y/useMediaCaption: Experience videos are ambient previews and do not ship caption tracks. */}
                   <video
@@ -315,6 +315,7 @@ export function ExperienceDetailModal({
                     loop
                     playsInline
                     crossOrigin="anonymous"
+                    preload="metadata"
                     poster={currentMedia.type === "video" ? (currentMedia.poster ?? undefined) : undefined}
                     className={cn(
                       "relative h-full w-full object-contain transition-opacity duration-300 cursor-pointer",
@@ -332,6 +333,12 @@ export function ExperienceDetailModal({
                     }}
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}
+                    onError={() => {
+                      captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
+                        src: currentMedia.src,
+                        context: "experience_detail_modal",
+                      });
+                    }}
                   />
                   {!isPlaying && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

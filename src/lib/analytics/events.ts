@@ -38,6 +38,7 @@ export const ANALYTICS_EVENT = {
   VIDEO_PAUSED: "video_paused",
   VIDEO_MUTED: "video_muted",
   VIDEO_UNMUTED: "video_unmuted",
+  VIDEO_ERROR: "video_error",
   // Errors
   CHAT_MESSAGE_FAILED: "chat_message_failed",
   BOOKING_QUOTE_FAILED: "booking_quote_failed",

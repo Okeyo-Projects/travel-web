@@ -30,7 +30,12 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
   useHlsVideo(videoRef, src);
 
   useEffect(() => {
-    videoRef.current?.play().catch(() => {});
+    const video = videoRef.current;
+    if (!video) return;
+    // Only autoplay if the src is still what we expect (prevents race conditions)
+    if (video.getAttribute("src") === src || video.src === src) {
+      video.play().catch(() => {});
+    }
   }, [src]);
 
   useEffect(() => {
@@ -98,12 +103,25 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
       if (!document.fullscreenElement) {
         if (typeof container.requestFullscreen === "function") {
           await container.requestFullscreen();
+        } else if (
+          // iOS Safari fallback
+          "webkitRequestFullscreen" in container &&
+          typeof (container as HTMLElement & { webkitRequestFullscreen: () => void }).webkitRequestFullscreen === "function"
+        ) {
+          (container as HTMLElement & { webkitRequestFullscreen: () => void }).webkitRequestFullscreen();
         }
       } else {
-        await document.exitFullscreen();
+        if (typeof document.exitFullscreen === "function") {
+          await document.exitFullscreen();
+        } else if (
+          "webkitExitFullscreen" in document &&
+          typeof (document as Document & { webkitExitFullscreen: () => void }).webkitExitFullscreen === "function"
+        ) {
+          (document as Document & { webkitExitFullscreen: () => void }).webkitExitFullscreen();
+        }
       }
     } catch {
-      // Fullscreen may be unsupported (iOS Safari) or rejected
+      // Fullscreen may be unsupported or rejected
     }
   };
 
@@ -115,7 +133,10 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    video.currentTime = (percentage / 100) * video.duration;
+    const duration = video.duration;
+    if (Number.isFinite(duration) && duration > 0) {
+      video.currentTime = (percentage / 100) * duration;
+    }
   };
 
   return (
@@ -149,9 +170,16 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
         muted={isMuted}
         loop
         playsInline
+        preload="metadata"
         onClick={togglePlay}
         poster={poster ?? undefined}
         className="relative h-full w-full object-contain cursor-pointer"
+        onError={() => {
+          captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
+            src,
+            context: "custom_video_player",
+          });
+        }}
       />
 
       {/* Play/Pause Overlay Icon (shows when paused) */}
@@ -167,8 +195,27 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         {/* Progress Bar */}
         <div
-          role="progressbar"
+          role="slider"
           aria-label="Seek"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress)}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            const video = videoRef.current;
+            if (!video || !Number.isFinite(video.duration)) return;
+            const step = video.duration * 0.05;
+            if (e.key === "ArrowLeft") {
+              e.preventDefault();
+              video.currentTime = Math.max(0, video.currentTime - step);
+            } else if (e.key === "ArrowRight") {
+              e.preventDefault();
+              video.currentTime = Math.min(video.duration, video.currentTime + step);
+            } else if (e.key === " ") {
+              e.preventDefault();
+              togglePlay(e as unknown as React.MouseEvent);
+            }
+          }}
           className="w-full h-1.5 bg-white/30 rounded-full mb-4 cursor-pointer relative"
           onClick={handleSeek}
         >

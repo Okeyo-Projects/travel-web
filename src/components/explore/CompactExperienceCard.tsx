@@ -92,7 +92,14 @@ export function CompactExperienceCard({
             playsInline
             loop
             muted
+            preload="none"
             crossOrigin="anonymous"
+            onError={() => {
+              captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
+                src: videoUrl,
+                context: "compact_experience_card",
+              });
+            }}
           />
         )}
 
