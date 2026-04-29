@@ -56,6 +56,9 @@ type RawExperience = {
   title: string;
   slug?: string | null;
   short_description: string;
+  short_description_en?: string | null;
+  short_description_fr?: string | null;
+  short_description_ar?: string | null;
   city: string;
   region: string | null;
   type: ExperienceListItem["type"];
@@ -137,6 +140,9 @@ export function transformExperience(exp: RawExperience): ExperienceListItem {
     title: exp.title,
     slug: exp.slug ?? null,
     short_description: exp.short_description,
+    short_description_en: exp.short_description_en ?? null,
+    short_description_fr: exp.short_description_fr ?? null,
+    short_description_ar: exp.short_description_ar ?? null,
     city: exp.city,
     region: exp.region,
     type: exp.type,
@@ -183,6 +189,9 @@ export function useExperiencesByCategory(
             title,
             slug,
             short_description,
+            short_description_en,
+            short_description_fr,
+            short_description_ar,
             city,
             region,
             type,

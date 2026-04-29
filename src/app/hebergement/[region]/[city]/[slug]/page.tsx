@@ -32,6 +32,7 @@ export default async function HebergementPage({
   const canonicalPath = buildExperienceHref({
     title: experience.title,
     id: experience.id,
+    slug: experience.slug,
     region: experience.region,
     city: experience.city,
   });

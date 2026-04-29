@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { Compass, Home } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+  alternates: {},
+};
 
 export default async function NotFound() {
   const requestHeaders = await headers();

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "@/hooks/use-booking";
 import type { ExperienceDetail } from "@/types/experience-detail";
@@ -10,6 +11,7 @@ interface RoomBookingButtonProps {
 }
 
 export function RoomBookingButton({ experience, roomId }: RoomBookingButtonProps) {
+  const { t } = useSiteI18n();
   const { openBooking, BookingModal } = useBooking();
 
   return (
@@ -19,7 +21,7 @@ export function RoomBookingButton({ experience, roomId }: RoomBookingButtonProps
         className="rounded-xl"
         onClick={() => openBooking(experience, roomId)}
       >
-        Réserver
+        {t("experience.bookingSection.book")}
       </Button>
       <BookingModal />
     </>

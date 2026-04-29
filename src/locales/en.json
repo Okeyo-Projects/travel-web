@@ -139,6 +139,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "back": "Back",
+    "share": "Share",
     "continue": "Continue",
     "done": "Done",
     "yes": "Yes",
@@ -390,6 +391,12 @@
           "name": "Sofia Benali",
           "role": "Digital nomad"
         }
+      },
+      "carousel": {
+        "avatarAlt": "Photo de {name}",
+        "previous": "Avis précédent",
+        "next": "Avis suivant",
+        "goTo": "Aller à l'avis {count}"
       }
     },
     "footer": {
@@ -846,6 +853,22 @@
       "title": "Unable to load experiences",
       "description": "An error occurred while loading the page. Please try again.",
       "retry": "Retry"
+    },
+    "modal": {
+      "new": "New",
+      "share": "Share",
+      "startingFrom": "Starting from",
+      "bookNow": "Book now",
+      "viewDetails": "View details",
+      "comments": "Comments",
+      "loadingComments": "Loading comments...",
+      "noComments": "No comments yet. Start the conversation.",
+      "user": "User",
+      "addComment": "Add a comment...",
+      "previousMedia": "Previous media",
+      "nextMedia": "Next media",
+      "previousExperience": "Previous experience",
+      "nextExperience": "Next experience"
     }
   },
   "chat": {
@@ -1303,7 +1326,13 @@
   "experienceDetails": {
     "hostedBy": "Hosted by",
     "verified": "Verified",
-    "type": "Type",
+    "typeLabel": "Type",
+    "type": {
+      "lodging": "Stay",
+      "trip": "Trip",
+      "activity": "Activity"
+    },
+    "reviewCount": "({count} reviews)",
     "servicesExcluded": "Excluded services",
     "mediaUnavailable": "Media unavailable",
     "tabs": {
@@ -1334,9 +1363,21 @@
       "checkIn": "Check-in",
       "checkOut": "Check-out",
       "cancellationPolicy": "Cancellation policy",
+      "cancellationPolicies": {
+        "free": "Free cancellation",
+        "flexible": "Flexible cancellation policy",
+        "moderate": "Moderate cancellation policy",
+        "strict": "Strict cancellation policy",
+        "non_refundable": "Non-refundable"
+      },
       "includedServices": "Included services",
       "excludedServices": "Excluded services",
       "beds": "beds",
+      "perPerson": "per person",
+      "houseRules": "House rules",
+      "noAmenities": "No amenities listed.",
+      "maxPersons": "{count} max",
+      "about": "About",
       "noDetails": "No details provided",
       "noRooms": "No rooms available",
       "addressNotProvided": "Address not provided"
@@ -1344,6 +1385,7 @@
     "rooms": {
       "beds": "beds"
     },
+    "room": "Room",
     "similar": {
       "title": "Similar accommodations"
     }
@@ -1366,5 +1408,50 @@
     "similarPosts": "Similar articles",
     "publishedOn": "Published on {date}",
     "by": "by {author}"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "description": "Consultez les conditions d'utilisation d'Okeyo Travel pour les utilisateurs et les prestataires."
+    },
+    "page": {
+      "eyebrow": "Informations légales",
+      "lastUpdated": "Dernière mise à jour",
+      "home": "Accueil",
+      "explore": "Explorer",
+      "tableOfContents": "Table des matières",
+      "onThisPage": "Sur cette page",
+      "section": "Section"
+    }
+  },
+  "tags": {
+    "wifi": "WiFi",
+    "parking": "Parking",
+    "pool": "Pool",
+    "breakfast": "Breakfast",
+    "luxury": "Luxury",
+    "family": "Family",
+    "romantic": "Romantic",
+    "adventure": "Adventure",
+    "nature": "Nature",
+    "sea_view": "Sea view",
+    "mountain_view": "Mountain view",
+    "pet_friendly": "Pet friendly",
+    "air_conditioning": "Air conditioning",
+    "heating": "Heating",
+    "kitchen": "Kitchen",
+    "garden": "Garden",
+    "terrace": "Terrace",
+    "balcony": "Balcony",
+    "all_inclusive": "All inclusive",
+    "spa": "Spa",
+    "gym": "Gym",
+    "restaurant": "Restaurant",
+    "bar": "Bar",
+    "non_smoking": "Non-smoking"
   }
 }

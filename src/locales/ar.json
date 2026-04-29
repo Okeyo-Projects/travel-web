@@ -139,6 +139,7 @@
     "delete": "حذف",
     "edit": "تعديل",
     "back": "رجوع",
+    "share": "مشاركة",
     "continue": "متابعة",
     "done": "تم",
     "yes": "نعم",
@@ -390,6 +391,12 @@
           "name": "صوفيا بنعلي",
           "role": "رحالة رقمية"
         }
+      },
+      "carousel": {
+        "avatarAlt": "Photo de {name}",
+        "previous": "Avis précédent",
+        "next": "Avis suivant",
+        "goTo": "Aller à l'avis {count}"
       }
     },
     "footer": {
@@ -846,6 +853,22 @@
       "title": "تعذر تحميل التجارب",
       "description": "حدث خطأ أثناء تحميل الصفحة. يرجى المحاولة مرة أخرى.",
       "retry": "إعادة المحاولة"
+    },
+    "modal": {
+      "new": "جديد",
+      "share": "مشاركة",
+      "startingFrom": "ابتداءً من",
+      "bookNow": "احجز الآن",
+      "viewDetails": "عرض التفاصيل",
+      "comments": "التعليقات",
+      "loadingComments": "جارٍ تحميل التعليقات...",
+      "noComments": "لا توجد تعليقات بعد. ابدأ المحادثة.",
+      "user": "مستخدم",
+      "addComment": "أضف تعليقًا...",
+      "previousMedia": "الوسائط السابقة",
+      "nextMedia": "الوسائط التالية",
+      "previousExperience": "التجربة السابقة",
+      "nextExperience": "التجربة التالية"
     }
   },
   "chat": {
@@ -1368,7 +1391,13 @@
   "experienceDetails": {
     "hostedBy": "يستضيفه",
     "verified": "موثق",
-    "type": "النوع",
+    "typeLabel": "النوع",
+    "type": {
+      "lodging": "إقامة",
+      "trip": "رحلة",
+      "activity": "نشاط"
+    },
+    "reviewCount": "({count} مراجعة)",
     "servicesExcluded": "الخدمات غير المشمولة",
     "mediaUnavailable": "الوسائط غير متوفرة",
     "tabs": {
@@ -1399,9 +1428,21 @@
       "checkIn": "تسجيل الوصول",
       "checkOut": "تسجيل المغادرة",
       "cancellationPolicy": "سياسة الإلغاء",
+      "cancellationPolicies": {
+        "free": "إلغاء مجاني",
+        "flexible": "سياسة إلغاء مرنة",
+        "moderate": "سياسة إلغاء معتدلة",
+        "strict": "سياسة إلغاء صارمة",
+        "non_refundable": "غير قابل للاسترداد"
+      },
       "includedServices": "الخدمات المشمولة",
       "excludedServices": "الخدمات غير المشمولة",
       "beds": "أسرة",
+      "perPerson": "للشخص",
+      "houseRules": "قواعد المنزل",
+      "noAmenities": "لا توجد مرافق مدرجة.",
+      "maxPersons": "حد أقصى {count} شخص",
+      "about": "نبذة",
       "noDetails": "لا توجد تفاصيل",
       "noRooms": "لا توجد غرف متاحة",
       "addressNotProvided": "العنوان غير مقدم"
@@ -1409,6 +1450,7 @@
     "rooms": {
       "beds": "أسرة"
     },
+    "room": "غرفة",
     "similar": {
       "title": "إقامات مشابهة"
     }
@@ -1431,5 +1473,50 @@
     "similarPosts": "مقالات مشابهة",
     "publishedOn": "نُشر في {date}",
     "by": "بواسطة {author}"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "description": "Consultez les conditions d'utilisation d'Okeyo Travel pour les utilisateurs et les prestataires."
+    },
+    "page": {
+      "eyebrow": "Informations légales",
+      "lastUpdated": "Dernière mise à jour",
+      "home": "Accueil",
+      "explore": "Explorer",
+      "tableOfContents": "Table des matières",
+      "onThisPage": "Sur cette page",
+      "section": "Section"
+    }
+  },
+  "tags": {
+    "wifi": "واي فاي",
+    "parking": "موقف سيارات",
+    "pool": "مسبح",
+    "breakfast": "إفطار",
+    "luxury": "فاخر",
+    "family": "عائلي",
+    "romantic": "رومانسي",
+    "adventure": "مغامرة",
+    "nature": "طبيعة",
+    "sea_view": "إطلالة بحرية",
+    "mountain_view": "إطلالة جبلية",
+    "pet_friendly": "مسموح بالحيوانات",
+    "air_conditioning": "تكييف",
+    "heating": "تدفئة",
+    "kitchen": "مطبخ",
+    "garden": "حديقة",
+    "terrace": "تراس",
+    "balcony": "شرفة",
+    "all_inclusive": "شامل الكل",
+    "spa": "سبا",
+    "gym": "صالة رياضية",
+    "restaurant": "مطعم",
+    "bar": "بار",
+    "non_smoking": "غير مدخن"
   }
 }

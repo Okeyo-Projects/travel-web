@@ -5,6 +5,11 @@ import { EXPERIENCE_ROUTE_ALIASES } from "@/lib/routing/locale-path";
 
 const PUBLIC_FILE = /\.[^/]+$/;
 
+// C9: Legacy typo redirects (expand as data fixes are confirmed)
+const LEGACY_REDIRECTS: Record<string, string> = {
+  // Example: "/fr/hebergement/marrakech-safi/marrekch": "/fr/hebergement/marrakech-safi/marrakech",
+};
+
 function shouldBypass(pathname: string): boolean {
   return (
     pathname.startsWith("/_next") ||
@@ -67,6 +72,31 @@ export function middleware(request: NextRequest) {
   }
 
   const firstSegment = pathname.split("/").filter(Boolean)[0] ?? "";
+
+  // C9: Legacy typo redirects
+  const legacyTarget = LEGACY_REDIRECTS[pathname];
+  if (legacyTarget) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = legacyTarget;
+    const response = NextResponse.redirect(redirectUrl, 301);
+    response.headers.set("Content-Security-Policy", csp);
+    Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
+
+  // C7: Redirect /en/hebergement/ → /en/accommodation/ (permanent)
+  if (firstSegment === "en" && pathname.startsWith("/en/hebergement/")) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = pathname.replace("/en/hebergement/", "/en/accommodation/");
+    const response = NextResponse.redirect(redirectUrl, 308);
+    response.headers.set("Content-Security-Policy", csp);
+    Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
 
   if (isSupportedLocale(firstSegment)) {
     let rewrittenPath =

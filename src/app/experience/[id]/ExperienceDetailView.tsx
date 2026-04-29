@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLowestPricedRoom } from "@/lib/experience-pricing";
-import type { Translator } from "@/lib/i18n";
+import { getLocalizedDescription, type Translator } from "@/lib/i18n";
 import type { ExperienceDetail } from "@/types/experience-detail";
 import {
   Check,
@@ -55,22 +55,6 @@ function formatDuration(
 }
 
 type Language = "en" | "fr" | "ar";
-
-function getLocalizedDescription(
-  experience: ExperienceDetail,
-  language: Language,
-  type: "short" | "long"
-): string {
-  const key = `${type}_description_${language}` as keyof ExperienceDetail;
-  const translatedDesc = experience[key];
-  const defaultKey = type === "short" ? "shortDescription" : "longDescription";
-
-  if (typeof translatedDesc === "string" && translatedDesc.trim()) {
-    return translatedDesc;
-  }
-
-  return (experience[defaultKey as keyof ExperienceDetail] as string) || "";
-}
 
 export function ExperienceDetailView({
   experience,
@@ -429,13 +413,6 @@ export function ExperienceDetailView({
           <div className="lg:col-span-7 space-y-6">
             {/* Title & Meta */}
             <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {experience.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="capitalize">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
                 {experience.title}
               </h1>
@@ -511,13 +488,6 @@ export function ExperienceDetailView({
         <div className="lg:hidden space-y-6">
           <section className="space-y-4">
             <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {experience.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="capitalize">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1 text-foreground">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />

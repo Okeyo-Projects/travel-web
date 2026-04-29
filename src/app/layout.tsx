@@ -122,6 +122,21 @@ export default async function RootLayout({
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" />
         <link rel="preconnect" href="https://connect.facebook.net" />
+        <link
+          rel="preconnect"
+          href={
+            process.env.NEXT_PUBLIC_SUPABASE_URL ??
+            "https://nfqamqrxgpyuhjhedllg.supabase.co"
+          }
+          crossOrigin=""
+        />
+        <link
+          rel="dns-prefetch"
+          href={
+            process.env.NEXT_PUBLIC_SUPABASE_URL ??
+            "https://nfqamqrxgpyuhjhedllg.supabase.co"
+          }
+        />
         <JsonLd
           schema={[
             {

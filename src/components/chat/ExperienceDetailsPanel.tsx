@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getIntlLocale } from "@/lib/i18n";
+import { getIntlLocale, getLocalizedDescription } from "@/lib/i18n";
 import { getImageUrl } from "@/utils/functions";
 
 type Primitive = string | number | boolean | null | undefined;
@@ -16,6 +16,12 @@ export interface ExperienceDetailsData {
     title: string;
     short_description?: string | null;
     long_description?: string | null;
+    short_description_en?: string | null;
+    short_description_fr?: string | null;
+    short_description_ar?: string | null;
+    long_description_en?: string | null;
+    long_description_fr?: string | null;
+    long_description_ar?: string | null;
     type: "lodging" | "trip" | "activity" | string;
     city?: string | null;
     region?: string | null;
@@ -274,14 +280,20 @@ export function ExperienceDetailsPanel({
           {location ? (
             <p className="text-sm text-muted-foreground">{location}</p>
           ) : null}
-          {experience.short_description ? (
-            <p className="text-sm">{experience.short_description}</p>
-          ) : null}
-          {experience.long_description ? (
-            <p className="text-sm text-muted-foreground">
-              {experience.long_description}
-            </p>
-          ) : null}
+          {(() => {
+            const shortDesc = getLocalizedDescription(experience, locale, "short");
+            const longDesc = getLocalizedDescription(experience, locale, "long");
+            return (
+              <>
+                {shortDesc ? (
+                  <p className="text-sm">{shortDesc}</p>
+                ) : null}
+                {longDesc ? (
+                  <p className="text-sm text-muted-foreground">{longDesc}</p>
+                ) : null}
+              </>
+            );
+          })()}
 
           {Array.isArray(experience.languages) &&
           experience.languages.length > 0 ? (
@@ -294,15 +306,6 @@ export function ExperienceDetailsPanel({
             </div>
           ) : null}
 
-          {Array.isArray(experience.tags) && experience.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {experience.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          ) : null}
         </div>
 
         {details.host?.name ? (

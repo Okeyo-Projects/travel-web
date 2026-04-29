@@ -1,0 +1,26 @@
+# Okeyo Travel
+> AI-powered travel planning and lodging in Morocco. Curated riads, lodges
+> and authentic experiences in Marrakech, Essaouira, Chefchaouen, Ourika,
+> Ouirgane, Atlas, and the Sahara desert.
+
+## Main entry points
+- [Home](https://okeyotravel.com/en): AI Morocco trip planning
+- [Explore](https://okeyotravel.com/en/explore): 26 curated stays
+- [Blog](https://okeyotravel.com/fr/blog): Morocco travel guides
+
+## Featured destinations
+- Marrakech (riads, kasbah, medina)
+- Essaouira (coast, riad)
+- Chefchaouen (blue city)
+- Ourika & Ouirgane (Atlas mountains)
+- Merzouga (Sahara desert)
+
+## Property types
+- Riad · Auberge · Maison d'hôtes · Kasbah · Lodge
+
+## Languages
+- French (primary) · English · Arabic
+
+## Contact
+- Site: https://okeyotravel.com
+- Sitemap: https://okeyotravel.com/sitemap.xml

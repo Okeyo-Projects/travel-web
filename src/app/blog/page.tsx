@@ -26,7 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("seo.blog.title"),
     description: t("seo.blog.description"),
-    alternates: buildLocaleAlternates("/blog"),
+    alternates: buildLocaleAlternates("/blog", locale),
+    robots: locale === "fr" ? undefined : { index: false, follow: false },
     openGraph: {
       title: t("seo.blog.title"),
       description: t("seo.blog.description"),
@@ -45,8 +46,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const page = Number(params.page) || 1;
 
   const [postsData, categories] = await Promise.all([
-    fetchPosts(page, 9),
-    fetchCategories(),
+    fetchPosts(page, 9, undefined, locale),
+    fetchCategories(locale),
   ]);
 
   const blogHref = localizeHref("/blog", locale);

@@ -1,3 +1,4 @@
+import { type AppLocale, DEFAULT_LOCALE, LOCALES } from "@/lib/i18n";
 import type {
   BlogListResponse,
   BlogPost,
@@ -6,9 +7,81 @@ import type {
 } from "@/types/blog";
 
 const WP_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL ?? "";
+const WP_LANGUAGE_PARAM = "lang";
 
 function baseUrl(): string {
   return `${WP_API_URL}/wp-json/wp/v2`;
+}
+
+function withLocaleParam(
+  params: Record<string, string>,
+  locale?: AppLocale,
+): Record<string, string> {
+  if (!locale) {
+    return params;
+  }
+
+  return {
+    ...params,
+    [WP_LANGUAGE_PARAM]: locale,
+  };
+}
+
+function getRecordLocale(record: Record<string, unknown>): AppLocale | null {
+  const rawLocale = record.lang ?? record.language ?? record.locale;
+
+  if (
+    typeof rawLocale === "string" &&
+    LOCALES.includes(rawLocale as AppLocale)
+  ) {
+    return rawLocale as AppLocale;
+  }
+
+  if (rawLocale && typeof rawLocale === "object") {
+    const code =
+      (rawLocale as { slug?: unknown; code?: unknown; locale?: unknown })
+        .slug ??
+      (rawLocale as { slug?: unknown; code?: unknown; locale?: unknown })
+        .code ??
+      (rawLocale as { slug?: unknown; code?: unknown; locale?: unknown })
+        .locale;
+
+    if (typeof code === "string" && LOCALES.includes(code as AppLocale)) {
+      return code as AppLocale;
+    }
+  }
+
+  return null;
+}
+
+function filterRecordsByLocale<T extends Record<string, unknown>>(
+  records: T[],
+  locale?: AppLocale,
+): T[] {
+  if (!locale) {
+    return records;
+  }
+
+  const recordsWithLocale = records.filter((record) => getRecordLocale(record));
+
+  if (recordsWithLocale.length === 0) {
+    return locale === DEFAULT_LOCALE ? records : [];
+  }
+
+  return records.filter((record) => {
+    const recordLocale = getRecordLocale(record);
+    return recordLocale === locale;
+  });
+}
+
+function filterCategoriesByLocale(
+  categories: WpCategory[],
+  locale?: AppLocale,
+): WpCategory[] {
+  return filterRecordsByLocale(
+    categories as unknown as Record<string, unknown>[],
+    locale,
+  ) as unknown as WpCategory[];
 }
 
 async function fetchWp<T>(
@@ -63,6 +136,25 @@ async function resolveFeaturedMedia(
   }
 }
 
+function extractEmbeddedMedia(
+  raw: Record<string, unknown>,
+): WpFeaturedMedia | null {
+  const embedded = (raw._embedded as Record<string, unknown> | undefined) ?? {};
+  const featuredMedia = (embedded["wp:featuredmedia"] as
+    | Array<Record<string, unknown>>
+    | undefined)?.[0];
+
+  if (!featuredMedia) return null;
+
+  const sourceUrl = featuredMedia.source_url as string | undefined;
+  if (!sourceUrl) return null;
+
+  return {
+    source_url: sourceUrl,
+    alt_text: (featuredMedia.alt_text as string) || "",
+  };
+}
+
 function toBlogPost(
   raw: Record<string, unknown>,
   author: { name: string; slug: string },
@@ -85,22 +177,30 @@ function toBlogPost(
   };
 }
 
-export async function fetchCategories(): Promise<WpCategory[]> {
+export async function fetchCategories(
+  locale?: AppLocale,
+): Promise<WpCategory[]> {
   const { data } = await fetchWp<WpCategory[]>("/categories", {
-    per_page: "100",
-    hide_empty: "true",
+    ...withLocaleParam(
+      {
+        per_page: "100",
+        hide_empty: "true",
+      },
+      locale,
+    ),
   });
-  return data;
+  return filterCategoriesByLocale(data, locale);
 }
 
 export async function fetchCategoryBySlug(
   slug: string,
+  locale?: AppLocale,
 ): Promise<WpCategory | null> {
   try {
     const { data } = await fetchWp<WpCategory[]>("/categories", {
-      slug,
+      ...withLocaleParam({ slug }, locale),
     });
-    return data[0] ?? null;
+    return filterCategoriesByLocale(data, locale)[0] ?? null;
   } catch {
     return null;
   }
@@ -110,14 +210,18 @@ export async function fetchPosts(
   page = 1,
   perPage = 9,
   categoryId?: number,
+  locale?: AppLocale,
 ): Promise<BlogListResponse> {
-  const params: Record<string, string> = {
-    page: String(page),
-    per_page: String(perPage),
-    _embed: "1",
-    orderby: "date",
-    order: "desc",
-  };
+  const params: Record<string, string> = withLocaleParam(
+    {
+      page: String(page),
+      per_page: String(perPage),
+      _embed: "1",
+      orderby: "date",
+      order: "desc",
+    },
+    locale,
+  );
 
   if (categoryId) {
     params.categories = String(categoryId);
@@ -129,30 +233,35 @@ export async function fetchPosts(
     total,
   } = await fetchWp<Record<string, unknown>[]>("/posts", params);
 
+  const localePosts = filterRecordsByLocale(rawPosts, locale);
+
   const allCategoryIds = [
-    ...new Set(rawPosts.flatMap((p) => (p.categories as number[]) ?? [])),
+    ...new Set(localePosts.flatMap((p) => (p.categories as number[]) ?? [])),
   ];
   const categoriesMap: Record<number, WpCategory> = {};
   if (allCategoryIds.length > 0) {
-    const catParams: Record<string, string> = {
-      include: allCategoryIds.join(","),
-      per_page: "100",
-    };
+    const catParams: Record<string, string> = withLocaleParam(
+      {
+        include: allCategoryIds.join(","),
+        per_page: "100",
+      },
+      locale,
+    );
     const { data: cats } = await fetchWp<WpCategory[]>(
       "/categories",
       catParams,
     );
-    for (const cat of cats) {
+    for (const cat of filterCategoriesByLocale(cats, locale)) {
       categoriesMap[cat.id] = cat;
     }
   }
 
   const posts = await Promise.all(
-    rawPosts.map(async (raw) => {
+    localePosts.map(async (raw) => {
       const author = await resolveAuthors(raw);
-      const media = await resolveFeaturedMedia(
-        (raw.featured_media as number) ?? null,
-      );
+      const media =
+        extractEmbeddedMedia(raw) ??
+        (await resolveFeaturedMedia((raw.featured_media as number) ?? null));
       const postCats = ((raw.categories as number[]) ?? [])
         .map((id) => categoriesMap[id])
         .filter(Boolean) as WpCategory[];
@@ -163,27 +272,35 @@ export async function fetchPosts(
   return { posts, totalPages, total, currentPage: page };
 }
 
-export async function fetchPostBySlug(slug: string): Promise<BlogPost | null> {
+export async function fetchPostBySlug(
+  slug: string,
+  locale?: AppLocale,
+): Promise<BlogPost | null> {
   try {
     const { data: rawPosts } = await fetchWp<Record<string, unknown>[]>(
       "/posts",
-      { slug, _embed: "1" },
+      withLocaleParam({ slug, _embed: "1" }, locale),
     );
-    const raw = rawPosts[0];
+    const raw = filterRecordsByLocale(rawPosts, locale)[0];
     if (!raw) return null;
 
     const author = await resolveAuthors(raw);
-    const media = await resolveFeaturedMedia(
-      (raw.featured_media as number) ?? null,
-    );
+    const media =
+      extractEmbeddedMedia(raw) ??
+      (await resolveFeaturedMedia((raw.featured_media as number) ?? null));
     const catIds = (raw.categories as number[]) ?? [];
     let categories: WpCategory[] = [];
     if (catIds.length > 0) {
       const { data: cats } = await fetchWp<WpCategory[]>("/categories", {
-        include: catIds.join(","),
-        per_page: "100",
+        ...withLocaleParam(
+          {
+            include: catIds.join(","),
+            per_page: "100",
+          },
+          locale,
+        ),
       });
-      categories = cats;
+      categories = filterCategoriesByLocale(cats, locale);
     }
 
     return toBlogPost(raw, author, media, categories);
@@ -193,92 +310,132 @@ export async function fetchPostBySlug(slug: string): Promise<BlogPost | null> {
 }
 
 export async function fetchAllPostsForSitemap(): Promise<
-  { slug: string; modified: string }[]
+  { slug: string; modified: string; locale: AppLocale }[]
 > {
-  const results: { slug: string; modified: string }[] = [];
-  let page = 1;
+  const results: { slug: string; modified: string; locale: AppLocale }[] = [];
   const perPage = 100;
 
-  try {
-    while (true) {
-      const { data, totalPages } = await fetchWp<Record<string, unknown>[]>(
-        "/posts",
-        {
-          page: String(page),
-          per_page: String(perPage),
-          _fields: "slug,modified",
-          orderby: "modified",
-          order: "desc",
-        },
-      );
-      for (const p of data) {
-        results.push({
-          slug: p.slug as string,
-          modified: p.modified as string,
-        });
+  await Promise.all(
+    LOCALES.map(async (locale) => {
+      let page = 1;
+
+      try {
+        while (true) {
+          const { data, totalPages } = await fetchWp<Record<string, unknown>[]>(
+            "/posts",
+            withLocaleParam(
+              {
+                page: String(page),
+                per_page: String(perPage),
+                _fields: "slug,modified,lang,language,locale",
+                orderby: "modified",
+                order: "desc",
+              },
+              locale,
+            ),
+          );
+          for (const p of filterRecordsByLocale(data, locale)) {
+            results.push({
+              slug: p.slug as string,
+              modified: p.modified as string,
+              locale,
+            });
+          }
+          if (page >= totalPages) break;
+          page++;
+        }
+      } catch {
+        // WordPress unavailable for this locale — return what we have
       }
-      if (page >= totalPages) break;
-      page++;
-    }
-  } catch {
-    // WordPress unavailable — return what we have
-  }
+    }),
+  );
 
   return results;
 }
 
 export async function fetchAllCategoriesForSitemap(): Promise<
-  { slug: string }[]
+  { slug: string; locale: AppLocale }[]
 > {
-  try {
-    const { data } = await fetchWp<{ slug: string }[]>("/categories", {
-      per_page: "100",
-      hide_empty: "true",
-      _fields: "slug",
-    });
-    return data;
-  } catch {
-    return [];
-  }
+  const results: { slug: string; locale: AppLocale }[] = [];
+
+  await Promise.all(
+    LOCALES.map(async (locale) => {
+      try {
+        const { data } = await fetchWp<Record<string, unknown>[]>(
+          "/categories",
+          {
+            ...withLocaleParam(
+              {
+                per_page: "100",
+                hide_empty: "true",
+                _fields: "slug,lang,language,locale",
+              },
+              locale,
+            ),
+          },
+        );
+
+        for (const category of filterRecordsByLocale(data, locale)) {
+          results.push({
+            slug: category.slug as string,
+            locale,
+          });
+        }
+      } catch {
+        // WordPress unavailable for this locale — return what we have
+      }
+    }),
+  );
+
+  return results;
 }
 
 export async function fetchRelatedPosts(
   postId: number,
   categoryIds: number[],
   count = 3,
+  locale?: AppLocale,
 ): Promise<BlogPost[]> {
   if (categoryIds.length === 0) return [];
 
   try {
     const { data: rawPosts } = await fetchWp<Record<string, unknown>[]>(
       "/posts",
-      {
-        categories: categoryIds.join(","),
-        per_page: String(count + 1),
-        orderby: "date",
-        order: "desc",
-        _embed: "1",
-      },
+      withLocaleParam(
+        {
+          categories: categoryIds.join(","),
+          per_page: String(count + 1),
+          orderby: "date",
+          order: "desc",
+          _embed: "1",
+        },
+        locale,
+      ),
     );
 
-    const filtered = rawPosts
+    const filtered = filterRecordsByLocale(rawPosts, locale)
       .filter((p) => (p.id as number) !== postId)
       .slice(0, count);
 
     return Promise.all(
       filtered.map(async (raw) => {
         const author = await resolveAuthors(raw);
-        const media = await resolveFeaturedMedia(
-          (raw.featured_media as number) ?? null,
-        );
+        const media =
+          extractEmbeddedMedia(raw) ??
+          (await resolveFeaturedMedia((raw.featured_media as number) ?? null));
         const catIds = (raw.categories as number[]) ?? [];
         let categories: WpCategory[] = [];
         if (catIds.length > 0) {
           const { data: cats } = await fetchWp<WpCategory[]>("/categories", {
-            include: catIds.join(","),
-            per_page: "100",
+            ...withLocaleParam(
+              {
+                include: catIds.join(","),
+                per_page: "100",
+              },
+              locale,
+            ),
           });
-          categories = cats;
+          categories = filterCategoriesByLocale(cats, locale);
         }
         return toBlogPost(raw, author, media, categories);
       }),

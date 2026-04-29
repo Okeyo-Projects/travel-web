@@ -135,6 +135,7 @@ export type ExperienceAmenity = {
 
 export type ExperienceDetail = {
   id: string;
+  slug: string | null;
   title: string;
   shortDescription: string;
   longDescription: string;

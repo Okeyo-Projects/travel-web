@@ -2,6 +2,7 @@
 
 import { BedDouble } from "lucide-react";
 import Image from "next/image";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { useImageViewer } from "@/hooks/use-image-viewer";
 
 const MAX_VISIBLE_SMALL = 4;
@@ -14,8 +15,9 @@ interface RoomGalleryProps {
 }
 
 export function RoomGallery({ photoUrls, name, fallbackUrl }: RoomGalleryProps) {
+  const { t } = useSiteI18n();
   const { openImageViewer, Viewer } = useImageViewer();
-  const alt = name ?? "Room";
+  const alt = name ?? t("experienceDetails.room");
 
   const displayUrls =
     photoUrls.length > 0

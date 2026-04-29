@@ -2,6 +2,7 @@
 
 import { ChevronLeft, Share2 } from "lucide-react";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { useShare } from "@/hooks/use-share";
 
@@ -22,6 +23,7 @@ export function ExperienceDetailHeader({
   previewImageUrl,
   experienceId,
 }: ExperienceDetailHeaderProps) {
+  const { t } = useSiteI18n();
   const share = useShare({
     title,
     url,
@@ -64,12 +66,12 @@ export function ExperienceDetailHeader({
           onClick={() => window.history.back()}
         >
           <ChevronLeft className="h-4 w-4" />
-          Retour
+          {t("common.back")}
         </Button>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2" onClick={share.openShare}>
             <Share2 className="h-4 w-4" />
-            Partager
+            {t("common.share")}
           </Button>
         </div>
       </div>

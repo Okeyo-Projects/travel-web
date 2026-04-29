@@ -3,6 +3,7 @@
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { getLocalizedDescription } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,7 @@ export function CompactExperienceCard({
   className,
   onOpenDetails,
 }: CompactExperienceCardProps) {
-  const { t } = useSiteI18n();
+  const { t, locale } = useSiteI18n();
   const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pathname = usePathname();
@@ -172,7 +173,7 @@ export function CompactExperienceCard({
             {experience.title}
           </h3>
           <p className="text-gray-500 text-sm mt-1 line-clamp-1">
-            {experience.short_description}
+            {getLocalizedDescription(experience as unknown as Record<string, unknown>, locale, "short")}
           </p>
         </div>
         <div className="flex justify-end w-full">
@@ -182,11 +183,11 @@ export function CompactExperienceCard({
               onClick={(event) => event.stopPropagation()}
               className="mt-1 inline-flex items-center justify-center rounded-full bg-primary px-10 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/80"
             >
-              Details
+              {t("chat.experienceCard.details")}
             </Link>
           ) : (
             <div className="mt-1 inline-flex items-center justify-center rounded-full bg-primary px-10 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/80">
-              Details
+              {t("chat.experienceCard.details")}
             </div>
           )}
         </div>

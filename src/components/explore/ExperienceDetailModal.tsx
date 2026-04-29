@@ -28,6 +28,7 @@ import { useRequiredAuth } from "@/hooks/use-required-auth";
 import { useShare } from "@/hooks/use-share";
 import { useExperienceSocial } from "@/hooks/use-social";
 import { useSiteI18n } from "@/components/site/site-i18n";
+import { getLocalizedDescription } from "@/lib/i18n";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { localizeHref } from "@/lib/routing/locale-path";
@@ -62,7 +63,7 @@ export function ExperienceDetailModal({
   startIndex,
   onClose,
 }: ExperienceDetailModalProps) {
-  const { t } = useSiteI18n();
+  const { t, locale } = useSiteI18n();
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [comment, setComment] = useState("");
   const [isMediaVisible, setIsMediaVisible] = useState(true);
@@ -196,10 +197,14 @@ export function ExperienceDetailModal({
   const sharePreviewImageUrl = currentExperience?.thumbnail_url
     ? getImageUrl(currentExperience.thumbnail_url)
     : null;
+  const modalShortDesc = currentExperience
+    ? getLocalizedDescription(currentExperience as unknown as Record<string, unknown>, locale, "short")
+    : "";
+
   const share = useShare({
     title: currentExperience?.title ?? "",
     url: detailsHref,
-    description: currentExperience?.short_description ?? "",
+    description: modalShortDesc,
     locationLabel,
     previewImageUrl: sharePreviewImageUrl,
     experienceId: currentExperience?.id ?? null,
@@ -222,7 +227,7 @@ export function ExperienceDetailModal({
   const reviewText =
     currentExperience.avg_rating != null
       ? `${currentExperience.avg_rating.toFixed(1)}${currentExperience.reviews_count ? ` (${currentExperience.reviews_count})` : ""}`
-      : "Nouveau";
+      : t("explore.modal.new");
 
   const handleNextExperience = () => {
     setActiveIndex((value) => Math.min(experiences.length - 1, value + 1));
@@ -361,7 +366,7 @@ export function ExperienceDetailModal({
                     }
                     disabled={activeMediaIndex === 0}
                     className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40"
-                    aria-label="Previous media"
+                    aria-label={t("explore.modal.previousMedia")}
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
@@ -374,7 +379,7 @@ export function ExperienceDetailModal({
                     }
                     disabled={activeMediaIndex === mediaItems.length - 1}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40"
-                    aria-label="Next media"
+                    aria-label={t("explore.modal.nextMedia")}
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -399,7 +404,7 @@ export function ExperienceDetailModal({
                     </span>
                   </div>
                   <p className="text-sm leading-relaxed text-gray-600">
-                    {currentExperience.short_description}
+                    {modalShortDesc}
                   </p>
                 </div>
 
@@ -436,13 +441,13 @@ export function ExperienceDetailModal({
                     onClick={share.openShare}
                   >
                     <Share2 className="h-4 w-4" />
-                    <span>Share</span>
+                    <span>{t("explore.modal.share")}</span>
                   </Button>
                 </div>
 
                 <div className="mt-5 rounded-xl border bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">À partir de</span>
+                    <span className="text-sm text-gray-600">{t("explore.modal.startingFrom")}</span>
                     <span className="text-xl font-semibold text-gray-900">
                       {formatPrice(currentExperience)}
                     </span>
@@ -457,26 +462,26 @@ export function ExperienceDetailModal({
                       }}
                       disabled={!fullExperienceData?.transformed}
                     >
-                      Book now
+                      {t("explore.modal.bookNow")}
                     </Button>
                     <Button asChild variant="outline" className="flex-1">
-                      <Link href={detailsHref}>View details</Link>
+                      <Link href={detailsHref}>{t("explore.modal.viewDetails")}</Link>
                     </Button>
                   </div>
                 </div>
 
                 <div className="mt-5">
                   <h3 className="text-sm font-semibold text-gray-900">
-                    Comments
+                    {t("explore.modal.comments")}
                   </h3>
                   <div className="mt-3 space-y-3">
                     {social.commentsLoading ? (
                       <p className="text-sm text-gray-500">
-                        Loading comments...
+                        {t("explore.modal.loadingComments")}
                       </p>
                     ) : social.comments.length === 0 ? (
                       <p className="text-sm text-gray-500">
-                        No comments yet. Start the conversation.
+                        {t("explore.modal.noComments")}
                       </p>
                     ) : (
                       social.comments.map((item) => (
@@ -490,11 +495,11 @@ export function ExperienceDetailModal({
                                 src={item.author?.avatar_url ?? undefined}
                               />
                               <AvatarFallback>
-                                {(item.author?.display_name ?? "U").slice(0, 1)}
+                                {(item.author?.display_name ?? t("explore.modal.user")).slice(0, 1)}
                               </AvatarFallback>
                             </Avatar>
                             <p className="text-xs font-medium text-gray-800">
-                              {item.author?.display_name ?? "Utilisateur"}
+                              {item.author?.display_name ?? t("explore.modal.user")}
                             </p>
                             <p className="text-xs text-gray-500">
                               {formatDistanceToNow(new Date(item.created_at), {
@@ -515,7 +520,7 @@ export function ExperienceDetailModal({
                   <input
                     value={comment}
                     onChange={(event) => setComment(event.target.value)}
-                    placeholder="Add a comment..."
+                    placeholder={t("explore.modal.addComment")}
                     className="h-10 flex-1 rounded-full border border-gray-200 px-4 text-sm outline-none focus:border-[#ff2566]"
                   />
                   <Button
@@ -544,7 +549,7 @@ export function ExperienceDetailModal({
             onClick={handlePreviousExperience}
             disabled={activeIndex === 0}
             className="absolute left-1/2 top-4 hidden -translate-x-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
-            aria-label="Previous experience"
+            aria-label={t("explore.modal.previousExperience")}
           >
             <ChevronUp className="h-6 w-6" />
           </button>
@@ -553,7 +558,7 @@ export function ExperienceDetailModal({
             onClick={handleNextExperience}
             disabled={activeIndex === experiences.length - 1}
             className="absolute bottom-4 left-1/2 hidden -translate-x-1/2 rounded-full bg-black/55 p-2 text-white disabled:opacity-40 md:block"
-            aria-label="Next experience"
+            aria-label={t("explore.modal.nextExperience")}
           >
             <ChevronDown className="h-6 w-6" />
           </button>

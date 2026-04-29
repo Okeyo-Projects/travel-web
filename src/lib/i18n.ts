@@ -54,6 +54,30 @@ export const LOCALE_MESSAGES = {
 
 export type Translator = (key: string, values?: TranslationValues) => string;
 
+export function translateTag(tag: string, t: Translator): string {
+  const key = `tags.${tag.toLowerCase().replace(/\s+/g, "_")}`;
+  const translated = t(key);
+  return translated === key ? tag : translated;
+}
+
+export function getLocalizedDescription(
+  data: Record<string, unknown>,
+  language: "en" | "fr" | "ar",
+  type: "short" | "long",
+): string {
+  const key = `${type}_description_${language}`;
+  const translatedDesc = data[key];
+
+  if (typeof translatedDesc === "string" && translatedDesc.trim()) {
+    return translatedDesc;
+  }
+
+  // Try camelCase default first (ExperienceDetail), then snake_case (ExperienceListItem)
+  const camelKey = type === "short" ? "shortDescription" : "longDescription";
+  const snakeKey = type === "short" ? "short_description" : "long_description";
+  return (data[camelKey] as string) || (data[snakeKey] as string) || "";
+}
+
 export function isSupportedLocale(
   value: string | null | undefined,
 ): value is AppLocale {

@@ -1,10 +1,3 @@
-import { SimilarBlogs } from "@/components/blog/SimilarBlogs";
-import { FooterSection } from "@/components/home/FooterSection";
-import { JsonLd } from "@/components/seo/json-ld";
-import { MarketingHeader } from "@/components/site/MarketingHeader";
-import { createTranslator, resolveLocale } from "@/lib/i18n";
-import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
-import { fetchPostBySlug, fetchRelatedPosts } from "@/lib/wordpress";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Calendar, User } from "lucide-react";
@@ -14,6 +7,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import sanitizeHtml from "sanitize-html";
+import { SimilarBlogs } from "@/components/blog/SimilarBlogs";
+import { FooterSection } from "@/components/home/FooterSection";
+import { JsonLd } from "@/components/seo/json-ld";
+import { MarketingHeader } from "@/components/site/MarketingHeader";
+import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
+import { fetchPostBySlug, fetchRelatedPosts } from "@/lib/wordpress";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 
@@ -30,7 +30,7 @@ export async function generateMetadata({
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
   const t = createTranslator(locale);
-  const post = await fetchPostBySlug(slug);
+  const post = await fetchPostBySlug(slug, locale);
 
   if (!post) {
     return { title: t("seo.blog.fallbackTitle") };
@@ -44,7 +44,8 @@ export async function generateMetadata({
   return {
     title: `${plainTitle} — ${t("app.name")}`,
     description: plainExcerpt,
-    alternates: buildLocaleAlternates(`/blog/${slug}`),
+    alternates: buildLocaleAlternates(`/blog/${slug}`, locale),
+    robots: locale === "fr" ? undefined : { index: false, follow: false },
     openGraph: {
       title: plainTitle,
       description: plainExcerpt,
@@ -65,10 +66,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const locale = resolveLocale(requestHeaders.get("x-locale"));
   const t = createTranslator(locale);
 
-  const post = await fetchPostBySlug(slug);
+  const post = await fetchPostBySlug(slug, locale);
   if (!post) notFound();
 
-  const relatedPosts = await fetchRelatedPosts(post.id, post.categories, 3);
+  const relatedPosts = await fetchRelatedPosts(
+    post.id,
+    post.categories,
+    3,
+    locale,
+  );
 
   const blogHref = localizeHref("/blog", locale);
   const postUrl = `${SITE_URL}${localizeHref(`/blog/${slug}`, locale)}`;
@@ -93,11 +99,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     allowedAttributes: {
       ...sanitizeHtml.defaults.allowedAttributes,
       "*": ["class", "id", "style"],
-      img: ["src", "alt", "width", "height", "class", "style", "loading", "decoding", "srcset", "sizes"],
+      img: [
+        "src",
+        "alt",
+        "width",
+        "height",
+        "class",
+        "style",
+        "loading",
+        "decoding",
+        "srcset",
+        "sizes",
+      ],
       figure: ["class", "style"],
       figcaption: ["class", "style"],
       a: ["href", "target", "rel", "class", "style"],
-      iframe: ["src", "width", "height", "frameborder", "allowfullscreen", "loading"],
+      iframe: [
+        "src",
+        "width",
+        "height",
+        "frameborder",
+        "allowfullscreen",
+        "loading",
+      ],
       td: ["colspan", "rowspan", "class", "style"],
       th: ["colspan", "rowspan", "class", "style"],
       ol: ["start", "class", "style"],

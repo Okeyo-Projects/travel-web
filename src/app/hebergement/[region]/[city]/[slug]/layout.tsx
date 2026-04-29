@@ -36,6 +36,7 @@ export async function generateMetadata({
   const href = buildExperienceHref({
     title: experience.title,
     id: experience.id,
+    slug: experience.slug,
     region: experience.region,
     city: experience.city,
   });
@@ -84,7 +85,7 @@ export default async function HebergementLayout({
     : null;
 
   const experiencePath = experience
-    ? buildExperienceHref({ title: experience.title, id: experience.id, region: experience.region, city: experience.city })
+    ? buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city })
     : "/explore";
   const experienceUrl = `${SITE_URL}${localizeHref(localizeExperiencePath(experiencePath, locale), locale)}`;
 

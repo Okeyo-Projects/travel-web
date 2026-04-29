@@ -139,6 +139,7 @@
     "delete": "Supprimer",
     "edit": "Modifier",
     "back": "Retour",
+    "share": "Partager",
     "continue": "Continuer",
     "done": "Terminé",
     "yes": "Oui",
@@ -390,6 +391,12 @@
           "name": "Sofia Benali",
           "role": "Digital nomade"
         }
+      },
+      "carousel": {
+        "avatarAlt": "Photo de {name}",
+        "previous": "Avis précédent",
+        "next": "Avis suivant",
+        "goTo": "Aller à l'avis {count}"
       }
     },
     "footer": {
@@ -846,6 +853,22 @@
       "title": "Impossible de charger les expériences",
       "description": "Une erreur est survenue lors du chargement. Veuillez réessayer.",
       "retry": "Réessayer"
+    },
+    "modal": {
+      "new": "Nouveau",
+      "share": "Partager",
+      "startingFrom": "À partir de",
+      "bookNow": "Réserver",
+      "viewDetails": "Voir détails",
+      "comments": "Commentaires",
+      "loadingComments": "Chargement des commentaires...",
+      "noComments": "Aucun commentaire pour le moment. Commencez la conversation.",
+      "user": "Utilisateur",
+      "addComment": "Ajouter un commentaire...",
+      "previousMedia": "Média précédent",
+      "nextMedia": "Média suivant",
+      "previousExperience": "Expérience précédente",
+      "nextExperience": "Expérience suivante"
     }
   },
   "chat": {
@@ -1368,7 +1391,13 @@
   "experienceDetails": {
     "hostedBy": "Hébergé par",
     "verified": "Vérifié",
-    "type": "Type",
+    "typeLabel": "Type",
+    "type": {
+      "lodging": "Hébergement",
+      "trip": "Voyage",
+      "activity": "Activité"
+    },
+    "reviewCount": "({count} avis)",
     "servicesExcluded": "Services exclus",
     "mediaUnavailable": "Média non disponible",
     "tabs": {
@@ -1399,9 +1428,21 @@
       "checkIn": "Check-in",
       "checkOut": "Check-out",
       "cancellationPolicy": "Politique d'annulation",
+      "cancellationPolicies": {
+        "free": "Annulation gratuite",
+        "flexible": "Politique d'annulation flexible",
+        "moderate": "Politique d'annulation modérée",
+        "strict": "Politique d'annulation stricte",
+        "non_refundable": "Non remboursable"
+      },
       "includedServices": "Services inclus",
       "excludedServices": "Services exclus",
       "beds": "lits",
+      "perPerson": "pers.",
+      "houseRules": "Règles de la maison",
+      "noAmenities": "Aucun équipement renseigné.",
+      "maxPersons": "{count} pers. max",
+      "about": "À propos",
       "noDetails": "Aucun détail fourni",
       "noRooms": "Aucune chambre disponible",
       "addressNotProvided": "Adresse non renseignée"
@@ -1409,6 +1450,7 @@
     "rooms": {
       "beds": "lits"
     },
+    "room": "Chambre",
     "similar": {
       "title": "Hébergements similaires"
     }
@@ -1431,5 +1473,50 @@
     "similarPosts": "Articles similaires",
     "publishedOn": "Publié le {date}",
     "by": "par {author}"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+    },
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "description": "Consultez les conditions d'utilisation d'Okeyo Travel pour les utilisateurs et les prestataires."
+    },
+    "page": {
+      "eyebrow": "Informations légales",
+      "lastUpdated": "Dernière mise à jour",
+      "home": "Accueil",
+      "explore": "Explorer",
+      "tableOfContents": "Table des matières",
+      "onThisPage": "Sur cette page",
+      "section": "Section"
+    }
+  },
+  "tags": {
+    "wifi": "WiFi",
+    "parking": "Parking",
+    "pool": "Piscine",
+    "breakfast": "Petit-déjeuner",
+    "luxury": "Luxe",
+    "family": "Famille",
+    "romantic": "Romantique",
+    "adventure": "Aventure",
+    "nature": "Nature",
+    "sea_view": "Vue sur mer",
+    "mountain_view": "Vue sur montagne",
+    "pet_friendly": "Animaux acceptés",
+    "air_conditioning": "Climatisation",
+    "heating": "Chauffage",
+    "kitchen": "Cuisine",
+    "garden": "Jardin",
+    "terrace": "Terrasse",
+    "balcony": "Balcon",
+    "all_inclusive": "Tout compris",
+    "spa": "Spa",
+    "gym": "Salle de sport",
+    "restaurant": "Restaurant",
+    "bar": "Bar",
+    "non_smoking": "Non-fumeur"
   }
 }

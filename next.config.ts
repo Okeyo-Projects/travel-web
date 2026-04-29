@@ -39,6 +39,7 @@ const nextConfig: NextConfig = {
     // Allow optimization when DNS resolves to NAT64/private IPs (common on some local networks).
     // Consider gating this to development if you want stricter SSRF protection in prod.
     dangerouslyAllowLocalIP: true,
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -59,6 +60,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**.supabase.co",
         pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "travel-wordpress.7xzjgo.easypanel.host",
+        pathname: "/wp-content/uploads/**",
       },
       {
         protocol: "https",

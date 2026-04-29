@@ -33,6 +33,9 @@ type RawExperience = {
   id: string;
   title: string;
   short_description: string;
+  short_description_en?: string | null;
+  short_description_fr?: string | null;
+  short_description_ar?: string | null;
   city: string;
   region: string | null;
   type: ExperienceType;
@@ -124,6 +127,9 @@ const EXPERIENCE_LIST_SELECT = `
   title,
   slug,
   short_description,
+  short_description_en,
+  short_description_fr,
+  short_description_ar,
   city,
   region,
   type,
@@ -289,6 +295,9 @@ function mapExperienceWithMeta(exp: RawExperience): ExploreExperienceWithMeta {
     title: exp.title,
     slug: (exp as Record<string, unknown>).slug as string | null ?? null,
     short_description: exp.short_description,
+    short_description_en: (exp as Record<string, unknown>).short_description_en as string | null ?? null,
+    short_description_fr: (exp as Record<string, unknown>).short_description_fr as string | null ?? null,
+    short_description_ar: (exp as Record<string, unknown>).short_description_ar as string | null ?? null,
     city: exp.city,
     region: exp.region,
     type: exp.type,
@@ -536,10 +545,10 @@ export async function fetchExploreSearchResults(
   } = input;
 
   let query = supabase
-    .from("experiences")
-    .select(EXPERIENCE_LIST_SELECT)
-    .eq("status", "published")
-    .is("deleted_at", null);
+    .from("experiences" as never)
+    .select(EXPERIENCE_LIST_SELECT as never)
+    .eq("status" as never, "published")
+    .is("deleted_at" as never, null);
 
   if (type) {
     query = query.eq("type", type);
@@ -616,7 +625,7 @@ export async function fetchSimilarExperiences(input: {
 
   let query = supabase
     .from("experiences" as never)
-    .select(EXPERIENCE_LIST_SELECT)
+    .select(EXPERIENCE_LIST_SELECT as never)
     .eq("status" as never, "published")
     .is("deleted_at" as never, null)
     .neq("id" as never, excludeId)
@@ -637,7 +646,7 @@ export async function fetchSimilarExperiences(input: {
     if (region) {
       const { data: fallback } = await supabase
         .from("experiences" as never)
-        .select(EXPERIENCE_LIST_SELECT)
+        .select(EXPERIENCE_LIST_SELECT as never)
         .eq("status" as never, "published")
         .is("deleted_at" as never, null)
         .neq("id" as never, excludeId)
@@ -658,10 +667,10 @@ export async function fetchFeaturedExperiences(
 ): Promise<ExperienceListItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("experiences")
-    .select(EXPERIENCE_LIST_SELECT)
-    .eq("status", "published")
-    .is("deleted_at", null)
+    .from("experiences" as never)
+    .select(EXPERIENCE_LIST_SELECT as never)
+    .eq("status" as never, "published")
+    .is("deleted_at" as never, null)
     .order("avg_rating", { ascending: false, nullsFirst: false })
     .order("bookings_count", { ascending: false, nullsFirst: false })
     .range(0, Math.max(limit, 1) - 1);

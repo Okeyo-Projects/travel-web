@@ -10,7 +10,8 @@
     "format": "biome format --write",
     "embeddings:generate": "node scripts/generate-embeddings.js",
     "payzone:check": "node scripts/check-payzone-flow.mjs",
-    "supabase:check-sync": "node scripts/check-supabase-sync.mjs"
+    "supabase:check-sync": "node scripts/check-supabase-sync.mjs",
+    "i18n:audit": "node scripts/i18n-audit.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.25",

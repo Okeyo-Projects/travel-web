@@ -32,7 +32,7 @@ export async function generateMetadata({
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
   const t = createTranslator(locale);
-  const category = await fetchCategoryBySlug(slug);
+  const category = await fetchCategoryBySlug(slug, locale);
 
   if (!category) {
     return { title: t("seo.blog.fallbackTitle") };
@@ -47,7 +47,8 @@ export async function generateMetadata({
   return {
     title: seoTitle,
     description: plainDescription || t("seo.blog.description"),
-    alternates: buildLocaleAlternates(`/blog/category/${slug}`),
+    alternates: buildLocaleAlternates(`/blog/category/${slug}`, locale),
+    robots: { index: false, follow: false },
     openGraph: {
       title: seoTitle,
       description: plainDescription || t("seo.blog.description"),
@@ -67,8 +68,8 @@ export default async function BlogCategoryPage({
   const t = createTranslator(locale);
 
   const [category, categories] = await Promise.all([
-    fetchCategoryBySlug(slug),
-    fetchCategories(),
+    fetchCategoryBySlug(slug, locale),
+    fetchCategories(locale),
   ]);
 
   if (!category) notFound();
@@ -76,7 +77,7 @@ export default async function BlogCategoryPage({
   const pageParam = await searchParams;
   const page = Number(pageParam.page) || 1;
 
-  const postsData = await fetchPosts(page, 9, category.id);
+  const postsData = await fetchPosts(page, 9, category.id, locale);
 
   const blogHref = localizeHref("/blog", locale);
   const categoryBaseHref = localizeHref("/blog/category", locale);

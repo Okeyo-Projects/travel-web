@@ -42,6 +42,7 @@ function localizedLabel(
 export const SELECT_EXPERIENCE_DETAIL = `
   id,
   title,
+  slug,
   short_description,
   long_description,
   short_description_en,
@@ -518,6 +519,7 @@ export function transformRecord(
 
   return {
     id: record.id,
+    slug: (record as Record<string, unknown>).slug as string | null ?? null,
     title: record.title,
     shortDescription: record.short_description,
     longDescription: record.long_description,

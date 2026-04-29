@@ -5,6 +5,9 @@ export interface ExperienceListItem {
   title: string;
   slug: string | null;
   short_description: string;
+  short_description_en: string | null;
+  short_description_fr: string | null;
+  short_description_ar: string | null;
   city: string;
   region: string | null;
   type: ExperienceType;

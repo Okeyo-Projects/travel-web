@@ -16,7 +16,10 @@ export const EXPERIENCE_ROUTE_SEGMENT: Record<AppLocale, string> = {
 // All surface forms that map to the internal /hebergement/ route.
 export const EXPERIENCE_ROUTE_ALIASES = Object.values(EXPERIENCE_ROUTE_SEGMENT);
 
-export function localizeExperiencePath(internalPath: string, locale: AppLocale): string {
+export function localizeExperiencePath(
+  internalPath: string,
+  locale: AppLocale,
+): string {
   const segment = EXPERIENCE_ROUTE_SEGMENT[locale];
   return internalPath.replace(/^\/hebergement\//, `/${segment}/`);
 }
@@ -98,6 +101,13 @@ export function localizeHref(
   return `/${locale}${withoutLocale}${suffix}`;
 }
 
+/**
+ * Builds canonical and hreflang URLs for one route.
+ *
+ * Most callers should pass the currently rendered locale as the second argument
+ * so canonical stays self-referential. Omit it only for routes that intentionally
+ * canonicalize to the default French page.
+ */
 export function buildLocaleAlternates(
   href: string,
   canonicalLocale: AppLocale = DEFAULT_LOCALE,
@@ -128,10 +138,16 @@ export function buildExperienceAlternates(
   ) as Record<AppLocale, string>;
 
   return {
-    canonical: localizeHref(localizeExperiencePath(internalPath, canonicalLocale), canonicalLocale),
+    canonical: localizeHref(
+      localizeExperiencePath(internalPath, canonicalLocale),
+      canonicalLocale,
+    ),
     languages: {
       ...languages,
-      "x-default": localizeHref(localizeExperiencePath(internalPath, DEFAULT_LOCALE), DEFAULT_LOCALE),
+      "x-default": localizeHref(
+        localizeExperiencePath(internalPath, DEFAULT_LOCALE),
+        DEFAULT_LOCALE,
+      ),
     },
   };
 }

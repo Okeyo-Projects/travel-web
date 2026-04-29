@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLowestPricedRoom } from "@/lib/experience-pricing";
-import type { Translator } from "@/lib/i18n";
+import { getLocalizedDescription, type Translator } from "@/lib/i18n";
 import type { ExperienceDetail } from "@/types/experience-detail";
 import {
   Check,
@@ -56,22 +56,6 @@ function formatDuration(
 
 type Language = "en" | "fr" | "ar";
 
-function getLocalizedDescription(
-  experience: ExperienceDetail,
-  language: Language,
-  type: "short" | "long"
-): string {
-  const key = `${type}_description_${language}` as keyof ExperienceDetail;
-  const translatedDesc = experience[key];
-  const defaultKey = type === "short" ? "shortDescription" : "longDescription";
-
-  if (typeof translatedDesc === "string" && translatedDesc.trim()) {
-    return translatedDesc;
-  }
-
-  return (experience[defaultKey as keyof ExperienceDetail] as string) || "";
-}
-
 export function ExperienceDetailView({
   experience,
   url,
@@ -110,7 +94,9 @@ export function ExperienceDetailView({
     return t("experienceDetails.info.photoOf", { number: photoNumber, total });
   });
 
-  const nightsLabel = trip ? "pers." : t("experienceDetails.info.night");
+  const nightsLabel = trip
+    ? t("experienceDetails.info.perPerson")
+    : t("experienceDetails.info.night");
   const lowestPricedRoom = getLowestPricedRoom(lodging?.rooms);
   const basePrice = trip?.price_cents ?? lowestPricedRoom?.price_cents ?? null;
   const baseCurrency = trip?.currency ?? lowestPricedRoom?.currency ?? "MAD";
@@ -167,7 +153,7 @@ export function ExperienceDetailView({
         <div className="flex items-center gap-3 p-4">
           <div>
             <p className="text-xs text-muted-foreground">
-              {t("experienceDetails.type")}
+              {t("experienceDetails.typeLabel")}
             </p>
             <p className="font-medium capitalize">{t(`experienceDetails.type.${experience.type}`)}</p>
           </div>
@@ -202,7 +188,9 @@ export function ExperienceDetailView({
             <p>
               {t("experienceDetails.info.cancellationPolicy")}:{" "}
               <span className="font-medium capitalize text-foreground">
-                {experience.cancellationPolicy}
+                {t(
+                  `experienceDetails.info.cancellationPolicies.${experience.cancellationPolicy}`,
+                )}
               </span>
             </p>
           </CardContent>
@@ -210,7 +198,9 @@ export function ExperienceDetailView({
 
         <Card className="rounded-2xl">
           <CardHeader>
-            <CardTitle className="text-base">Règles de la maison</CardTitle>
+            <CardTitle className="text-base">
+              {t("experienceDetails.info.houseRules")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
@@ -246,7 +236,9 @@ export function ExperienceDetailView({
 
   const EquipmentSection = () => (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold">Équipements de l&apos;auberge</h2>
+      <h2 className="text-lg font-semibold">
+        {t("experienceDetails.info.amenities")}
+      </h2>
       {allEquipment.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {allEquipment.map((item) => (
@@ -261,7 +253,7 @@ export function ExperienceDetailView({
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Aucun équipement renseigné.
+          {t("experienceDetails.info.noAmenities")}
         </p>
       )}
     </div>
@@ -272,7 +264,9 @@ export function ExperienceDetailView({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="rounded-2xl">
           <CardHeader>
-            <CardTitle className="text-base">Ce qui est inclus</CardTitle>
+            <CardTitle className="text-base">
+              {t("experienceDetails.info.includedServices")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {experience.servicesIncluded.length ? (
@@ -283,7 +277,9 @@ export function ExperienceDetailView({
                 </p>
               ))
             ) : (
-              <p className="text-muted-foreground">Aucun détail fourni</p>
+              <p className="text-muted-foreground">
+                {t("experienceDetails.info.noDetails")}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -302,7 +298,9 @@ export function ExperienceDetailView({
                 </p>
               ))
             ) : (
-              <p className="text-muted-foreground">Aucun détail fourni</p>
+              <p className="text-muted-foreground">
+                {t("experienceDetails.info.noDetails")}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -328,7 +326,9 @@ export function ExperienceDetailView({
                 <div className="flex flex-wrap gap-2 text-xs">
                   <Badge variant="secondary" className="gap-1">
                     <Users className="h-3 w-3" />
-                    {room.max_persons} pers. max
+                    {t("experienceDetails.info.maxPersons", {
+                      count: room.max_persons,
+                    })}
                   </Badge>
                   <Badge variant="secondary" className="gap-1">
                     <BedDouble className="h-3 w-3" />
@@ -414,13 +414,6 @@ export function ExperienceDetailView({
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Title & Meta — rendered once for all breakpoints */}
         <div className="mb-6 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {experience.tags.map((tag) => (
-              <Badge key={tag} variant="secondary" className="capitalize">
-                {tag}
-              </Badge>
-            ))}
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
             {experience.title}
           </h1>
@@ -428,11 +421,14 @@ export function ExperienceDetailView({
             <div className="flex items-center gap-1 text-foreground">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
               <span className="font-semibold">
-                {experience.metrics.rating?.toFixed(1) ?? "Nouveau"}
+                {experience.metrics.rating?.toFixed(1) ??
+                  t("experienceDetails.info.new")}
               </span>
               {experience.metrics.reviews > 0 && (
                 <span className="underline underline-offset-2">
-                  ({experience.metrics.reviews} avis)
+                  {t("experienceDetails.reviewCount", {
+                    count: experience.metrics.reviews,
+                  })}
                 </span>
               )}
             </div>
@@ -494,7 +490,9 @@ export function ExperienceDetailView({
 
             {longDesc && (
               <div className="space-y-2 pt-2">
-                <h2 className="text-lg font-semibold">À propos</h2>
+                <h2 className="text-lg font-semibold">
+                  {t("experienceDetails.info.about")}
+                </h2>
                 <div
                   className="prose prose-sm max-w-none text-muted-foreground prose-headings:text-foreground prose-a:text-primary"
                   // Content originates from our own DB (host-entered rich text)
