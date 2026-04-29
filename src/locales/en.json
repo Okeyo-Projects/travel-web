@@ -146,7 +146,8 @@
     "no": "No",
     "or": "or",
     "and": "and",
-    "image": "Image"
+    "image": "Image",
+    "pageNumber": "Page {page}"
   },
   "host": {
     "loadingWorkspace": "Loading host workspace...",

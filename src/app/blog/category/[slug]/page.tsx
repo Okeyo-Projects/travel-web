@@ -47,16 +47,24 @@ export async function generateMetadata({
   const plainDescription = sanitizeHtml(category.description, {
     allowedTags: [],
   }).slice(0, 160);
-  const seoTitle = `${category.name} — ${t("app.name")}`;
+  const baseTitle = `${category.name} — ${t("app.name")}`;
+  const title =
+    page > 1
+      ? `${baseTitle} — ${t("common.pageNumber", { page })}`
+      : baseTitle;
+  const description =
+    page > 1
+      ? `${plainDescription || t("seo.blog.description")} — ${t("common.pageNumber", { page })}`
+      : plainDescription || t("seo.blog.description");
   const categoryUrl = `${SITE_URL}${localizeHref(canonicalPath, locale)}`;
 
   return {
-    title: seoTitle,
-    description: plainDescription || t("seo.blog.description"),
+    title,
+    description,
     alternates: buildLocaleAlternates(canonicalPath, locale),
     openGraph: {
-      title: seoTitle,
-      description: plainDescription || t("seo.blog.description"),
+      title,
+      description,
       url: categoryUrl,
       type: "website",
     },
@@ -84,9 +92,11 @@ export default async function BlogCategoryPage({
 
   const postsData = await fetchPosts(page, 9, category.id, locale);
 
+  const canonicalPath =
+    page > 1 ? `/blog/category/${slug}?page=${page}` : `/blog/category/${slug}`;
   const blogHref = localizeHref("/blog", locale);
   const categoryBaseHref = localizeHref("/blog/category", locale);
-  const categoryUrl = `${SITE_URL}${localizeHref(`/blog/category/${slug}`, locale)}`;
+  const categoryUrl = `${SITE_URL}${localizeHref(canonicalPath, locale)}`;
   const { posts, totalPages, currentPage } = postsData;
 
   const plainDescription = sanitizeHtml(category.description, {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { BookingChat } from "@/components/chat/BookingChat";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
-import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
+import { localizeHref } from "@/lib/routing/locale-path";
 
 export async function generateMetadata({
   params,
@@ -19,7 +19,6 @@ export async function generateMetadata({
     title: t("seo.chatConversation.title"),
     description: t("seo.chatConversation.description"),
     robots: { index: false, follow: false },
-    alternates: buildLocaleAlternates(href, locale),
     openGraph: {
       title: t("seo.chatConversation.title"),
       description: t("seo.chatConversation.description"),

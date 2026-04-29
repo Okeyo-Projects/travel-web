@@ -371,7 +371,7 @@ export function ExperienceDetailView({
       <div className="rounded-2xl border bg-card p-5">
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14 border">
-            <AvatarImage src={host.avatarUrl ?? undefined} />
+            <AvatarImage src={host.avatarUrl ?? undefined} alt={host.name} />
             <AvatarFallback>{host.name.slice(0, 1)}</AvatarFallback>
           </Avatar>
           <div>

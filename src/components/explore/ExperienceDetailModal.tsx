@@ -500,6 +500,7 @@ export function ExperienceDetailModal({
                             <Avatar className="h-7 w-7">
                               <AvatarImage
                                 src={item.author?.avatar_url ?? undefined}
+                                alt={item.author?.display_name ?? t("explore.modal.user")}
                               />
                               <AvatarFallback>
                                 {(item.author?.display_name ?? t("explore.modal.user")).slice(0, 1)}

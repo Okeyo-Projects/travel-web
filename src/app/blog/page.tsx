@@ -32,13 +32,24 @@ export async function generateMetadata({
   const page = Number(params.page) || 1;
   const canonicalPath = page > 1 ? `/blog?page=${page}` : "/blog";
 
+  const baseTitle = t("seo.blog.title");
+  const baseDescription = t("seo.blog.description");
+  const title =
+    page > 1
+      ? `${baseTitle} — ${t("common.pageNumber", { page })}`
+      : baseTitle;
+  const description =
+    page > 1
+      ? `${baseDescription} — ${t("common.pageNumber", { page })}`
+      : baseDescription;
+
   return {
-    title: t("seo.blog.title"),
-    description: t("seo.blog.description"),
+    title,
+    description,
     alternates: buildLocaleAlternates(canonicalPath, locale),
     openGraph: {
-      title: t("seo.blog.title"),
-      description: t("seo.blog.description"),
+      title,
+      description,
       url: localizeHref(canonicalPath, locale),
     },
   };
@@ -54,6 +65,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     fetchCategories(locale),
   ]);
 
+  const canonicalPath = page > 1 ? `/blog?page=${page}` : "/blog";
   const blogHref = localizeHref("/blog", locale);
   const categoryBaseHref = localizeHref("/blog/category", locale);
   const { posts, totalPages, currentPage } = postsData;
@@ -65,9 +77,15 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           {
             "@context": "https://schema.org",
             "@type": "Blog",
-            name: t("seo.blog.title"),
-            description: t("seo.blog.description"),
-            url: `${SITE_URL}${blogHref}`,
+            name:
+              page > 1
+                ? `${t("seo.blog.title")} — ${t("common.pageNumber", { page })}`
+                : t("seo.blog.title"),
+            description:
+              page > 1
+                ? `${t("seo.blog.description")} — ${t("common.pageNumber", { page })}`
+                : t("seo.blog.description"),
+            url: `${SITE_URL}${localizeHref(canonicalPath, locale)}`,
             inLanguage: locale,
           },
         ]}

@@ -146,7 +146,8 @@
     "no": "لا",
     "or": "أو",
     "and": "و",
-    "image": "صورة"
+    "image": "صورة",
+    "pageNumber": "الصفحة {page}"
   },
   "host": {
     "loadingWorkspace": "جارٍ تحميل مساحة المضيف...",
