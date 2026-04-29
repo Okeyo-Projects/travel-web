@@ -27,6 +27,7 @@ interface BlogCategoryPageProps {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: BlogCategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
   const requestHeaders = await headers();
@@ -38,17 +39,21 @@ export async function generateMetadata({
     return { title: t("seo.blog.fallbackTitle") };
   }
 
+  const pageParam = await searchParams;
+  const page = Number(pageParam.page) || 1;
+  const canonicalPath =
+    page > 1 ? `/blog/category/${slug}?page=${page}` : `/blog/category/${slug}`;
+
   const plainDescription = sanitizeHtml(category.description, {
     allowedTags: [],
   }).slice(0, 160);
   const seoTitle = `${category.name} — ${t("app.name")}`;
-  const categoryUrl = `${SITE_URL}${localizeHref(`/blog/category/${slug}`, locale)}`;
+  const categoryUrl = `${SITE_URL}${localizeHref(canonicalPath, locale)}`;
 
   return {
     title: seoTitle,
     description: plainDescription || t("seo.blog.description"),
-    alternates: buildLocaleAlternates(`/blog/category/${slug}`, locale),
-    robots: { index: false, follow: false },
+    alternates: buildLocaleAlternates(canonicalPath, locale),
     openGraph: {
       title: seoTitle,
       description: plainDescription || t("seo.blog.description"),

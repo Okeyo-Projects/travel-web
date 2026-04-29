@@ -37,6 +37,9 @@ export function RoomGallery({ photoUrls, name, fallbackUrl }: RoomGalleryProps) 
   const smallPhotos = displayUrls.slice(1, 1 + MAX_VISIBLE_SMALL);
   const overflow = displayUrls.length - (1 + MAX_VISIBLE_SMALL);
   const showStrip = displayUrls.length >= GRID_THRESHOLD;
+  const imageAlts = displayUrls.map((_, i) =>
+    i === 0 ? alt : `${alt} ${i + 1}`,
+  );
 
   return (
     <div className="space-y-1.5">
@@ -44,7 +47,7 @@ export function RoomGallery({ photoUrls, name, fallbackUrl }: RoomGalleryProps) 
       <button
         type="button"
         className="relative block w-full overflow-hidden rounded-xl aspect-[4/3]"
-        onClick={() => openImageViewer(displayUrls, 0)}
+        onClick={() => openImageViewer(displayUrls, 0, imageAlts)}
       >
         <Image
           src={displayUrls[0]}
@@ -68,7 +71,7 @@ export function RoomGallery({ photoUrls, name, fallbackUrl }: RoomGalleryProps) 
                 key={url}
                 type="button"
                 className="relative aspect-square overflow-hidden rounded-lg"
-                onClick={() => openImageViewer(displayUrls, globalIndex)}
+                onClick={() => openImageViewer(displayUrls, globalIndex, imageAlts)}
               >
                 <Image
                   src={url}

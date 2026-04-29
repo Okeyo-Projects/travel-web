@@ -72,6 +72,12 @@ export function ExperienceCard({
   );
   const intlLocale = getIntlLocale(locale);
   const galleryImages = experience.gallery ?? [];
+  const galleryAlts = galleryImages.map((_, i) =>
+    t("chat.experienceCard.galleryAlt", {
+      title: experience.title,
+      count: i + 1,
+    }),
+  );
   const thumbnailSrc = experience.thumbnail_url
     ? getImageUrl(experience.thumbnail_url)
     : null;
@@ -226,7 +232,7 @@ export function ExperienceCard({
                 title: experience.title,
                 count: i + 1,
               })}
-              onClick={() => openImageViewer(galleryImages, i)}
+              onClick={() => openImageViewer(galleryImages, i, galleryAlts)}
             >
               <Image
                 src={imgUrl}
@@ -317,7 +323,13 @@ export function ExperienceCard({
                           aria-label={t("chat.experienceCard.openRoomPhoto", {
                             room: room.name,
                           })}
-                          onClick={() => openImageViewer(roomPhotos, 0)}
+                          onClick={() =>
+                            openImageViewer(
+                              roomPhotos,
+                              0,
+                              roomPhotos.map(() => room.name),
+                            )
+                          }
                         >
                           <Image
                             src={roomPhotos[0]}

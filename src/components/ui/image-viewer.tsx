@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useT } from "@/providers/translations-provider";
 
 interface ImageViewerProps {
   images: string[];
@@ -18,6 +19,7 @@ export function ImageViewer({
   initialIndex = 0,
   onClose,
 }: ImageViewerProps) {
+  const t = useT();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [mounted, setMounted] = useState(false);
 
@@ -84,7 +86,7 @@ export function ImageViewer({
         <div className="relative w-full h-full select-none">
           <Image
             src={images[currentIndex]}
-            alt={imageAlts?.[currentIndex] ?? `Image ${currentIndex + 1}`}
+            alt={imageAlts?.[currentIndex] ?? `${t("common.image")} ${currentIndex + 1}`}
             fill
             className="object-contain"
             priority

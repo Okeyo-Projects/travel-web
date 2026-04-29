@@ -45,7 +45,6 @@ export async function generateMetadata({
     title: `${plainTitle} — ${t("app.name")}`,
     description: plainExcerpt,
     alternates: buildLocaleAlternates(`/blog/${slug}`, locale),
-    robots: locale === "fr" ? undefined : { index: false, follow: false },
     openGraph: {
       title: plainTitle,
       description: plainExcerpt,

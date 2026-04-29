@@ -411,7 +411,7 @@ function AvatarUpload({
         )}
       >
         {previewUrl ? (
-          <Image src={previewUrl} alt="logo" fill className="object-cover" />
+          <Image src={previewUrl} alt={t("host.becomeHost.upload.logoAlt")} fill className="object-cover" />
         ) : uploading ? (
           <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
         ) : (
@@ -480,7 +480,7 @@ function CoverUpload({
       >
         {previewUrl ? (
           <>
-            <Image src={previewUrl} alt="cover" fill className="object-cover" />
+            <Image src={previewUrl} alt={t("host.becomeHost.upload.coverAlt")} fill className="object-cover" />
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
               <Upload className="h-8 w-8 text-white" />
             </div>

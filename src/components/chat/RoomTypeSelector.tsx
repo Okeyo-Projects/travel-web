@@ -155,7 +155,13 @@ export function RoomTypeSelector({
                   <button
                     type="button"
                     className="relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden bg-muted cursor-pointer"
-                    onClick={() => openImageViewer(photos, 0)}
+                    onClick={() =>
+                      openImageViewer(
+                        photos,
+                        0,
+                        photos.map(() => room.name),
+                      )
+                    }
                   >
                     <Image
                       src={photos[0]}

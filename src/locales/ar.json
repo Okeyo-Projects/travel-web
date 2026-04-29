@@ -145,7 +145,8 @@
     "yes": "نعم",
     "no": "لا",
     "or": "أو",
-    "and": "و"
+    "and": "و",
+    "image": "صورة"
   },
   "host": {
     "loadingWorkspace": "جارٍ تحميل مساحة المضيف...",
@@ -289,7 +290,9 @@
         "tapToUploadLogo": "انقر للرفع",
         "uploading": "جارٍ الرفع... {progress}%",
         "uploadImage": "رفع صورة الغلاف",
-        "replaceImage": "استبدال صورة الغلاف"
+        "replaceImage": "استبدال صورة الغلاف",
+        "logoAlt": "معاينة شعار المضيف",
+        "coverAlt": "معاينة صورة الغلاف للمضيف"
       },
       "buttons": {
         "back": "رجوع",

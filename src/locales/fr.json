@@ -145,7 +145,8 @@
     "yes": "Oui",
     "no": "Non",
     "or": "ou",
-    "and": "et"
+    "and": "et",
+    "image": "Image"
   },
   "host": {
     "loadingWorkspace": "Chargement de l'espace hôte...",
@@ -289,7 +290,9 @@
         "tapToUploadLogo": "Appuyer pour uploader",
         "uploading": "Envoi… {progress}%",
         "uploadImage": "Uploader la photo de couverture",
-        "replaceImage": "Remplacer la photo de couverture"
+        "replaceImage": "Remplacer la photo de couverture",
+        "logoAlt": "Aperçu du logo hôte",
+        "coverAlt": "Aperçu de la photo de couverture hôte"
       },
       "buttons": {
         "back": "Retour",

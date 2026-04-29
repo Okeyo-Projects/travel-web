@@ -20,24 +20,28 @@ async function getRequestTranslator() {
   return { locale, t: createTranslator(locale) };
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+interface BlogPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: BlogPageProps): Promise<Metadata> {
   const { locale, t } = await getRequestTranslator();
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+  const canonicalPath = page > 1 ? `/blog?page=${page}` : "/blog";
 
   return {
     title: t("seo.blog.title"),
     description: t("seo.blog.description"),
-    alternates: buildLocaleAlternates("/blog", locale),
-    robots: locale === "fr" ? undefined : { index: false, follow: false },
+    alternates: buildLocaleAlternates(canonicalPath, locale),
     openGraph: {
       title: t("seo.blog.title"),
       description: t("seo.blog.description"),
-      url: localizeHref("/blog", locale),
+      url: localizeHref(canonicalPath, locale),
     },
   };
-}
-
-interface BlogPageProps {
-  searchParams: Promise<{ page?: string }>;
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {

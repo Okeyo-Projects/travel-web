@@ -145,7 +145,8 @@
     "yes": "Yes",
     "no": "No",
     "or": "or",
-    "and": "and"
+    "and": "and",
+    "image": "Image"
   },
   "host": {
     "loadingWorkspace": "Loading host workspace...",
@@ -289,7 +290,9 @@
         "tapToUploadLogo": "Tap to upload",
         "uploading": "Uploading… {progress}%",
         "uploadImage": "Upload cover image",
-        "replaceImage": "Replace cover image"
+        "replaceImage": "Replace cover image",
+        "logoAlt": "Host logo preview",
+        "coverAlt": "Host cover photo preview"
       },
       "buttons": {
         "back": "Back",

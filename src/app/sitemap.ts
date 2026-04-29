@@ -43,23 +43,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   if (wpPosts.status === "fulfilled") {
-    // Only emit FR blog posts until EN/AR translations exist (Track B)
-    blogPostRoutes = wpPosts.value
-      .filter(({ locale }) => locale === "fr")
-      .map(({ slug, modified, locale }) => ({
-        url: `${SITE_URL}${localizeHref(`/blog/${slug}`, locale)}`,
-        lastModified: new Date(modified),
-      }));
+    blogPostRoutes = wpPosts.value.map(({ slug, modified, locale }) => ({
+      url: `${SITE_URL}${localizeHref(`/blog/${slug}`, locale)}`,
+      lastModified: new Date(modified),
+    }));
   }
 
   if (wpCategories.status === "fulfilled") {
-    // Only emit FR blog categories until EN/AR translations exist
-    blogCategoryRoutes = wpCategories.value
-      .filter(({ locale }) => locale === "fr")
-      .map(({ slug, locale }) => ({
-        url: `${SITE_URL}${localizeHref(`/blog/category/${slug}`, locale)}`,
-        lastModified: now,
-      }));
+    blogCategoryRoutes = wpCategories.value.map(({ slug, locale }) => ({
+      url: `${SITE_URL}${localizeHref(`/blog/category/${slug}`, locale)}`,
+      lastModified: now,
+    }));
   }
 
   try {
