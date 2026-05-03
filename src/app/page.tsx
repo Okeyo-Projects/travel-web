@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { preload } from "react-dom";
 import { AISection } from "@/components/home/AISection";
 import { ExploreSection } from "@/components/home/ExploreSection";
 import { FooterSection } from "@/components/home/FooterSection";
@@ -12,6 +13,7 @@ import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 import type { ExperienceListItem } from "@/types/experience";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+const HOME_HERO_POSTER_SRC = "/hero-video-poster.jpg";
 
 async function getRequestTranslator() {
   const requestHeaders = await headers();
@@ -42,6 +44,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const { locale, t } = await getRequestTranslator();
+  preload(HOME_HERO_POSTER_SRC, {
+    as: "image",
+    fetchPriority: "high",
+  });
   let featuredExperiences: ExperienceListItem[] = [];
 
   try {

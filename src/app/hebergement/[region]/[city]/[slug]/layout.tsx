@@ -1,12 +1,17 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import type { ReactNode } from "react";
+import { preload } from "react-dom";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getLowestPricedRoom } from "@/lib/experience-pricing";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { fetchExperienceData } from "@/lib/routing/experience-resolver";
-import { buildExperienceAlternates, localizeExperiencePath, localizeHref } from "@/lib/routing/locale-path";
+import {
+  buildExperienceAlternates,
+  localizeExperiencePath,
+  localizeHref,
+} from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
-import type { Metadata } from "next";
-import { headers } from "next/headers";
-import type { ReactNode } from "react";
 
 export const revalidate = 3600;
 
@@ -41,9 +46,18 @@ export async function generateMetadata({
     city: experience.city,
   });
 
-  const title = (experience[`seo_title_${langCode}` as keyof typeof experience] as string | null) ?? undefined;
-  const description = (experience[`seo_description_${langCode}` as keyof typeof experience] as string | null) ?? undefined;
-  const keywords = (experience[`seo_keywords_${langCode}` as keyof typeof experience] as string | null) ?? undefined;
+  const title =
+    (experience[`seo_title_${langCode}` as keyof typeof experience] as
+      | string
+      | null) ?? undefined;
+  const description =
+    (experience[`seo_description_${langCode}` as keyof typeof experience] as
+      | string
+      | null) ?? undefined;
+  const keywords =
+    (experience[`seo_keywords_${langCode}` as keyof typeof experience] as
+      | string
+      | null) ?? undefined;
 
   return {
     title,
@@ -72,12 +86,23 @@ export default async function HebergementLayout({
   const t = createTranslator(locale);
   const data = await fetchExperienceData(slug, locale);
   const experience = data?.transformed;
+  const heroImageUrl =
+    experience?.thumbnailUrl ??
+    experience?.video?.thumbnailUrl ??
+    experience?.gallery.find((item) => item.kind === "photo" && item.url)
+      ?.url ??
+    experience?.gallery.find((item) => item.thumbnailUrl)?.thumbnailUrl ??
+    null;
 
   const langCode = locale === "fr" ? "fr" : locale === "ar" ? "ar" : "en";
 
   const description = experience
-    ? (experience[`short_description_${langCode}` as keyof typeof experience] as string | null) ??
-      (experience[`long_description_${langCode}` as keyof typeof experience] as string | null)
+    ? ((experience[
+        `short_description_${langCode}` as keyof typeof experience
+      ] as string | null) ??
+      (experience[`long_description_${langCode}` as keyof typeof experience] as
+        | string
+        | null))
     : null;
 
   const lowestPricedRoom = experience
@@ -85,9 +110,22 @@ export default async function HebergementLayout({
     : null;
 
   const experiencePath = experience
-    ? buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city })
+    ? buildExperienceHref({
+        title: experience.title,
+        id: experience.id,
+        slug: experience.slug,
+        region: experience.region,
+        city: experience.city,
+      })
     : "/explore";
   const experienceUrl = `${SITE_URL}${localizeHref(localizeExperiencePath(experiencePath, locale), locale)}`;
+
+  if (heroImageUrl) {
+    preload(heroImageUrl, {
+      as: "image",
+      fetchPriority: "high",
+    });
+  }
 
   return (
     <>
@@ -134,7 +172,9 @@ export default async function HebergementLayout({
                   name: experience.title,
                   description,
                   url: experienceUrl,
-                  image: experience.thumbnailUrl ? [experience.thumbnailUrl] : [],
+                  image: experience.thumbnailUrl
+                    ? [experience.thumbnailUrl]
+                    : [],
                   address: {
                     "@type": "PostalAddress",
                     addressLocality: experience.city,

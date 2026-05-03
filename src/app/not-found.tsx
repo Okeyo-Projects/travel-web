@@ -8,7 +8,7 @@ import { localizeHref } from "@/lib/routing/locale-path";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
-  alternates: {},
+  alternates: undefined,
 };
 
 export default async function NotFound() {

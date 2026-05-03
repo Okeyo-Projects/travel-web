@@ -1415,20 +1415,20 @@
   },
   "legal": {
     "privacy": {
-      "title": "Politique de confidentialité",
-      "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+      "title": "Privacy Policy",
+      "description": "Review Okeyo Travel's privacy policy and how your data is used and protected."
     },
     "terms": {
-      "title": "Conditions d'utilisation",
-      "description": "Consultez les conditions d'utilisation d'Okeyo Travel pour les utilisateurs et les prestataires."
+      "title": "Terms of Service",
+      "description": "Review Okeyo Travel's terms of service for travelers and providers."
     },
     "page": {
-      "eyebrow": "Informations légales",
-      "lastUpdated": "Dernière mise à jour",
-      "home": "Accueil",
-      "explore": "Explorer",
-      "tableOfContents": "Table des matières",
-      "onThisPage": "Sur cette page",
+      "eyebrow": "Legal Information",
+      "lastUpdated": "Last updated",
+      "home": "Home",
+      "explore": "Explore",
+      "tableOfContents": "Table of contents",
+      "onThisPage": "On this page",
       "section": "Section"
     }
   },

@@ -1,3 +1,5 @@
+import type { AppLocale } from "@/lib/i18n";
+
 export type LegalBullet = {
   text: string;
   children?: LegalBullet[];
@@ -11,9 +13,34 @@ export type LegalSection = {
   bullets?: LegalBullet[];
 };
 
-export const LEGAL_LAST_UPDATED = "13 mars 2026";
+const LAST_UPDATED_ISO = "2026-03-13";
 
-export const termsSections: LegalSection[] = [
+export function getLegalLastUpdated(locale: AppLocale): string {
+  const date = new Date(LAST_UPDATED_ISO);
+  switch (locale) {
+    case "en":
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    case "ar":
+      return date.toLocaleDateString("ar-MA", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    case "fr":
+    default:
+      return date.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+  }
+}
+
+const frTermsSections: LegalSection[] = [
   {
     id: "introduction",
     title: "Introduction",
@@ -102,15 +129,20 @@ export const termsSections: LegalSection[] = [
   {
     id: "user-conduct",
     title: "Conduite de l'Utilisateur",
-    intro: "L'utilisateur s'engage à utiliser la plateforme de manière loyale et conforme à la loi.",
+    intro:
+      "L'utilisateur s'engage à utiliser la plateforme de manière loyale et conforme à la loi.",
     bullets: [
       {
         text: "Sont notamment interdits :",
         children: [
           { text: "les fausses réservations ou les paiements frauduleux" },
           { text: "les commentaires insultants, diffamatoires ou mensongers" },
-          { text: "le contournement du système de réservation, de paiement ou de commissions" },
-          { text: "toute utilisation illégale, nuisible ou trompeuse de la plateforme" },
+          {
+            text: "le contournement du système de réservation, de paiement ou de commissions",
+          },
+          {
+            text: "toute utilisation illégale, nuisible ou trompeuse de la plateforme",
+          },
         ],
       },
       {
@@ -198,7 +230,376 @@ export const termsSections: LegalSection[] = [
   },
 ];
 
-export const privacySections: LegalSection[] = [
+const enTermsSections: LegalSection[] = [
+  {
+    id: "introduction",
+    title: "Introduction",
+    paragraphs: [
+      "These Terms of Service govern access to and use of the Okeyo Travel platform for booking accommodations, activities, and trips.",
+      "By creating an account, publishing an offer, or making a booking, you accept these terms as a user or provider.",
+    ],
+  },
+  {
+    id: "definitions",
+    title: "Definitions",
+    bullets: [
+      {
+        text: "User: any person who browses, books, or pays for an offer through the platform.",
+      },
+      {
+        text: "Provider: any individual or organization that publishes an accommodation, activity, or trip offer.",
+      },
+      {
+        text: "Booking: any order confirmed after payment confirmation or according to the mode displayed at checkout.",
+      },
+      {
+        text: "Content: texts, photos, videos, reviews, calendars, and other elements posted on Okeyo Travel.",
+      },
+      {
+        text: "Platform: the website, mobile application, and associated services operated under the Okeyo Travel brand.",
+      },
+    ],
+  },
+  {
+    id: "account-registration",
+    title: "Registration and Account",
+    intro: "Access to certain features requires creating an account.",
+    bullets: [
+      {
+        text: "You must provide accurate, complete, and up-to-date information.",
+      },
+      {
+        text: "You are responsible for the confidentiality of your credentials and for actions taken from your account.",
+      },
+      {
+        text: "You must be legally authorized to publish an offer or make a booking.",
+      },
+      {
+        text: "We may suspend or delete an account in case of fraud, abuse, or serious violation of these terms.",
+      },
+    ],
+  },
+  {
+    id: "booking-payments",
+    title: "Bookings and Payments",
+    bullets: [
+      {
+        text: "Bookings are made through the platform according to availability, prices, and conditions displayed at the time of order.",
+      },
+      {
+        text: "Users accept the displayed price, any service fees, and the provider's specific conditions.",
+      },
+      {
+        text: "Payments are processed through our secure payment partners. Full banking details are not stored on our servers.",
+      },
+      {
+        text: "The provider remains responsible for the proper execution of the booked service.",
+      },
+    ],
+  },
+  {
+    id: "cancellation-policy",
+    title: "Cancellation and Refund",
+    bullets: [
+      {
+        text: "Each offer may have its own cancellation conditions, clearly displayed before booking confirmation.",
+      },
+      {
+        text: "In case of cancellation by the provider, the user is entitled to a full refund of the amount paid.",
+      },
+      {
+        text: "Refund timelines also depend on the payment provider used.",
+      },
+      {
+        text: "Abusive, repeated, or platform rule-violating cancellations may result in account restrictions.",
+      },
+    ],
+  },
+  {
+    id: "user-conduct",
+    title: "User Conduct",
+    intro:
+      "The user agrees to use the platform fairly and in compliance with the law.",
+    bullets: [
+      {
+        text: "The following are strictly prohibited:",
+        children: [
+          { text: "fake bookings or fraudulent payments" },
+          { text: "insulting, defamatory, or false reviews" },
+          { text: "circumventing the booking, payment, or commission system" },
+          { text: "any illegal, harmful, or deceptive use of the platform" },
+        ],
+      },
+      {
+        text: "The user must respect the venue's rules, schedules, safety guidelines, and the provider's instructions.",
+      },
+    ],
+  },
+  {
+    id: "host-obligations",
+    title: "Provider Obligations",
+    intro:
+      "The provider remains solely responsible for the content of their offer and the execution of the proposed service.",
+    bullets: [
+      {
+        text: "Publish accurate, transparent, and up-to-date information about offers, prices, availability, and restrictions.",
+      },
+      {
+        text: "Hold the necessary authorizations, licenses, insurance, and rights to propose the published offer.",
+      },
+      {
+        text: "Provide photos and videos that are faithful, real, and free of rights.",
+      },
+      {
+        text: "Honor confirmed bookings and ensure a level of safety, cleanliness, and quality consistent with the description.",
+      },
+      {
+        text: "Cooperate with Okeyo Travel in the event of a dispute, claim, or incident related to a booking.",
+      },
+    ],
+  },
+  {
+    id: "intellectual-property",
+    title: "Intellectual Property",
+    bullets: [
+      {
+        text: "The graphic elements, trademarks, logos, texts, and interfaces of the platform remain the property of Okeyo Travel or its licensors.",
+      },
+      {
+        text: "You retain rights to the content you publish, but you grant Okeyo Travel the necessary license to host, display, and promote offers on its channels.",
+      },
+      {
+        text: "It is prohibited to copy, reproduce, extract, or exploit the content or brand without prior authorization.",
+      },
+    ],
+  },
+  {
+    id: "limitation-of-liability",
+    title: "Limitation of Liability",
+    bullets: [
+      {
+        text: "Okeyo Travel acts as an intermediary between users and providers and does not replace their respective obligations.",
+      },
+      {
+        text: "We cannot be held liable for delays, cancellations, accidents, losses, or damages caused by a provider or by an external event beyond our reasonable control.",
+      },
+      {
+        text: "Each party remains responsible for its statements, conduct, and compliance with applicable laws.",
+      },
+    ],
+  },
+  {
+    id: "dispute-resolution",
+    title: "Disputes and Applicable Law",
+    paragraphs: [
+      "In case of a dispute, the parties agree to first seek an amicable solution with the help of Okeyo Travel support.",
+      "Failing an amicable agreement, the dispute may be submitted to the competent jurisdictions of Morocco, subject to mandatory consumer protection rules.",
+    ],
+  },
+  {
+    id: "changes-to-terms",
+    title: "Changes to Terms",
+    paragraphs: [
+      "We may update these terms to reflect changes to the platform, legal obligations, or our service model.",
+      "In case of significant changes, we will publish an updated version on this page and may notify you by email or through the app.",
+    ],
+  },
+  {
+    id: "contact",
+    title: "Contact",
+    bullets: [
+      { text: "General support: support@okeyo.ma" },
+      { text: "Legal questions: legal@okeyo.ma" },
+      { text: "Contact address: Okeyo Travel, Morocco" },
+    ],
+  },
+];
+
+const arTermsSections: LegalSection[] = [
+  {
+    id: "introduction",
+    title: "مقدمة",
+    paragraphs: [
+      "تحكم شروط الاستخدام هذه الوصول إلى منصة Okeyo Travel واستخدامها لحجز الإقامات والأنشطة والرحلات.",
+      "بإنشاء حساب أو نشر عرض أو إجراء حجز، فإنك تقبل هذه الشروط بصفة مستخدم أو مقدم خدمة.",
+    ],
+  },
+  {
+    id: "definitions",
+    title: "التعريفات",
+    bullets: [
+      {
+        text: "المستخدم: أي شخص يتصفح أو يحجز أو يدفع مقابل عرض عبر المنصة.",
+      },
+      {
+        text: "مقدم الخدمة: أي شخص أو كيان ينشر عرض إقامة أو نشاط أو رحلة.",
+      },
+      {
+        text: "الحجز: أي طلب تم تأكيده بعد تأكيد الدفع أو وفقًا للطريقة المعروضة عند إتمام الطلب.",
+      },
+      {
+        text: "المحتوى: النصوص والصور ومقاطع الفيديو والتقييمات والتقويمات والعناصر الأخرى المنشورة على Okeyo Travel.",
+      },
+      {
+        text: "المنصة: الموقع الإلكتروني وتطبيق الهاتف المحمول والخدمات المرتبطة المشغلة تحت علامة Okeyo Travel.",
+      },
+    ],
+  },
+  {
+    id: "account-registration",
+    title: "التسجيل والحساب",
+    intro: "الوصول إلى بعض الميزات يتطلب إنشاء حساب.",
+    bullets: [
+      {
+        text: "يجب عليك تقديم معلومات دقيقة وكاملة ومحدثة.",
+      },
+      {
+        text: "أنت مسؤول عن سرية بيانات اعتمادك وعن الإجراءات المنفذة من حسابك.",
+      },
+      {
+        text: "يجب أن تكون مخولاً قانونياً لنشر عرض أو إجراء حجز.",
+      },
+      {
+        text: "يجوز لنا تعليق أو حذف حساب في حالة الاحتيال أو الإساءة أو الانتهاك الجدي لهذه الشروط.",
+      },
+    ],
+  },
+  {
+    id: "booking-payments",
+    title: "الحجوزات والمدفوعات",
+    bullets: [
+      {
+        text: "تُجرى الحجوزات عبر المنصة وفقًا للتوافر والأسعار والشروط المعروضة وقت الطلب.",
+      },
+      {
+        text: "يقبل المستخدمون السعر المعروض وأي رسوم خدمة والشروط الخاصة بمقدم الخدمة.",
+      },
+      {
+        text: "تُعالج المدفوعات عبر شركاء الدفع الآمنين لدينا. لا يتم تخزين البيانات المصرفية الكاملة على خوادمنا.",
+      },
+      {
+        text: "يظل مقدم الخدمة مسؤولاً عن التنفيذ السليم للخدمة المحجوزة.",
+      },
+    ],
+  },
+  {
+    id: "cancellation-policy",
+    title: "الإلغاء والاسترداد",
+    bullets: [
+      {
+        text: "قد يتضمن كل عرض شروط إلغاء خاصة به، معروضة بوضوح قبل تأكيد الحجز.",
+      },
+      {
+        text: "في حالة الإلغاء من قبل مقدم الخدمة، يحق للمستخدم استرداد المبلغ المدفوع بالكامل.",
+      },
+      {
+        text: "تعتمد مهلة الاسترداد أيضًا على مزود الدفع المستخدم.",
+      },
+      {
+        text: "قد تؤدي الإلغاءات المسيئة أو المتكررة أو المخالفة لقواعد المنصة إلى قيود على الحساب.",
+      },
+    ],
+  },
+  {
+    id: "user-conduct",
+    title: "سلوك المستخدم",
+    intro: "يلتزم المستخدم باستخدام المنصة بشكل نزيه ووفقًا للقانون.",
+    bullets: [
+      {
+        text: "يُحظر على وجه الخصوص:",
+        children: [
+          { text: "الحجوزات الوهمية أو المدفوعات الاحتيالية" },
+          { text: "التعليقات المهينة أو المشينة أو الكاذبة" },
+          { text: "التلاعب بنظام الحجز أو الدفع أو العمولات" },
+          { text: "أي استخدام غير قانوني أو ضار أو خادع للمنصة" },
+        ],
+      },
+      {
+        text: "يجب على المستخدم احترام قواعد المكان والمواعيد وتعليمات السلامة وتوجيهات مقدم الخدمة.",
+      },
+    ],
+  },
+  {
+    id: "host-obligations",
+    title: "التزامات مقدم الخدمة",
+    intro:
+      "يظل مقدم الخدمة المسؤول الوحيد عن محتوى عرضه وتنفيذ الخدمة المقترحة.",
+    bullets: [
+      {
+        text: "نشر معلومات دقيقة وشفافة ومحدثة حول العروض والأسعار والتوافر والقيود.",
+      },
+      {
+        text: "الحصول على التصاريح والتراخيص والتأمينات والحقوق اللازمة لعرض العرض المنشور.",
+      },
+      {
+        text: "تقديم صور ومقاطع فيديو حقيقية ودقيقة وخالية من الحقوق.",
+      },
+      {
+        text: "الوفاء بالحجوزات المؤكدة وضمان مستوى السلامة والنظافة والجودة المتوافق مع الوصف.",
+      },
+      {
+        text: "التعاون مع Okeyo Travel في حالة النزاع أو المطالبة أو الحادث المرتبط بحجز.",
+      },
+    ],
+  },
+  {
+    id: "intellectual-property",
+    title: "الملكية الفكرية",
+    bullets: [
+      {
+        text: "تظل العناصر الرسومية والعلامات التجارية والشعارات والنصوص وواجهات المنصة ملكاً لـ Okeyo Travel أو المرخصين لها.",
+      },
+      {
+        text: "تحتفظ بحقوق المحتوى الذي تنشره، لكنك تمنح Okeyo Travel الترخيص اللازم لاستضافته وعرضه وترويج العروض على قنواتها.",
+      },
+      {
+        text: "يُحظر نسخ أو استنساخ أو استخراج أو استغلال المحتوى أو العلامة التجارية دون إذن مسبق.",
+      },
+    ],
+  },
+  {
+    id: "limitation-of-liability",
+    title: "تحديد المسؤولية",
+    bullets: [
+      {
+        text: "تعمل Okeyo Travel كوسيط بين المستخدمين ومقدمي الخدمات ولا تحل محل التزاماتهم respective.",
+      },
+      {
+        text: "لا يمكننا تحمّل المسؤولية عن التأخير أو الإلغاء أو الحوادث أو الخسائر أو الأضرار الناجمة عن مقدم خدمة أو حدث خارجي خارج عن سيطرتنا المعقولة.",
+      },
+      {
+        text: "تظل كل طرف مسؤولاً عن تصريحاته وسلوكه والامتثال للقوانين المطبقة عليه.",
+      },
+    ],
+  },
+  {
+    id: "dispute-resolution",
+    title: "النزاعات والقانون المطبق",
+    paragraphs: [
+      "في حالة النزاع، تتفق الأطراف على السعي أولاً لحل ودي بمساعدة دعم Okeyo Travel.",
+      "فشل التوصل إلى اتفاق ودي، قد يُحال النزاع إلى المحاكم المختصة في المغرب، مع مراعاة قواعد حماية المستهلك الإلزامية.",
+    ],
+  },
+  {
+    id: "changes-to-terms",
+    title: "تعديل الشروط",
+    paragraphs: [
+      "يجوز لنا تحديث هذه الشروط لعكس تطور المنصة أو الالتزامات القانونية أو نموذج خدماتنا.",
+      "في حالة تغييرات مهمة، سننشر نسخة محدثة على هذه الصفحة وقد نخطرك عبر البريد الإلكتروني أو التطبيق.",
+    ],
+  },
+  {
+    id: "contact",
+    title: "اتصل بنا",
+    bullets: [
+      { text: "الدعم العام: support@okeyo.ma" },
+      { text: "الاستفسارات القانونية: legal@okeyo.ma" },
+      { text: "عنوان الاتصال: Okeyo Travel، المغرب" },
+    ],
+  },
+];
+
+const frPrivacySections: LegalSection[] = [
   {
     id: "introduction",
     title: "Introduction",
@@ -217,28 +618,40 @@ export const privacySections: LegalSection[] = [
         text: "Informations de compte :",
         children: [
           { text: "nom, prénom, e-mail et numéro de téléphone" },
-          { text: "photo de profil et préférences de compte si vous les renseignez" },
+          {
+            text: "photo de profil et préférences de compte si vous les renseignez",
+          },
         ],
       },
       {
         text: "Informations de réservation :",
         children: [
-          { text: "dates, nombre de voyageurs, options sélectionnées et historique des transactions" },
+          {
+            text: "dates, nombre de voyageurs, options sélectionnées et historique des transactions",
+          },
           { text: "coordonnées nécessaires au traitement de la réservation" },
         ],
       },
       {
         text: "Données prestataire :",
         children: [
-          { text: "informations professionnelles et détails des offres publiées" },
-          { text: "calendriers, photos, descriptions et informations de versement" },
+          {
+            text: "informations professionnelles et détails des offres publiées",
+          },
+          {
+            text: "calendriers, photos, descriptions et informations de versement",
+          },
         ],
       },
       {
         text: "Données techniques et d'usage :",
         children: [
-          { text: "adresse IP, type d'appareil, système d'exploitation et journaux techniques" },
-          { text: "pages consultées, recherches, favoris et interactions avec la plateforme" },
+          {
+            text: "adresse IP, type d'appareil, système d'exploitation et journaux techniques",
+          },
+          {
+            text: "pages consultées, recherches, favoris et interactions avec la plateforme",
+          },
         ],
       },
     ],
@@ -252,21 +665,27 @@ export const privacySections: LegalSection[] = [
         children: [
           { text: "créer et gérer votre compte" },
           { text: "traiter les réservations et paiements" },
-          { text: "faciliter les échanges entre utilisateurs, prestataires et support" },
+          {
+            text: "faciliter les échanges entre utilisateurs, prestataires et support",
+          },
         ],
       },
       {
         text: "Améliorer l'expérience :",
         children: [
           { text: "personnaliser les résultats et recommandations" },
-          { text: "mesurer l'utilisation de la plateforme et développer de nouvelles fonctionnalités" },
+          {
+            text: "mesurer l'utilisation de la plateforme et développer de nouvelles fonctionnalités",
+          },
         ],
       },
       {
         text: "Sécurité et conformité :",
         children: [
           { text: "prévenir la fraude, les abus et les activités illégales" },
-          { text: "respecter nos obligations légales, comptables et réglementaires" },
+          {
+            text: "respecter nos obligations légales, comptables et réglementaires",
+          },
         ],
       },
     ],
@@ -389,3 +808,418 @@ export const privacySections: LegalSection[] = [
     ],
   },
 ];
+
+const enPrivacySections: LegalSection[] = [
+  {
+    id: "introduction",
+    title: "Introduction",
+    paragraphs: [
+      "This Privacy Policy explains how Okeyo Travel collects, uses, shares, and protects your personal data when you use the platform.",
+      "We are committed to handling this information with transparency, security, and in accordance with applicable laws.",
+    ],
+  },
+  {
+    id: "data-we-collect",
+    title: "Data We Collect",
+    intro:
+      "We collect the information necessary to create an account, manage bookings, and improve the user experience.",
+    bullets: [
+      {
+        text: "Account information:",
+        children: [
+          { text: "first name, last name, email, and phone number" },
+          {
+            text: "profile picture and account preferences if you provide them",
+          },
+        ],
+      },
+      {
+        text: "Booking information:",
+        children: [
+          {
+            text: "dates, number of travelers, selected options, and transaction history",
+          },
+          { text: "contact details required to process the booking" },
+        ],
+      },
+      {
+        text: "Provider data:",
+        children: [
+          { text: "professional information and details of published offers" },
+          { text: "calendars, photos, descriptions, and payout information" },
+        ],
+      },
+      {
+        text: "Technical and usage data:",
+        children: [
+          {
+            text: "IP address, device type, operating system, and technical logs",
+          },
+          {
+            text: "pages viewed, searches, favorites, and interactions with the platform",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "how-we-use-data",
+    title: "How We Use Your Data",
+    bullets: [
+      {
+        text: "Provide our services:",
+        children: [
+          { text: "create and manage your account" },
+          { text: "process bookings and payments" },
+          {
+            text: "facilitate communication between users, providers, and support",
+          },
+        ],
+      },
+      {
+        text: "Improve the experience:",
+        children: [
+          { text: "personalize results and recommendations" },
+          { text: "measure platform usage and develop new features" },
+        ],
+      },
+      {
+        text: "Security and compliance:",
+        children: [
+          { text: "prevent fraud, abuse, and illegal activities" },
+          { text: "meet our legal, accounting, and regulatory obligations" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "data-sharing",
+    title: "Data Sharing",
+    bullets: [
+      {
+        text: "With providers: we share the information necessary to fulfill the booking.",
+      },
+      {
+        text: "With our subcontractors: cloud hosting, analytics, customer support, notifications, and payment providers.",
+      },
+      {
+        text: "With competent authorities when required by law or to protect our rights, our users, or platform security.",
+      },
+      {
+        text: "With your consent when you explicitly choose an integration or specific sharing.",
+      },
+    ],
+    paragraphs: [
+      "We do not sell your personal data to third parties for commercial purposes.",
+    ],
+  },
+  {
+    id: "cookies",
+    title: "Cookies and Similar Technologies",
+    bullets: [
+      {
+        text: "Essential cookies to maintain the session, secure login, and remember certain preferences.",
+      },
+      {
+        text: "Audience and performance measurement tools to understand product usage and improve our interfaces.",
+      },
+      {
+        text: "Personalization and communication technologies, subject to settings available on your device or browser.",
+      },
+    ],
+  },
+  {
+    id: "data-retention",
+    title: "Data Retention",
+    bullets: [
+      {
+        text: "Account data is retained as long as your account remains active, then for a reasonable period to manage legal obligations or disputes.",
+      },
+      {
+        text: "Booking and payment data may be retained longer to meet accounting, tax, or regulatory obligations.",
+      },
+      {
+        text: "Technical logs are retained for a limited period necessary for security, support, and product analysis.",
+      },
+    ],
+  },
+  {
+    id: "your-rights",
+    title: "Your Rights",
+    intro:
+      "Under applicable law, you may exercise several rights regarding your personal data.",
+    bullets: [
+      {
+        text: "Request access to the data we hold about you.",
+      },
+      {
+        text: "Request correction or updating of inaccurate information.",
+      },
+      {
+        text: "Request erasure, restriction of processing, or portability of your data when these rights apply.",
+      },
+      {
+        text: "Object to certain processing, in particular related to direct marketing.",
+      },
+      {
+        text: "Withdraw your consent when processing is based on this legal ground.",
+      },
+    ],
+    paragraphs: [
+      "To exercise these rights, contact us at privacy@okeyo.ma. We will respond within the time limits required by applicable regulation.",
+    ],
+  },
+  {
+    id: "security",
+    title: "Security",
+    bullets: [
+      {
+        text: "We implement technical and organizational measures designed to protect data against unauthorized access, loss, alteration, or disclosure.",
+      },
+      {
+        text: "Sensitive data is protected by access controls, encryption in transit, and appropriate monitoring practices.",
+      },
+      {
+        text: "Payments are processed by specialized partners compliant with applicable security standards.",
+      },
+    ],
+  },
+  {
+    id: "childrens-privacy",
+    title: "Children's Data",
+    paragraphs: [
+      "Okeyo Travel is not intended for individuals under 18 years of age. We do not knowingly collect personal data from minors.",
+      "If you believe a minor has provided us with personal information, please contact us so we can review and delete that data if necessary.",
+    ],
+  },
+  {
+    id: "changes-to-policy",
+    title: "Changes to This Policy",
+    paragraphs: [
+      "This policy may be updated to reflect legal, technical, or operational developments.",
+      "The most recent version is always published on this page with its update date.",
+    ],
+  },
+  {
+    id: "contact",
+    title: "Contact",
+    bullets: [
+      { text: "Privacy: privacy@okeyo.ma" },
+      { text: "Support: support@okeyo.ma" },
+      { text: "Contact address: Okeyo Travel, Morocco" },
+    ],
+  },
+];
+
+const arPrivacySections: LegalSection[] = [
+  {
+    id: "introduction",
+    title: "مقدمة",
+    paragraphs: [
+      "تشرح سياسة الخصوصية هذه كيف تجمع Okeyo Travel بياناتك الشخصية وتستخدمها وتشاركها وتحميها عند استخدامك للمنصة.",
+      "نلتزم بالتعامل مع هذه المعلومات بشفافية وأمان ووفقًا للقوانين المعمول بها.",
+    ],
+  },
+  {
+    id: "data-we-collect",
+    title: "البيانات التي نجمعها",
+    intro:
+      "نجمع المعلومات اللازمة لإنشاء حساب وإدارة الحجوزات وتحسين تجربة المستخدم.",
+    bullets: [
+      {
+        text: "معلومات الحساب:",
+        children: [
+          { text: "الاسم واللقب والبريد الإلكتروني ورقم الهاتف" },
+          { text: "صورة الملف الشخصي وتفضيلات الحساب إذا قمت بإدخالها" },
+        ],
+      },
+      {
+        text: "معلومات الحجز:",
+        children: [
+          { text: "التواريخ وعدد المسافرين والخيارات المحددة وسجل المعاملات" },
+          { text: "بيانات الاتصال اللازمة لمعالجة الحجز" },
+        ],
+      },
+      {
+        text: "بيانات مقدم الخدمة:",
+        children: [
+          { text: "المعلومات المهنية وتفاصيل العروض المنشورة" },
+          { text: "التقويمات والصور والأوصاف ومعلومات التحويلات" },
+        ],
+      },
+      {
+        text: "البيانات التقنية وبيانات الاستخدام:",
+        children: [
+          { text: "عنوان IP ونوع الجهاز ونظام التشغيل والسجلات التقنية" },
+          { text: "الصفحات المشاهدة والبحوث والمفضلات والتفاعلات مع المنصة" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "how-we-use-data",
+    title: "كيف نستخدم بياناتك",
+    bullets: [
+      {
+        text: "تقديم خدماتنا:",
+        children: [
+          { text: "إنشاء وإدارة حسابك" },
+          { text: "معالجة الحجوزات والمدفوعات" },
+          { text: "تسهيل التواصل بين المستخدمين ومقدمي الخدمات والدعم" },
+        ],
+      },
+      {
+        text: "تحسين التجربة:",
+        children: [
+          { text: "تخصيص النتائج والتوصيات" },
+          { text: "قياس استخدام المنصة وتطوير ميزات جديدة" },
+        ],
+      },
+      {
+        text: "الأمان والامتثال:",
+        children: [
+          { text: "منع الاحتيال والإساءة والأنشطة غير القانونية" },
+          { text: "الوفاء بالالتزامات القانونية والمحاسبية والتنظيمية" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "data-sharing",
+    title: "مشاركة البيانات",
+    bullets: [
+      {
+        text: "مع مقدمي الخدمات: نشارك المعلومات اللازمة لتنفيذ الحجز.",
+      },
+      {
+        text: "مع مقاولينا الفرعيين: الاستضافة السحابية والتحليلات ودعم العملاء والإشعارات ومزودي الدفع.",
+      },
+      {
+        text: "مع السلطات المختصة عندما يقتضي القانون ذلك أو لحماية حقوقنا أو مستخدمينا أو أمان المنصة.",
+      },
+      {
+        text: "بموافقتك عندما تختار صراحةً تكاملاً أو مشاركة محددة.",
+      },
+    ],
+    paragraphs: ["لا نبيع بياناتك الشخصية لأطراف ثالثة لأغراض تجارية."],
+  },
+  {
+    id: "cookies",
+    title: "ملفات تعريف الارتباط والتقنيات المشابهة",
+    bullets: [
+      {
+        text: "ملفات تعريف ارتباط ضرورية للحفاظ على الجلسة وتأمين تسجيل الدخول وتذكر بعض التفضيلات.",
+      },
+      {
+        text: "أدوات قياس الجمهور والأداء لفهم استخدام المنتج وتحسين واجهاتنا.",
+      },
+      {
+        text: "تقنيات التخصيص والتواصل، وفقًا للإعدادات المتاحة على جهازك أو متصفحك.",
+      },
+    ],
+  },
+  {
+    id: "data-retention",
+    title: "الاحتفاظ بالبيانات",
+    bullets: [
+      {
+        text: "تحتفظ بيانات الحساب طالما يظل حسابك نشطًا، ثم لمدة معقولة لإدارة الالتزامات القانونية أو النزاعات.",
+      },
+      {
+        text: "قد تُحفظ بيانات الحجز والدفع لفترة أطول للوفاء بالالتزامات المحاسبية أو الضريبية أو التنظيمية.",
+      },
+      {
+        text: "تُحفظ السجلات التقنية لفترة محدودة ضرورية للأمان والدعم وتحليل المنتج.",
+      },
+    ],
+  },
+  {
+    id: "your-rights",
+    title: "حقوقك",
+    intro:
+      "بموجب القانون المعمول به، يمكنك ممارسة عدة حقوق فيما يتعلق ببياناتك الشخصية.",
+    bullets: [
+      {
+        text: "طلب الوصول إلى البيانات التي نحتفظ بها عنك.",
+      },
+      {
+        text: "طلب تصحيح أو تحديث المعلومات غير الدقيقة.",
+      },
+      {
+        text: "طلب الحذف أو تقييد المعالجة أو نقل بياناتك عندما تنطبق هذه الحقوق.",
+      },
+      {
+        text: "الاعتراض على بعض أشكال المعالجة، لا سيما المتعلقة بالتسويق المباشر.",
+      },
+      {
+        text: "سحب موافقتك عندما يستند المعالجة إلى هذا الأساس القانوني.",
+      },
+    ],
+    paragraphs: [
+      "لممارسة هذه الحقوق، تواصل معنا على privacy@okeyo.ma. سنرد ضمن المهلة الزمنية المطلوبة باللوائح المعمول بها.",
+    ],
+  },
+  {
+    id: "security",
+    title: "الأمان",
+    bullets: [
+      {
+        text: "ننفذ تدابير تقنية وتنظيمية مصممة لحماية البيانات من الوصول غير المصرح به أو الفقد أو التغيير أو الإفصاح.",
+      },
+      {
+        text: "تُحمى البيانات الحساسة بواسطة ضوابط الوصول والتشفير أثناء النقل وممارسات المراقبة المناسبة.",
+      },
+      {
+        text: "تُعالج المدفوعات بواسطة شركاء متخصصين متوافقين مع معايير الأمان المعمول بها.",
+      },
+    ],
+  },
+  {
+    id: "childrens-privacy",
+    title: "بيانات القاصرين",
+    paragraphs: [
+      "لا تستهدف Okeyo Travel الأشخاص دون سن 18 عامًا. لا نجمع عن قصد بيانات شخصية من قاصرين.",
+      "إذا كنت تعتقد أن قاصرًا قد زودنا بمعلومات شخصية، يرجى التواصل معنا حتى نتمكن من مراجعتها وحذفها إذا لزم الأمر.",
+    ],
+  },
+  {
+    id: "changes-to-policy",
+    title: "تعديلات على السياسة",
+    paragraphs: [
+      "قد تُحدّث هذه السياسة لتعكس التطورات القانونية أو التقنية أو التشغيلية.",
+      "تُنشر النسخة الأحدث دائمًا على هذه الصفحة مع تاريخ التحديث.",
+    ],
+  },
+  {
+    id: "contact",
+    title: "اتصل بنا",
+    bullets: [
+      { text: "الخصوصية: privacy@okeyo.ma" },
+      { text: "الدعم: support@okeyo.ma" },
+      { text: "عنوان الاتصال: Okeyo Travel، المغرب" },
+    ],
+  },
+];
+
+const TERMS_SECTIONS_MAP: Record<AppLocale, LegalSection[]> = {
+  fr: frTermsSections,
+  en: enTermsSections,
+  ar: arTermsSections,
+};
+
+const PRIVACY_SECTIONS_MAP: Record<AppLocale, LegalSection[]> = {
+  fr: frPrivacySections,
+  en: enPrivacySections,
+  ar: arPrivacySections,
+};
+
+export function getTermsSections(locale: AppLocale): LegalSection[] {
+  return TERMS_SECTIONS_MAP[locale] ?? frTermsSections;
+}
+
+export function getPrivacySections(locale: AppLocale): LegalSection[] {
+  return PRIVACY_SECTIONS_MAP[locale] ?? frPrivacySections;
+}
+
+// Kept for backward compatibility; prefer getLegalLastUpdated(locale)
+export const LEGAL_LAST_UPDATED = "13 mars 2026";

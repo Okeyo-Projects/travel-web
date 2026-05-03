@@ -1480,21 +1480,21 @@
   },
   "legal": {
     "privacy": {
-      "title": "Politique de confidentialité",
-      "description": "Consultez la politique de confidentialité d'Okeyo Travel et la manière dont vos données sont utilisées et protégées."
+      "title": "سياسة الخصوصية",
+      "description": "اطلع على سياسة خصوصية Okeyo Travel وكيفية استخدام بياناتك وحمايتها."
     },
     "terms": {
-      "title": "Conditions d'utilisation",
-      "description": "Consultez les conditions d'utilisation d'Okeyo Travel pour les utilisateurs et les prestataires."
+      "title": "شروط الاستخدام",
+      "description": "اطلع على شروط استخدام Okeyo Travel للمسافرين ومقدمي الخدمات."
     },
     "page": {
-      "eyebrow": "Informations légales",
-      "lastUpdated": "Dernière mise à jour",
-      "home": "Accueil",
-      "explore": "Explorer",
-      "tableOfContents": "Table des matières",
-      "onThisPage": "Sur cette page",
-      "section": "Section"
+      "eyebrow": "المعلومات القانونية",
+      "lastUpdated": "آخر تحديث",
+      "home": "الرئيسية",
+      "explore": "استكشف",
+      "tableOfContents": "جدول المحتويات",
+      "onThisPage": "في هذه الصفحة",
+      "section": "القسم"
     }
   },
   "tags": {

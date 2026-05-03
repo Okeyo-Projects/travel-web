@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import {
-  LEGAL_LAST_UPDATED,
-  privacySections,
+  getLegalLastUpdated,
+  getPrivacySections,
 } from "@/components/legal/legal-data";
 import { LegalPage } from "@/components/legal/legal-page";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
@@ -36,8 +36,8 @@ export default async function PrivacyPage() {
     <LegalPage
       title={t("legal.privacy.title")}
       description={t("legal.privacy.description")}
-      lastUpdated={LEGAL_LAST_UPDATED}
-      sections={privacySections}
+      lastUpdated={getLegalLastUpdated(locale)}
+      sections={getPrivacySections(locale)}
       eyebrow={t("legal.page.eyebrow")}
       lastUpdatedLabel={t("legal.page.lastUpdated")}
       homeHref={localizeHref("/", locale)}

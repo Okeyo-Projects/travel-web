@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter, Playfair_Display } from "next/font/google";
 import { headers } from "next/headers";
+import NextTopLoader from "nextjs-toploader";
 import type { ReactNode } from "react";
 import { PostHogPageView } from "@/components/analytics/posthog-pageview";
 import { WebVitalsReporter } from "@/components/analytics/web-vitals-reporter";
@@ -21,7 +22,6 @@ import { PostHogProvider } from "@/providers/posthog-provider";
 import QueryProvider from "@/providers/query-provider";
 import { TranslationsProvider } from "@/providers/translations-provider";
 import { ViewModeProvider } from "@/providers/view-mode-provider";
-import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -90,7 +90,7 @@ export async function generateMetadata(): Promise<Metadata> {
     robots:
       process.env.NEXT_PUBLIC_NOINDEX === "true"
         ? { index: false, follow: false }
-        : { index: true, follow: true },
+        : undefined,
     openGraph: {
       siteName: t("app.name"),
       locale: LOCALE_OPEN_GRAPH[locale],
@@ -115,6 +115,10 @@ export default async function RootLayout({
   const messages = getLocaleMessages(locale);
   const direction = getLocaleDirection(locale);
   const t = createTranslator(messages);
+  const ogLocale = LOCALE_OPEN_GRAPH[locale];
+  const alternateOgLocales = Object.values(LOCALE_OPEN_GRAPH).filter(
+    (value) => value !== ogLocale,
+  );
 
   return (
     <html lang={locale} dir={direction}>
@@ -137,6 +141,10 @@ export default async function RootLayout({
             "https://nfqamqrxgpyuhjhedllg.supabase.co"
           }
         />
+        <meta property="og:locale" content={ogLocale} />
+        {alternateOgLocales.map((value) => (
+          <meta key={value} property="og:locale:alternate" content={value} />
+        ))}
         <JsonLd
           schema={[
             {

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import {
-  LEGAL_LAST_UPDATED,
-  termsSections,
+  getLegalLastUpdated,
+  getTermsSections,
 } from "@/components/legal/legal-data";
 import { LegalPage } from "@/components/legal/legal-page";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
@@ -36,8 +36,8 @@ export default async function TermsPage() {
     <LegalPage
       title={t("legal.terms.title")}
       description={t("legal.terms.description")}
-      lastUpdated={LEGAL_LAST_UPDATED}
-      sections={termsSections}
+      lastUpdated={getLegalLastUpdated(locale)}
+      sections={getTermsSections(locale)}
       eyebrow={t("legal.page.eyebrow")}
       lastUpdatedLabel={t("legal.page.lastUpdated")}
       homeHref={localizeHref("/", locale)}

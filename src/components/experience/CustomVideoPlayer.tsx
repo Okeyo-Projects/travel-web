@@ -3,16 +3,16 @@
 import {
   Maximize,
   Minimize,
-  Play,
   Pause,
+  Play,
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
+import { useHlsVideo } from "@/hooks/use-hls-video";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
-import { useHlsVideo } from "@/hooks/use-hls-video";
+import { cn } from "@/lib/utils";
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -46,7 +46,9 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
     const onPause = () => setIsPlaying(false);
     const onTimeUpdate = () => {
       const d = video.duration;
-      setProgress(Number.isFinite(d) && d > 0 ? (video.currentTime / d) * 100 : 0);
+      setProgress(
+        Number.isFinite(d) && d > 0 ? (video.currentTime / d) * 100 : 0,
+      );
     };
 
     video.addEventListener("play", onPlay);
@@ -106,18 +108,25 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
         } else if (
           // iOS Safari fallback
           "webkitRequestFullscreen" in container &&
-          typeof (container as HTMLElement & { webkitRequestFullscreen: () => void }).webkitRequestFullscreen === "function"
+          typeof (
+            container as HTMLElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen === "function"
         ) {
-          (container as HTMLElement & { webkitRequestFullscreen: () => void }).webkitRequestFullscreen();
+          (
+            container as HTMLElement & { webkitRequestFullscreen: () => void }
+          ).webkitRequestFullscreen();
         }
       } else {
         if (typeof document.exitFullscreen === "function") {
           await document.exitFullscreen();
         } else if (
           "webkitExitFullscreen" in document &&
-          typeof (document as Document & { webkitExitFullscreen: () => void }).webkitExitFullscreen === "function"
+          typeof (document as Document & { webkitExitFullscreen: () => void })
+            .webkitExitFullscreen === "function"
         ) {
-          (document as Document & { webkitExitFullscreen: () => void }).webkitExitFullscreen();
+          (
+            document as Document & { webkitExitFullscreen: () => void }
+          ).webkitExitFullscreen();
         }
       }
     } catch {
@@ -151,10 +160,13 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
     >
       {/* Blurred backdrop (poster only — avoids decoding the stream twice) */}
       {poster ? (
+        /* biome-ignore lint/performance/noImgElement: This backdrop must reuse the exact poster asset and carry fetch priority for LCP. */
         <img
           src={poster}
           alt=""
           aria-hidden="true"
+          fetchPriority="high"
+          loading="eager"
           className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-80 pointer-events-none"
         />
       ) : (
@@ -210,7 +222,10 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
               video.currentTime = Math.max(0, video.currentTime - step);
             } else if (e.key === "ArrowRight") {
               e.preventDefault();
-              video.currentTime = Math.min(video.duration, video.currentTime + step);
+              video.currentTime = Math.min(
+                video.duration,
+                video.currentTime + step,
+              );
             } else if (e.key === " ") {
               e.preventDefault();
               togglePlay(e as unknown as React.MouseEvent);

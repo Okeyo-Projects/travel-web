@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays, format, startOfDay } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import {
   Calendar,
   Home,
@@ -153,6 +153,9 @@ export function ExplorePageClient({
             fill
             className="w-full h-full object-cover"
             sizes="100vw"
+            preload
+            fetchPriority="high"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-black/40" />
         </div>
