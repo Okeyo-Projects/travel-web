@@ -58,12 +58,27 @@ export function getExperienceIdSegment(experienceId: string): string {
   return firstSegment || experienceId.slice(0, 8);
 }
 
+export function getExperienceIdSegmentFromIdentifier(
+  identifier: string,
+): string | null {
+  const match = identifier
+    .trim()
+    .toLowerCase()
+    .match(/(?:^|-)([0-9a-f]{8})$/);
+
+  return match?.[1] ?? null;
+}
+
 export function buildExperienceSlug(input: {
   title: string;
   id: string;
   slug?: string | null;
 }): string {
-  if (input.slug) return slugify(input.slug) || `${slugify(input.title) || "experience"}-${getExperienceIdSegment(input.id)}`;
+  if (input.slug)
+    return (
+      slugify(input.slug) ||
+      `${slugify(input.title) || "experience"}-${getExperienceIdSegment(input.id)}`
+    );
   const titlePart = slugify(input.title) || "experience";
   const idPart = getExperienceIdSegment(input.id);
   return `${titlePart}-${idPart}`;
@@ -78,7 +93,11 @@ export function buildExperienceHref(input: {
 }): string {
   const regionSlug = input.region ? slugify(input.region) : slugify(input.city);
   const citySlug = slugify(input.city);
-  const expSlug = buildExperienceSlug({ title: input.title, id: input.id, slug: input.slug });
+  const expSlug = buildExperienceSlug({
+    title: input.title,
+    id: input.id,
+    slug: input.slug,
+  });
   return `/hebergement/${regionSlug}/${citySlug}/${expSlug}`;
 }
 

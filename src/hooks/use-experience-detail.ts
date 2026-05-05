@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
-import { buildExperienceSlug } from "@/lib/routing/slugs";
 import { getLocaleFromPathname } from "@/lib/routing/locale-path";
+import {
+  buildExperienceSlug,
+  getExperienceIdSegmentFromIdentifier,
+} from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/client";
 import type {
   ExperienceAmenity,
@@ -519,28 +522,77 @@ export function transformRecord(
 
   return {
     id: record.id,
-    slug: (record as Record<string, unknown>).slug as string | null ?? null,
+    slug: ((record as Record<string, unknown>).slug as string | null) ?? null,
     title: record.title,
     shortDescription: record.short_description,
     longDescription: record.long_description,
-    short_description_en: (record as Record<string, unknown>).short_description_en as string | null ?? null,
-    short_description_fr: (record as Record<string, unknown>).short_description_fr as string | null ?? null,
-    short_description_ar: (record as Record<string, unknown>).short_description_ar as string | null ?? null,
-    long_description_en: (record as Record<string, unknown>).long_description_en as string | null ?? null,
-    long_description_fr: (record as Record<string, unknown>).long_description_fr as string | null ?? null,
-    long_description_ar: (record as Record<string, unknown>).long_description_ar as string | null ?? null,
-    seo_title_en: (record as Record<string, unknown>).seo_title_en as string | null ?? null,
-    seo_title_fr: (record as Record<string, unknown>).seo_title_fr as string | null ?? null,
-    seo_title_ar: (record as Record<string, unknown>).seo_title_ar as string | null ?? null,
-    seo_description_en: (record as Record<string, unknown>).seo_description_en as string | null ?? null,
-    seo_description_fr: (record as Record<string, unknown>).seo_description_fr as string | null ?? null,
-    seo_description_ar: (record as Record<string, unknown>).seo_description_ar as string | null ?? null,
-    seo_keywords_en: (record as Record<string, unknown>).seo_keywords_en as string | null ?? null,
-    seo_keywords_fr: (record as Record<string, unknown>).seo_keywords_fr as string | null ?? null,
-    seo_keywords_ar: (record as Record<string, unknown>).seo_keywords_ar as string | null ?? null,
-    is_translated: (record as Record<string, unknown>).is_translated as boolean | null ?? null,
-    is_seo_generated: (record as Record<string, unknown>).is_seo_generated as boolean | null ?? null,
-    original_language: (record as Record<string, unknown>).original_language as "en" | "fr" | "ar" | null ?? null,
+    short_description_en:
+      ((record as Record<string, unknown>).short_description_en as
+        | string
+        | null) ?? null,
+    short_description_fr:
+      ((record as Record<string, unknown>).short_description_fr as
+        | string
+        | null) ?? null,
+    short_description_ar:
+      ((record as Record<string, unknown>).short_description_ar as
+        | string
+        | null) ?? null,
+    long_description_en:
+      ((record as Record<string, unknown>).long_description_en as
+        | string
+        | null) ?? null,
+    long_description_fr:
+      ((record as Record<string, unknown>).long_description_fr as
+        | string
+        | null) ?? null,
+    long_description_ar:
+      ((record as Record<string, unknown>).long_description_ar as
+        | string
+        | null) ?? null,
+    seo_title_en:
+      ((record as Record<string, unknown>).seo_title_en as string | null) ??
+      null,
+    seo_title_fr:
+      ((record as Record<string, unknown>).seo_title_fr as string | null) ??
+      null,
+    seo_title_ar:
+      ((record as Record<string, unknown>).seo_title_ar as string | null) ??
+      null,
+    seo_description_en:
+      ((record as Record<string, unknown>).seo_description_en as
+        | string
+        | null) ?? null,
+    seo_description_fr:
+      ((record as Record<string, unknown>).seo_description_fr as
+        | string
+        | null) ?? null,
+    seo_description_ar:
+      ((record as Record<string, unknown>).seo_description_ar as
+        | string
+        | null) ?? null,
+    seo_keywords_en:
+      ((record as Record<string, unknown>).seo_keywords_en as string | null) ??
+      null,
+    seo_keywords_fr:
+      ((record as Record<string, unknown>).seo_keywords_fr as string | null) ??
+      null,
+    seo_keywords_ar:
+      ((record as Record<string, unknown>).seo_keywords_ar as string | null) ??
+      null,
+    is_translated:
+      ((record as Record<string, unknown>).is_translated as boolean | null) ??
+      null,
+    is_seo_generated:
+      ((record as Record<string, unknown>).is_seo_generated as
+        | boolean
+        | null) ?? null,
+    original_language:
+      ((record as Record<string, unknown>).original_language as
+        | "en"
+        | "fr"
+        | "ar"
+        | null) ?? null,
     city: record.city,
     region: record.region,
     country,
@@ -671,6 +723,28 @@ async function resolveExperienceId(
 
   if (directSlugMatch?.id) {
     return directSlugMatch.id;
+  }
+
+  const legacyIdSegment =
+    getExperienceIdSegmentFromIdentifier(normalizedIdentifier);
+
+  if (legacyIdSegment) {
+    const { data: byLegacyIdSegment, error: legacyIdError } = await supabase
+      .from("experiences")
+      .select("id")
+      .like("id", `${legacyIdSegment}-%`)
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .limit(2)
+      .returns<Array<{ id: string }>>();
+
+    if (legacyIdError) {
+      throw legacyIdError;
+    }
+
+    if (byLegacyIdSegment?.length === 1) {
+      return byLegacyIdSegment[0]?.id ?? null;
+    }
   }
 
   const { data: candidates, error: candidateError } = await supabase

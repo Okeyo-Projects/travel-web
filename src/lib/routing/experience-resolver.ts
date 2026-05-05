@@ -1,13 +1,16 @@
 import {
+  buildRoomItemsMap,
   type ExperienceDetailResponse,
   SELECT_EXPERIENCE_DETAIL,
   transformRecord,
-  buildRoomItemsMap,
 } from "@/hooks/use-experience-detail";
 import { type AppLocale, resolveLocale } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseExperienceRecord } from "@/types/experience-detail";
-import { buildExperienceSlug } from "./slugs";
+import {
+  buildExperienceSlug,
+  getExperienceIdSegmentFromIdentifier,
+} from "./slugs";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -40,7 +43,25 @@ export async function resolveExperienceId(
 
   if (bySlug?.id) return bySlug.id;
 
-  // 3. Composite slug fallback for records without a persisted slug.
+  // 3. Legacy slug fallback: if the title changed, use the trailing UUID prefix.
+  const legacyIdSegment = getExperienceIdSegmentFromIdentifier(normalized);
+
+  if (legacyIdSegment) {
+    const { data: byLegacyIdSegment } = await supabase
+      .from("experiences" as never)
+      .select("id")
+      .like("id" as never, `${legacyIdSegment}-%`)
+      .eq("status" as never, "published")
+      .is("deleted_at" as never, null)
+      .limit(2)
+      .returns<Array<{ id: string }>>();
+
+    if (byLegacyIdSegment?.length === 1) {
+      return byLegacyIdSegment[0]?.id ?? null;
+    }
+  }
+
+  // 4. Composite slug fallback for records without a persisted slug.
   const { data: candidates } = await supabase
     .from("experiences" as never)
     .select("id, title, slug")
