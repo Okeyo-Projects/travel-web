@@ -21,7 +21,7 @@ function shouldBypass(pathname: string): boolean {
   );
 }
 
-function buildCsp(nonce: string): string {
+function buildCsp(_nonce: string): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline' https://connect.facebook.net`,
@@ -89,7 +89,10 @@ export function middleware(request: NextRequest) {
   // C7: Redirect /en/hebergement/ → /en/accommodation/ (permanent)
   if (firstSegment === "en" && pathname.startsWith("/en/hebergement/")) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = pathname.replace("/en/hebergement/", "/en/accommodation/");
+    redirectUrl.pathname = pathname.replace(
+      "/en/hebergement/",
+      "/en/accommodation/",
+    );
     const response = NextResponse.redirect(redirectUrl, 308);
     response.headers.set("Content-Security-Policy", csp);
     Object.entries(getCacheHeaders()).forEach(([key, value]) => {
@@ -105,7 +108,7 @@ export function middleware(request: NextRequest) {
     // Normalize locale-translated experience segment aliases → /hebergement/
     for (const alias of EXPERIENCE_ROUTE_ALIASES) {
       if (alias !== "hebergement" && rewrittenPath.startsWith(`/${alias}/`)) {
-        rewrittenPath = "/hebergement" + rewrittenPath.slice(alias.length + 1);
+        rewrittenPath = `/hebergement${rewrittenPath.slice(alias.length + 1)}`;
         break;
       }
     }
@@ -139,7 +142,7 @@ export function middleware(request: NextRequest) {
   redirectUrl.pathname =
     pathname === "/" ? `/${DEFAULT_LOCALE}` : `/${DEFAULT_LOCALE}${pathname}`;
 
-  const response = NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl, 308);
   response.headers.set("Content-Security-Policy", csp);
   Object.entries(getCacheHeaders()).forEach(([key, value]) => {
     response.headers.set(key, value);

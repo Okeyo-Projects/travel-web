@@ -111,7 +111,7 @@ const frTermsSections: LegalSection[] = [
   {
     id: "cancellation-policy",
     title: "Annulation et Remboursement",
-    bullets: [
+    bullets: [ 
       {
         text: "Chaque offre peut comporter ses propres conditions d'annulation, clairement affichées avant confirmation de la réservation.",
       },

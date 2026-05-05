@@ -1,9 +1,12 @@
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
-import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { notFound, permanentRedirect } from "next/navigation";
+import { resolveLocale } from "@/lib/i18n";
 import { fetchExperienceData } from "@/lib/routing/experience-resolver";
+import {
+  localizeExperiencePath,
+  localizeHref,
+} from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
-import { localizeHref } from "@/lib/routing/locale-path";
 
 export const revalidate = 3600;
 
@@ -15,7 +18,6 @@ export default async function ExperienceLegacyRedirect({
   const { id } = await params;
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
-  const t = createTranslator(locale);
 
   const data = await fetchExperienceData(id, locale);
 
@@ -32,5 +34,7 @@ export default async function ExperienceLegacyRedirect({
     city: experience.city,
   });
 
-  redirect(localizeHref(newPath, locale));
+  permanentRedirect(
+    localizeHref(localizeExperiencePath(newPath, locale), locale),
+  );
 }
