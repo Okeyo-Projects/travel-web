@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { SupabaseExperienceRecord } from "@/types/experience-detail";
 import {
   buildExperienceSlug,
+  buildLegacyExperienceSlug,
   getExperienceIdSegmentFromIdentifier,
 } from "./slugs";
 
@@ -87,6 +88,11 @@ export async function resolveExperienceId(
       }
 
       return (
+        buildLegacyExperienceSlug({
+          title: candidate.title,
+          id: candidate.id,
+          slug: candidate.slug,
+        }) === normalized ||
         buildExperienceSlug({
           title: candidate.title,
           id: candidate.id,

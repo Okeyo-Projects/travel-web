@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 import { getLocaleFromPathname } from "@/lib/routing/locale-path";
 import {
+  buildLegacyExperienceSlug,
   buildExperienceSlug,
   getExperienceIdSegmentFromIdentifier,
 } from "@/lib/routing/slugs";
@@ -768,6 +769,11 @@ async function resolveExperienceId(
     }
 
     return (
+      buildLegacyExperienceSlug({
+        title: candidate.title,
+        id: candidate.id,
+        slug: candidate.slug,
+      }) === normalizedIdentifier ||
       typeof candidate.title === "string" &&
       typeof candidate.id === "string" &&
       buildExperienceSlug({ title: candidate.title, id: candidate.id }) ===

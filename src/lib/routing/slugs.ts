@@ -84,6 +84,17 @@ export function buildExperienceSlug(input: {
   return `${titlePart}-${idPart}`;
 }
 
+export function buildLegacyExperienceSlug(input: {
+  title: string;
+  id: string;
+  slug?: string | null;
+}): string {
+  const slugBase = input.slug ? slugify(input.slug) : slugify(input.title);
+  const titlePart = slugBase || slugify(input.title) || "experience";
+  const idPart = getExperienceIdSegment(input.id);
+  return `${titlePart}-${idPart}`;
+}
+
 export function buildExperienceHref(input: {
   title: string;
   id: string;
