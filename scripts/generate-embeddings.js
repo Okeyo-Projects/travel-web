@@ -1,16 +1,25 @@
 #!/usr/bin/env node
+import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 /**
- * Generate embeddings for published experiences without embeddings.
+ * Generate embeddings for published experiences with missing or stale embeddings.
  *
  * Usage:
  *   node scripts/generate-embeddings.js
  *
+ * Required env vars:
+ *   NEXT_PUBLIC_SUPABASE_URL
+ *   SUPABASE_SERVICE_ROLE_KEY
+ *   OPENAI_API_KEY
+ *
  * Optional env vars:
  *   BATCH_SIZE=10
  *   DELAY_MS=1000
+ *   MAX_EXPERIENCES=1000
  */
 import OpenAI from "openai";
+
+const EXPERIENCE_EMBEDDING_MODEL = "text-embedding-3-small";
 
 if (typeof process.loadEnvFile === "function") {
   process.loadEnvFile(".env");
@@ -28,12 +37,36 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function hashEmbeddingText(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
+/**
+ * Truncate text to a safe character limit for the embedding model.
+ * text-embedding-3-small has an 8192-token context window.
+ * A conservative estimate is ~3 chars/token for French/English mixed text.
+ */
+function truncateForEmbedding(text, maxChars = 24000) {
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars);
+}
+
 async function generateEmbeddingForExperience({
   supabase,
   openai,
   experienceId,
+  sourceChangedAt,
   title,
 }) {
+  const { data: runningSourceChangedAt } = await supabase.rpc(
+    "record_experience_embedding_running",
+    {
+      p_experience_id: experienceId,
+    },
+  );
+  const effectiveSourceChangedAt =
+    sourceChangedAt || runningSourceChangedAt || null;
+
   const { data: embeddingText, error: textError } = await supabase.rpc(
     "generate_experience_embedding_text",
     { exp_id: experienceId },
@@ -50,7 +83,7 @@ async function generateEmbeddingForExperience({
   }
 
   const embeddingResponse = await openai.embeddings.create({
-    model: "text-embedding-3-small",
+    model: EXPERIENCE_EMBEDDING_MODEL,
     input: embeddingText,
     encoding_format: "float",
   });
@@ -70,6 +103,22 @@ async function generateEmbeddingForExperience({
       `Failed to save embedding for "${title}": ${updateError.message}`,
     );
   }
+
+  const { error: syncError } = await supabase.rpc(
+    "record_experience_embedding_synced",
+    {
+      p_experience_id: experienceId,
+      p_embedding_model: EXPERIENCE_EMBEDDING_MODEL,
+      p_embedding_text_hash: hashEmbeddingText(embeddingText),
+      p_source_changed_at: effectiveSourceChangedAt,
+    },
+  );
+
+  if (syncError) {
+    throw new Error(
+      `Failed to update embedding sync state for "${title}": ${syncError.message}`,
+    );
+  }
 }
 
 async function main() {
@@ -77,17 +126,8 @@ async function main() {
 
   try {
     const supabaseUrl = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
-    const supabaseKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseKey = getRequiredEnv("SUPABASE_SERVICE_ROLE_KEY");
     const openaiApiKey = getRequiredEnv("OPENAI_API_KEY");
-
-    if (!supabaseKey) {
-      throw new Error(
-        "Missing Supabase key. Set SUPABASE_SERVICE_ROLE_KEY (recommended) or NEXT_PUBLIC_SUPABASE_ANON_KEY / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
-      );
-    }
 
     const batchSize = Number(process.env.BATCH_SIZE || 10);
     const delayMs = Number(process.env.DELAY_MS || 1000);
@@ -98,21 +138,12 @@ async function main() {
     console.log("Configuration:");
     console.log(`- Batch size: ${batchSize}`);
     console.log(`- Delay between batches: ${delayMs}ms`);
-    console.log(
-      `- Supabase key type: ${
-        process.env.SUPABASE_SERVICE_ROLE_KEY
-          ? "service_role"
-          : "public (anon/publishable)"
-      }\n`,
-    );
+    console.log("- Supabase key type: service_role\n");
 
-    const { data: experiences, error: fetchError } = await supabase
-      .from("experiences")
-      .select("id, title")
-      .eq("status", "published")
-      .is("deleted_at", null)
-      .is("embedding", null)
-      .order("created_at", { ascending: false });
+    const { data: experiences, error: fetchError } = await supabase.rpc(
+      "get_experiences_needing_embedding",
+      { p_limit: Number(process.env.MAX_EXPERIENCES || 1000) },
+    );
 
     if (fetchError) {
       throw new Error(`Failed to fetch experiences: ${fetchError.message}`);
@@ -124,7 +155,7 @@ async function main() {
     }
 
     console.log(
-      `Found ${experiences.length} experiences without embeddings.\n`,
+      `Found ${experiences.length} experiences needing embeddings.\n`,
     );
 
     let success = 0;
@@ -141,7 +172,8 @@ async function main() {
           generateEmbeddingForExperience({
             supabase,
             openai,
-            experienceId: experience.id,
+            experienceId: experience.experience_id,
+            sourceChangedAt: experience.last_experience_changed_at,
             title: experience.title,
           }),
         ),
@@ -149,13 +181,19 @@ async function main() {
 
       for (let index = 0; index < results.length; index++) {
         const result = results[index];
-        const title = batch[index]?.title || batch[index]?.id;
+        const title = batch[index]?.title || batch[index]?.experience_id;
 
         if (result.status === "fulfilled") {
           success++;
           console.log(`  OK  ${title}`);
         } else {
           failed++;
+          if (batch[index]?.experience_id) {
+            await supabase.rpc("record_experience_embedding_failed", {
+              p_experience_id: batch[index].experience_id,
+              p_error_message: result.reason?.message || "Unknown error",
+            });
+          }
           console.error(
             `  FAIL ${title}: ${result.reason?.message || "Unknown error"}`,
           );

@@ -9,9 +9,7 @@ const searchExperiencesSchema = z.object({
   type: z
     .enum(["lodging", "trip", "activity"])
     .optional()
-    .describe(
-      "Requested type from model. Runtime enforces lodging-only search.",
-    ),
+    .describe("Filter by experience type when the user asks for one."),
   city: z
     .string()
     .optional()
@@ -70,9 +68,14 @@ const searchExperiencesSchema = z.object({
     .optional()
     .default(10)
     .describe("Maximum number of results to return"),
+  allow_location_fallback: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Only true after the user explicitly agrees to see alternatives outside the requested city/region.",
+    ),
 });
-
-const FORCED_EXPERIENCE_TYPE = "lodging";
 
 // Common city name variants to handle typos in database
 const CITY_VARIANTS: Record<string, string[]> = {
@@ -131,15 +134,14 @@ function uniqueStrings(values: Array<string | null | undefined>): string[] {
   return output;
 }
 
-function toCitySlug(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[’']/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+function buildLocationCandidates(value?: string): string[] {
+  if (!value) return [];
+
+  return uniqueStrings([
+    value,
+    normalizeCity(value),
+    ...getCityVariants(value),
+  ]).slice(0, 12);
 }
 
 function resolveMediaAssetUrl(
@@ -194,6 +196,7 @@ async function executeSearch(
   params: z.infer<typeof searchExperiencesSchema>,
   overrides: {
     city_filter?: string | null;
+    city_slug_filter?: string | null;
     region_filter?: string | null;
     semantic_threshold?: number;
     date_from?: string | null;
@@ -228,7 +231,11 @@ async function executeSearch(
         query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
         semantic_threshold: threshold,
         text_query: params.query,
-        exp_type: FORCED_EXPERIENCE_TYPE,
+        exp_type: params.type || null,
+        city_slug_filter:
+          overrides.city_slug_filter !== undefined
+            ? overrides.city_slug_filter
+            : null,
         city_filter:
           overrides.city_filter !== undefined
             ? overrides.city_filter
@@ -267,16 +274,12 @@ async function executeSearch(
       return { results, error, used_threshold: threshold };
     }
 
-    const lodgingResults = Array.isArray(results)
-      ? results.filter((exp: any) => exp?.type === FORCED_EXPERIENCE_TYPE)
-      : results;
-
-    lastResults = lodgingResults;
+    lastResults = results;
     lastThreshold = threshold;
 
-    if (lodgingResults && lodgingResults.length > 0) {
+    if (results && results.length > 0) {
       return {
-        results: lodgingResults,
+        results,
         error: null,
         used_threshold: threshold,
       };
@@ -516,10 +519,10 @@ async function formatResults(results: any[], db: any) {
 }
 
 export const searchExperiences = tool({
-  description: `Search for lodging experiences in Morocco using semantic search.
+  description: `Search for Okeyo Travel experiences in Morocco using semantic search.
 This tool combines AI-powered semantic search with filters like location, price, dates, and promotions.
 Use this when users ask to find, search, or discover experiences.
-The tool automatically handles city name variants and does progressive fallback searches if no results are found.`,
+The tool handles city name variants. It keeps requested locations strict unless allow_location_fallback is true.`,
   inputSchema: searchExperiencesSchema,
   execute: async (params) => {
     try {
@@ -537,18 +540,26 @@ The tool automatically handles city name variants and does progressive fallback 
         );
       }
 
-      // === STRATEGY: Progressive search with automatic fallback ===
+      // === STRATEGY: Progressive search with canonical city_slug resolution in SQL ===
       // Availability is NOT checked here (lodging_availability is deprecated).
       // Use checkAvailability tool separately for real-time booking-based checks.
-      // 1. Try with exact filters (city + region + type)
-      // 2. If 0 results: try city variants (handle typos in DB)
-      // 3. If 0 results: try city as region (e.g., "Imlil" is a region)
-      // 4. If 0 results: drop location filters entirely
+      // 1. Try exact search as requested. The SQL RPC resolves canonical city_slug/region from cities.
+      // 2. If 0 results: try text variants against city input.
+      // 3. If 0 results: try text variants against region input.
+      // 4. If user explicitly agreed to alternatives: drop location filters.
 
       let searchNote: string | null = null;
 
-      // --- Attempt 1: Exact search as requested ---
-      let { results, error } = await executeSearch(db, queryEmbedding, params);
+      const cityCandidates = buildLocationCandidates(params.city);
+      const regionCandidates = buildLocationCandidates(params.region);
+
+      // --- Attempt 1: Exact search as requested; SQL resolves canonical city_slug/region ---
+      let { results, error } = await executeSearch(
+        db,
+        queryEmbedding,
+        params,
+        {},
+      );
 
       if (error) {
         console.error("Search error:", error);
@@ -556,28 +567,26 @@ The tool automatically handles city name variants and does progressive fallback 
       }
 
       if (results && results.length > 0) {
+        if (params.city || params.region) {
+          searchNote =
+            "Résultats trouvés avec le filtre de destination demandé.";
+        }
+
         return {
           success: true,
           count: results.length,
           results: await formatResults(results, db),
           has_more: results.length >= (params.limit || 10),
+          note: searchNote,
         };
       }
 
-      // --- Attempt 2: If city was specified, try variant spellings ---
-      const locationInputs = uniqueStrings([params.city, params.region]);
-      const locationCandidates = uniqueStrings(
-        locationInputs.flatMap((location) => [
-          location,
-          normalizeCity(location),
-          ...getCityVariants(location),
-        ]),
-      ).slice(0, 12);
-
-      for (const candidate of locationCandidates) {
+      // --- Attempt 2: If city was specified, try text variants against city field ---
+      for (const candidate of cityCandidates) {
         const attempt = await executeSearch(db, queryEmbedding, params, {
+          city_slug_filter: null,
           city_filter: candidate,
-          region_filter: null,
+          region_filter: params.region || null,
         });
 
         if (attempt.results && attempt.results.length > 0) {
@@ -587,10 +596,11 @@ The tool automatically handles city name variants and does progressive fallback 
         }
       }
 
-      // --- Attempt 3: If city/region was ambiguous, try candidate as region ---
+      // --- Attempt 3: Try region text variants ---
       if (!results || results.length === 0) {
-        for (const candidate of locationCandidates) {
+        for (const candidate of regionCandidates) {
           const attempt = await executeSearch(db, queryEmbedding, params, {
+            city_slug_filter: null,
             city_filter: null,
             region_filter: candidate,
           });
@@ -613,68 +623,10 @@ The tool automatically handles city name variants and does progressive fallback 
         };
       }
 
-      // --- Attempt 4: Resolve by city_slug, then retry with canonical city/region ---
-      const slugCandidates = uniqueStrings(
-        locationCandidates.map((location) => toCitySlug(location)),
-      ).slice(0, 12);
-
-      if ((!results || results.length === 0) && slugCandidates.length > 0) {
-        const { data: slugMatches, error: slugError } = await db
-          .from("experiences")
-          .select("city, region, city_slug")
-          .eq("status", "published")
-          .is("deleted_at", null)
-          .in("city_slug", slugCandidates);
-
-        if (!slugError && slugMatches && slugMatches.length > 0) {
-          const matchedCities = uniqueStrings(
-            slugMatches.map((match: any) => match.city),
-          );
-          const matchedRegions = uniqueStrings(
-            slugMatches.map((match: any) => match.region),
-          );
-
-          for (const matchedCity of matchedCities) {
-            const attempt = await executeSearch(db, queryEmbedding, params, {
-              city_filter: matchedCity,
-              region_filter: null,
-            });
-            if (attempt.results && attempt.results.length > 0) {
-              results = attempt.results;
-              searchNote = `Résultats trouvés via city_slug pour la ville "${matchedCity}".`;
-              break;
-            }
-          }
-
-          if (!results || results.length === 0) {
-            for (const matchedRegion of matchedRegions) {
-              const attempt = await executeSearch(db, queryEmbedding, params, {
-                city_filter: null,
-                region_filter: matchedRegion,
-              });
-              if (attempt.results && attempt.results.length > 0) {
-                results = attempt.results;
-                searchNote = `Résultats trouvés via city_slug pour la région "${matchedRegion}".`;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      if (results && results.length > 0) {
-        return {
-          success: true,
-          count: results.length,
-          results: await formatResults(results, db),
-          has_more: results.length >= (params.limit || 10),
-          note: searchNote,
-        };
-      }
-
-      // --- Attempt 5: Drop location filters entirely ---
-      if (params.city || params.region) {
+      // --- Attempt 4: Drop location filters only after explicit user consent ---
+      if ((params.city || params.region) && params.allow_location_fallback) {
         const attempt = await executeSearch(db, queryEmbedding, params, {
+          city_slug_filter: null,
           city_filter: null,
           region_filter: null,
         });
@@ -701,7 +653,10 @@ The tool automatically handles city name variants and does progressive fallback 
         count: 0,
         results: [],
         has_more: false,
-        note: "Aucune expérience ne correspond à votre recherche. Essayez avec des critères différents.",
+        note:
+          params.city || params.region
+            ? `Aucune expérience ne correspond à votre recherche dans "${params.city || params.region}".`
+            : "Aucune expérience ne correspond à votre recherche. Essayez avec des critères différents.",
       };
     } catch (error) {
       console.error("Search experiences error:", error);

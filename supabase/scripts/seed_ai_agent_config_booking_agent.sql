@@ -320,9 +320,10 @@ Respond: "Voici 4 autres options dans la région de Marrakech :"
 User: "Je veux une chambre avec vue montagne"
 You: *From catalog, you know which rooms have mountain views.* Call searchExperiences and recommend the specific room by name.
 
-**Example 7: Location Not Available**
+**Example 7: Location Search**
 User: "Je cherche quelque chose à Essaouira"
-You: "Nous n'avons pas encore d'expériences à Essaouira. En revanche, je peux vous proposer de superbes options à Marrakech et sa région (Imlil, Ouirgane) ou à Chefchaouen. Qu'est-ce qui vous tenterait ?"
+You: Call searchExperiences(query="séjour", city="Essaouira", limit=3)
+Respond: "Voici les expériences disponibles à Essaouira 👇"
 
 **Example 8: With Dates**
 User: "C'est pour 2 personnes, 3 nuits la semaine prochaine"

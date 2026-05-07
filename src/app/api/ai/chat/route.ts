@@ -139,7 +139,7 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
         const experienceTitle =
           experience && typeof experience.title === "string"
             ? experience.title
-            : "Unknown lodging";
+            : "Unknown experience";
         const experienceType =
           experience && typeof experience.type === "string"
             ? experience.type
@@ -188,7 +188,7 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
         const experienceTitle =
           experience && typeof experience.title === "string"
             ? experience.title
-            : "Unknown lodging";
+            : "Unknown experience";
         const experienceType =
           experience && typeof experience.type === "string"
             ? experience.type
@@ -257,7 +257,7 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
               experienceTitle:
                 typeof result.title === "string"
                   ? result.title
-                  : "Unknown lodging",
+                  : "Unknown experience",
               roomTypeId: room.room_type_id,
               roomName: room.name,
             });
@@ -410,6 +410,30 @@ export async function POST(req: Request) {
       enabledTools: Object.keys(effectiveTools),
     });
 
+    const configuredGreetingUnsureOption =
+      process.env.AI_GREETING_INCLUDE_UNSURE_OPTION;
+    const includeUnsureGreetingOption =
+      typeof configuredGreetingUnsureOption === "string"
+        ? isTruthyEnvVar(configuredGreetingUnsureOption)
+        : true;
+    const greetingOptions = getGreetingQuickReplyOptions(
+      requestedLanguage,
+      includeUnsureGreetingOption,
+    );
+    const destinationClarificationQuestion =
+      getDestinationClarificationQuestion(requestedLanguage);
+    const destinationClarificationOptions =
+      getDestinationClarificationOptions(requestedLanguage);
+    const requestedLanguageName = getLanguageDisplayName(requestedLanguage);
+    const greetingTemplate = getGreetingWelcomeText(requestedLanguage);
+
+    aiDebug("chat.route", "greeting_quick_replies_config", {
+      requestId,
+      requestedLanguage,
+      includeUnsureGreetingOption,
+      greetingOptions,
+    });
+
     // Build system prompt with today's date for smart date resolution
     const todayDate = new Date().toISOString().split("T")[0];
     let systemPrompt =
@@ -417,6 +441,18 @@ export async function POST(req: Request) {
         config: agentConfig,
         todayDate,
         enabledTools: Object.keys(effectiveTools),
+        runtimeVariables: {
+          REQUEST_LANGUAGE: requestedLanguage,
+          REQUEST_LANGUAGE_NAME: requestedLanguageName,
+          GREETING_WELCOME_TEXT: greetingTemplate,
+          GREETING_QUICK_REPLIES: greetingOptions
+            .map((option) => `- ${option}`)
+            .join("\n"),
+          DESTINATION_CLARIFICATION_QUESTION: destinationClarificationQuestion,
+          DESTINATION_CLARIFICATION_OPTIONS: destinationClarificationOptions
+            .map((option) => `- ${option}`)
+            .join("\n"),
+        },
       }) || buildSystemPrompt(todayDate, requestedLanguage);
 
     // Load catalog context so the AI knows what experiences are available
@@ -443,46 +479,6 @@ export async function POST(req: Request) {
         requestId,
       });
     }
-
-    const configuredGreetingUnsureOption =
-      process.env.AI_GREETING_INCLUDE_UNSURE_OPTION;
-    const includeUnsureGreetingOption =
-      typeof configuredGreetingUnsureOption === "string"
-        ? isTruthyEnvVar(configuredGreetingUnsureOption)
-        : true;
-    const greetingOptions = getGreetingQuickReplyOptions(
-      requestedLanguage,
-      includeUnsureGreetingOption,
-    );
-    const destinationClarificationQuestion =
-      getDestinationClarificationQuestion(requestedLanguage);
-    const destinationClarificationOptions =
-      getDestinationClarificationOptions(requestedLanguage);
-    const requestedLanguageName = getLanguageDisplayName(requestedLanguage);
-    aiDebug("chat.route", "greeting_quick_replies_config", {
-      requestId,
-      requestedLanguage,
-      includeUnsureGreetingOption,
-      greetingOptions,
-    });
-
-    const greetingTemplate = getGreetingWelcomeText(requestedLanguage);
-
-    // Runtime safety overrides.
-    systemPrompt += `\n\n## CRITICAL LODGING-ONLY MODE\nYou are in strict lodging-only mode.\n- Recommend and discuss ONLY lodging experiences (riads, lodges, maisons d'hôtes, hôtels).\n- Never suggest trips, treks, tours, workshops, or activities.\n- Always call searchExperiences with type="lodging".\n- If user asks for a trip/activity, politely redirect to a lodging suggestion matching the same vibe/location.\n- Any quick-reply options must stay lodging-focused (style, budget, destination, room preference).`;
-    systemPrompt += `\n\n## CURRENT INTERFACE LANGUAGE\nThe current interface/request language is ${requestedLanguageName} (${requestedLanguage}).\nKeep quick-reply questions, button labels, date options, and room-choice prompts in ${requestedLanguageName} unless the user's latest message clearly switches to another supported language.\nNever default interactive choices to French when responding in another language.`;
-    systemPrompt += `\n\n## CRITICAL GREETING QUICK REPLIES RULE\nWhen user sends a greeting (hello/bonjour/salut/marhba/hi/hey), do not call searchExperiences.\nCall offerQuickReplies with language="${requestedLanguage}" and exactly these options: ${greetingOptions
-      .map((option) => `"${option}"`)
-      .join(
-        ", ",
-      )}.\nUse exactly this welcome text before the quick replies:\n${greetingTemplate}\nImportant: do not repeat the same welcome sentence inside the quick-reply card; the card should only display options.`;
-    systemPrompt += `\n\n## CRITICAL DESTINATION CLARIFICATION RULE\nWhen user asks for a type or vibe without city/region (examples: "je veux une auberge", "je veux un endroit calme"), do NOT call searchExperiences yet unless the user explicitly asks for cross-region suggestions.\nFirst call offerQuickReplies with language="${requestedLanguage}", question="${destinationClarificationQuestion}", and concise options such as: ${destinationClarificationOptions
-      .map((option) => `"${option}"`)
-      .join(
-        ", ",
-      )}.\nAfter user chooses, call searchExperiences with type="lodging" and the chosen context.`;
-    systemPrompt += `\n\n## CRITICAL DETAIL RETRIEVAL RULE\nWhen the user asks details about a specific room option, you MUST call getExperienceOptionDetails before answering.\nNever claim you cannot access room details without attempting the relevant tool call first.`;
-    systemPrompt += `\n\n## CRITICAL EXPERIENCE DETAIL RULE\nWhen the user asks details about a specific experience by name, resolve the exact experience_id from recent tool outputs.\nIf no reliable ID is available, call searchExperiences(query=user wording, limit=4) first, then call getExperienceDetails with the returned ID.\nNever claim "experience not found" without trying that fallback path.`;
 
     // Inject user auth status so the AI never wrongly asks logged-in users to sign in
     const supabase = await createClient();

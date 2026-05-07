@@ -105,6 +105,75 @@ function BookingCheckoutModal({
 
       if (error) throw error;
 
+      // Send notifications to host and guest
+      try {
+        const { data: bookingData } = await supabase
+          .from("bookings")
+          .select(
+            `
+            id,
+            host_id,
+            guest_id,
+            experience_id,
+            experience:experiences(id, title),
+            guest:profiles!bookings_guest_id_fkey(id, display_name)
+          `,
+          )
+          .eq("id", summary.booking_id)
+          .single();
+
+        if (bookingData) {
+          const experienceTitle =
+            (bookingData.experience as unknown as { title?: string } | null)
+              ?.title || "Experience";
+          const guestName =
+            (bookingData.guest as unknown as { display_name?: string } | null)
+              ?.display_name || "A guest";
+
+          // Notify host: new booking request
+          if (bookingData.host_id) {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                type: "booking_created",
+                userId: bookingData.host_id,
+                data: {
+                  booking_id: bookingData.id,
+                  experience_id: bookingData.experience_id,
+                  entity_type: "booking",
+                  entity_id: bookingData.id,
+                },
+                variables: {
+                  user: guestName,
+                  experience: experienceTitle,
+                },
+              },
+            });
+          }
+
+          // Notify guest: booking request sent
+          if (bookingData.guest_id) {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                type: "booking_request",
+                userId: bookingData.guest_id,
+                data: {
+                  booking_id: bookingData.id,
+                  experience_id: bookingData.experience_id,
+                  entity_type: "booking",
+                  entity_id: bookingData.id,
+                },
+                variables: {
+                  experience: experienceTitle,
+                },
+              },
+            });
+          }
+        }
+      } catch (notifyErr) {
+        // Don't block the booking flow if notifications fail
+        console.error("Failed to send booking notifications:", notifyErr);
+      }
+
       setConfirmed(true);
       // Signal parent to lock conversation and close modal after a beat
       setTimeout(() => {

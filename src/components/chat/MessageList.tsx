@@ -89,8 +89,20 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   });
 }
 
+/**
+ * Strip raw checkout URLs from AI text since there is no /checkout/ page
+ * and the UI handles confirmation via BookingConfirmCard.
+ */
+function stripCheckoutUrls(text: string): string {
+  // Handle backtick-wrapped URLs first, then bare URLs
+  return text
+    .replace(/`\s*\/checkout\/[a-zA-Z0-9_-]+\s*`/gi, "")
+    .replace(/\s*\/checkout\/[a-zA-Z0-9_-]+[.,;:!?]?\s*/gi, " ")
+    .trim();
+}
+
 function renderAssistantText(text: string): ReactNode {
-  const normalized = text.replaceAll("\r\n", "\n").trim();
+  const normalized = stripCheckoutUrls(text).replaceAll("\r\n", "\n").trim();
   if (!normalized) return null;
 
   const renderedBlocks: ReactNode[] = [];
@@ -240,6 +252,14 @@ function extractSearchResults(output: unknown): ExperienceResult[] | null {
   if (!isRecord(output) || output.success !== true) return null;
   if (!Array.isArray(output.results)) return null;
   return output.results.filter(isRecord);
+}
+
+function extractLinkedExperienceResults(
+  output: unknown,
+): ExperienceResult[] | null {
+  if (!isRecord(output) || output.success !== true) return null;
+  if (!Array.isArray(output.linked_experiences)) return null;
+  return output.linked_experiences.filter(isRecord);
 }
 
 function extractLocationReason(output: unknown): string {
@@ -892,6 +912,35 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
         ids.length > 0
           ? `experience_cards:${ids.join(",")}`
           : "experience_cards:empty";
+
+      pushUniqueBlock(
+        {
+          key: signature,
+          type: "ui",
+          content: {
+            component: "experience_cards",
+            data: { experiences },
+          },
+        },
+        signature,
+      );
+    }
+
+    if (
+      part.type === "tool-getLinkedExperiences" &&
+      part.state === "output-available"
+    ) {
+      const experiences = extractLinkedExperienceResults(part.output);
+      if (!experiences || experiences.length === 0) continue;
+
+      const ids = experiences
+        .map((exp) => (typeof exp.id === "string" ? exp.id : ""))
+        .filter(Boolean);
+
+      const signature =
+        ids.length > 0
+          ? `linked_experience_cards:${ids.join(",")}`
+          : "linked_experience_cards:empty";
 
       pushUniqueBlock(
         {

@@ -164,6 +164,9 @@ function extractUiComponentNames(message: ChatMessage): string[] {
         case "tool-getExperienceDetails":
           componentNames.add("experience_details");
           break;
+        case "tool-getLinkedExperiences":
+          componentNames.add("experience_cards");
+          break;
         case "tool-getExperienceOptionDetails":
           componentNames.add("option_details");
           break;

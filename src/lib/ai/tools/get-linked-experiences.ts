@@ -10,9 +10,9 @@ const getLinkedExperiencesSchema = z.object({
 });
 
 export const getLinkedExperiences = tool({
-  description: `Get lodging experiences linked to a specific experience.
+  description: `Get Okeyo Travel experiences linked to a specific experience.
 Linked experiences are related offerings that complement the main experience.
-Use this when user shows interest in an experience to suggest complementary lodging options.`,
+Use this when user shows interest in an experience to suggest complementary catalog options.`,
   inputSchema: getLinkedExperiencesSchema,
   execute: async ({ experience_id }) => {
     try {
@@ -31,10 +31,10 @@ Use this when user shows interest in an experience to suggest complementary lodg
             city,
             region,
             short_description,
-            price_cents,
             avg_rating,
             reviews_count,
-            published,
+            status,
+            deleted_at,
             thumbnail_url
           )
         `)
@@ -52,7 +52,7 @@ Use this when user shows interest in an experience to suggest complementary lodg
       const linkedExperiences = (links || [])
         .filter(
           (link: any) =>
-            link.target?.published && link.target?.type === "lodging",
+            link.target?.status === "published" && !link.target?.deleted_at,
         )
         .map((link: any) => ({
           id: link.target.id,
@@ -61,15 +61,14 @@ Use this when user shows interest in an experience to suggest complementary lodg
           city: link.target.city,
           region: link.target.region,
           description: link.target.short_description,
-          price_mad: link.target.price_cents
-            ? link.target.price_cents / 100
-            : null,
+          price_mad: null as number | null,
           rating: link.target.avg_rating,
           reviews_count: link.target.reviews_count,
           thumbnail_url: link.target.thumbnail_url,
+          rooms: undefined as any[] | undefined,
         }));
 
-      // Also get room types for lodging experiences
+      // Also get room types/prices for lodging experiences
       const lodgingIds = linkedExperiences
         .filter((exp: any) => exp.type === "lodging")
         .map((exp: any) => exp.id);
@@ -99,7 +98,34 @@ Use this when user shows interest in an experience to suggest complementary lodg
           for (const exp of linkedExperiences) {
             if (roomsByExp[exp.id]) {
               exp.rooms = roomsByExp[exp.id];
+              exp.price_mad = Math.min(
+                ...roomsByExp[exp.id].map((room) => room.price_mad),
+              );
             }
+          }
+        }
+      }
+
+      const tripOrActivityIds = linkedExperiences
+        .filter((exp: any) => exp.type === "trip" || exp.type === "activity")
+        .map((exp: any) => exp.id);
+
+      if (tripOrActivityIds.length > 0) {
+        const { data: tripDetails } = await db
+          .from("experiences_trip")
+          .select("experience_id, price_cents")
+          .in("experience_id", tripOrActivityIds);
+
+        const priceByExp = new Map<string, number>();
+        for (const detail of tripDetails || []) {
+          if (typeof detail.price_cents === "number") {
+            priceByExp.set(detail.experience_id, detail.price_cents / 100);
+          }
+        }
+
+        for (const exp of linkedExperiences) {
+          if (priceByExp.has(exp.id)) {
+            exp.price_mad = priceByExp.get(exp.id) ?? null;
           }
         }
       }

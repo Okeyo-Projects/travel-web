@@ -157,8 +157,10 @@ The tool will:
           children: item.children,
           infants: item.infants,
           rooms: item.rooms,
-          departure_id: experience.type === "trip" ? (item.departure_id ?? null) : null,
-          session_id: experience.type === "activity" ? (item.session_id ?? null) : null,
+          departure_id:
+            experience.type === "trip" ? (item.departure_id ?? null) : null,
+          session_id:
+            experience.type === "activity" ? (item.session_id ?? null) : null,
           guest_notes: item.guest_notes,
           quote: quoteResult,
         });
@@ -183,7 +185,10 @@ The tool will:
           children: mainItem.children,
           infants: mainItem.infants,
           rooms: mainItem.rooms ? JSON.stringify(mainItem.rooms) : null,
-          departure_id: mainItem.experience_type === "trip" ? (mainItem.departure_id ?? null) : null,
+          departure_id:
+            mainItem.experience_type === "trip"
+              ? (mainItem.departure_id ?? null)
+              : null,
           price_subtotal_cents: mainItem.quote.subtotal_cents,
           price_fees_cents: mainItem.quote.fees_cents,
           price_taxes_cents: mainItem.quote.taxes_cents,
@@ -217,8 +222,12 @@ The tool will:
         children: item.children,
         infants: item.infants,
         rooms: item.rooms ? JSON.stringify(item.rooms) : null,
-        departure_id: item.experience_type === "trip" ? (item.departure_id ?? null) : null,
-        session_id: item.experience_type === "activity" ? (item.session_id ?? null) : null,
+        departure_id:
+          item.experience_type === "trip" ? (item.departure_id ?? null) : null,
+        session_id:
+          item.experience_type === "activity"
+            ? (item.session_id ?? null)
+            : null,
         price_subtotal_cents: item.quote.subtotal_cents,
         price_fees_cents: item.quote.fees_cents,
         price_taxes_cents: item.quote.taxes_cents,
@@ -245,7 +254,6 @@ The tool will:
       // Build booking summary for chat display
       const summary = {
         booking_id: booking.id,
-        checkout_url: `/checkout/${booking.id}`,
         total_cents: totalCents,
         currency: "MAD",
         items: itemsWithQuotes.map((item) => ({
@@ -267,7 +275,6 @@ The tool will:
         success: true,
         message: "Booking intent created successfully",
         booking_id: booking.id,
-        checkout_url: summary.checkout_url,
         summary,
       };
     } catch (error) {

@@ -4,6 +4,7 @@ interface BuildAgentPromptInput {
   config: AgentRuntimeConfig;
   todayDate: string;
   enabledTools: string[];
+  runtimeVariables?: Record<string, string>;
 }
 
 function stringifyValue(value: unknown): string {
@@ -70,6 +71,7 @@ export function buildAgentPromptFromConfig({
   config,
   todayDate,
   enabledTools,
+  runtimeVariables: additionalRuntimeVariables = {},
 }: BuildAgentPromptInput): string | null {
   const template = config.systemPromptTemplate;
   if (!template || !template.trim()) return null;
@@ -86,6 +88,8 @@ export function buildAgentPromptFromConfig({
   for (const [key, value] of Object.entries(config.systemPromptVariables)) {
     runtimeVariables[key] = stringifyValue(value);
   }
+
+  Object.assign(runtimeVariables, additionalRuntimeVariables);
 
   return replaceTemplateVariables(template, runtimeVariables);
 }

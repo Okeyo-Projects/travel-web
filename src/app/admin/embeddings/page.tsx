@@ -18,6 +18,9 @@ interface EmbeddingStats {
   total_experiences: number;
   with_embeddings: number;
   without_embeddings: number;
+  pending_embeddings?: number;
+  failed_embeddings?: number;
+  running_embeddings?: number;
   percentage_complete: number;
 }
 
@@ -138,7 +141,7 @@ export default function EmbeddingsAdminPage() {
           </CardHeader>
           <CardContent>
             {stats ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
                     Total Experiences
@@ -161,6 +164,24 @@ export default function EmbeddingsAdminPage() {
                   </p>
                   <p className="text-2xl font-bold text-orange-600">
                     {stats.without_embeddings}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Pending Sync</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {stats.pending_embeddings ?? 0}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Running</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {stats.running_embeddings ?? 0}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Failed</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {stats.failed_embeddings ?? 0}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -347,9 +368,10 @@ export default function EmbeddingsAdminPage() {
                 model
               </li>
               <li>Each embedding is a 1536-dimensional vector</li>
-              <li>Automatic cron job runs daily at 2 AM UTC</li>
+              <li>Automatic cron job processes missing or stale embeddings</li>
               <li>
-                Embeddings are regenerated when experience content changes
+                Embeddings are regenerated when experience, room, schedule,
+                amenity, service, city, or media content changes
               </li>
             </ul>
           </CardContent>

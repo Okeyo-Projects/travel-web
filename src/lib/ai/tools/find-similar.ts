@@ -31,7 +31,7 @@ Useful when users ask for alternatives or similar options to a specific experien
       // Get the reference experience with its embedding
       const { data: refExperience, error: refError } = await db
         .from("experiences")
-        .select("id, title, type, region, city, embedding")
+        .select("id, title, type, region, city, city_slug, embedding")
         .eq("id", params.experience_id)
         .single();
 
@@ -40,6 +40,21 @@ Useful when users ask for alternatives or similar options to a specific experien
           success: false,
           error: "Reference experience not found or has no embedding",
         };
+      }
+
+      let canonicalRegion = refExperience.region;
+      if (params.same_region && refExperience.city_slug) {
+        const { data: cityRecord } = await db
+          .from("cities")
+          .select("region")
+          .eq("slug", refExperience.city_slug)
+          .is("deleted_at", null)
+          .eq("is_active", true)
+          .single();
+
+        if (cityRecord?.region) {
+          canonicalRegion = cityRecord.region;
+        }
       }
 
       // Search for similar experiences using the reference embedding
@@ -51,7 +66,8 @@ Useful when users ask for alternatives or similar options to a specific experien
           text_query: null,
           exp_type: params.same_type ? refExperience.type : null,
           city_filter: null,
-          region_filter: params.same_region ? refExperience.region : null,
+          city_slug_filter: null,
+          region_filter: params.same_region ? canonicalRegion : null,
           price_min_cents: null,
           price_max_cents: null,
           min_rating: null,

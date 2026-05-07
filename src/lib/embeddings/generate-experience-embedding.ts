@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { embedText } from "./index";
+import {
+  EXPERIENCE_EMBEDDING_MODEL,
+  embedText,
+  hashEmbeddingText,
+} from "./index";
 
 /**
  * Generate and save embedding for a specific experience
@@ -7,10 +11,20 @@ import { embedText } from "./index";
  */
 export async function generateExperienceEmbedding(
   experienceId: string,
+  sourceChangedAt?: string | null,
 ): Promise<boolean> {
   try {
     const supabase = await createClient();
     const db = supabase as any;
+
+    const { data: runningSourceChangedAt } = await db.rpc(
+      "record_experience_embedding_running",
+      {
+        p_experience_id: experienceId,
+      },
+    );
+    const effectiveSourceChangedAt =
+      sourceChangedAt || runningSourceChangedAt || null;
 
     // Call the database function to generate embedding text
     const { data: embeddingTextData, error: textError } = await db.rpc(
@@ -23,6 +37,10 @@ export async function generateExperienceEmbedding(
         `Error generating embedding text for experience ${experienceId}:`,
         textError,
       );
+      await db.rpc("record_experience_embedding_failed", {
+        p_experience_id: experienceId,
+        p_error_message: textError.message || "Failed to build embedding text",
+      });
       return false;
     }
 
@@ -30,12 +48,17 @@ export async function generateExperienceEmbedding(
       console.warn(
         `No embedding text generated for experience ${experienceId}`,
       );
+      await db.rpc("record_experience_embedding_failed", {
+        p_experience_id: experienceId,
+        p_error_message: "No embedding text generated",
+      });
       return false;
     }
 
     // Generate the embedding using OpenAI
     console.log(`Generating embedding for experience ${experienceId}...`);
     const embedding = await embedText(embeddingTextData);
+    const embeddingTextHash = hashEmbeddingText(embeddingTextData);
 
     // Update the experience with the embedding
     const { error: updateError } = await db
@@ -48,8 +71,19 @@ export async function generateExperienceEmbedding(
         `Error updating embedding for experience ${experienceId}:`,
         updateError,
       );
+      await db.rpc("record_experience_embedding_failed", {
+        p_experience_id: experienceId,
+        p_error_message: updateError.message || "Failed to update embedding",
+      });
       return false;
     }
+
+    await db.rpc("record_experience_embedding_synced", {
+      p_experience_id: experienceId,
+      p_embedding_model: EXPERIENCE_EMBEDDING_MODEL,
+      p_embedding_text_hash: embeddingTextHash,
+      p_source_changed_at: effectiveSourceChangedAt,
+    });
 
     console.log(
       `Successfully generated embedding for experience ${experienceId}`,
@@ -60,6 +94,17 @@ export async function generateExperienceEmbedding(
       `Failed to generate embedding for experience ${experienceId}:`,
       error,
     );
+    try {
+      const supabase = await createClient();
+      const db = supabase as any;
+      await db.rpc("record_experience_embedding_failed", {
+        p_experience_id: experienceId,
+        p_error_message:
+          error instanceof Error ? error.message : "Unknown error",
+      });
+    } catch {
+      // Best-effort failure tracking only.
+    }
     return false;
   }
 }
@@ -77,14 +122,11 @@ export async function generateAllMissingEmbeddings(
   const results = { success: 0, failed: 0 };
 
   try {
-    // Find all published experiences without embeddings
-    const { data: experiences, error } = await db
-      .from("experiences")
-      .select("id, title")
-      .eq("status", "published")
-      .is("embedding", null)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+    // Find published experiences whose source data changed since the last embedding.
+    const { data: experiences, error } = await db.rpc(
+      "get_experiences_needing_embedding",
+      { p_limit: 1000 },
+    );
 
     if (error) {
       console.error("Error fetching experiences:", error);
@@ -96,7 +138,7 @@ export async function generateAllMissingEmbeddings(
       return results;
     }
 
-    console.log(`Found ${experiences.length} experiences without embeddings`);
+    console.log(`Found ${experiences.length} experiences needing embeddings`);
 
     // Process in batches
     for (let i = 0; i < experiences.length; i += batchSize) {
@@ -107,7 +149,12 @@ export async function generateAllMissingEmbeddings(
 
       // Process batch concurrently
       const batchResults = await Promise.allSettled(
-        batch.map((exp: any) => generateExperienceEmbedding(exp.id)),
+        batch.map((exp: any) =>
+          generateExperienceEmbedding(
+            exp.experience_id || exp.id,
+            exp.last_experience_changed_at || null,
+          ),
+        ),
       );
 
       // Count results

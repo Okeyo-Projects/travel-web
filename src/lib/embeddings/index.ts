@@ -1,4 +1,7 @@
+import { createHash } from "node:crypto";
 import OpenAI from "openai";
+
+export const EXPERIENCE_EMBEDDING_MODEL = "text-embedding-3-small";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -16,7 +19,7 @@ export async function embedText(text: string): Promise<number[]> {
 
   try {
     const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
+      model: EXPERIENCE_EMBEDDING_MODEL,
       input: text,
       encoding_format: "float",
     });
@@ -61,7 +64,7 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
 
   try {
     const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
+      model: EXPERIENCE_EMBEDDING_MODEL,
       input: validTexts,
       encoding_format: "float",
     });
@@ -73,4 +76,8 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
       `Failed to generate batch embeddings: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
+}
+
+export function hashEmbeddingText(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
 }
