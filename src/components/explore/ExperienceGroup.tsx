@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
 import { getImageUrl } from "@/utils/functions";
@@ -26,6 +27,7 @@ export function ExperienceGroup({
   className,
   onMoreClick,
 }: ExperienceGroupProps) {
+  const { t } = useSiteI18n();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeExperienceIndex, setActiveExperienceIndex] = useState<
     number | null
@@ -74,7 +76,7 @@ export function ExperienceGroup({
           disabled={!onMoreClick}
           className="text-[#ff2566] text-sm font-medium hover:text-[#e0205a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Voir tout
+          {t("experienceGroup.viewAll")}
         </button>
       </div>
 

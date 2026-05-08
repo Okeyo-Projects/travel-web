@@ -54,6 +54,25 @@ interface MessageListProps {
   isConversationLocked?: boolean;
 }
 
+function getLastAssistantTextLength(messages: Message[]): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== "assistant") continue;
+    const parts = message.parts || [];
+    let length = 0;
+    for (const part of parts) {
+      if (isTextPart(part)) {
+        length += part.text.length;
+      }
+    }
+    if (typeof message.content === "string" && message.content.length > length) {
+      length = message.content.length;
+    }
+    return length;
+  }
+  return 0;
+}
+
 type TextPart = { type: "text"; text: string };
 type ToolPart = { type?: string; state?: string; output?: unknown };
 
@@ -624,10 +643,25 @@ export function MessageList({
 }: MessageListProps) {
   const { t, dir } = useSiteI18n();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textEndRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLengthRef = useRef(messages.length);
+  const prevLastTextLengthRef = useRef(getLastAssistantTextLength(messages));
 
   useEffect(() => {
     if (messages.length === 0 && !isLoading) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    const currentMessagesLength = messages.length;
+    const currentLastTextLength = getLastAssistantTextLength(messages);
+    const hasNewMessage = currentMessagesLength > prevMessagesLengthRef.current;
+    const hasNewText = currentLastTextLength > prevLastTextLengthRef.current;
+
+    if (hasNewMessage || hasNewText) {
+      const target = textEndRef.current ?? messagesEndRef.current;
+      target?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+
+    prevMessagesLengthRef.current = currentMessagesLength;
+    prevLastTextLengthRef.current = currentLastTextLength;
   });
 
   return (
@@ -647,6 +681,7 @@ export function MessageList({
           activeConversationId={activeConversationId}
           lockedBookingId={lockedBookingId}
           isConversationLocked={isConversationLocked}
+          textEndRef={textEndRef}
         />
       ))}
 
@@ -676,6 +711,7 @@ function MessageItem({
   activeConversationId,
   lockedBookingId,
   isConversationLocked = false,
+  textEndRef,
 }: {
   message: Message;
   isLastMessage: boolean;
@@ -689,6 +725,7 @@ function MessageItem({
   activeConversationId?: string | null;
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
+  textEndRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const isUser = message.role === "user";
   const { t, dir } = useSiteI18n();
@@ -719,12 +756,10 @@ function MessageItem({
   const parsedContent = extractAssistantBlocks(message);
   if (parsedContent.length === 0) return null;
   const canSubmitFeedback = !isLoading || !isLastMessage;
-  const beforeMessageComponents = new Set<string>([
+  const afterMessageComponents = new Set<string>([
     "experience_cards",
     "experience_details",
     "option_details",
-  ]);
-  const afterMessageComponents = new Set<string>([
     "quick_replies",
     "date_options",
     "room_type_selector",
@@ -733,11 +768,6 @@ function MessageItem({
     "booking_confirm",
   ]);
   const textBlocks = parsedContent.filter((block) => block.type === "text");
-  const beforeMessageUIBlocks = parsedContent.filter(
-    (block) =>
-      block.type === "ui" &&
-      beforeMessageComponents.has(block.content.component),
-  );
   const afterMessageUIBlocks = parsedContent.filter(
     (block) =>
       block.type === "ui" &&
@@ -746,14 +776,12 @@ function MessageItem({
   const uncategorizedUIBlocks = parsedContent.filter(
     (block) =>
       block.type === "ui" &&
-      !beforeMessageComponents.has(block.content.component) &&
       !afterMessageComponents.has(block.content.component),
   );
   const deferAfterMessageBlocks = isLoading && isLastMessage;
   const orderedContent = [
-    ...beforeMessageUIBlocks,
-    ...uncategorizedUIBlocks,
     ...textBlocks,
+    ...uncategorizedUIBlocks,
     ...(deferAfterMessageBlocks ? [] : afterMessageUIBlocks),
   ];
 
@@ -768,20 +796,24 @@ function MessageItem({
       </div>
 
       <div className="flex-1 space-y-4 overflow-hidden">
-        {orderedContent.map((block) => {
-          if (block.type === "text") {
-            return (
-              <div
-                key={block.key}
-                dir="auto"
-                className="prose prose-neutral dark:prose-invert max-w-none break-words text-[15px] sm:text-base"
-              >
-                {renderAssistantText(block.content)}
-              </div>
-            );
-          }
+        <div
+          ref={isLastMessage ? textEndRef : undefined}
+          className="space-y-3"
+        >
+          {textBlocks.map((block) => (
+            <div
+              key={block.key}
+              dir="auto"
+              className="prose prose-neutral dark:prose-invert max-w-none break-words text-[15px] sm:text-base"
+            >
+              {renderAssistantText(block.content)}
+            </div>
+          ))}
+        </div>
 
-          return (
+        {orderedContent
+          .filter((block) => block.type !== "text")
+          .map((block) => (
             <div key={block.key} className="my-4">
               <UIBlock
                 component={block.content.component}
@@ -792,8 +824,7 @@ function MessageItem({
                 isConversationLocked={isConversationLocked}
               />
             </div>
-          );
-        })}
+          ))}
 
         {onAssistantFeedback && canSubmitFeedback ? (
           <div className="flex flex-wrap items-center gap-2 pt-1">

@@ -9,6 +9,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { useHlsVideo } from "@/hooks/use-hls-video";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
@@ -20,6 +21,7 @@ interface CustomVideoPlayerProps {
 }
 
 export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
+  const { t } = useSiteI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -83,17 +85,29 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
     }
   };
 
-  const toggleMute = (e: React.MouseEvent) => {
+  const toggleMute = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (videoRef.current) {
-      const next = !isMuted;
-      videoRef.current.muted = next;
-      captureEvent(
-        next ? ANALYTICS_EVENT.VIDEO_MUTED : ANALYTICS_EVENT.VIDEO_UNMUTED,
-        { src },
-      );
-      setIsMuted(next);
+    const video = videoRef.current;
+    if (!video) return;
+    const next = !isMuted;
+    video.muted = next;
+    // iOS Safari requires play() to be called in the same user gesture
+    // when unmuting from an autoplay-muted state.
+    if (!next && video.paused) {
+      try {
+        await video.play();
+      } catch {
+        // If play fails, keep muted to respect browser policy
+        video.muted = true;
+        setIsMuted(true);
+        return;
+      }
     }
+    captureEvent(
+      next ? ANALYTICS_EVENT.VIDEO_MUTED : ANALYTICS_EVENT.VIDEO_UNMUTED,
+      { src },
+    );
+    setIsMuted(next);
   };
 
   const toggleFullscreen = async (e: React.MouseEvent) => {
@@ -204,11 +218,11 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
       )}
 
       {/* Controls Bar */}
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
         {/* Progress Bar */}
         <div
           role="slider"
-          aria-label="Seek"
+          aria-label={t("customVideoPlayer.seek")}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(progress)}
@@ -246,7 +260,11 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
           <button
             type="button"
             onClick={togglePlay}
-            aria-label={isPlaying ? "Pause" : "Play"}
+            aria-label={
+              isPlaying
+                ? t("customVideoPlayer.pause")
+                : t("customVideoPlayer.play")
+            }
             className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
           >
             {isPlaying ? (
@@ -260,7 +278,11 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
             <button
               type="button"
               onClick={toggleMute}
-              aria-label={isMuted ? "Unmute" : "Mute"}
+              aria-label={
+                isMuted
+                  ? t("customVideoPlayer.unmute")
+                  : t("customVideoPlayer.mute")
+              }
               className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
             >
               {isMuted ? (
@@ -273,7 +295,11 @@ export function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
             <button
               type="button"
               onClick={toggleFullscreen}
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              aria-label={
+                isFullscreen
+                  ? t("customVideoPlayer.exitFullscreen")
+                  : t("customVideoPlayer.fullscreen")
+              }
               className="p-1.5 rounded-full text-white hover:bg-white/20 transition-colors focus:outline-none backdrop-blur-sm"
             >
               {isFullscreen ? (

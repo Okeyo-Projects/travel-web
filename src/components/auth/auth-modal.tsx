@@ -21,6 +21,11 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  normalizePhoneNumber,
+  type PhoneCountry,
+  PhoneInput,
+} from "@/components/ui/phone-input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -34,6 +39,13 @@ type MessageState = {
   type: "error" | "success";
   text: string;
 };
+
+const SUPPORTED_SIGNUP_LANGUAGES = new Set(["fr", "ar", "en"]);
+
+function getPreferredLanguageFromPathname(pathname: string) {
+  const candidate = pathname.split("/")[1];
+  return SUPPORTED_SIGNUP_LANGUAGES.has(candidate) ? candidate : "fr";
+}
 
 function AppleLogo({ className }: { className?: string }) {
   return (
@@ -62,6 +74,9 @@ export function AuthModal() {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
+  const [signupPhone, setSignupPhone] = useState("");
+  const [signupPhoneCountry, setSignupPhoneCountry] =
+    useState<PhoneCountry>("MA");
   const [signupPassword, setSignupPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<MessageState | null>(null);
@@ -73,6 +88,8 @@ export function AuthModal() {
       setForgotPasswordEmail("");
       setSignupName("");
       setSignupEmail("");
+      setSignupPhone("");
+      setSignupPhoneCountry("MA");
       setSignupPassword("");
       setMessage(null);
     }
@@ -125,12 +142,39 @@ export function AuthModal() {
       return;
     }
 
+    if (!signupPhone.trim()) {
+      setMessage({
+        type: "error",
+        text: t("authModal.messages.phoneRequired"),
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const normalizedPhone = normalizePhoneNumber(
+      signupPhone,
+      signupPhoneCountry,
+    );
+    const preferredLanguage = getPreferredLanguageFromPathname(pathname);
+
+    if (!normalizedPhone) {
+      setMessage({
+        type: "error",
+        text: t("authModal.messages.invalidPhone"),
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: signupEmail.trim(),
       password: signupPassword,
       options: {
         data: {
           display_name: signupName.trim(),
+          phone: normalizedPhone,
+          phone_country: signupPhoneCountry,
+          preferred_language: preferredLanguage,
         },
       },
     });
@@ -143,6 +187,29 @@ export function AuthModal() {
       setMessage({ type: "error", text: error.message });
       setIsSubmitting(false);
       return;
+    }
+
+    if (data.session && data.user) {
+      const { error: profileError } = await supabase.from("profiles").upsert(
+        {
+          id: data.user.id,
+          display_name: signupName.trim(),
+          phone: normalizedPhone,
+          phone_verified: false,
+          preferred_language: preferredLanguage,
+          currency: "MAD",
+          metadata: {
+            onboarding_complete: false,
+          },
+        },
+        { onConflict: "id" },
+      );
+
+      if (profileError) {
+        setMessage({ type: "error", text: profileError.message });
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     if (!data.session) {
@@ -394,6 +461,21 @@ export function AuthModal() {
               autoComplete="email"
               placeholder={t("authModal.signup.emailPlaceholder")}
               className="h-11 rounded-full bg-muted/60"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="signup-phone">
+              {t("authModal.signup.phoneLabel")}
+            </Label>
+            <PhoneInput
+              id="signup-phone"
+              value={signupPhone}
+              country={signupPhoneCountry}
+              onValueChange={setSignupPhone}
+              onCountryChange={setSignupPhoneCountry}
+              countryLabel={t("authModal.signup.phoneCountryLabel")}
+              placeholder={t("authModal.signup.phonePlaceholder")}
               required
             />
           </div>

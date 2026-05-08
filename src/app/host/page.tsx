@@ -1,37 +1,57 @@
 "use client";
 
 import { AlertCircle, BarChart3 } from "lucide-react";
-import Link from "next/link";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { RecentBookingsList } from "@/components/host/recent-bookings-list";
 import { StatisticsCards } from "@/components/host/statistics-cards";
 
 const BookingsChart = dynamic(
   () => import("@/components/host/bookings-chart").then((m) => m.BookingsChart),
-  { ssr: false, loading: () => <Skeleton className="h-[340px] w-full rounded-xl" /> },
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[340px] w-full rounded-xl" />,
+  },
 );
 const StatusBreakdownChart = dynamic(
-  () => import("@/components/host/status-breakdown-chart").then((m) => m.StatusBreakdownChart),
-  { ssr: false, loading: () => <Skeleton className="h-[340px] w-full rounded-xl" /> },
+  () =>
+    import("@/components/host/status-breakdown-chart").then(
+      (m) => m.StatusBreakdownChart,
+    ),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[340px] w-full rounded-xl" />,
+  },
 );
 const ExperienceBreakdownChart = dynamic(
-  () => import("@/components/host/experience-breakdown-chart").then((m) => m.ExperienceBreakdownChart),
-  { ssr: false, loading: () => <Skeleton className="h-[320px] w-full rounded-xl" /> },
+  () =>
+    import("@/components/host/experience-breakdown-chart").then(
+      (m) => m.ExperienceBreakdownChart,
+    ),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[320px] w-full rounded-xl" />,
+  },
 );
+
 import { TimePeriodSelector } from "@/components/host/time-period-selector";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHostStats } from "@/hooks/use-host-stats";
-import { useSiteI18n } from "@/components/site/site-i18n";
+import { getIntlLocale } from "@/lib/i18n";
 import type { HostDashboardPeriod } from "@/types/host-analytics";
 
 export default function HostDashboardPage() {
-  const { t } = useSiteI18n();
+  const { t, locale } = useSiteI18n();
   const [period, setPeriod] = useState<HostDashboardPeriod>("6m");
-  const { dashboard, isPending, error } = useHostStats(period);
+  const { dashboard, isPending, error } = useHostStats(
+    period,
+    getIntlLocale(locale),
+  );
 
   const emptyMessage = useMemo(() => {
     if (!dashboard?.isHost) {
@@ -97,7 +117,9 @@ export default function HostDashboardPage() {
           <p className="mt-2 text-sm text-slate-600">{emptyMessage}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Button asChild variant="secondary">
-              <Link href="/explore">{t("host.dashboard.exploreMarketplace")}</Link>
+              <Link href="/explore">
+                {t("host.dashboard.exploreMarketplace")}
+              </Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/bookings">{t("host.dashboard.viewBookings")}</Link>

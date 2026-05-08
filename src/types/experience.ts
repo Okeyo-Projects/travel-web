@@ -10,6 +10,11 @@ export interface ExperienceListItem {
   short_description_ar: string | null;
   city: string;
   region: string | null;
+  city_linked: {
+    name: string;
+    region: string | null;
+    slug: string;
+  } | null;
   type: ExperienceType;
   thumbnail_url: string | null;
   video_url?: string | null;

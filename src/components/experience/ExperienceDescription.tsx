@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import parse from "html-react-parser";
+import { useMemo, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { prepareExperienceRichText } from "@/lib/experience-rich-text";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ interface ExperienceDescriptionProps {
 export function ExperienceDescription({
   description,
 }: ExperienceDescriptionProps) {
+  const { t } = useSiteI18n();
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const renderedDescription = useMemo(
     () => prepareExperienceRichText(description),
@@ -22,7 +24,9 @@ export function ExperienceDescription({
 
   return (
     <div className="space-y-2">
-      <h2 className="text-xl font-semibold">À propos de cette expérience</h2>
+      <h2 className="text-xl font-semibold">
+        {t("experience.description.about")}
+      </h2>
       <div
         className={cn(
           "relative",
@@ -41,7 +45,9 @@ export function ExperienceDescription({
           className="h-auto p-0 font-semibold"
           onClick={() => setDescriptionExpanded((state) => !state)}
         >
-          {descriptionExpanded ? "Voir moins" : "Lire plus"}
+          {descriptionExpanded
+            ? t("experience.description.showLess")
+            : t("experience.description.readMore")}
         </Button>
       ) : null}
     </div>

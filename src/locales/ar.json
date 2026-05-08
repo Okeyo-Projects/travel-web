@@ -37,7 +37,21 @@
   },
   "notifications": {
     "view": "عرض الإشعارات",
-    "unread": "{count} إشعارات غير مقروءة"
+    "unread": "{count} إشعارات غير مقروءة",
+    "page": {
+      "title": "الإشعارات",
+      "description": "تحقق من آخر التحديثات.",
+      "unread": {
+        "one": "{count} غير مقروءة",
+        "other": "{count} غير مقروءة",
+        "allRead": "الكل محدّث"
+      },
+      "markAll": "تحديد الكل كمقروء"
+    },
+    "empty": {
+      "title": "لا توجد إشعارات",
+      "description": "ليس لديك إشعارات بعد. تحقق لاحقاً."
+    }
   },
   "floatingChat": {
     "open": "فتح محادثة المساعد الذكي"
@@ -53,6 +67,8 @@
     "legalPrivacy": "سياسة الخصوصية",
     "messages": {
       "nameRequired": "يرجى إدخال اسمك.",
+      "phoneRequired": "يرجى إدخال رقم هاتفك.",
+      "invalidPhone": "يرجى إدخال رقم هاتف صالح للبلد المحدد.",
       "emailConfirmation": "تحقق من بريدك الإلكتروني لتأكيد حسابك.",
       "oauthCancelled": "تم إلغاء تسجيل الدخول. يرجى المحاولة مرة أخرى.",
       "invalidEmail": "أدخل عنوان بريد إلكتروني صالحًا.",
@@ -64,6 +80,9 @@
       "description": "مرحبًا بعودتك. أدخل بياناتك للمتابعة.",
       "emailLabel": "البريد الإلكتروني",
       "emailPlaceholder": "you@email.com",
+      "phoneLabel": "رقم الهاتف",
+      "phonePlaceholder": "6 12 34 56 78",
+      "phoneCountryLabel": "بلد رقم الهاتف",
       "passwordLabel": "كلمة المرور",
       "passwordPlaceholder": "••••••••",
       "forgotPassword": "هل نسيت كلمة المرور؟",
@@ -90,7 +109,10 @@
       "passwordPlaceholder": "أنشئ كلمة مرور",
       "submit": "إنشاء حساب",
       "switchPrompt": "لديك حساب بالفعل؟",
-      "switchAction": "سجّل الدخول"
+      "switchAction": "سجّل الدخول",
+      "phoneLabel": "رقم الهاتف",
+      "phoneCountryLabel": "بلد الرقم",
+      "phonePlaceholder": "6 12 34 56 78"
     }
   },
   "resetPasswordPage": {
@@ -184,8 +206,8 @@
       "unpublish": "إيقاف النشر"
     },
     "availability": {
-      "title": "توفر المضيف",
-      "comingSoon": "إدارة التوفر الكاملة ستكون متاحة قريبًا."
+      "title": "التوافر",
+      "comingSoon": "إدارة التوافر الكاملة قادمة قريباً."
     },
     "experienceCard": {
       "noThumbnail": "لا توجد صورة مصغرة",
@@ -323,6 +345,19 @@
         "subtitle": "ملفك الشخصي كمضيف نشط. تفضل بزيارة لوحة التحكم لإدارة تجاربك.",
         "goToDashboard": "الذهاب إلى لوحة التحكم"
       }
+    },
+    "error": {
+      "title": "خطأ في لوحة تحكم المضيف",
+      "description": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    },
+    "period": {
+      "7d": "7 أيام",
+      "30d": "30 يوماً",
+      "3m": "3 أشهر",
+      "6m": "6 أشهر",
+      "1y": "سنة واحدة",
+      "all": "الكل"
     }
   },
   "review": {
@@ -1106,7 +1141,9 @@
       "capacity": "السعة: {available}/{total}",
       "promotions": "العروض",
       "recentReviews": "المراجعات الأخيرة",
-      "travelerFallback": "مسافر"
+      "travelerFallback": "مسافر",
+      "showMore": "المزيد",
+      "showLess": "أقل"
     },
     "debug": {
       "component": "مكوّن واجهة للتصحيح: {component}"
@@ -1155,7 +1192,13 @@
     },
     "hostedBy": "يستضيفه",
     "contactHost": "تواصل مع المضيف",
-    "fromPrice": "من"
+    "fromPrice": "من",
+    "durationDays": "{count}ي",
+    "durationHours": "{count}س",
+    "nightsMin": "{count} ليالٍ كحد أدنى",
+    "nightsMin_one": "{count} ليلة كحد أدنى",
+    "hostedByFallback": "مضيف أوكيو",
+    "onRequest": "حسب الطلب"
   },
   "experienceGallery": {
     "viewPhotos": "عرض {count} صور"
@@ -1201,6 +1244,89 @@
         "checkOut": "تسجيل المغادرة",
         "dayOf": "اليوم {day} من {total}"
       }
+    },
+    "detail": {
+      "authRequired": "تسجيل الدخول مطلوب",
+      "authRequiredDesc": "سجّل الدخول لعرض تفاصيل هذا الحجز.",
+      "goHome": "الانتقال إلى الصفحة الرئيسية",
+      "notFound": "الحجز غير موجود",
+      "notFoundDesc": "لم يُعثر على هذا الحجز أو ليس لديك صلاحية الوصول.",
+      "backToBookings": "العودة إلى الحجوزات",
+      "backToDashboard": "لوحة التحكم",
+      "guestRequest": "طلب الحجز",
+      "guest": "ضيف",
+      "requestedOn": "تم الطلب بتاريخ",
+      "respondedOn": "تم الرد بتاريخ",
+      "dates": "التواريخ",
+      "guests": "الضيوف",
+      "guestCount": "{count} ضيف",
+      "guestCount_plural": "{count} ضيوف",
+      "room": "غرفة",
+      "bed": "سرير",
+      "beds": "أسرة",
+      "guestUnit": "ضيف",
+      "guestsUnit": "ضيوف",
+      "roomCount": "{count} غرفة",
+      "roomCount_plural": "{count} غرف",
+      "cancellationPolicy": "سياسة الإلغاء",
+      "cancelledOn": "تم الإلغاء بتاريخ {date}",
+      "cancellationReason": "سبب الإلغاء",
+      "messages": "الرسائل",
+      "guestMessage": "رسالة الضيف",
+      "yourMessage": "رسالتك",
+      "hostMessage": "رسالة المضيف",
+      "yourReview": "تقييمك",
+      "loadingReview": "جارٍ تحميل التقييم…",
+      "reviewSubmitted": "تم إرسال التقييم",
+      "experienceNotFound": "تعذر العثور على التجربة المرتبطة بهذا الحجز.",
+      "hostActions": "إجراءات المضيف",
+      "actions": "إجراءات",
+      "payNow": "ادفع الآن",
+      "checkPayment": "تحقق من حالة الدفع",
+      "cancelBooking": "إلغاء الحجز",
+      "approve": "الموافقة على الحجز",
+      "decline": "رفض الحجز",
+      "approveDesc": "هل أنت متأكد من الموافقة على هذا الحجز؟",
+      "declineDesc": "هل أنت متأكد من رفض هذا الحجز؟",
+      "cancel": "إلغاء",
+      "updating": "جارٍ التحديث…",
+      "sendResponse": "إرسال الرد",
+      "explore": "استكشاف",
+      "bookings": "الحجوزات",
+      "templates": {
+        "accept": {
+          "one": "نتطلع لاستضافتك!",
+          "two": "شكراً لحجزك. نراك قريباً!",
+          "three": "تم تأكيد إقامتك. رحلة سعيدة!"
+        },
+        "decline": {
+          "one": "للأسف لست متاحاً في هذه التواريخ.",
+          "two": "عذراً، لقد تغيرت توافري.",
+          "three": "لا أستطيع استضافة ضيوف حالياً."
+        }
+      },
+      "toast": {
+        "noPayment": "لا يوجد دفع قيد الانتظار للتحقق منه.",
+        "checkPaymentError": "تعذر التحقق من حالة الدفع.",
+        "paymentConfirmed": "تم تأكيد الدفع.",
+        "paymentFailed": "لم ينجح الدفع.",
+        "paymentPending": "تم استلام الدفع، جارٍ التأكيد.",
+        "paymentRetry": "فشل الدفع. يمكنك إعادة المحاولة.",
+        "paymentUnknown": "حالة الدفع: {status}",
+        "checkError": "خطأ في التحقق من الدفع.",
+        "startPaymentError": "تعذر بدء الدفع.",
+        "invalidPaymentResponse": "رد دفع غير صالح.",
+        "cancelSuccess": "تم إلغاء الحجز.",
+        "cancelError": "تعذر إلغاء الحجز.",
+        "approveSuccess": "تمت الموافقة على الحجز.",
+        "declineSuccess": "تم رفض الحجز.",
+        "updateError": "تعذر تحديث الحجز."
+      }
+    },
+    "error": {
+      "title": "تعذر تحميل حجوزاتك",
+      "description": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
     }
   },
   "booking": {
@@ -1359,7 +1485,11 @@
           "upToGuests": "حتى {count} أشخاص",
           "perNight": "ليلة",
           "addRoom": "إضافة غرفة",
-          "removeRoom": "إزالة غرفة"
+          "removeRoom": "إزالة غرفة",
+          "roomCount": "{count} غرفة",
+          "maxRoomsReached": "الحد الأقصى {count}",
+          "insufficientCapacity": "السعة غير كافية. أضف غرفاً لـ {remaining} ضيف إضافي.",
+          "continueHint": "اختر غرفة واحدة على الأقل وتأكد من السعة الكافية."
         }
       },
       "review": {
@@ -1464,6 +1594,32 @@
       "startingFrom": "ابتداءً من",
       "nextDeparture": "أقرب موعد مغادرة",
       "book": "احجز"
+    },
+    "description": {
+      "about": "عن هذه التجربة",
+      "showLess": "عرض أقل",
+      "readMore": "اقرأ المزيد"
+    },
+    "reviewCard": {
+      "hostResponse": "رد المضيف"
+    },
+    "reviewList": {
+      "sortRecent": "الأحدث",
+      "sortBest": "الأعلى تقييماً",
+      "sortWorst": "الأقل تقييماً",
+      "title": "التقييمات",
+      "reviewCount": "{count} تقييم",
+      "error": "تعذر تحميل التقييمات حالياً.",
+      "empty": "لا توجد تقييمات بعد. كن أول من يشارك تجربته.",
+      "sortPlaceholder": "ترتيب",
+      "loadMore": "عرض المزيد من التقييمات"
+    },
+    "reviewSummary": {
+      "accuracy": "الدقة",
+      "cleanliness": "النظافة",
+      "communication": "التواصل",
+      "location": "الموقع",
+      "value": "القيمة"
     }
   },
   "blog": {
@@ -1522,5 +1678,97 @@
     "restaurant": "مطعم",
     "bar": "بار",
     "non_smoking": "غير مدخن"
+  },
+  "profile": {
+    "page": {
+      "errors": {
+        "avatarType": "تنسيق الصورة غير مدعوم. استخدم JPG أو PNG أو WebP.",
+        "avatarSize": "الصورة كبيرة جداً. الحد الأقصى: 5 ميجابايت.",
+        "authRequired": "يجب تسجيل الدخول لتعديل ملفك الشخصي.",
+        "saveFallback": "تعذر حفظ الملف الشخصي.",
+        "displayNameRequired": "الاسم المعروض مطلوب.",
+        "bioTooLong": "يجب ألا تتجاوز السيرة الذاتية {count} حرفاً."
+      },
+      "toast": {
+        "success": "تم تحديث الملف الشخصي بنجاح!"
+      },
+      "userFallback": "مستخدم",
+      "changeAvatar": "تغيير الصورة",
+      "roles": {
+        "hostTraveler": "مضيف ومسافر",
+        "traveler": "مسافر"
+      },
+      "memberSince": "عضو منذ {date}",
+      "edit": "تعديل",
+      "account": "الحساب",
+      "info": {
+        "email": "البريد الإلكتروني",
+        "currency": "العملة",
+        "timezone": "المنطقة الزمنية"
+      },
+      "quickLinks": "روابط سريعة",
+      "dialog": {
+        "title": "تعديل ملفك الشخصي",
+        "description": "خصص ملفك الشخصي المرئي للمستخدمين الآخرين.",
+        "chooseAvatar": "اختر صورة",
+        "avatar": "الصورة الشخصية",
+        "avatarHint": "JPG أو PNG أو WebP. بحد أقصى 5 ميجابايت.",
+        "uploadingAvatar": "جارٍ الرفع…",
+        "displayName": "الاسم المعروض",
+        "bio": "نبذة",
+        "bioPlaceholder": "أخبرنا عن نفسك…",
+        "bioMax": "بحد أقصى {count} حرف",
+        "cancel": "إلغاء",
+        "saving": "جارٍ الحفظ…",
+        "save": "حفظ"
+      }
+    },
+    "error": {
+      "title": "تعذر تحميل ملفك الشخصي",
+      "description": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    }
+  },
+  "settings": {
+    "page": {
+      "errors": {
+        "authRequired": "يجب تسجيل الدخول."
+      },
+      "title": "الإعدادات",
+      "preferences": "التفضيلات",
+      "currency": "العملة",
+      "currencyValue": "MAD",
+      "currencyHint": "لا يمكن تغيير العملة حالياً.",
+      "saving": "جارٍ الحفظ…",
+      "account": "الحساب",
+      "editProfile": "تعديل الملف الشخصي",
+      "support": "الدعم",
+      "supportDescription": "هل تحتاج إلى مساعدة؟ تواصل مع فريقنا.",
+      "supportLink": "مركز المساعدة",
+      "legal": "القانونية",
+      "privacy": "سياسة الخصوصية",
+      "terms": "شروط الخدمة"
+    }
+  },
+  "customVideoPlayer": {
+    "play": "تشغيل",
+    "pause": "إيقاف مؤقت",
+    "mute": "كتم الصوت",
+    "unmute": "إلغاء كتم الصوت",
+    "fullscreen": "ملء الشاشة",
+    "exitFullscreen": "خروج من ملء الشاشة",
+    "seek": "تقديم"
+  },
+  "compactExperienceCard": {
+    "playVideo": "تشغيل فيديو {title}",
+    "pauseVideo": "إيقاف فيديو {title}",
+    "muteVideo": "كتم صوت الفيديو",
+    "unmuteVideo": "إلغاء كتم صوت الفيديو"
+  },
+  "experienceDetailModal": {
+    "close": "إغلاق"
+  },
+  "experienceGroup": {
+    "viewAll": "عرض الكل"
   }
 }

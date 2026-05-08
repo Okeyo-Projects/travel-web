@@ -151,6 +151,8 @@ Use this when users want to know more about a specific experience.`,
           amenity:amenities!experience_amenities_amenity_key_fkey (
             key,
             label_fr,
+            label_en,
+            label_ar,
             category,
             icon
           )
@@ -164,6 +166,8 @@ Use this when users want to know more about a specific experience.`,
           service:services!experience_services_included_service_key_fkey (
             key,
             label_fr,
+            label_en,
+            label_ar,
             category
           ),
           notes
@@ -177,6 +181,8 @@ Use this when users want to know more about a specific experience.`,
           service:services!experience_services_excluded_service_key_fkey (
             key,
             label_fr,
+            label_en,
+            label_ar,
             category
           ),
           notes

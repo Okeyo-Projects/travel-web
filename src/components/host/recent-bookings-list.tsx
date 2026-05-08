@@ -2,9 +2,10 @@
 
 import { CalendarDays, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSiteI18n } from "@/components/site/site-i18n";
+import type { AppLocale } from "@/lib/i18n";
 import { getIntlLocale } from "@/lib/i18n";
 import type {
   HostBookingStatus,
@@ -26,8 +27,8 @@ function statusVariant(
   return "outline";
 }
 
-function formatMoney(cents: number, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+function formatMoney(cents: number, currency: string, locale: AppLocale) {
+  return new Intl.NumberFormat(getIntlLocale(locale), {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
@@ -71,7 +72,9 @@ export function RecentBookingsList({ bookings }: RecentBookingsListProps) {
                   {booking.experienceTitle}
                 </p>
                 <Badge variant={statusVariant(booking.status)}>
-                  {booking.status ? STATUS_LABELS[booking.status] : t("host.recentBookings.statuses.unknown")}
+                  {booking.status
+                    ? STATUS_LABELS[booking.status]
+                    : t("host.recentBookings.statuses.unknown")}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -93,7 +96,7 @@ export function RecentBookingsList({ bookings }: RecentBookingsListProps) {
 
             <div className="flex items-center gap-2 sm:flex-col sm:items-end">
               <p className="text-sm font-semibold">
-                {formatMoney(booking.totalCents, booking.currency)}
+                {formatMoney(booking.totalCents, booking.currency, locale)}
               </p>
               <div className="flex items-center gap-2">
                 <Link

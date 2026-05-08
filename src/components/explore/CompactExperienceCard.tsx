@@ -1,6 +1,11 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
+import { useHlsVideo } from "@/hooks/use-hls-video";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { getLocalizedDescription } from "@/lib/i18n";
@@ -8,12 +13,7 @@ import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
-import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
-import { useHlsVideo } from "@/hooks/use-hls-video";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface CompactExperienceCardProps {
   experience: ExperienceListItem;
@@ -28,6 +28,7 @@ export function CompactExperienceCard({
 }: CompactExperienceCardProps) {
   const { t, locale } = useSiteI18n();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pathname = usePathname();
   const thumbnailUrl = experience.thumbnail_url
@@ -39,11 +40,19 @@ export function CompactExperienceCard({
       ? Math.round(experience.lodging.price_cents / 100)
       : null;
   const videoUrl = experience.video_hls_url ?? experience.video_url ?? null;
+  const displayCity = experience.city_linked?.name ?? experience.city;
+  const displayRegion = experience.city_linked?.region ?? experience.region;
   const href = localizeHref(
-    buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city }),
+    buildExperienceHref({
+      title: experience.title,
+      id: experience.id,
+      slug: experience.slug,
+      region: displayRegion,
+      city: displayCity,
+    }),
     pathname,
   );
-  
+
   const handleVideoClick = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -79,6 +88,12 @@ export function CompactExperienceCard({
     }
   }, [isPlaying]);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = isMuted;
+  }, [isMuted]);
+
   const cardBody = (
     <>
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
@@ -91,7 +106,7 @@ export function CompactExperienceCard({
             )}
             playsInline
             loop
-            muted
+            muted={isMuted}
             preload="none"
             crossOrigin="anonymous"
             onError={() => {
@@ -135,7 +150,9 @@ export function CompactExperienceCard({
               type="button"
               onClick={handleVideoClick}
               className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/40 bg-black/35 text-white backdrop-blur-md transition-transform duration-300 hover:scale-105 hover:bg-black/45"
-              aria-label={`Play video for ${experience.title}`}
+              aria-label={t("compactExperienceCard.playVideo", {
+                title: experience.title,
+              })}
             >
               <svg
                 className="ml-0.5 h-7 w-7 fill-current"
@@ -161,7 +178,7 @@ export function CompactExperienceCard({
 
         <div className="absolute top-3 right-3 z-20">
           <span className="px-3 py-1.5 bg-black/40 backdrop-blur-md text-white text-sm font-medium rounded-full">
-            {experience.city}
+            {displayCity}
           </span>
         </div>
 
@@ -172,6 +189,65 @@ export function CompactExperienceCard({
             </span>
           )}
         </div>
+
+        {isPlaying && videoUrl && !onOpenDetails && (
+          <div className="absolute bottom-3 right-3 z-20">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsMuted((prev) => {
+                  const next = !prev;
+                  captureEvent(
+                    next
+                      ? ANALYTICS_EVENT.VIDEO_MUTED
+                      : ANALYTICS_EVENT.VIDEO_UNMUTED,
+                    { src: videoUrl, context: "compact_experience_card" },
+                  );
+                  return next;
+                });
+              }}
+              className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-black/80"
+              aria-label={
+                isMuted
+                  ? t("compactExperienceCard.unmuteVideo")
+                  : t("compactExperienceCard.muteVideo")
+              }
+            >
+              {isMuted ? (
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <title>{t("customVideoPlayer.mute")}</title>
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              ) : (
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <title>{t("customVideoPlayer.unmute")}</title>
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 px-1 flex flex-col items-start gap-2">
@@ -180,7 +256,11 @@ export function CompactExperienceCard({
             {experience.title}
           </h3>
           <p className="text-gray-500 text-sm mt-1 line-clamp-1">
-            {getLocalizedDescription(experience as unknown as Record<string, unknown>, locale, "short")}
+            {getLocalizedDescription(
+              experience as unknown as Record<string, unknown>,
+              locale,
+              "short",
+            )}
           </p>
         </div>
         <div className="flex justify-end w-full">

@@ -182,14 +182,19 @@ export function BookingModal() {
                         </span>
                       )}
                       <span className="text-lg font-bold">
-                        {formatCents(quote.total_cents, quote.currency, intlLocale)}
+                        {formatCents(
+                          quote.total_cents,
+                          quote.currency,
+                          intlLocale,
+                        )}
                       </span>
                     </div>
                     {quote.discount_cents > 0 && (
                       <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
                         <Tag className="size-3" />
                         <span>
-                          {quote.message ?? t("booking.modal.footer.promoApplied")}
+                          {quote.message ??
+                            t("booking.modal.footer.promoApplied")}
                         </span>
                       </div>
                     )}
@@ -201,14 +206,24 @@ export function BookingModal() {
                 )}
               </div>
 
-              <Button
-                size="lg"
-                onClick={nextStep}
-                disabled={!canProceed || isLoadingQuote}
-                className="shrink-0 px-7"
-              >
-                {t("booking.modal.footer.continue")}
-              </Button>
+              <div className="flex flex-col items-end gap-1.5">
+                {!canProceed &&
+                  !isLoadingQuote &&
+                  currentStep === "options" &&
+                  experience.type === "lodging" && (
+                    <span className="text-xs text-destructive text-right max-w-[180px]">
+                      {t("booking.steps.options.lodging.continueHint")}
+                    </span>
+                  )}
+                <Button
+                  size="lg"
+                  onClick={nextStep}
+                  disabled={!canProceed || isLoadingQuote}
+                  className="shrink-0 px-7"
+                >
+                  {t("booking.modal.footer.continue")}
+                </Button>
+              </div>
             </div>
           </div>
         )}

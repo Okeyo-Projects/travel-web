@@ -43,6 +43,7 @@ const EXPERIENCE_SELECT = `
   short_description,
   city,
   region,
+  city_linked:cities!experiences_city_slug_fkey(name, region, slug),
   type,
   thumbnail_url,
   avg_rating,

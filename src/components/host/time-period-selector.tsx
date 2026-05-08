@@ -1,5 +1,6 @@
 "use client";
 
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import {
   HOST_DASHBOARD_PERIOD_OPTIONS,
@@ -15,6 +16,8 @@ export function TimePeriodSelector({
   value,
   onChange,
 }: TimePeriodSelectorProps) {
+  const { t } = useSiteI18n();
+
   return (
     <div className="flex gap-2 overflow-x-auto pb-1">
       {HOST_DASHBOARD_PERIOD_OPTIONS.map((option) => (
@@ -26,7 +29,7 @@ export function TimePeriodSelector({
           onClick={() => onChange(option.value)}
           className="shrink-0"
         >
-          {option.label}
+          {t(`host.period.${option.value}`)}
         </Button>
       ))}
     </div>

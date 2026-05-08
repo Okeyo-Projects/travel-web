@@ -88,6 +88,13 @@ function getFallbackPreferredLanguage(user: User) {
   return "fr";
 }
 
+function getFallbackPhone(user: User) {
+  const candidate = user.user_metadata?.phone;
+  return typeof candidate === "string" && candidate.trim().length > 0
+    ? candidate.trim()
+    : null;
+}
+
 function normalizeProfileSnapshot(
   profile: {
     is_host: boolean | null;
@@ -123,12 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let profile = normalizeProfileSnapshot(fetchedProfile);
 
       if (!profile) {
+        const fallbackPhone = getFallbackPhone(user);
         const { data: createdProfile, error } = await supabase
           .from("profiles")
           .upsert(
             {
               id: user.id,
               display_name: getFallbackDisplayName(user),
+              ...(fallbackPhone
+                ? { phone: fallbackPhone, phone_verified: false }
+                : {}),
               preferred_language: getFallbackPreferredLanguage(user),
               currency: "MAD",
               metadata: {

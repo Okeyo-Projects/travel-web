@@ -12,16 +12,17 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { getIntlLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
 import type { ExperienceListItem } from "@/types/experience";
-import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
-import { useT } from "@/providers/translations-provider";
+import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface ExperienceCardProps {
   experience: ExperienceListItem;
@@ -35,16 +36,17 @@ export function ExperienceCard({
   source = "explore",
 }: ExperienceCardProps) {
   const pathname = usePathname();
-  const t = useT();
+  const { t, locale } = useSiteI18n();
+  const intlLocale = getIntlLocale(locale);
   const price = experience.trip?.price_cents
-    ? new Intl.NumberFormat("en-US", {
+    ? new Intl.NumberFormat(intlLocale, {
         style: "currency",
-        currency: experience.trip.currency ?? "USD",
+        currency: experience.trip.currency ?? "MAD",
       }).format(experience.trip.price_cents / 100)
     : experience.lodging?.price_cents
-      ? new Intl.NumberFormat("en-US", {
+      ? new Intl.NumberFormat(intlLocale, {
           style: "currency",
-          currency: experience.lodging.currency ?? "USD",
+          currency: experience.lodging.currency ?? "MAD",
         }).format(experience.lodging.price_cents / 100)
       : null;
 
@@ -53,13 +55,17 @@ export function ExperienceCard({
     : experience.city;
 
   const duration = experience.trip?.duration_days
-    ? `${experience.trip.duration_days}d`
+    ? t("experienceCard.durationDays", { count: experience.trip.duration_days })
     : experience.trip?.duration_hours
-      ? `${experience.trip.duration_hours}h`
+      ? t("experienceCard.durationHours", {
+          count: experience.trip.duration_hours,
+        })
       : null;
 
   const nights = experience.lodging?.min_stay_nights
-    ? `${experience.lodging.min_stay_nights} nights min`
+    ? t("experienceCard.nightsMin", {
+        count: experience.lodging.min_stay_nights,
+      })
     : null;
 
   const TypeIcon =
@@ -69,7 +75,13 @@ export function ExperienceCard({
         ? Bed
         : Activity;
   const href = localizeHref(
-    buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city }),
+    buildExperienceHref({
+      title: experience.title,
+      id: experience.id,
+      slug: experience.slug,
+      region: experience.region,
+      city: experience.city,
+    }),
     pathname,
   );
 
@@ -168,7 +180,7 @@ export function ExperienceCard({
             )}
             <span className="text-sm text-muted-foreground line-clamp-1">
               {t("experienceCard.hostedBy")}{" "}
-              {experience.host?.name ?? "Okeyo Host"}
+              {experience.host?.name ?? t("experienceCard.hostedByFallback")}
             </span>
           </div>
 

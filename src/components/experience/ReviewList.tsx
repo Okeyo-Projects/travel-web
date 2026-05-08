@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import {
   Select,
   SelectContent,
@@ -9,7 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useExperienceReviews, useExperienceReviewSummary } from "@/hooks/use-reviews";
+import {
+  useExperienceReviewSummary,
+  useExperienceReviews,
+} from "@/hooks/use-reviews";
 import type { ExperienceReview, ReviewSort } from "@/types/review";
 import { Button } from "../ui/button";
 import { ReviewCard } from "./ReviewCard";
@@ -19,13 +23,8 @@ type ReviewListProps = {
   experienceId: string;
 };
 
-const sortOptions: Array<{ value: ReviewSort; label: string }> = [
-  { value: "recent", label: "Plus récents" },
-  { value: "highest", label: "Meilleures notes" },
-  { value: "lowest", label: "Moins bonnes notes" },
-];
-
 export function ReviewList({ experienceId }: ReviewListProps) {
+  const { t } = useSiteI18n();
   const [sort, setSort] = useState<ReviewSort>("recent");
   const [page, setPage] = useState(0);
   const [visibleReviews, setVisibleReviews] = useState<ExperienceReview[]>([]);
@@ -56,10 +55,19 @@ export function ReviewList({ experienceId }: ReviewListProps) {
 
   const title = useMemo(() => {
     if (!total) {
-      return "Avis";
+      return t("experience.reviewList.title");
     }
-    return `${total} avis`;
-  }, [total]);
+    return t("experience.reviewList.reviewCount", { count: total });
+  }, [total, t]);
+
+  const sortOptions: Array<{ value: ReviewSort; label: string }> = useMemo(
+    () => [
+      { value: "recent", label: t("experience.reviewList.sortRecent") },
+      { value: "highest", label: t("experience.reviewList.sortBest") },
+      { value: "lowest", label: t("experience.reviewList.sortWorst") },
+    ],
+    [t],
+  );
 
   const handleSortChange = (value: string) => {
     setSort(value as ReviewSort);
@@ -77,7 +85,7 @@ export function ReviewList({ experienceId }: ReviewListProps) {
   if (summaryQuery.isError || reviewsQuery.isError) {
     return (
       <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-        Impossible de charger les avis pour le moment.
+        {t("experience.reviewList.error")}
       </div>
     );
   }
@@ -85,7 +93,7 @@ export function ReviewList({ experienceId }: ReviewListProps) {
   if (!summaryQuery.data?.totalReviews) {
     return (
       <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-        Aucun avis pour le moment. Soyez le premier à partager votre expérience.
+        {t("experience.reviewList.empty")}
       </div>
     );
   }
@@ -98,7 +106,9 @@ export function ReviewList({ experienceId }: ReviewListProps) {
         <h3 className="text-lg font-semibold">{title}</h3>
         <Select value={sort} onValueChange={handleSortChange}>
           <SelectTrigger className="w-full sm:w-[220px]">
-            <SelectValue placeholder="Trier" />
+            <SelectValue
+              placeholder={t("experience.reviewList.sortPlaceholder")}
+            />
           </SelectTrigger>
           <SelectContent>
             {sortOptions.map((option) => (
@@ -123,8 +133,10 @@ export function ReviewList({ experienceId }: ReviewListProps) {
             onClick={() => setPage((current) => current + 1)}
             disabled={reviewsQuery.isFetching}
           >
-            {reviewsQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Afficher plus d'avis
+            {reviewsQuery.isFetching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : null}
+            {t("experience.reviewList.loadMore")}
           </Button>
         </div>
       ) : null}

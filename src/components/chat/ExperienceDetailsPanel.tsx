@@ -1,11 +1,18 @@
 "use client";
 
+import parse from "html-react-parser";
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { getIntlLocale, getLocalizedDescription } from "@/lib/i18n";
+import { prepareExperienceRichText } from "@/lib/experience-rich-text";
+import {
+  type AppLocale,
+  getIntlLocale,
+  getLocalizedDescription,
+  translateTag,
+} from "@/lib/i18n";
 import { getImageUrl } from "@/utils/functions";
 
 type Primitive = string | number | boolean | null | undefined;
@@ -43,17 +50,23 @@ export interface ExperienceDetailsData {
   amenities?: Array<{
     key?: string;
     label_fr?: string;
+    label_en?: string | null;
+    label_ar?: string | null;
     category?: string;
   }>;
   services_included?: Array<{
     key?: string;
     label_fr?: string;
+    label_en?: string | null;
+    label_ar?: string | null;
     category?: string;
     notes?: string | null;
   }>;
   services_excluded?: Array<{
     key?: string;
     label_fr?: string;
+    label_en?: string | null;
+    label_ar?: string | null;
     category?: string;
     notes?: string | null;
   }>;
@@ -111,12 +124,81 @@ function toDisplayLabel(input: string): string {
     .replace(/\b\w/g, (match) => match.toUpperCase());
 }
 
+function getLocalizedLabel(
+  locale: AppLocale,
+  item: {
+    label_fr?: string;
+    label_en?: string | null;
+    label_ar?: string | null;
+    key?: string;
+  },
+): string {
+  const labels: Record<string, string | null | undefined> = {
+    fr: item.label_fr,
+    en: item.label_en,
+    ar: item.label_ar,
+  };
+  const order: AppLocale[] = [locale, "fr", "en", "ar"];
+  for (const l of order) {
+    const val = labels[l];
+    if (typeof val === "string" && val.length > 0) return val;
+  }
+  return item.key ?? "";
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
       <h4 className="text-sm font-semibold">{title}</h4>
       {children}
     </section>
+  );
+}
+
+function ExpandableDescription({
+  description,
+  showMoreLabel,
+  showLessLabel,
+}: {
+  description: string;
+  showMoreLabel: string;
+  showLessLabel: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  // Split by one or more blank lines to identify paragraphs
+  const paragraphs = description
+    .split(/\n\s*\n/)
+    .filter((p) => p.trim().length > 0);
+  if (paragraphs.length === 0) return null;
+  if (paragraphs.length === 1) {
+    return (
+      <p className="text-sm text-muted-foreground">{paragraphs[0].trim()}</p>
+    );
+  }
+
+  const firstParagraph = paragraphs[0].trim();
+  const restParagraphs = paragraphs.slice(1).map((p) => p.trim());
+
+  return (
+    <div className="space-y-1">
+      <p className="text-sm text-muted-foreground">{firstParagraph}</p>
+      {expanded &&
+        restParagraphs.map((paragraph) => (
+          <p
+            key={paragraph.slice(0, 40)}
+            className="text-sm text-muted-foreground"
+          >
+            {paragraph}
+          </p>
+        ))}
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="text-sm font-medium text-primary hover:underline underline-offset-2"
+      >
+        {expanded ? showLessLabel : showMoreLabel}
+      </button>
+    </div>
   );
 }
 
@@ -281,31 +363,51 @@ export function ExperienceDetailsPanel({
             <p className="text-sm text-muted-foreground">{location}</p>
           ) : null}
           {(() => {
-            const shortDesc = getLocalizedDescription(experience, locale, "short");
-            const longDesc = getLocalizedDescription(experience, locale, "long");
+            const shortDesc = getLocalizedDescription(
+              experience,
+              locale,
+              "short",
+            );
+            const longDesc = getLocalizedDescription(
+              experience,
+              locale,
+              "long",
+            );
+            const longDescHtml = longDesc
+              ? prepareExperienceRichText(longDesc).html
+              : null;
             return (
               <>
-                {shortDesc ? (
-                  <p className="text-sm">{shortDesc}</p>
-                ) : null}
-                {longDesc ? (
-                  <p className="text-sm text-muted-foreground">{longDesc}</p>
+                {shortDesc ? <p className="text-sm">{shortDesc}</p> : null}
+                {longDescHtml ? (
+                  <div className="text-sm text-muted-foreground leading-relaxed [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:my-4 [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_h1]:mb-3 [&_h1]:text-3xl [&_h1]:font-semibold [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:mb-2 [&_h4]:text-lg [&_h4]:font-semibold [&_h5]:mb-2 [&_h5]:text-base [&_h5]:font-semibold [&_h6]:mb-2 [&_h6]:text-sm [&_h6]:font-semibold [&_hr]:my-4 [&_li]:ml-5 [&_ol]:list-decimal [&_p]:mb-3 [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-muted [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_ul]:list-disc">
+                    {parse(longDescHtml)}
+                  </div>
                 ) : null}
               </>
             );
           })()}
 
-          {Array.isArray(experience.languages) &&
-          experience.languages.length > 0 ? (
+          {Array.isArray(experience.tags) && experience.tags.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {experience.languages.map((lang) => (
-                <Badge key={lang} variant="outline">
-                  {lang}
+              {experience.tags.map((tag) => (
+                <Badge key={tag} variant="outline">
+                  {translateTag(tag, t)}
                 </Badge>
               ))}
             </div>
           ) : null}
 
+          {Array.isArray(experience.languages) &&
+          experience.languages.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {experience.languages.map((lang) => (
+                <Badge key={lang} variant="secondary">
+                  {lang}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {details.host?.name ? (
@@ -339,11 +441,11 @@ export function ExperienceDetailsPanel({
           <Section title={t("chat.experienceDetails.amenities")}>
             <div className="flex flex-wrap gap-1">
               {details.amenities.map((amenity) => {
-                const label = amenity.label_fr || amenity.key;
+                const label = getLocalizedLabel(locale, amenity);
                 if (!label) return null;
                 return (
                   <Badge
-                    key={`${amenity.key ?? label}-${amenity.label_fr ?? ""}`}
+                    key={`${amenity.key ?? label}-${label}`}
                     variant="outline"
                   >
                     {label}
@@ -363,7 +465,7 @@ export function ExperienceDetailsPanel({
                   key={`${service.key ?? service.label_fr ?? service.notes ?? "service"}`}
                   className="text-sm"
                 >
-                  • {service.label_fr || service.key}
+                  • {getLocalizedLabel(locale, service)}
                   {service.notes ? ` — ${service.notes}` : ""}
                 </p>
               ))}
@@ -380,7 +482,7 @@ export function ExperienceDetailsPanel({
                   key={`${service.key ?? service.label_fr ?? service.notes ?? "service"}`}
                   className="text-sm"
                 >
-                  • {service.label_fr || service.key}
+                  • {getLocalizedLabel(locale, service)}
                   {service.notes ? ` — ${service.notes}` : ""}
                 </p>
               ))}
@@ -412,9 +514,11 @@ export function ExperienceDetailsPanel({
                       ) : null}
                     </div>
                     {room.description ? (
-                      <p className="text-sm text-muted-foreground">
-                        {room.description}
-                      </p>
+                      <ExpandableDescription
+                        description={room.description}
+                        showMoreLabel={t("chat.experienceDetails.showMore")}
+                        showLessLabel={t("chat.experienceDetails.showLess")}
+                      />
                     ) : null}
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-3">
                       {typeof room.max_persons === "number" ? (

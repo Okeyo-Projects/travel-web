@@ -61,6 +61,18 @@ type RawExperience = {
   short_description_ar?: string | null;
   city: string;
   region: string | null;
+  city_linked?:
+    | Array<{
+        name: string;
+        region: string | null;
+        slug: string;
+      }>
+    | {
+        name: string;
+        region: string | null;
+        slug: string;
+      }
+    | null;
   type: ExperienceListItem["type"];
   thumbnail_url?: string | null;
   avg_rating: number | null;
@@ -145,6 +157,9 @@ export function transformExperience(exp: RawExperience): ExperienceListItem {
     short_description_ar: exp.short_description_ar ?? null,
     city: exp.city,
     region: exp.region,
+    city_linked: Array.isArray(exp.city_linked)
+      ? (exp.city_linked[0] ?? null)
+      : (exp.city_linked ?? null),
     type: exp.type,
     thumbnail_url: thumbnailUrl,
     video_url: videoUrl,
@@ -194,6 +209,11 @@ export function useExperiencesByCategory(
             short_description_ar,
             city,
             region,
+            city_linked:cities!experiences_city_slug_fkey(
+              name,
+              region,
+              slug
+            ),
             type,
             thumbnail_url,
             video:media_assets!fk_experiences_video(
@@ -328,6 +348,11 @@ export function useAllCategoryGroups(
               short_description,
               city,
               region,
+              city_linked:cities!experiences_city_slug_fkey(
+                name,
+                region,
+                slug
+              ),
               type,
               thumbnail_url,
               video:media_assets!fk_experiences_video(

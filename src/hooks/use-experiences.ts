@@ -322,6 +322,11 @@ async function fetchExperiencesWithMeta(
       short_description_ar,
       city,
       region,
+      city_linked:cities!experiences_city_slug_fkey(
+        name,
+        region,
+        slug
+      ),
       type,
       thumbnail_url,
       video:media_assets!fk_experiences_video(
@@ -473,6 +478,9 @@ async function fetchExperiencesWithMeta(
         short_description_ar: (exp as Record<string, unknown>).short_description_ar as string | null ?? null,
         city: exp.city,
         region: exp.region,
+        city_linked: Array.isArray(exp.city_linked)
+          ? (exp.city_linked[0] ?? null)
+          : (exp.city_linked ?? null),
         type: exp.type,
         thumbnail_url: thumbnailUrl,
         video_url: videoUrl,

@@ -2,6 +2,11 @@
 
 import { formatDistanceToNow } from "date-fns";
 import {
+  ar as dateFnsAr,
+  enUS as dateFnsEn,
+  fr as dateFnsFr,
+} from "date-fns/locale";
+import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -13,12 +18,15 @@ import {
   Send,
   Share2,
   Star,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "@/hooks/use-booking";
@@ -27,10 +35,9 @@ import { useHlsVideo } from "@/hooks/use-hls-video";
 import { useRequiredAuth } from "@/hooks/use-required-auth";
 import { useShare } from "@/hooks/use-share";
 import { useExperienceSocial } from "@/hooks/use-social";
-import { useSiteI18n } from "@/components/site/site-i18n";
-import { getLocalizedDescription } from "@/lib/i18n";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { getLocalizedDescription } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
@@ -54,7 +61,7 @@ function formatPrice(experience: ExperienceListItem) {
     experience.lodging?.price_cents ??
     experience.rooms?.find((room) => room.price_cents)?.price_cents;
 
-  return cents != null ? `${Math.round(cents / 100)} MAD` : "Sur demande";
+  return cents != null ? `${Math.round(cents / 100)} MAD` : null;
 }
 
 export function ExperienceDetailModal({
@@ -69,6 +76,7 @@ export function ExperienceDetailModal({
   const [isMediaVisible, setIsMediaVisible] = useState(true);
   const [isExperienceVisible, setIsExperienceVisible] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const pathname = usePathname();
@@ -188,7 +196,13 @@ export function ExperienceDetailModal({
     : null;
   const detailsHref = currentExperience
     ? localizeHref(
-        buildExperienceHref({ title: currentExperience.title, id: currentExperience.id, slug: currentExperience.slug, region: currentExperience.region, city: currentExperience.city }),
+        buildExperienceHref({
+          title: currentExperience.title,
+          id: currentExperience.id,
+          slug: currentExperience.slug,
+          region: currentExperience.region,
+          city: currentExperience.city,
+        }),
         pathname,
       )
     : "";
@@ -196,7 +210,11 @@ export function ExperienceDetailModal({
     ? getImageUrl(currentExperience.thumbnail_url)
     : null;
   const modalShortDesc = currentExperience
-    ? getLocalizedDescription(currentExperience as unknown as Record<string, unknown>, locale, "short")
+    ? getLocalizedDescription(
+        currentExperience as unknown as Record<string, unknown>,
+        locale,
+        "short",
+      )
     : "";
 
   const share = useShare({
@@ -266,7 +284,7 @@ export function ExperienceDetailModal({
         type="button"
         className="absolute inset-0"
         onClick={onClose}
-        aria-label="Close detail modal"
+        aria-label={t("experienceDetailModal.close")}
       />
 
       <div className="absolute inset-0 flex items-center justify-center p-0 md:p-4">
@@ -282,7 +300,7 @@ export function ExperienceDetailModal({
             type="button"
             onClick={onClose}
             className="absolute right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white"
-            aria-label="Close"
+            aria-label={t("experienceDetailModal.close")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -311,12 +329,16 @@ export function ExperienceDetailModal({
                     ref={videoRef}
                     key={currentMedia.src}
                     autoPlay
-                    muted
+                    muted={isMuted}
                     loop
                     playsInline
                     crossOrigin="anonymous"
                     preload="metadata"
-                    poster={currentMedia.type === "video" ? (currentMedia.poster ?? undefined) : undefined}
+                    poster={
+                      currentMedia.type === "video"
+                        ? (currentMedia.poster ?? undefined)
+                        : undefined
+                    }
                     className={cn(
                       "relative h-full w-full object-contain transition-opacity duration-300 cursor-pointer",
                       isMediaVisible ? "opacity-100" : "opacity-0",
@@ -347,6 +369,36 @@ export function ExperienceDetailModal({
                       </div>
                     </div>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMuted((prev) => {
+                        const next = !prev;
+                        if (videoRef.current) {
+                          videoRef.current.muted = next;
+                        }
+                        captureEvent(
+                          next
+                            ? ANALYTICS_EVENT.VIDEO_MUTED
+                            : ANALYTICS_EVENT.VIDEO_UNMUTED,
+                          {
+                            src: currentMedia.src,
+                            context: "experience_detail_modal",
+                          },
+                        );
+                        return next;
+                      });
+                    }}
+                    className="absolute bottom-4 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-black/80"
+                    aria-label={isMuted ? "Unmute video" : "Mute video"}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="h-5 w-5" />
+                    ) : (
+                      <Volume2 className="h-5 w-5" />
+                    )}
+                  </button>
                 </>
               ) : currentMedia?.src ? (
                 <Image
@@ -454,9 +506,12 @@ export function ExperienceDetailModal({
 
                 <div className="mt-5 rounded-xl border bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{t("explore.modal.startingFrom")}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("explore.modal.startingFrom")}
+                    </span>
                     <span className="text-xl font-semibold text-gray-900">
-                      {formatPrice(currentExperience)}
+                      {formatPrice(currentExperience) ??
+                        t("experienceCard.onRequest")}
                     </span>
                   </div>
                   <div className="mt-3 flex gap-2">
@@ -472,7 +527,9 @@ export function ExperienceDetailModal({
                       {t("explore.modal.bookNow")}
                     </Button>
                     <Button asChild variant="outline" className="flex-1">
-                      <Link href={detailsHref}>{t("explore.modal.viewDetails")}</Link>
+                      <Link href={detailsHref}>
+                        {t("explore.modal.viewDetails")}
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -500,18 +557,31 @@ export function ExperienceDetailModal({
                             <Avatar className="h-7 w-7">
                               <AvatarImage
                                 src={item.author?.avatar_url ?? undefined}
-                                alt={item.author?.display_name ?? t("explore.modal.user")}
+                                alt={
+                                  item.author?.display_name ??
+                                  t("explore.modal.user")
+                                }
                               />
                               <AvatarFallback>
-                                {(item.author?.display_name ?? t("explore.modal.user")).slice(0, 1)}
+                                {(
+                                  item.author?.display_name ??
+                                  t("explore.modal.user")
+                                ).slice(0, 1)}
                               </AvatarFallback>
                             </Avatar>
                             <p className="text-xs font-medium text-gray-800">
-                              {item.author?.display_name ?? t("explore.modal.user")}
+                              {item.author?.display_name ??
+                                t("explore.modal.user")}
                             </p>
                             <p className="text-xs text-gray-500">
                               {formatDistanceToNow(new Date(item.created_at), {
                                 addSuffix: true,
+                                locale:
+                                  locale === "ar"
+                                    ? dateFnsAr
+                                    : locale === "en"
+                                      ? dateFnsEn
+                                      : dateFnsFr,
                               })}
                             </p>
                           </div>

@@ -76,6 +76,7 @@ function startOfDay(date: Date): Date {
 
 function buildTrendBuckets(
   period: HostDashboardPeriod,
+  locale: string,
   now = new Date(),
 ): BookingTrendPoint[] {
   if (period === "7d" || period === "30d") {
@@ -90,7 +91,7 @@ function buildTrendBuckets(
       );
       return {
         key: day.toISOString().slice(0, 10),
-        label: day.toLocaleDateString("en-US", {
+        label: day.toLocaleDateString(locale, {
           month: "short",
           day: "numeric",
         }),
@@ -110,7 +111,7 @@ function buildTrendBuckets(
     );
     return {
       key: `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, "0")}`,
-      label: monthDate.toLocaleDateString("en-US", { month: "short" }),
+      label: monthDate.toLocaleDateString(locale, { month: "short" }),
       bookings: 0,
       revenue: 0,
     };
@@ -127,6 +128,7 @@ function trendKeyForDate(period: HostDashboardPeriod, date: Date): string {
 function aggregateDashboard(
   data: HostBaseData,
   period: HostDashboardPeriod,
+  locale: string,
 ): HostDashboardData {
   const periodStart = getPeriodStart(period);
   const bookingsInPeriod = data.bookings.filter((booking) => {
@@ -163,7 +165,7 @@ function aggregateDashboard(
   };
 
   const trendMap = new Map(
-    buildTrendBuckets(period).map((point) => [point.key, point]),
+    buildTrendBuckets(period, locale).map((point) => [point.key, point]),
   );
   for (const booking of bookingsInPeriod) {
     const createdAt = new Date(booking.created_at);
@@ -250,7 +252,7 @@ function aggregateDashboard(
   };
 }
 
-export function useHostStats(period: HostDashboardPeriod) {
+export function useHostStats(period: HostDashboardPeriod, locale: string) {
   const { user } = useAuth();
 
   const query = useQuery({
@@ -324,8 +326,8 @@ export function useHostStats(period: HostDashboardPeriod) {
     if (!query.data) {
       return null;
     }
-    return aggregateDashboard(query.data, period);
-  }, [period, query.data]);
+    return aggregateDashboard(query.data, period, locale);
+  }, [period, query.data, locale]);
 
   return {
     ...query,

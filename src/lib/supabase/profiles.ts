@@ -31,12 +31,21 @@ function getPreferredLanguage(user: User): "fr" | "ar" | "en" {
   return "fr";
 }
 
+function getFallbackPhone(user: User) {
+  const candidate = user.user_metadata?.phone;
+  return typeof candidate === "string" && candidate.trim().length > 0
+    ? candidate.trim()
+    : undefined;
+}
+
 export async function ensureProfileExistsForUser(user: User) {
   const serviceClient = createServiceRoleClientOrThrow();
+  const phone = getFallbackPhone(user);
   const { error } = await serviceClient.from("profiles").upsert(
     {
       id: user.id,
       display_name: getFallbackDisplayName(user),
+      ...(phone ? { phone, phone_verified: false } : {}),
       preferred_language: getPreferredLanguage(user),
       metadata: {
         onboarding_complete: false,

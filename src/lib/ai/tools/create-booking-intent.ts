@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getTodayIsoForBookings, validateFutureDateRange } from "./date-guards";
 
 const RoomSelectionSchema = z.object({
   room_type_id: z.string().uuid().describe("Room type ID"),
@@ -68,15 +69,39 @@ Use this when:
 - You have all required details (dates, guests, rooms for lodging)
 
 The tool will:
+0. Reject past or malformed dates before creating anything
 1. Validate availability for each experience
 2. Calculate pricing (subtotal, fees, taxes, total)
 3. Create draft booking intent
-4. Return summary for display in chat`,
+4. Return summary for display in chat
+
+Never call this tool with a date before today's date. If the user gives a past date, ask them for a future date instead.`,
   inputSchema: createBookingIntentSchema,
   execute: async ({ items, promotion_code }) => {
     try {
       const supabase = await createClient();
       const db = supabase as any;
+      const todayIso = getTodayIsoForBookings();
+
+      for (const item of items) {
+        const validation = validateFutureDateRange({
+          fromDate: item.from_date,
+          toDate: item.to_date,
+          todayIso,
+        });
+
+        if (!validation.ok) {
+          return {
+            success: false,
+            error_code: validation.code,
+            error: validation.error,
+            today_iso: validation.today_iso,
+            today_label: validation.today_label,
+            requested_from_date: validation.requested_from_date,
+            requested_to_date: validation.requested_to_date,
+          };
+        }
+      }
 
       // Get current user
       const {
@@ -114,6 +139,27 @@ The tool will:
           return {
             success: false,
             error: `Experience "${experience.title}" is not available for booking`,
+          };
+        }
+
+        const dateValidation = validateFutureDateRange({
+          fromDate: item.from_date,
+          toDate: item.to_date,
+          requireEndAfterStart: experience.type === "lodging",
+          todayIso,
+        });
+
+        if (!dateValidation.ok) {
+          return {
+            success: false,
+            error_code: dateValidation.code,
+            error: dateValidation.error,
+            today_iso: dateValidation.today_iso,
+            today_label: dateValidation.today_label,
+            requested_from_date: dateValidation.requested_from_date,
+            requested_to_date: dateValidation.requested_to_date,
+            experience_id: item.experience_id,
+            experience_title: experience.title,
           };
         }
 

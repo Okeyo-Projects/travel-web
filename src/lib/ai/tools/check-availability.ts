@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getTodayIsoForBookings, validateFutureDateRange } from "./date-guards";
 
 const checkAvailabilitySchema = z.object({
   experience_id: z.string().uuid().describe("UUID of the experience"),
@@ -17,12 +18,33 @@ export const checkAvailability = tool({
 For lodging: checks room availability between date_from and date_to.
 For trips: checks upcoming departures after date_from.
 For activities: checks upcoming sessions after date_from.
-Returns available options with pricing.`,
+Returns available options with pricing.
+
+Never check availability for a date before today's date. If the user gives a past date, ask them for a future date instead.`,
   inputSchema: checkAvailabilitySchema,
   execute: async ({ experience_id, date_from, date_to, guests }) => {
     try {
       const supabase = await createClient();
       const db = supabase as any;
+      const todayIso = getTodayIsoForBookings();
+
+      const initialDateValidation = validateFutureDateRange({
+        fromDate: date_from,
+        toDate: date_to,
+        todayIso,
+      });
+
+      if (!initialDateValidation.ok) {
+        return {
+          success: false,
+          error_code: initialDateValidation.code,
+          error: initialDateValidation.error,
+          today_iso: initialDateValidation.today_iso,
+          today_label: initialDateValidation.today_label,
+          requested_from_date: initialDateValidation.requested_from_date,
+          requested_to_date: initialDateValidation.requested_to_date,
+        };
+      }
 
       // Get experience type
       const { data: experience, error: expError } = await db
@@ -39,6 +61,25 @@ Returns available options with pricing.`,
       }
 
       if (experience.type === "lodging") {
+        const lodgingDateValidation = validateFutureDateRange({
+          fromDate: date_from,
+          toDate: date_to,
+          requireEndAfterStart: true,
+          todayIso,
+        });
+
+        if (!lodgingDateValidation.ok) {
+          return {
+            success: false,
+            error_code: lodgingDateValidation.code,
+            error: lodgingDateValidation.error,
+            today_iso: lodgingDateValidation.today_iso,
+            today_label: lodgingDateValidation.today_label,
+            requested_from_date: lodgingDateValidation.requested_from_date,
+            requested_to_date: lodgingDateValidation.requested_to_date,
+          };
+        }
+
         // Check lodging availability by checking actual bookings
         const { data: roomTypes } = await db
           .from("lodging_room_types")
@@ -69,35 +110,37 @@ Returns available options with pricing.`,
 
         // Check availability for each room type
         const availabilityChecks = roomTypes.map((roomType: any) => {
-            // Sum booked quantity for this room type across all overlapping bookings
-            let bookedQuantity = 0;
-            for (const booking of overlappingBookings || []) {
-              const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
-              const entry = rooms.find((r: any) => r.room_type_id === roomType.id);
-              if (entry) bookedQuantity += entry.quantity || 1;
-            }
+          // Sum booked quantity for this room type across all overlapping bookings
+          let bookedQuantity = 0;
+          for (const booking of overlappingBookings || []) {
+            const rooms = Array.isArray(booking.rooms) ? booking.rooms : [];
+            const entry = rooms.find(
+              (r: any) => r.room_type_id === roomType.id,
+            );
+            if (entry) bookedQuantity += entry.quantity || 1;
+          }
 
-            const totalRooms = roomType.total_rooms || 1;
-            const availableRooms = Math.max(0, totalRooms - bookedQuantity);
+          const totalRooms = roomType.total_rooms || 1;
+          const availableRooms = Math.max(0, totalRooms - bookedQuantity);
 
-            // Check if room capacity meets guest requirements
-            const meetsGuestRequirement =
-              !guests || roomType.max_persons >= guests;
-            const hasAvailability = availableRooms > 0 && meetsGuestRequirement;
+          // Check if room capacity meets guest requirements
+          const meetsGuestRequirement =
+            !guests || roomType.max_persons >= guests;
+          const hasAvailability = availableRooms > 0 && meetsGuestRequirement;
 
-            return {
-              room_type_id: roomType.id,
-              room_type: roomType.room_type,
-              name: roomType.name,
-              capacity_beds: roomType.capacity_beds,
-              max_persons: roomType.max_persons,
-              base_price_mad: roomType.price_cents / 100,
-              available: hasAvailability,
-              total_rooms: totalRooms,
-              available_rooms: availableRooms,
-              booked_rooms: bookedQuantity,
-            };
-          });
+          return {
+            room_type_id: roomType.id,
+            room_type: roomType.room_type,
+            name: roomType.name,
+            capacity_beds: roomType.capacity_beds,
+            max_persons: roomType.max_persons,
+            base_price_mad: roomType.price_cents / 100,
+            available: hasAvailability,
+            total_rooms: totalRooms,
+            available_rooms: availableRooms,
+            booked_rooms: bookedQuantity,
+          };
+        });
 
         const hasAnyAvailability = availabilityChecks.some(
           (check: { available: boolean }) => check.available,

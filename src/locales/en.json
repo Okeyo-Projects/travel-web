@@ -37,7 +37,21 @@
   },
   "notifications": {
     "view": "View notifications",
-    "unread": "{count} unread notifications"
+    "unread": "{count} unread notifications",
+    "page": {
+      "title": "Notifications",
+      "description": "Check your latest updates.",
+      "unread": {
+        "one": "{count} unread",
+        "other": "{count} unread",
+        "allRead": "All caught up"
+      },
+      "markAll": "Mark all as read"
+    },
+    "empty": {
+      "title": "No notifications",
+      "description": "You don't have any notifications yet. Check back later."
+    }
   },
   "floatingChat": {
     "open": "Open AI assistant chat"
@@ -53,6 +67,8 @@
     "legalPrivacy": "Privacy Policy",
     "messages": {
       "nameRequired": "Please enter your name.",
+      "phoneRequired": "Please enter your phone number.",
+      "invalidPhone": "Please enter a valid phone number for the selected country.",
       "emailConfirmation": "Check your email to confirm your account.",
       "oauthCancelled": "Sign-in was cancelled. Please try again.",
       "invalidEmail": "Enter a valid email address.",
@@ -64,6 +80,9 @@
       "description": "Welcome back. Enter your details to continue.",
       "emailLabel": "Email",
       "emailPlaceholder": "you@email.com",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "6 12 34 56 78",
+      "phoneCountryLabel": "Phone country",
       "passwordLabel": "Password",
       "passwordPlaceholder": "••••••••",
       "forgotPassword": "Forgot password?",
@@ -90,7 +109,10 @@
       "passwordPlaceholder": "Create a password",
       "submit": "Create account",
       "switchPrompt": "Already have an account?",
-      "switchAction": "Log in"
+      "switchAction": "Log in",
+      "phoneLabel": "Phone number",
+      "phoneCountryLabel": "Phone country",
+      "phonePlaceholder": "6 12 34 56 78"
     }
   },
   "resetPasswordPage": {
@@ -184,7 +206,7 @@
       "unpublish": "Unpublish"
     },
     "availability": {
-      "title": "Host Availability",
+      "title": "Availability",
       "comingSoon": "Full availability management is coming soon."
     },
     "experienceCard": {
@@ -323,6 +345,19 @@
         "subtitle": "Your host profile is active. Visit your dashboard to manage your experiences.",
         "goToDashboard": "Go to dashboard"
       }
+    },
+    "error": {
+      "title": "Host dashboard error",
+      "description": "An error occurred. Please try again.",
+      "retry": "Retry"
+    },
+    "period": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "3m": "3 months",
+      "6m": "6 months",
+      "1y": "1 year",
+      "all": "All time"
     }
   },
   "review": {
@@ -1106,7 +1141,9 @@
       "capacity": "Capacity: {available}/{total}",
       "promotions": "Promotions",
       "recentReviews": "Recent reviews",
-      "travelerFallback": "Traveler"
+      "travelerFallback": "Traveler",
+      "showMore": "More",
+      "showLess": "Less"
     },
     "debug": {
       "component": "Debug UI component: {component}"
@@ -1155,7 +1192,13 @@
     },
     "hostedBy": "Hosted by",
     "contactHost": "Contact Host",
-    "fromPrice": "From"
+    "fromPrice": "From",
+    "durationDays": "{count}d",
+    "durationHours": "{count}h",
+    "nightsMin": "{count} nights min",
+    "nightsMin_one": "{count} night min",
+    "hostedByFallback": "Okeyo Host",
+    "onRequest": "On request"
   },
   "experienceGallery": {
     "viewPhotos": "View {count} photos"
@@ -1201,6 +1244,89 @@
         "checkOut": "Check-out",
         "dayOf": "Day {day} of {total}"
       }
+    },
+    "detail": {
+      "authRequired": "Sign-in required",
+      "authRequiredDesc": "Sign in to view this booking detail.",
+      "goHome": "Go to home",
+      "notFound": "Booking not found",
+      "notFoundDesc": "This booking could not be found or you don't have access.",
+      "backToBookings": "Back to bookings",
+      "backToDashboard": "Dashboard",
+      "guestRequest": "Booking request",
+      "guest": "Guest",
+      "requestedOn": "Requested on",
+      "respondedOn": "Responded on",
+      "dates": "Dates",
+      "guests": "Guests",
+      "guestCount": "{count} guest",
+      "guestCount_plural": "{count} guests",
+      "room": "Room",
+      "bed": "bed",
+      "beds": "beds",
+      "guestUnit": "guest",
+      "guestsUnit": "guests",
+      "roomCount": "{count} room",
+      "roomCount_plural": "{count} rooms",
+      "cancellationPolicy": "Cancellation policy",
+      "cancelledOn": "Cancelled on {date}",
+      "cancellationReason": "Cancellation reason",
+      "messages": "Messages",
+      "guestMessage": "Guest message",
+      "yourMessage": "Your message",
+      "hostMessage": "Host message",
+      "yourReview": "Your review",
+      "loadingReview": "Loading review…",
+      "reviewSubmitted": "Review submitted",
+      "experienceNotFound": "Unable to find the experience for this booking.",
+      "hostActions": "Host actions",
+      "actions": "Actions",
+      "payNow": "Pay now",
+      "checkPayment": "Check payment status",
+      "cancelBooking": "Cancel booking",
+      "approve": "Approve booking",
+      "decline": "Decline booking",
+      "approveDesc": "Are you sure you want to approve this booking?",
+      "declineDesc": "Are you sure you want to decline this booking?",
+      "cancel": "Cancel",
+      "updating": "Updating…",
+      "sendResponse": "Send response",
+      "explore": "Explore",
+      "bookings": "Bookings",
+      "templates": {
+        "accept": {
+          "one": "Looking forward to hosting you!",
+          "two": "Thank you for your booking. See you soon!",
+          "three": "Your stay is confirmed. Have a great trip!"
+        },
+        "decline": {
+          "one": "Unfortunately I'm unavailable for these dates.",
+          "two": "Sorry, my availability has changed.",
+          "three": "I can't accommodate guests at the moment."
+        }
+      },
+      "toast": {
+        "noPayment": "No pending payment to check.",
+        "checkPaymentError": "Unable to check payment status.",
+        "paymentConfirmed": "Payment confirmed.",
+        "paymentFailed": "The payment was not successful.",
+        "paymentPending": "Payment received, confirmation in progress.",
+        "paymentRetry": "Payment failed. You can try again.",
+        "paymentUnknown": "Payment status: {status}",
+        "checkError": "Error checking payment.",
+        "startPaymentError": "Unable to start payment.",
+        "invalidPaymentResponse": "Invalid payment response.",
+        "cancelSuccess": "Booking cancelled.",
+        "cancelError": "Unable to cancel booking.",
+        "approveSuccess": "Booking approved.",
+        "declineSuccess": "Booking declined.",
+        "updateError": "Unable to update booking."
+      }
+    },
+    "error": {
+      "title": "Unable to load your bookings",
+      "description": "An error occurred. Please try again.",
+      "retry": "Retry"
     }
   },
   "booking": {
@@ -1312,8 +1438,77 @@
       }
     },
     "steps": {
+      "dates": {
+        "title": "When are you going?",
+        "description": "Select your check-in and check-out dates."
+      },
+      "guests": {
+        "question": "How many travelers?",
+        "maxGuests": "This experience is limited to {count} travelers",
+        "maxReached": "Maximum of {count} travelers reached",
+        "labels": {
+          "adults": "Adults",
+          "children": "Children",
+          "infants": "Infants"
+        },
+        "descriptions": {
+          "adults": "Ages 13+",
+          "children": "Ages 2–12",
+          "infants": "Under 2"
+        }
+      },
+      "options": {
+        "noneAvailable": "No options available for this experience.",
+        "trip": {
+          "noneAvailable": "No departure dates available.",
+          "select": "Select a departure date",
+          "returns": "Returns",
+          "soldOut": "Sold out",
+          "seatsLeft": "{count} seats left",
+          "standardPrice": "Standard price"
+        },
+        "lodging": {
+          "noneAvailable": "No rooms available.",
+          "select": "Select rooms",
+          "guestCount": "{count} guests",
+          "roomFallback": "Room",
+          "upToGuests": "Up to {count} guests",
+          "perNight": "night",
+          "addRoom": "Add room",
+          "removeRoom": "Remove room",
+          "roomCount": "{count} room(s)",
+          "maxRoomsReached": "Max {count}",
+          "insufficientCapacity": "Not enough capacity. Add rooms for {remaining} more guest(s).",
+          "continueHint": "Select at least one room and ensure sufficient capacity."
+        }
+      },
+      "promo": {
+        "title": "Have a promo code?",
+        "description": "Enter your promo code to get a discount.",
+        "label": "Promo code",
+        "placeholder": "e.g. SUMMER20",
+        "apply": "Apply",
+        "loading": "Checking…",
+        "applied": "Promo applied!",
+        "errorCalculating": "Could not apply promo code. Please try again."
+      },
       "review": {
-        "rooms": "Rooms"
+        "messageToHost": "Message to host",
+        "notePlaceholder": "Write a message to your host (optional)",
+        "noteTemplates": {
+          "one": "Looking forward to my stay!",
+          "two": "Please send me check-in details.",
+          "three": "Traveling with family."
+        },
+        "rooms": "Rooms",
+        "roomFallback": "Room",
+        "promoDiscount": "Promo discount",
+        "total": "Total",
+        "confirm": "Confirm booking",
+        "notice": "Your booking request will be sent to the host for approval. No payment will be taken now.",
+        "loginRequired": "Please sign in to complete your booking",
+        "successToast": "Booking sent successfully!",
+        "errorToast": "Failed to send booking. Please try again."
       }
     },
     "details": {
@@ -1399,6 +1594,32 @@
       "startingFrom": "Starting from",
       "nextDeparture": "Next departure",
       "book": "Book"
+    },
+    "description": {
+      "about": "About this experience",
+      "showLess": "Show less",
+      "readMore": "Read more"
+    },
+    "reviewCard": {
+      "hostResponse": "Host response"
+    },
+    "reviewList": {
+      "sortRecent": "Most recent",
+      "sortBest": "Highest rated",
+      "sortWorst": "Lowest rated",
+      "title": "Reviews",
+      "reviewCount": "{count} reviews",
+      "error": "Unable to load reviews at the moment.",
+      "empty": "No reviews yet. Be the first to share your experience.",
+      "sortPlaceholder": "Sort",
+      "loadMore": "Show more reviews"
+    },
+    "reviewSummary": {
+      "accuracy": "Accuracy",
+      "cleanliness": "Cleanliness",
+      "communication": "Communication",
+      "location": "Location",
+      "value": "Value"
     }
   },
   "blog": {
@@ -1457,5 +1678,97 @@
     "restaurant": "Restaurant",
     "bar": "Bar",
     "non_smoking": "Non-smoking"
+  },
+  "profile": {
+    "page": {
+      "errors": {
+        "avatarType": "Unsupported image format. Use JPG, PNG or WebP.",
+        "avatarSize": "Image is too large. Maximum size: 5 MB.",
+        "authRequired": "You must be signed in to edit your profile.",
+        "saveFallback": "Unable to save profile.",
+        "displayNameRequired": "Display name is required.",
+        "bioTooLong": "Bio must not exceed {count} characters."
+      },
+      "toast": {
+        "success": "Profile updated successfully!"
+      },
+      "userFallback": "User",
+      "changeAvatar": "Change photo",
+      "roles": {
+        "hostTraveler": "Host & Traveler",
+        "traveler": "Traveler"
+      },
+      "memberSince": "Member since {date}",
+      "edit": "Edit",
+      "account": "Account",
+      "info": {
+        "email": "Email",
+        "currency": "Currency",
+        "timezone": "Timezone"
+      },
+      "quickLinks": "Quick links",
+      "dialog": {
+        "title": "Edit your profile",
+        "description": "Customize your profile visible to other users.",
+        "chooseAvatar": "Choose a photo",
+        "avatar": "Profile photo",
+        "avatarHint": "JPG, PNG or WebP. Max 5 MB.",
+        "uploadingAvatar": "Uploading…",
+        "displayName": "Display name",
+        "bio": "Bio",
+        "bioPlaceholder": "Tell us about yourself…",
+        "bioMax": "{count} characters max",
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "save": "Save"
+      }
+    },
+    "error": {
+      "title": "Unable to load your profile",
+      "description": "An error occurred. Please try again.",
+      "retry": "Retry"
+    }
+  },
+  "settings": {
+    "page": {
+      "errors": {
+        "authRequired": "You must be signed in."
+      },
+      "title": "Settings",
+      "preferences": "Preferences",
+      "currency": "Currency",
+      "currencyValue": "MAD",
+      "currencyHint": "Currency cannot be changed at this time.",
+      "saving": "Saving…",
+      "account": "Account",
+      "editProfile": "Edit profile",
+      "support": "Support",
+      "supportDescription": "Need help? Contact our team.",
+      "supportLink": "Help center",
+      "legal": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    }
+  },
+  "customVideoPlayer": {
+    "play": "Play",
+    "pause": "Pause",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "seek": "Seek"
+  },
+  "compactExperienceCard": {
+    "playVideo": "Play video for {title}",
+    "pauseVideo": "Pause video for {title}",
+    "muteVideo": "Mute video",
+    "unmuteVideo": "Unmute video"
+  },
+  "experienceDetailModal": {
+    "close": "Close"
+  },
+  "experienceGroup": {
+    "viewAll": "View all"
   }
 }

@@ -157,9 +157,18 @@ function LodgingOptions() {
   }
 
   const calcInitialQty = (room: (typeof rooms)[0]) => {
-    const forCapacity = Math.ceil((adults + children) / (room.max_persons || 2));
+    const forCapacity = Math.ceil(
+      (adults + children) / (room.max_persons || 2),
+    );
     return Math.max(infants, forCapacity, 1);
   };
+
+  const totalGuests = adults + children + infants;
+  const totalCapacity = roomSelections.reduce((sum, sel) => {
+    const room = rooms.find((r) => r.id === sel.roomId);
+    return sum + (room?.max_persons ?? 0) * sel.quantity;
+  }, 0);
+  const capacityShortfall = Math.max(0, totalGuests - totalCapacity);
 
   return (
     <div className="space-y-3">
@@ -167,9 +176,11 @@ function LodgingOptions() {
         {t("booking.steps.options.lodging.select")}
         {adults + children > 0 && (
           <span className="ml-1">
-            ({t("booking.steps.options.lodging.guestCount", {
+            (
+            {t("booking.steps.options.lodging.guestCount", {
               count: adults + children,
-            })})
+            })}
+            )
           </span>
         )}
       </p>
@@ -185,7 +196,9 @@ function LodgingOptions() {
         return (
           <div
             key={room.id}
-            onClick={() => !selected && setRoomSelection(room.id, calcInitialQty(room))}
+            onClick={() =>
+              !selected && setRoomSelection(room.id, calcInitialQty(room))
+            }
             className={cn(
               "w-full rounded-xl border text-left transition-all overflow-hidden",
               selected
@@ -210,7 +223,8 @@ function LodgingOptions() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <p className="font-semibold text-sm">
-                    {room.name ?? t("booking.steps.options.lodging.roomFallback")}
+                    {room.name ??
+                      t("booking.steps.options.lodging.roomFallback")}
                   </p>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                     <Users className="h-3 w-3" />
@@ -224,7 +238,7 @@ function LodgingOptions() {
 
                 {selected ? (
                   <div
-                    className="flex items-center gap-1 shrink-0"
+                    className="flex items-center gap-1.5 shrink-0"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
@@ -235,14 +249,28 @@ function LodgingOptions() {
                     >
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-5 text-center text-sm font-semibold">
-                      {qty}
+                    <span className="min-w-[3.5rem] text-center text-sm font-semibold">
+                      {t("booking.steps.options.lodging.roomCount", {
+                        count: qty,
+                      })}
                     </span>
                     <button
                       type="button"
                       aria-label={t("booking.steps.options.lodging.addRoom")}
-                      onClick={() => setRoomSelection(room.id, qty + 1)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-primary text-white hover:bg-primary/90 transition-colors"
+                      disabled={qty >= (room.total_rooms ?? Infinity)}
+                      onClick={() => {
+                        if (qty < (room.total_rooms ?? Infinity)) {
+                          setRoomSelection(room.id, qty + 1);
+                        }
+                      }}
+                      title={
+                        qty >= (room.total_rooms ?? Infinity)
+                          ? t("booking.steps.options.lodging.maxRoomsReached", {
+                              count: room.total_rooms,
+                            })
+                          : undefined
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       <Plus className="h-3 w-3" />
                     </button>
@@ -269,6 +297,14 @@ function LodgingOptions() {
           </div>
         );
       })}
+
+      {capacityShortfall > 0 && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+          {t("booking.steps.options.lodging.insufficientCapacity", {
+            remaining: capacityShortfall,
+          })}
+        </div>
+      )}
     </div>
   );
 }

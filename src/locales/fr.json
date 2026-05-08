@@ -37,7 +37,21 @@
   },
   "notifications": {
     "view": "Voir les notifications",
-    "unread": "{count} notifications non lues"
+    "unread": "{count} notifications non lues",
+    "page": {
+      "title": "Notifications",
+      "description": "Consultez vos dernières mises à jour.",
+      "unread": {
+        "one": "{count} non lue",
+        "other": "{count} non lues",
+        "allRead": "Tout est à jour"
+      },
+      "markAll": "Tout marquer comme lu"
+    },
+    "empty": {
+      "title": "Aucune notification",
+      "description": "Vous n'avez pas encore de notifications. Revenez plus tard."
+    }
   },
   "floatingChat": {
     "open": "Ouvrir le chat avec l'assistant IA"
@@ -53,6 +67,8 @@
     "legalPrivacy": "Politique de confidentialité",
     "messages": {
       "nameRequired": "Veuillez saisir votre nom.",
+      "phoneRequired": "Veuillez saisir votre numéro de téléphone.",
+      "invalidPhone": "Veuillez saisir un numéro valide pour le pays sélectionné.",
       "emailConfirmation": "Vérifiez votre e-mail pour confirmer votre compte.",
       "oauthCancelled": "La connexion a été annulée. Veuillez réessayer.",
       "invalidEmail": "Saisissez une adresse e-mail valide.",
@@ -64,6 +80,9 @@
       "description": "Bon retour. Entrez vos identifiants pour continuer.",
       "emailLabel": "E-mail",
       "emailPlaceholder": "vous@email.com",
+      "phoneLabel": "Numéro de téléphone",
+      "phonePlaceholder": "6 12 34 56 78",
+      "phoneCountryLabel": "Pays du numéro",
       "passwordLabel": "Mot de passe",
       "passwordPlaceholder": "••••••••",
       "forgotPassword": "Mot de passe oublié ?",
@@ -90,7 +109,10 @@
       "passwordPlaceholder": "Créez un mot de passe",
       "submit": "Créer un compte",
       "switchPrompt": "Vous avez déjà un compte ?",
-      "switchAction": "Se connecter"
+      "switchAction": "Se connecter",
+      "phoneLabel": "Numéro de téléphone",
+      "phoneCountryLabel": "Pays du numéro",
+      "phonePlaceholder": "6 12 34 56 78"
     }
   },
   "resetPasswordPage": {
@@ -184,7 +206,7 @@
       "unpublish": "Dépublier"
     },
     "availability": {
-      "title": "Disponibilités hôte",
+      "title": "Disponibilités",
       "comingSoon": "La gestion complète des disponibilités arrive bientôt."
     },
     "experienceCard": {
@@ -323,6 +345,19 @@
         "subtitle": "Votre profil hôte est actif. Visitez votre tableau de bord pour gérer vos expériences.",
         "goToDashboard": "Aller au tableau de bord"
       }
+    },
+    "error": {
+      "title": "Erreur dans le tableau de bord hôte",
+      "description": "Une erreur est survenue. Veuillez réessayer.",
+      "retry": "Réessayer"
+    },
+    "period": {
+      "7d": "7 jours",
+      "30d": "30 jours",
+      "3m": "3 mois",
+      "6m": "6 mois",
+      "1y": "1 an",
+      "all": "Tout"
     }
   },
   "review": {
@@ -1106,7 +1141,9 @@
       "capacity": "Capacité : {available}/{total}",
       "promotions": "Promotions",
       "recentReviews": "Avis récents",
-      "travelerFallback": "Voyageur"
+      "travelerFallback": "Voyageur",
+      "showMore": "Plus",
+      "showLess": "Moins"
     },
     "debug": {
       "component": "Composant UI de debug : {component}"
@@ -1155,7 +1192,13 @@
     },
     "hostedBy": "Hébergé par",
     "contactHost": "Contacter l'hôte",
-    "fromPrice": "À partir de"
+    "fromPrice": "À partir de",
+    "durationDays": "{count}j",
+    "durationHours": "{count}h",
+    "nightsMin": "{count} nuits min",
+    "nightsMin_one": "{count} nuit min",
+    "hostedByFallback": "Hôte Okeyo",
+    "onRequest": "Sur demande"
   },
   "experienceGallery": {
     "viewPhotos": "Voir {count} photos"
@@ -1201,6 +1244,89 @@
         "checkOut": "Départ",
         "dayOf": "Jour {day} sur {total}"
       }
+    },
+    "detail": {
+      "authRequired": "Connexion requise",
+      "authRequiredDesc": "Connectez-vous pour accéder au détail de cette réservation.",
+      "goHome": "Aller à l'accueil",
+      "notFound": "Réservation introuvable",
+      "notFoundDesc": "Cette réservation est introuvable ou vous n'avez pas accès.",
+      "backToBookings": "Retour aux réservations",
+      "backToDashboard": "Tableau de bord",
+      "guestRequest": "Demande de réservation",
+      "guest": "Voyageur",
+      "requestedOn": "Demandé le",
+      "respondedOn": "Répondu le",
+      "dates": "Dates",
+      "guests": "Voyageurs",
+      "guestCount": "{count} voyageur",
+      "guestCount_plural": "{count} voyageurs",
+      "room": "Chambre",
+      "bed": "lit",
+      "beds": "lits",
+      "guestUnit": "voyageur",
+      "guestsUnit": "voyageurs",
+      "roomCount": "{count} chambre",
+      "roomCount_plural": "{count} chambres",
+      "cancellationPolicy": "Politique d'annulation",
+      "cancelledOn": "Annulée le {date}",
+      "cancellationReason": "Motif d'annulation",
+      "messages": "Messages",
+      "guestMessage": "Message du voyageur",
+      "yourMessage": "Votre message",
+      "hostMessage": "Message de l'hôte",
+      "yourReview": "Votre avis",
+      "loadingReview": "Chargement de l'avis…",
+      "reviewSubmitted": "Avis soumis",
+      "experienceNotFound": "Impossible de trouver l'expérience associée.",
+      "hostActions": "Actions hôte",
+      "actions": "Actions",
+      "payNow": "Payer maintenant",
+      "checkPayment": "Vérifier le paiement",
+      "cancelBooking": "Annuler la réservation",
+      "approve": "Approuver la réservation",
+      "decline": "Refuser la réservation",
+      "approveDesc": "Confirmez-vous l'approbation de cette réservation ?",
+      "declineDesc": "Confirmez-vous le refus de cette réservation ?",
+      "cancel": "Annuler",
+      "updating": "Mise à jour…",
+      "sendResponse": "Envoyer la réponse",
+      "explore": "Explorer",
+      "bookings": "Réservations",
+      "templates": {
+        "accept": {
+          "one": "Au plaisir de vous accueillir !",
+          "two": "Merci pour votre réservation. À très bientôt !",
+          "three": "Votre séjour est confirmé. Bon voyage !"
+        },
+        "decline": {
+          "one": "Malheureusement je ne suis pas disponible pour ces dates.",
+          "two": "Désolé, mes disponibilités ont changé.",
+          "three": "Je ne peux pas accueillir de voyageurs pour le moment."
+        }
+      },
+      "toast": {
+        "noPayment": "Aucun paiement en cours à vérifier.",
+        "checkPaymentError": "Impossible de vérifier le paiement.",
+        "paymentConfirmed": "Paiement confirmé.",
+        "paymentFailed": "Le paiement n'a pas abouti.",
+        "paymentPending": "Paiement reçu, confirmation en cours.",
+        "paymentRetry": "Le paiement a échoué. Vous pouvez réessayer.",
+        "paymentUnknown": "Statut paiement : {status}",
+        "checkError": "Erreur de vérification du paiement.",
+        "startPaymentError": "Impossible de démarrer le paiement.",
+        "invalidPaymentResponse": "Réponse de paiement invalide.",
+        "cancelSuccess": "Réservation annulée.",
+        "cancelError": "Impossible d'annuler la réservation.",
+        "approveSuccess": "Réservation approuvée.",
+        "declineSuccess": "Réservation refusée.",
+        "updateError": "Impossible de mettre à jour la réservation."
+      }
+    },
+    "error": {
+      "title": "Impossible de charger vos réservations",
+      "description": "Une erreur est survenue. Veuillez réessayer.",
+      "retry": "Réessayer"
     }
   },
   "booking": {
@@ -1359,7 +1485,11 @@
           "upToGuests": "Jusqu'à {count} personnes",
           "perNight": "nuit",
           "addRoom": "Ajouter une chambre",
-          "removeRoom": "Retirer une chambre"
+          "removeRoom": "Retirer une chambre",
+          "roomCount": "{count} chambre(s)",
+          "maxRoomsReached": "Max {count}",
+          "insufficientCapacity": "Capacité insuffisante. Ajoutez des chambres pour {remaining} voyageur(s) supplémentaire(s).",
+          "continueHint": "Sélectionnez au moins une chambre et assurez une capacité suffisante."
         }
       },
       "review": {
@@ -1464,6 +1594,32 @@
       "startingFrom": "À partir de",
       "nextDeparture": "Prochain départ",
       "book": "Réserver"
+    },
+    "description": {
+      "about": "À propos de cette expérience",
+      "showLess": "Voir moins",
+      "readMore": "Lire plus"
+    },
+    "reviewCard": {
+      "hostResponse": "Réponse de l'hôte"
+    },
+    "reviewList": {
+      "sortRecent": "Plus récents",
+      "sortBest": "Meilleures notes",
+      "sortWorst": "Moins bonnes notes",
+      "title": "Avis",
+      "reviewCount": "{count} avis",
+      "error": "Impossible de charger les avis pour le moment.",
+      "empty": "Aucun avis pour le moment. Soyez le premier à partager votre expérience.",
+      "sortPlaceholder": "Trier",
+      "loadMore": "Afficher plus d'avis"
+    },
+    "reviewSummary": {
+      "accuracy": "Précision",
+      "cleanliness": "Propreté",
+      "communication": "Communication",
+      "location": "Emplacement",
+      "value": "Qualité-prix"
     }
   },
   "blog": {
@@ -1522,5 +1678,97 @@
     "restaurant": "Restaurant",
     "bar": "Bar",
     "non_smoking": "Non-fumeur"
+  },
+  "profile": {
+    "page": {
+      "errors": {
+        "avatarType": "Format d'image non pris en charge. Utilisez JPG, PNG ou WebP.",
+        "avatarSize": "L'image est trop lourde. Taille maximale : 5 Mo.",
+        "authRequired": "Vous devez être connecté pour modifier votre profil.",
+        "saveFallback": "Impossible de sauvegarder le profil.",
+        "displayNameRequired": "Le nom d'affichage est obligatoire.",
+        "bioTooLong": "La bio ne doit pas dépasser {count} caractères."
+      },
+      "toast": {
+        "success": "Profil mis à jour avec succès !"
+      },
+      "userFallback": "Utilisateur",
+      "changeAvatar": "Changer la photo",
+      "roles": {
+        "hostTraveler": "Hôte & Voyageur",
+        "traveler": "Voyageur"
+      },
+      "memberSince": "Membre depuis {date}",
+      "edit": "Modifier",
+      "account": "Compte",
+      "info": {
+        "email": "E-mail",
+        "currency": "Devise",
+        "timezone": "Fuseau horaire"
+      },
+      "quickLinks": "Liens rapides",
+      "dialog": {
+        "title": "Modifier votre profil",
+        "description": "Personnalisez votre profil visible par les autres utilisateurs.",
+        "chooseAvatar": "Choisir une photo",
+        "avatar": "Photo de profil",
+        "avatarHint": "JPG, PNG ou WebP. Max 5 Mo.",
+        "uploadingAvatar": "Téléchargement…",
+        "displayName": "Nom d'affichage",
+        "bio": "Bio",
+        "bioPlaceholder": "Parlez-nous de vous…",
+        "bioMax": "{count} caractères max",
+        "cancel": "Annuler",
+        "saving": "Enregistrement…",
+        "save": "Sauvegarder"
+      }
+    },
+    "error": {
+      "title": "Impossible de charger votre profil",
+      "description": "Une erreur est survenue. Veuillez réessayer.",
+      "retry": "Réessayer"
+    }
+  },
+  "settings": {
+    "page": {
+      "errors": {
+        "authRequired": "Vous devez être connecté."
+      },
+      "title": "Paramètres",
+      "preferences": "Préférences",
+      "currency": "Devise",
+      "currencyValue": "MAD",
+      "currencyHint": "La devise ne peut pas être modifiée pour le moment.",
+      "saving": "Enregistrement…",
+      "account": "Compte",
+      "editProfile": "Modifier le profil",
+      "support": "Support",
+      "supportDescription": "Besoin d'aide ? Contactez notre équipe.",
+      "supportLink": "Centre d'aide",
+      "legal": "Mentions légales",
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions d'utilisation"
+    }
+  },
+  "customVideoPlayer": {
+    "play": "Lire",
+    "pause": "Pause",
+    "mute": "Couper le son",
+    "unmute": "Réactiver le son",
+    "fullscreen": "Plein écran",
+    "exitFullscreen": "Quitter le plein écran",
+    "seek": "Avancer"
+  },
+  "compactExperienceCard": {
+    "playVideo": "Lire la vidéo de {title}",
+    "pauseVideo": "Mettre en pause la vidéo de {title}",
+    "muteVideo": "Couper le son de la vidéo",
+    "unmuteVideo": "Réactiver le son de la vidéo"
+  },
+  "experienceDetailModal": {
+    "close": "Fermer"
+  },
+  "experienceGroup": {
+    "viewAll": "Voir tout"
   }
 }

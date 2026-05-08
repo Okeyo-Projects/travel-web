@@ -1,5 +1,34 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertCircle,
+  ArrowLeft,
+  BedDouble,
+  BriefcaseBusiness,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  CreditCard,
+  Home,
+  LayoutDashboard,
+  Loader2,
+  MapPin,
+  RefreshCw,
+  UserMinus,
+  Users,
+  XCircle,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   BookingCancellationDialog,
   type BookingCancellationPayload,
@@ -32,44 +61,16 @@ import {
 import { useReviewForBooking } from "@/hooks/use-reviews";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { getIntlLocale } from "@/lib/i18n";
 import {
   isPayzoneSession,
-  readPayzoneReturnParams,
   type PayzoneReturnStatus,
   type PayzoneSession,
+  readPayzoneReturnParams,
 } from "@/lib/payzone";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 import { getImageUrl } from "@/utils/functions";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertCircle,
-  ArrowLeft,
-  BedDouble,
-  BriefcaseBusiness,
-  CalendarDays,
-  CheckCircle2,
-  Clock3,
-  CreditCard,
-  Home,
-  LayoutDashboard,
-  Loader2,
-  MapPin,
-  RefreshCw,
-  UserMinus,
-  Users,
-  XCircle,
-} from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 
 type BookingStatus = Database["public"]["Enums"]["booking_status"];
 type CancellationPolicy = Database["public"]["Enums"]["cancellation_policy"];
@@ -385,18 +386,6 @@ function getCancellationPolicyInfo(
   };
 }
 
-const HOST_ACCEPT_TEMPLATES = [
-  "Looking forward to hosting you!",
-  "Welcome! Feel free to reach out if you have any questions.",
-  "Confirmed! See you soon.",
-];
-
-const HOST_DECLINE_TEMPLATES = [
-  "Unfortunately I'm unavailable for those dates.",
-  "The experience is fully booked for that period.",
-  "I'm unable to accommodate this request at this time.",
-];
-
 export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -441,7 +430,7 @@ export default function BookingDetailPage() {
     enabled: Boolean(bookingId && user?.id),
     queryFn: async () => {
       if (!user?.id) {
-        throw new Error("Utilisateur non authentifié.");
+        throw new Error("User not authenticated.");
       }
       const supabase = createClient();
       const { data, error } = await supabase
@@ -503,14 +492,20 @@ export default function BookingDetailPage() {
   }, [booking?.rooms]);
 
   const { data: roomDetails } = useQuery({
-    queryKey: ["booking-room-details", bookingId, parsedRooms.map((r) => r.room_type_id).join(",")],
+    queryKey: [
+      "booking-room-details",
+      bookingId,
+      parsedRooms.map((r) => r.room_type_id).join(","),
+    ],
     enabled: parsedRooms.length > 0,
     queryFn: async () => {
       const supabase = createClient();
       const ids = parsedRooms.map((r) => r.room_type_id);
       const { data, error } = await supabase
         .from("lodging_room_types")
-        .select("id, name, photos, price_cents, currency, capacity_beds, max_persons, room_type")
+        .select(
+          "id, name, photos, price_cents, currency, capacity_beds, max_persons, room_type",
+        )
         .in("id", ids);
       if (error) throw error;
       return (data ?? []) as RoomDetail[];
@@ -571,7 +566,7 @@ export default function BookingDetailPage() {
     ) => {
       const paymentId = paymentIdOverride ?? lastPaymentId;
       if (!paymentId) {
-        toast.message("Aucun paiement en cours à vérifier.");
+        toast.message(t("bookings.detail.toast.noPayment"));
         return;
       }
 
@@ -587,7 +582,7 @@ export default function BookingDetailPage() {
 
         if (error || !data) {
           throw new Error(
-            error?.message ?? "Impossible de vérifier le paiement.",
+            error?.message ?? t("bookings.detail.toast.checkPaymentError"),
           );
         }
 
@@ -595,22 +590,26 @@ export default function BookingDetailPage() {
 
         if (status === "succeeded" || status === "confirmed") {
           clearPendingPaymentId();
-          toast.success("Paiement confirmé.");
+          toast.success(t("bookings.detail.toast.paymentConfirmed"));
         } else if (status === "failed" || status === "cancelled") {
           clearPendingPaymentId();
-          toast.error("Le paiement n'a pas abouti.");
+          toast.error(t("bookings.detail.toast.paymentFailed"));
         } else if (returnStatus === "success") {
           setLastPaymentId(paymentId);
           persistPendingPaymentId(paymentId);
-          toast.message("Paiement reçu, confirmation en cours.");
+          toast.message(t("bookings.detail.toast.paymentPending"));
         } else if (returnStatus === "failure") {
           setLastPaymentId(paymentId);
           persistPendingPaymentId(paymentId);
-          toast.error("Le paiement a échoué. Vous pouvez réessayer.");
+          toast.error(t("bookings.detail.toast.paymentRetry"));
         } else {
           setLastPaymentId(paymentId);
           persistPendingPaymentId(paymentId);
-          toast.message(`Statut paiement: ${status ?? "pending"}`);
+          toast.message(
+            t("bookings.detail.toast.paymentUnknown", {
+              status: status ?? "pending",
+            }),
+          );
         }
 
         await queryClient.invalidateQueries({
@@ -621,7 +620,7 @@ export default function BookingDetailPage() {
         const message =
           err instanceof Error
             ? err.message
-            : "Erreur de vérification du paiement.";
+            : t("bookings.detail.toast.checkError");
         toast.error(message);
       } finally {
         setIsCheckingPayment(false);
@@ -633,6 +632,7 @@ export default function BookingDetailPage() {
       persistPendingPaymentId,
       queryClient,
       refetch,
+      t,
       user?.id,
     ],
   );
@@ -669,7 +669,7 @@ export default function BookingDetailPage() {
 
     if (status === "cancel") {
       clearPendingPaymentId();
-      toast.message("Paiement annulé.");
+      toast.message("Payment cancelled.");
       router.replace(pathname, { scroll: false });
       return;
     }
@@ -720,14 +720,14 @@ export default function BookingDetailPage() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="w-full max-w-xl">
           <CardHeader>
-            <CardTitle>Connexion requise</CardTitle>
+            <CardTitle>{t("bookings.detail.authRequired")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Connectez-vous pour acceder au detail de cette reservation.
+              {t("bookings.detail.authRequiredDesc")}
             </p>
             <Button asChild>
-              <Link href="/">Aller à l'accueil</Link>
+              <Link href="/">{t("bookings.detail.goHome")}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -754,10 +754,20 @@ export default function BookingDetailPage() {
     : null;
   const hostResponseTemplates =
     hostResponseMode === "approved"
-      ? HOST_ACCEPT_TEMPLATES
-      : HOST_DECLINE_TEMPLATES;
+      ? [
+          t("bookings.detail.templates.accept.one"),
+          t("bookings.detail.templates.accept.two"),
+          t("bookings.detail.templates.accept.three"),
+        ]
+      : [
+          t("bookings.detail.templates.decline.one"),
+          t("bookings.detail.templates.decline.two"),
+          t("bookings.detail.templates.decline.three"),
+        ];
   const backHref = isHostView ? "/host" : "/bookings";
-  const backLabel = isHostView ? "Back to dashboard" : "Back to bookings";
+  const backLabel = isHostView
+    ? t("bookings.detail.backToDashboard")
+    : t("bookings.detail.backToBookings");
   const requestDateLabel = booking
     ? formatBookingTimestamp(booking.created_at, locale)
     : null;
@@ -776,7 +786,7 @@ export default function BookingDetailPage() {
 
     if (payzoneWindow) {
       payzoneWindow.document.write(
-        "<html><body style='font-family:system-ui;padding:24px'>Redirection vers Payzone...</body></html>",
+        "<html><body style='font-family:system-ui;padding:24px'>Redirecting to payment...</body></html>",
       );
       payzoneWindow.document.close();
     }
@@ -793,12 +803,12 @@ export default function BookingDetailPage() {
 
       if (error || !data) {
         throw new Error(
-          error?.message ?? "Impossible de démarrer le paiement.",
+          error?.message ?? t("bookings.detail.toast.startPaymentError"),
         );
       }
 
       if (!isPayzoneSession(data)) {
-        throw new Error("Réponse Payzone invalide.");
+        throw new Error(t("bookings.detail.toast.invalidPaymentResponse"));
       }
 
       const session = data;
@@ -815,11 +825,7 @@ export default function BookingDetailPage() {
         total_price: booking.price_total_cents,
       });
       openPayzonePaywall(session, payzoneWindow ? payzoneWindowName : "_self");
-      toast.success(
-        payzoneWindow
-          ? "Page de paiement ouverte dans une nouvelle fenêtre."
-          : "Redirection vers la page de paiement...",
-      );
+      toast.success(t("bookings.detail.toast.paymentPending"));
     } catch (err) {
       if (payzoneWindow && !payzoneWindow.closed) {
         payzoneWindow.close();
@@ -828,7 +834,7 @@ export default function BookingDetailPage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Échec de l'initialisation du paiement.";
+          : t("bookings.detail.toast.startPaymentError");
       toast.error(message);
     } finally {
       setIsStartingPayment(false);
@@ -851,7 +857,7 @@ export default function BookingDetailPage() {
       });
 
       clearPendingPaymentId();
-      toast.success("Réservation annulée.");
+      toast.success(t("bookings.detail.toast.cancelSuccess"));
       captureEvent(ANALYTICS_EVENT.BOOKING_CANCELLED, {
         booking_id: booking.id,
         reason: reason ?? "user_cancelled",
@@ -862,7 +868,7 @@ export default function BookingDetailPage() {
       const message =
         err instanceof Error
           ? err.message
-          : "Impossible d'annuler la réservation.";
+          : t("bookings.detail.toast.cancelError");
       toast.error(message);
     }
   };
@@ -889,15 +895,15 @@ export default function BookingDetailPage() {
       setIsHostResponseDialogOpen(false);
       toast.success(
         hostResponseMode === "approved"
-          ? "Reservation approuvee."
-          : "Reservation refusee.",
+          ? t("bookings.detail.toast.approveSuccess")
+          : t("bookings.detail.toast.declineSuccess"),
       );
       await refetch();
     } catch (err) {
       const message =
         err instanceof Error
           ? err.message
-          : "Impossible de mettre a jour la reservation.";
+          : t("bookings.detail.toast.updateError");
       toast.error(message);
     }
   };
@@ -915,14 +921,16 @@ export default function BookingDetailPage() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="w-full max-w-xl">
           <CardHeader>
-            <CardTitle>Réservation introuvable</CardTitle>
+            <CardTitle>{t("bookings.detail.notFound")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Cette réservation est introuvable ou vous n'avez pas accès.
+              {t("bookings.detail.notFoundDesc")}
             </p>
             <Button asChild>
-              <Link href="/bookings">Retour aux réservations</Link>
+              <Link href="/bookings">
+                {t("bookings.detail.backToBookings")}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -932,7 +940,7 @@ export default function BookingDetailPage() {
 
   const StatusIcon = statusMeta.icon;
   const cancellationDateLabel = booking.cancelled_at
-    ? new Date(booking.cancelled_at).toLocaleDateString("fr-FR", {
+    ? new Date(booking.cancelled_at).toLocaleDateString(getIntlLocale(locale), {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -956,7 +964,7 @@ export default function BookingDetailPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                {booking.experience?.title ?? "Booking Details"}
+                {booking.experience?.title ?? "Booking"}
               </h1>
               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-white/70">
                 <div className="flex items-center gap-1.5">
@@ -1001,16 +1009,19 @@ export default function BookingDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="size-5" />
-                    Guest Request
+                    {t("bookings.detail.guestRequest")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-3 text-sm">
                     <Users className="size-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="font-medium">Guest</p>
+                      <p className="font-medium">
+                        {t("bookings.detail.guest")}
+                      </p>
                       <p className="text-muted-foreground">
-                        {booking.guest?.display_name ?? "Guest"}
+                        {booking.guest?.display_name ??
+                          t("bookings.detail.guest")}
                       </p>
                     </div>
                   </div>
@@ -1018,7 +1029,9 @@ export default function BookingDetailPage() {
                   <div className="flex items-start gap-3 text-sm">
                     <CalendarDays className="size-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="font-medium">Requested on</p>
+                      <p className="font-medium">
+                        {t("bookings.detail.requestedOn")}
+                      </p>
                       <p className="text-muted-foreground">
                         {requestDateLabel}
                       </p>
@@ -1030,7 +1043,9 @@ export default function BookingDetailPage() {
                       <div className="flex items-start gap-3 text-sm">
                         <CheckCircle2 className="size-4 text-muted-foreground mt-0.5" />
                         <div>
-                          <p className="font-medium">Responded on</p>
+                          <p className="font-medium">
+                            {t("bookings.detail.respondedOn")}
+                          </p>
                           <p className="text-muted-foreground">
                             {responseDateLabel}
                           </p>
@@ -1053,7 +1068,7 @@ export default function BookingDetailPage() {
                 <div className="flex items-start gap-3 text-sm">
                   <CalendarDays className="size-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="font-medium">Dates</p>
+                    <p className="font-medium">{t("bookings.detail.dates")}</p>
                     <p className="text-muted-foreground">
                       {formatDateRange(
                         booking.from_date,
@@ -1067,13 +1082,13 @@ export default function BookingDetailPage() {
                 <div className="flex items-start gap-3 text-sm">
                   <Users className="size-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="font-medium">Guests</p>
+                    <p className="font-medium">{t("bookings.detail.guests")}</p>
                     <p className="text-muted-foreground">
-                      {guests} guest{guests > 1 ? "s" : ""}
+                      {t("bookings.detail.guestCount", { count: guests })}
                     </p>
                   </div>
                 </div>
-                {(isLodging && roomDisplayList.length > 0) && (
+                {isLodging && roomDisplayList.length > 0 && (
                   <>
                     <Separator />
                     <div className="flex items-start gap-3 text-sm">
@@ -1113,12 +1128,16 @@ export default function BookingDetailPage() {
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <span>
                                       {room.capacity_beds}{" "}
-                                      {room.capacity_beds > 1 ? "beds" : "bed"}
+                                      {room.capacity_beds > 1
+                                        ? t("bookings.detail.beds")
+                                        : t("bookings.detail.bed")}
                                     </span>
                                     <span>·</span>
                                     <span>
                                       {room.max_persons}{" "}
-                                      {room.max_persons > 1 ? "guests" : "guest"}
+                                      {room.max_persons > 1
+                                        ? t("bookings.detail.guestsUnit")
+                                        : t("bookings.detail.guestUnit")}
                                     </span>
                                   </div>
                                 </div>
@@ -1144,7 +1163,9 @@ export default function BookingDetailPage() {
                         <p className="font-medium">
                           {t("booking.steps.review.rooms")}
                         </p>
-                        <p className="text-muted-foreground">1 room</p>
+                        <p className="text-muted-foreground">
+                          {t("bookings.detail.roomCount", { count: 1 })}
+                        </p>
                       </div>
                     </div>
                   </>
@@ -1207,7 +1228,7 @@ export default function BookingDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <AlertCircle className="size-5" />
-                    Cancellation Policy
+                    {t("bookings.detail.cancellationPolicy")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1217,7 +1238,9 @@ export default function BookingDetailPage() {
                     </Badge>
                     {booking.status === "cancelled" && cancellationDateLabel ? (
                       <Badge variant="destructive">
-                        Cancelled on {cancellationDateLabel}
+                        {t("bookings.detail.cancelledOn", {
+                          date: cancellationDateLabel,
+                        })}
                       </Badge>
                     ) : null}
                   </div>
@@ -1230,7 +1253,7 @@ export default function BookingDetailPage() {
                   {booking.cancellation_reason ? (
                     <div className="rounded-xl border bg-muted/20 p-4 text-sm">
                       <p className="font-medium text-foreground">
-                        Cancellation reason
+                        {t("bookings.detail.cancellationReason")}
                       </p>
                       <p className="mt-1 text-muted-foreground">
                         {booking.cancellation_reason}
@@ -1244,13 +1267,15 @@ export default function BookingDetailPage() {
             {(booking.guest_notes || booking.host_notes) && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Messages</CardTitle>
+                  <CardTitle>{t("bookings.detail.messages")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {booking.guest_notes && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">
-                        {isHostView ? "Guest message" : "Your message"}
+                        {isHostView
+                          ? t("bookings.detail.guestMessage")
+                          : t("bookings.detail.yourMessage")}
                       </p>
                       <p className="text-sm">{booking.guest_notes}</p>
                     </div>
@@ -1258,7 +1283,9 @@ export default function BookingDetailPage() {
                   {booking.host_notes && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">
-                        {isHostView ? "Your response" : "Host message"}
+                        {isHostView
+                          ? t("bookings.detail.yourMessage")
+                          : t("bookings.detail.hostMessage")}
                       </p>
                       <p className="text-sm">{booking.host_notes}</p>
                     </div>
@@ -1270,18 +1297,20 @@ export default function BookingDetailPage() {
             {isGuestView && booking.status === "completed" ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Review</CardTitle>
+                  <CardTitle>{t("bookings.detail.yourReview")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {bookingReviewQuery.isLoading ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="size-4 animate-spin" />
-                      Loading review...
+                      {t("bookings.detail.loadingReview")}
                     </div>
                   ) : bookingReviewQuery.data ? (
                     <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium">Review submitted</p>
+                        <p className="font-medium">
+                          {t("bookings.detail.reviewSubmitted")}
+                        </p>
                         <ReviewStars
                           rating={bookingReviewQuery.data.ratingOverall}
                         />
@@ -1300,7 +1329,7 @@ export default function BookingDetailPage() {
                     />
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      Unable to find the experience for this booking.
+                      {t("bookings.detail.experienceNotFound")}
                     </p>
                   )}
                 </CardContent>
@@ -1312,7 +1341,9 @@ export default function BookingDetailPage() {
             <Card className="sticky top-6">
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {isHostView ? "Host Actions" : "Actions"}
+                  {isHostView
+                    ? t("bookings.detail.hostActions")
+                    : t("bookings.detail.actions")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -1326,14 +1357,14 @@ export default function BookingDetailPage() {
                           className="w-full gap-2"
                         >
                           <XCircle className="size-4" />
-                          Decline
+                          {t("bookings.detail.decline")}
                         </Button>
                         <Button
                           onClick={() => handleOpenHostResponse("approved")}
                           className="w-full gap-2"
                         >
                           <CheckCircle2 className="size-4" />
-                          Approve
+                          {t("bookings.detail.approve")}
                         </Button>
                       </div>
                     ) : (
@@ -1392,7 +1423,7 @@ export default function BookingDetailPage() {
                         ) : (
                           <CreditCard className="size-4" />
                         )}
-                        Pay Now
+                        {t("bookings.detail.payNow")}
                       </Button>
                     )}
 
@@ -1410,7 +1441,7 @@ export default function BookingDetailPage() {
                         ) : (
                           <RefreshCw className="size-4" />
                         )}
-                        Check Payment Status
+                        {t("bookings.detail.checkPayment")}
                       </Button>
                     )}
 
@@ -1422,7 +1453,9 @@ export default function BookingDetailPage() {
                       >
                         <Link href="/bookings">
                           <Home className="size-4" />
-                          <span className="hidden sm:inline">Bookings</span>
+                          <span className="hidden sm:inline">
+                            {t("bookings.detail.bookings")}
+                          </span>
                         </Link>
                       </Button>
                       <Button
@@ -1432,7 +1465,9 @@ export default function BookingDetailPage() {
                       >
                         <Link href="/explore">
                           <MapPin className="size-4" />
-                          <span className="hidden sm:inline">Explore</span>
+                          <span className="hidden sm:inline">
+                            {t("bookings.detail.explore")}
+                          </span>
                         </Link>
                       </Button>
                     </div>
@@ -1451,7 +1486,7 @@ export default function BookingDetailPage() {
                           ) : (
                             <UserMinus className="size-4" />
                           )}
-                          Cancel Booking
+                          {t("bookings.detail.cancelBooking")}
                         </Button>
                       </>
                     )}
@@ -1491,13 +1526,13 @@ export default function BookingDetailPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {hostResponseMode === "approved"
-                ? "Approve booking"
-                : "Decline booking"}
+                ? t("bookings.detail.approve")
+                : t("bookings.detail.decline")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {hostResponseMode === "approved"
-                ? "Send the guest a short note about the next step."
-                : "Let the guest know why you cannot host this booking."}
+                ? t("bookings.detail.approveDesc")
+                : t("bookings.detail.declineDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -1548,7 +1583,7 @@ export default function BookingDetailPage() {
 
           <AlertDialogFooter>
             <AlertDialogCancel disabled={hostRespondMutation.isPending}>
-              Cancel
+              {t("bookings.detail.cancel")}
             </AlertDialogCancel>
             <Button
               onClick={() => {
@@ -1559,10 +1594,10 @@ export default function BookingDetailPage() {
               {hostRespondMutation.isPending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Updating...
+                  {t("bookings.detail.updating")}
                 </>
               ) : (
-                "Send response"
+                t("bookings.detail.sendResponse")
               )}
             </Button>
           </AlertDialogFooter>

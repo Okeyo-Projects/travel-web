@@ -1,12 +1,14 @@
 "use client";
 
 import { DollarSign, Star, Ticket, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSiteI18n } from "@/components/site/site-i18n";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { AppLocale } from "@/lib/i18n";
+import { getIntlLocale } from "@/lib/i18n";
 import type { HostDashboardSummary } from "@/types/host-analytics";
 
-function formatMoney(cents: number, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+function formatMoney(cents: number, currency: string, locale: AppLocale) {
+  return new Intl.NumberFormat(getIntlLocale(locale), {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
@@ -18,7 +20,7 @@ type StatisticsCardsProps = {
 };
 
 export function StatisticsCards({ summary }: StatisticsCardsProps) {
-  const { t } = useSiteI18n();
+  const { t, locale } = useSiteI18n();
 
   const cards = [
     {
@@ -28,7 +30,7 @@ export function StatisticsCards({ summary }: StatisticsCardsProps) {
     },
     {
       title: t("host.stats.revenue"),
-      value: formatMoney(summary.totalRevenueCents, summary.currency),
+      value: formatMoney(summary.totalRevenueCents, summary.currency, locale),
       icon: DollarSign,
     },
     {

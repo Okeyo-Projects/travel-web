@@ -272,10 +272,22 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
         return !!startDate && !!endDate && nights > 0;
       case "guests":
         return adults > 0;
-      case "options":
-        if (experience.type === "lodging") return roomSelections.length > 0;
+      case "options": {
         if (experience.type === "trip") return !!departureId;
+        if (experience.type === "lodging") {
+          if (roomSelections.length === 0) return false;
+          // Validate total capacity covers all guests
+          const totalGuests = adults + childrenCount + infants;
+          const totalCapacity = roomSelections.reduce((sum, sel) => {
+            const room = experience.lodging?.rooms?.find(
+              (r) => r.id === sel.roomId,
+            );
+            return sum + (room?.max_persons ?? 0) * sel.quantity;
+          }, 0);
+          return totalCapacity >= totalGuests;
+        }
         return true;
+      }
       case "promo":
         return true; // Always optional
       case "review":
@@ -290,6 +302,8 @@ export function BookingProvider({ children }: { children: React.ReactNode }) {
     endDate,
     nights,
     adults,
+    childrenCount,
+    infants,
     roomSelections,
     departureId,
     quote,
