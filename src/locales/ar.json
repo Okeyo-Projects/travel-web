@@ -432,14 +432,14 @@
         }
       },
       "carousel": {
-        "avatarAlt": "Photo de {name}",
-        "previous": "Avis précédent",
-        "next": "Avis suivant",
-        "goTo": "Aller à l'avis {count}"
+        "avatarAlt": "صورة {name}",
+        "previous": "التقييم السابق",
+        "next": "التقييم التالي",
+        "goTo": "الانتقال إلى التقييم {count}"
       }
     },
     "footer": {
-      "tagline": "رفيقك الذكي في السفي.",
+      "tagline": "رفيقك الذكي في السفر.",
       "usefulLinks": "روابط مفيدة",
       "newsletterTitle": "انضم إلى نشرتنا البريدية",
       "newsletterDescription": "احصل كل أسبوع على آخر الأخبار والعروض ونصائح السفر.",
@@ -1051,7 +1051,8 @@
       "pricePerNight": "لكل ليلة",
       "pricePerPerson": "لكل شخص",
       "details": "التفاصيل",
-      "book": "احجز"
+      "book": "احجز",
+      "distanceKm": "{value} كم"
     },
     "roomSelector": {
       "room": {
@@ -1143,7 +1144,8 @@
       "recentReviews": "المراجعات الأخيرة",
       "travelerFallback": "مسافر",
       "showMore": "المزيد",
-      "showLess": "أقل"
+      "showLess": "أقل",
+      "ratingOutOf": "{value} / 5"
     },
     "debug": {
       "component": "مكوّن واجهة للتصحيح: {component}"

@@ -1,16 +1,23 @@
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import Image from "next/image";
 import Link from "next/link";
+import type { AppLocale } from "@/lib/i18n";
+import { getDateFnsLocale } from "@/lib/i18n";
 import type { BlogPost } from "@/types/blog";
 
 interface SimilarBlogsProps {
   posts: BlogPost[];
   title: string;
   blogHref: string;
+  locale: AppLocale;
 }
 
-export function SimilarBlogs({ posts, title, blogHref }: SimilarBlogsProps) {
+export function SimilarBlogs({
+  posts,
+  title,
+  blogHref,
+  locale,
+}: SimilarBlogsProps) {
   if (posts.length === 0) return null;
 
   return (
@@ -23,7 +30,9 @@ export function SimilarBlogs({ posts, title, blogHref }: SimilarBlogsProps) {
         {posts.map((post) => {
           const imageUrl = post.featuredMedia?.source_url;
           const dateStr = post.date
-            ? format(new Date(post.date), "dd/MM/yyyy", { locale: fr })
+            ? format(new Date(post.date), "dd/MM/yyyy", {
+                locale: getDateFnsLocale(locale),
+              })
             : "";
 
           return (
@@ -39,7 +48,7 @@ export function SimilarBlogs({ posts, title, blogHref }: SimilarBlogsProps) {
                     alt={post.featuredMedia?.alt_text || post.title.rendered}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 33vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-slate-300">
@@ -48,9 +57,11 @@ export function SimilarBlogs({ posts, title, blogHref }: SimilarBlogsProps) {
                 )}
               </div>
               <div className="p-4">
-                <p className="text-xs text-slate-500">{dateStr}</p>
+                <time className="text-xs text-slate-500" dateTime={post.date}>
+                  {dateStr}
+                </time>
                 <h3
-                  className="mt-2 line-clamp-2 text-base font-semibold leading-snug text-slate-900 group-hover:text-primary transition-colors"
+                  className="mt-1 text-base font-semibold text-slate-900 transition-colors group-hover:text-primary"
                   dangerouslySetInnerHTML={{ __html: post.title.rendered }}
                 />
               </div>

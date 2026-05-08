@@ -456,7 +456,7 @@ export async function POST(req: Request) {
       }) || buildSystemPrompt(todayDate, requestedLanguage);
 
     // Load catalog context so the AI knows what experiences are available
-    const catalogContext = await loadCatalogContext();
+    const catalogContext = await loadCatalogContext(requestedLanguage);
     if (systemPrompt.includes("{{CATALOG_CONTEXT}}")) {
       systemPrompt = systemPrompt.replaceAll(
         "{{CATALOG_CONTEXT}}",

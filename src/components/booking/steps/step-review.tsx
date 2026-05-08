@@ -1,16 +1,5 @@
 "use client";
 
-import { useBookingContext } from "@/components/booking/booking-context";
-import { useSiteI18n } from "@/components/site/site-i18n";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/use-auth";
-import { useCreateBooking } from "@/hooks/use-booking-mutations";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { getIntlLocale } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import {
   BedDouble,
   Calendar,
@@ -24,6 +13,17 @@ import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import * as React from "react";
 import { toast } from "sonner";
+import { useBookingContext } from "@/components/booking/booking-context";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { useCreateBooking } from "@/hooks/use-booking-mutations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import { getIntlLocale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 export function StepReview() {
   const { locale, t } = useSiteI18n();
@@ -40,7 +40,6 @@ export function StepReview() {
     guestNotes,
     setGuestNotes,
     quote,
-    isLoadingQuote,
   } = useBookingContext();
 
   const [noteTemplate, setNoteTemplate] = React.useState<string | null>(null);
@@ -52,7 +51,7 @@ export function StepReview() {
 
   const { mutateAsync: createBooking, isPending: isSubmitting } =
     useCreateBooking();
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const router = useRouter();
   const intlLocale = getIntlLocale(locale);
 
@@ -76,10 +75,19 @@ export function StepReview() {
   };
 
   const handleSubmit = async () => {
-    if (!experience || !quote) return;
-    if (!experience.host?.id) return;
+    if (isSubmitting) return;
+
+    if (!experience || !quote) {
+      toast.error(t("booking.steps.review.errorToast"));
+      return;
+    }
+    if (!experience.host?.id) {
+      toast.error(t("booking.steps.review.errorToast"));
+      return;
+    }
     if (!user?.id) {
       toast.error(t("booking.steps.review.loginRequired"));
+      openAuthModal({ mode: "login" });
       return;
     }
 
@@ -317,10 +325,12 @@ export function StepReview() {
       {/* ── Confirm button ───────────────────────────────────────── */}
       <div className="pt-1">
         <Button
+          type="button"
           className="w-full"
           size="lg"
-          onClick={handleSubmit}
-          disabled={isSubmitting || isLoadingQuote}
+          onClick={() => void handleSubmit()}
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
           {t("booking.steps.review.confirm")}
@@ -329,7 +339,7 @@ export function StepReview() {
           {t("booking.steps.review.notice")}
         </p>
       </div>
-{/* 
+      {/* 
       <PayzoneBadge /> */}
     </div>
   );

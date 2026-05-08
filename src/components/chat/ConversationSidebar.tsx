@@ -87,7 +87,7 @@ export function ConversationSidebar() {
         >
           <Image
             src="/logo.png"
-            alt="Okeyo Travel"
+            alt={t("header.logoAlt")}
             width={112}
             height={40}
             className="h-auto w-24"

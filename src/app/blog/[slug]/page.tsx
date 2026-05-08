@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Calendar, User } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
@@ -11,7 +10,7 @@ import { SimilarBlogs } from "@/components/blog/SimilarBlogs";
 import { FooterSection } from "@/components/home/FooterSection";
 import { JsonLd } from "@/components/seo/json-ld";
 import { MarketingHeader } from "@/components/site/MarketingHeader";
-import { createTranslator, resolveLocale } from "@/lib/i18n";
+import { createTranslator, getDateFnsLocale, resolveLocale } from "@/lib/i18n";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 import { fetchPostBySlug, fetchRelatedPosts } from "@/lib/wordpress";
 
@@ -130,7 +129,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const imageUrl = post.featuredMedia?.source_url;
   const dateStr = post.date
-    ? format(new Date(post.date), "d MMMM yyyy", { locale: fr })
+    ? format(new Date(post.date), "d MMMM yyyy", {
+        locale: getDateFnsLocale(locale),
+      })
     : "";
 
   return (
@@ -234,6 +235,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             posts={relatedPosts}
             title={t("blog.similarPosts")}
             blogHref={blogHref}
+            locale={locale}
           />
         </article>
       </main>

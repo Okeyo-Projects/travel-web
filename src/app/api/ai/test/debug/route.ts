@@ -16,7 +16,7 @@ export async function POST(_req: Request) {
   try {
     const todayDate = new Date().toISOString().split("T")[0];
     let systemPrompt = buildSystemPrompt(todayDate);
-    const catalogContext = await loadCatalogContext();
+    const catalogContext = await loadCatalogContext("fr");
     systemPrompt += catalogContext;
 
     const result = await generateText({

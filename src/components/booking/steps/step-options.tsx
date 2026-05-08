@@ -1,12 +1,12 @@
 "use client";
 
-import { Check, Minus, Plus, Users } from "lucide-react";
-import Image from "next/image";
 import { useBookingContext } from "@/components/booking/booking-context";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { getIntlLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { getImageUrl } from "@/utils/functions";
+import { Check, Minus, Plus, Users } from "lucide-react";
+import Image from "next/image";
 
 export function StepOptions() {
   const { t } = useSiteI18n();
@@ -297,14 +297,6 @@ function LodgingOptions() {
           </div>
         );
       })}
-
-      {capacityShortfall > 0 && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          {t("booking.steps.options.lodging.insufficientCapacity", {
-            remaining: capacityShortfall,
-          })}
-        </div>
-      )}
     </div>
   );
 }

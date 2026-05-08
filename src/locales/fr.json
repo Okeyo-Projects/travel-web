@@ -380,7 +380,7 @@
         "three": "Désir,"
       },
       "trailing": "nous nous occupons du reste",
-      "videoTitle": "Vidéro principale Okeyo Travel",
+      "videoTitle": "Vidéo principale Okeyo Travel",
       "description": "L'endroit que vous cherchiez existe. On va le trouver ensemble.",
       "cta": "Commencer votre voyage"
     },
@@ -1051,7 +1051,8 @@
       "pricePerNight": "par nuit",
       "pricePerPerson": "par personne",
       "details": "Détails",
-      "book": "Réserver"
+      "book": "Réserver",
+      "distanceKm": "{value} km"
     },
     "roomSelector": {
       "room": {
@@ -1143,7 +1144,8 @@
       "recentReviews": "Avis récents",
       "travelerFallback": "Voyageur",
       "showMore": "Plus",
-      "showLess": "Moins"
+      "showLess": "Moins",
+      "ratingOutOf": "{value} / 5"
     },
     "debug": {
       "component": "Composant UI de debug : {component}"

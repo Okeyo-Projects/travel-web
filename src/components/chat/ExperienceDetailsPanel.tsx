@@ -341,7 +341,9 @@ export function ExperienceDetailsPanel({
             <Badge variant="secondary">{experienceType}</Badge>
             {experience.avg_rating ? (
               <Badge variant="outline">
-                {experience.avg_rating.toFixed(1)} / 5
+                {t("chat.experienceDetails.ratingOutOf", {
+                  value: experience.avg_rating.toFixed(1),
+                })}
                 {experience.reviews_count
                   ? ` ${t("chat.experienceDetails.reviewCount", {
                       count: experience.reviews_count,
@@ -707,7 +709,11 @@ export function ExperienceDetailsPanel({
                         t("chat.experienceDetails.travelerFallback")}
                     </p>
                     {typeof review.rating === "number" ? (
-                      <Badge variant="outline">{review.rating}/5</Badge>
+                      <Badge variant="outline">
+                        {t("chat.experienceDetails.ratingOutOf", {
+                          value: review.rating,
+                        })}
+                      </Badge>
                     ) : null}
                   </div>
                   {review.comment ? (

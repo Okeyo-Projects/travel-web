@@ -40,7 +40,9 @@ function formatInventoryLine(inventory: DestinationInventory): string {
  * Since the catalog is small (~20 experiences), we load everything so the AI
  * can act as an expert concierge who knows every property, room, and activity.
  */
-export async function loadCatalogContext(): Promise<string> {
+export async function loadCatalogContext(
+  locale: string = "fr",
+): Promise<string> {
   try {
     const supabase = await createClient();
     const db = supabase as any;
@@ -159,7 +161,14 @@ export async function loadCatalogContext(): Promise<string> {
     for (const a of amenities || []) {
       if (!amenitiesByExp[a.experience_id])
         amenitiesByExp[a.experience_id] = [];
-      const label = a.amenities?.label_fr || a.amenities?.key;
+      const labelKey =
+        locale === "en"
+          ? "label_en"
+          : locale === "ar"
+            ? "label_ar"
+            : "label_fr";
+      const label =
+        a.amenities?.[labelKey] || a.amenities?.label_fr || a.amenities?.key;
       if (label) amenitiesByExp[a.experience_id].push(label);
     }
 
@@ -293,8 +302,8 @@ export async function loadCatalogContext(): Promise<string> {
             `- **Prochains départs:** ${expDepartures
               .slice(0, 3)
               .map(
-                (d: any) =>
-                  `${new Date(d.depart_at).toLocaleDateString("fr-FR")} (${d.seats_available}/${d.seats_total} places)`,
+                (d: { depart_at: string; seats_available: number; seats_total: number }) =>
+                  `${new Date(d.depart_at).toLocaleDateString(locale === "en" ? "en-US" : locale === "ar" ? "ar-MA" : "fr-FR")} (${d.seats_available}/${d.seats_total})`,
               )
               .join(", ")}`,
           );
@@ -316,8 +325,8 @@ export async function loadCatalogContext(): Promise<string> {
             `- **Prochaines sessions:** ${expSessions
               .slice(0, 3)
               .map(
-                (s: any) =>
-                  `${new Date(s.start_at).toLocaleDateString("fr-FR")} (${s.capacity_available}/${s.capacity_total} places)`,
+                (s: { start_at: string; capacity_available: number; capacity_total: number }) =>
+                  `${new Date(s.start_at).toLocaleDateString(locale === "en" ? "en-US" : locale === "ar" ? "ar-MA" : "fr-FR")} (${s.capacity_available}/${s.capacity_total})`,
               )
               .join(", ")}`,
           );

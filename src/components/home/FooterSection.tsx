@@ -1,12 +1,12 @@
 "use client";
 
-import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { useT } from "@/providers/translations-provider";
 import { Facebook, Instagram, Send, Twitter } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
+import { localizeHref } from "@/lib/routing/locale-path";
+import { useT } from "@/providers/translations-provider";
 
 export function FooterSection() {
   const pathname = usePathname();
@@ -108,7 +108,7 @@ export function FooterSection() {
               </button>
             </form>
             <p className="mt-5 text-sm text-white/60">
-              {t("home.footer.contact")} :{" "}
+              {t("home.footer.contact")}{" "}
               <a
                 href="mailto:contact@okeyo.ma"
                 className="underline hover:text-white/90 transition-colors"

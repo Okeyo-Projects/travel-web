@@ -49,9 +49,7 @@ export async function generateMetadata({
   }).slice(0, 160);
   const baseTitle = `${category.name} — ${t("app.name")}`;
   const title =
-    page > 1
-      ? `${baseTitle} — ${t("common.pageNumber", { page })}`
-      : baseTitle;
+    page > 1 ? `${baseTitle} — ${t("common.pageNumber", { page })}` : baseTitle;
   const description =
     page > 1
       ? `${plainDescription || t("seo.blog.description")} — ${t("common.pageNumber", { page })}`
@@ -172,6 +170,7 @@ export default async function BlogCategoryPage({
                       post={post}
                       blogHref={blogHref}
                       readMoreLabel={t("blog.readMore")}
+                      locale={locale}
                     />
                   ))}
                 </div>

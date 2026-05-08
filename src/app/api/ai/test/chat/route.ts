@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     let systemPrompt = buildSystemPrompt(todayDate);
 
     // Load catalog context
-    const catalogContext = await loadCatalogContext();
+    const catalogContext = await loadCatalogContext("fr");
     systemPrompt += catalogContext;
 
     const startTime = Date.now();

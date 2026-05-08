@@ -1,5 +1,5 @@
-import { BedDouble, DoorOpen, MapPin, Play, Star, Users } from "lucide-react";
 import parse from "html-react-parser";
+import { BedDouble, DoorOpen, MapPin, Play, Star, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,14 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useHlsVideo } from "@/hooks/use-hls-video";
+import { useImageViewer } from "@/hooks/use-image-viewer";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
-import { useImageViewer } from "@/hooks/use-image-viewer";
+import { prepareExperienceRichText } from "@/lib/experience-rich-text";
 import { getIntlLocale } from "@/lib/i18n";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
 import { cn } from "@/lib/utils";
-import { prepareExperienceRichText } from "@/lib/experience-rich-text";
 import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface RoomInfo {
@@ -67,7 +67,13 @@ export function ExperienceCard({
   const { openImageViewer, Viewer } = useImageViewer();
   const pathname = usePathname();
   const experienceHref = localizeHref(
-    buildExperienceHref({ title: experience.title, id: experience.id, slug: experience.slug, region: experience.region, city: experience.city }),
+    buildExperienceHref({
+      title: experience.title,
+      id: experience.id,
+      slug: experience.slug,
+      region: experience.region,
+      city: experience.city,
+    }),
     pathname,
   );
   const intlLocale = getIntlLocale(locale);
@@ -280,7 +286,11 @@ export function ExperienceCard({
             experience.distance_km !== undefined && (
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{experience.distance_km.toFixed(1)} km</span>
+                <span>
+                  {t("chat.experienceCard.distanceKm", {
+                    value: experience.distance_km.toFixed(1),
+                  })}
+                </span>
               </div>
             )}
         </div>

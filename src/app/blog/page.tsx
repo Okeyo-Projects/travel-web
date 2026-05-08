@@ -35,9 +35,7 @@ export async function generateMetadata({
   const baseTitle = t("seo.blog.title");
   const baseDescription = t("seo.blog.description");
   const title =
-    page > 1
-      ? `${baseTitle} — ${t("common.pageNumber", { page })}`
-      : baseTitle;
+    page > 1 ? `${baseTitle} — ${t("common.pageNumber", { page })}` : baseTitle;
   const description =
     page > 1
       ? `${baseDescription} — ${t("common.pageNumber", { page })}`
@@ -129,6 +127,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                       post={post}
                       blogHref={blogHref}
                       readMoreLabel={t("blog.readMore")}
+                      locale={locale}
                     />
                   ))}
                 </div>

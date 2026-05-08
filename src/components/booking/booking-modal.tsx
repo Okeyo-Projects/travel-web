@@ -10,7 +10,7 @@ import { StepPromo } from "@/components/booking/steps/step-promo";
 import { StepReview } from "@/components/booking/steps/step-review";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getIntlLocale } from "@/lib/i18n";
 import type { BookingStep } from "./booking-context";
 
@@ -84,7 +84,10 @@ export function BookingModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeBooking()}>
-      <DialogContent className="sm:max-w-[520px] p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col">
+      <DialogContent
+        aria-describedby={undefined}
+        className="sm:max-w-[520px] p-0 gap-0 overflow-hidden max-h-[92vh] flex flex-col"
+      >
         {/* ── Header ──────────────────────────────────────────────── */}
         <div className="flex items-center gap-3 border-b px-4 py-3">
           {!isFirstStep ? (
@@ -103,9 +106,9 @@ export function BookingModal() {
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide truncate">
               {experience.title}
             </p>
-            <h2 className="text-base font-semibold leading-tight">
+            <DialogTitle className="text-base font-semibold leading-tight">
               {stepTitles[currentStep]}
-            </h2>
+            </DialogTitle>
           </div>
         </div>
 
@@ -216,6 +219,7 @@ export function BookingModal() {
                     </span>
                   )}
                 <Button
+                  type="button"
                   size="lg"
                   onClick={nextStep}
                   disabled={!canProceed || isLoadingQuote}

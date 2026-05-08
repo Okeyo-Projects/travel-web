@@ -1,20 +1,29 @@
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 import { Calendar } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import type { AppLocale } from "@/lib/i18n";
+import { getDateFnsLocale } from "@/lib/i18n";
 import type { BlogPost } from "@/types/blog";
 
 interface BlogCardProps {
   post: BlogPost;
   blogHref: string;
   readMoreLabel: string;
+  locale: AppLocale;
 }
 
-export function BlogCard({ post, blogHref, readMoreLabel }: BlogCardProps) {
+export function BlogCard({
+  post,
+  blogHref,
+  readMoreLabel,
+  locale,
+}: BlogCardProps) {
   const imageUrl = post.featuredMedia?.source_url;
   const dateStr = post.date
-    ? format(new Date(post.date), "d MMMM yyyy", { locale: fr })
+    ? format(new Date(post.date), "d MMMM yyyy", {
+        locale: getDateFnsLocale(locale),
+      })
     : "";
 
   return (
@@ -38,29 +47,27 @@ export function BlogCard({ post, blogHref, readMoreLabel }: BlogCardProps) {
       </Link>
 
       <div className="p-5">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <Calendar className="size-3.5" />
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Calendar className="h-4 w-4" />
           <time dateTime={post.date}>{dateStr}</time>
         </div>
 
-        <h3 className="mt-3 line-clamp-2 text-lg font-semibold leading-snug text-slate-900">
-          <Link
-            href={`${blogHref}/${post.slug}`}
-            className="hover:text-primary transition-colors"
-            dangerouslySetInnerHTML={{ __html: post.title.rendered }}
-          />
+        <h3 className="mt-2 text-lg font-semibold leading-snug text-slate-950 transition-colors group-hover:text-primary">
+          <Link href={`${blogHref}/${post.slug}`}>
+            <span dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+          </Link>
         </h3>
 
-        <div
+        <p
           className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600"
           dangerouslySetInnerHTML={{ __html: post.excerpt.rendered }}
         />
 
         <Link
           href={`${blogHref}/${post.slug}`}
-          className="mt-4 inline-flex items-center text-sm font-medium text-primary hover:underline"
+          className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
         >
-          {readMoreLabel} &rarr;
+          {readMoreLabel}
         </Link>
       </div>
     </article>
