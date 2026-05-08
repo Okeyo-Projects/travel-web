@@ -1,5 +1,40 @@
 import { createClient } from "@/lib/supabase/server";
 
+type DestinationInventory = {
+  city: string;
+  region: string | null;
+  total: number;
+  lodging: number;
+  trip: number;
+  activity: number;
+};
+
+function incrementInventoryType(
+  inventory: DestinationInventory,
+  type: string | null | undefined,
+) {
+  if (type === "lodging") {
+    inventory.lodging += 1;
+  } else if (type === "trip") {
+    inventory.trip += 1;
+  } else if (type === "activity") {
+    inventory.activity += 1;
+  }
+}
+
+function formatInventoryLine(inventory: DestinationInventory): string {
+  const location = inventory.region
+    ? `${inventory.city}, ${inventory.region}`
+    : inventory.city;
+  const parts = [
+    inventory.lodging ? `${inventory.lodging} lodging` : null,
+    inventory.trip ? `${inventory.trip} trip` : null,
+    inventory.activity ? `${inventory.activity} activity` : null,
+  ].filter(Boolean);
+
+  return `- ${location}: ${inventory.total} published experience(s) (${parts.join(", ") || "no typed inventory"})`;
+}
+
 /**
  * Load the FULL catalog of all published experiences with complete details.
  * Since the catalog is small (~20 experiences), we load everything so the AI
@@ -128,12 +163,73 @@ export async function loadCatalogContext(): Promise<string> {
       if (label) amenitiesByExp[a.experience_id].push(label);
     }
 
+    const inventoryByLocation = new Map<string, DestinationInventory>();
+    const lodgingCities = new Map<string, number>();
+    const lodgingRegions = new Map<string, number>();
+
+    for (const exp of experiences) {
+      const city = (exp.city || "").trim() || "Unknown city";
+      const region = (exp.region || "").trim() || null;
+      const key = `${city.toLowerCase()}|${(region || "").toLowerCase()}`;
+      const inventory = inventoryByLocation.get(key) || {
+        city,
+        region,
+        total: 0,
+        lodging: 0,
+        trip: 0,
+        activity: 0,
+      };
+
+      inventory.total += 1;
+      incrementInventoryType(inventory, exp.type);
+      inventoryByLocation.set(key, inventory);
+
+      if (exp.type === "lodging") {
+        lodgingCities.set(city, (lodgingCities.get(city) || 0) + 1);
+        if (region) {
+          lodgingRegions.set(region, (lodgingRegions.get(region) || 0) + 1);
+        }
+      }
+    }
+
+    const inventoryList = Array.from(inventoryByLocation.values()).sort(
+      (a, b) => {
+        if (a.city !== b.city) return a.city.localeCompare(b.city);
+        return (a.region || "").localeCompare(b.region || "");
+      },
+    );
+
+    const lodgingCityList = Array.from(lodgingCities.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([city, count]) => `${city} (${count})`);
+
+    const lodgingRegionList = Array.from(lodgingRegions.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([region, count]) => `${region} (${count})`);
+
     // Build the full catalog text
     const lines: string[] = [];
     lines.push(`\n\n## FULL CATALOG — You know EVERY experience by heart`);
     lines.push(
       `Total: **${experiences.length} published experiences**. You have complete knowledge of each one.\n`,
     );
+    lines.push(
+      `## OKEYO DESTINATION INVENTORY — only these locations have published inventory`,
+    );
+    lines.push(...inventoryList.map(formatInventoryLine));
+    lines.push(
+      `Available lodging cities only: ${lodgingCityList.join(", ") || "none"}.`,
+    );
+    lines.push(
+      `Available lodging regions only: ${lodgingRegionList.join(", ") || "none"}.`,
+    );
+    lines.push(
+      `If a city/region/locality is not listed here or in the individual experience titles/descriptions below, Okeyo has no published inventory there. Do not suggest unlisted nearby cities as Okeyo alternatives.`,
+    );
+    lines.push(
+      `Never suggest Rabat, Salé, Casablanca, Fès, Agadir, or any other city unless it appears in this inventory with published inventory.`,
+    );
+    lines.push("");
 
     for (const exp of experiences) {
       const host = hostsMap[exp.host_id];
@@ -239,13 +335,22 @@ export async function loadCatalogContext(): Promise<string> {
       `- When searching, use the experience IDs and exact city/region names from above.`,
     );
     lines.push(
-      `- "Imlil", "Ouirgane", "Lala Takerkousst" are REGIONS under city "Marrakech".`,
+      `- Use the region filter only for stored administrative regions. For local destinations like "Imlil", "Ouirgane", or "Lala Takerkousst", keep the locality in the query and use city "Marrakech" when relevant.`,
+    );
+    lines.push(
+      `- Keep the type filter empty for broad "experiences", "options", or "what to do" searches; only set type when the user explicitly asks for lodging, trips, or activities.`,
+    );
+    lines.push(
+      `- For named experience requests, search by the exact or partial name first so the chat can show the matching card before asking for dates, destination, or room choices.`,
     );
     lines.push(
       `- You can discuss specific room types, prices, capacities, and equipments from memory.`,
     );
     lines.push(
       `- If a location is NOT in the catalog, be honest and suggest what you DO have.`,
+    );
+    lines.push(
+      `- For unsupported locations, suggest only destinations from the OKEYO DESTINATION INVENTORY above. Do not use general geography to propose nearby cities that have no Okeyo inventory.`,
     );
 
     return lines.join("\n");

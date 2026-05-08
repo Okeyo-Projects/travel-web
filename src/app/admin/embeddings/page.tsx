@@ -364,8 +364,8 @@ export default function EmbeddingsAdminPage() {
             </p>
             <ul className="list-disc list-inside space-y-1 mt-2">
               <li>
-                Embeddings are generated using OpenAI's text-embedding-3-small
-                model
+                Embeddings are generated using OpenAI's text-embedding-3-large
+                model with 1536 dimensions
               </li>
               <li>Each embedding is a 1536-dimensional vector</li>
               <li>Automatic cron job processes missing or stale embeddings</li>

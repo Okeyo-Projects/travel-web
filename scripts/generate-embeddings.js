@@ -19,7 +19,8 @@ import { createClient } from "@supabase/supabase-js";
  */
 import OpenAI from "openai";
 
-const EXPERIENCE_EMBEDDING_MODEL = "text-embedding-3-small";
+const EXPERIENCE_EMBEDDING_MODEL = "text-embedding-3-large";
+const EXPERIENCE_EMBEDDING_DIMENSIONS = 1536;
 
 if (typeof process.loadEnvFile === "function") {
   process.loadEnvFile(".env");
@@ -43,7 +44,7 @@ function hashEmbeddingText(text) {
 
 /**
  * Truncate text to a safe character limit for the embedding model.
- * text-embedding-3-small has an 8192-token context window.
+ * text-embedding-3-large has an 8192-token context window.
  * A conservative estimate is ~3 chars/token for French/English mixed text.
  */
 function truncateForEmbedding(text, maxChars = 24000) {
@@ -82,9 +83,11 @@ async function generateEmbeddingForExperience({
     throw new Error(`No embedding text returned for "${title}"`);
   }
 
+  const embeddingInput = truncateForEmbedding(String(embeddingText));
   const embeddingResponse = await openai.embeddings.create({
     model: EXPERIENCE_EMBEDDING_MODEL,
-    input: embeddingText,
+    input: embeddingInput,
+    dimensions: EXPERIENCE_EMBEDDING_DIMENSIONS,
     encoding_format: "float",
   });
 
@@ -109,7 +112,7 @@ async function generateEmbeddingForExperience({
     {
       p_experience_id: experienceId,
       p_embedding_model: EXPERIENCE_EMBEDDING_MODEL,
-      p_embedding_text_hash: hashEmbeddingText(embeddingText),
+      p_embedding_text_hash: hashEmbeddingText(embeddingInput),
       p_source_changed_at: effectiveSourceChangedAt,
     },
   );

@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import OpenAI from "openai";
 
-export const EXPERIENCE_EMBEDDING_MODEL = "text-embedding-3-small";
+export const EXPERIENCE_EMBEDDING_MODEL = "text-embedding-3-large";
+export const EXPERIENCE_EMBEDDING_DIMENSIONS = 1536;
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -9,8 +10,8 @@ const openai = new OpenAI({
 });
 
 /**
- * Generate embedding for a text using OpenAI's text-embedding-3-small model
- * Returns a 1536-dimensional vector
+ * Generate embedding for a text using OpenAI's text-embedding-3-large model
+ * constrained to the database's 1536-dimensional vector column.
  */
 export async function embedText(text: string): Promise<number[]> {
   if (!text || text.trim().length === 0) {
@@ -21,6 +22,7 @@ export async function embedText(text: string): Promise<number[]> {
     const response = await openai.embeddings.create({
       model: EXPERIENCE_EMBEDDING_MODEL,
       input: text,
+      dimensions: EXPERIENCE_EMBEDDING_DIMENSIONS,
       encoding_format: "float",
     });
 
@@ -66,6 +68,7 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
     const response = await openai.embeddings.create({
       model: EXPERIENCE_EMBEDDING_MODEL,
       input: validTexts,
+      dimensions: EXPERIENCE_EMBEDDING_DIMENSIONS,
       encoding_format: "float",
     });
 

@@ -9,7 +9,9 @@ const searchExperiencesSchema = z.object({
   type: z
     .enum(["lodging", "trip", "activity"])
     .optional()
-    .describe("Filter by experience type when the user asks for one."),
+    .describe(
+      'Filter by catalog type only when the user explicitly asks for lodging, a trip/excursion, or an activity. Do not set this just because the user says generic "experience(s)" or "options".',
+    ),
   city: z
     .string()
     .optional()
@@ -18,7 +20,7 @@ const searchExperiencesSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Filter by region/area name (e.g., "Imlil", "Ouirgane", "Lala Takerkousst")',
+      'Filter by stored administrative region (e.g., "Marrakech-Safi", "Tanger-Tétouan-Al Hoceïma"). Do not put local areas like "Imlil", "Ouirgane", or "Lala Takerkousst" here; keep them in the natural-language query with city="Marrakech".',
     ),
   max_price_mad: z
     .number()
@@ -142,6 +144,281 @@ function buildLocationCandidates(value?: string): string[] {
     normalizeCity(value),
     ...getCityVariants(value),
   ]).slice(0, 12);
+}
+
+const TYPE_HINT_PATTERNS: Record<
+  NonNullable<z.infer<typeof searchExperiencesSchema>["type"]>,
+  RegExp
+> = {
+  lodging:
+    /\b(riad|auberge|gite|hebergement|hotel|lodge|maison d[' ]hotes|chambre|dormir|sejour|nuit|room|stay)\b/i,
+  trip: /\b(trek|randonnee|excursion|circuit|tour|visite guidee|guide|depart|trip)\b/i,
+  activity:
+    /\b(activite|atelier|cours|cuisine|workshop|class|surf|quad|balade)\b/i,
+};
+
+const BROAD_CATALOG_QUERY_PATTERN =
+  /\b(experience|experiences|option|options|idee|idees|quoi faire|choses a faire|things to do|what to do)\b/i;
+
+const EXPERIENCE_NAME_HINT_PATTERN =
+  /\b(riad|auberge|kasbah|dar|lodge|maison|villa|camp|hotel|hôtel)\b/i;
+
+const EXPERIENCE_NAME_INTENT_PATTERN =
+  /\b(visiter|voir|montrer|details|détails|reserver|réserver|book|visit|show)\b/i;
+
+const GENERIC_NAME_QUERY_TOKENS = new Set([
+  "auberge",
+  "book",
+  "cette",
+  "dar",
+  "details",
+  "détails",
+  "donne",
+  "experience",
+  "expérience",
+  "hôtel",
+  "hotel",
+  "kasbah",
+  "lodge",
+  "maison",
+  "montrer",
+  "reserve",
+  "reserver",
+  "réserver",
+  "riad",
+  "villa",
+  "visit",
+  "visiter",
+  "voir",
+  "veux",
+]);
+
+function normalizeSearchText(value: string | undefined): string {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function shouldRetryWithoutTypeFilter(
+  params: z.infer<typeof searchExperiencesSchema>,
+): boolean {
+  if (!params.type) return false;
+
+  const normalizedQuery = normalizeSearchText(params.query);
+  if (!normalizedQuery) return false;
+  if (TYPE_HINT_PATTERNS[params.type].test(normalizedQuery)) return false;
+  if (
+    !params.city &&
+    !params.region &&
+    /^experience\s+[a-z0-9]+(?:\s|$)/i.test(normalizedQuery)
+  ) {
+    return false;
+  }
+
+  if (BROAD_CATALOG_QUERY_PATTERN.test(normalizedQuery)) return true;
+
+  return Boolean(params.city || params.region);
+}
+
+function extractNameQueryTokens(query: string): string[] {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return [];
+
+  return Array.from(
+    new Set(
+      normalizedQuery
+        .split(/\s+/)
+        .filter((token) => token.length >= 3)
+        .filter((token) => !GENERIC_NAME_QUERY_TOKENS.has(token)),
+    ),
+  ).slice(0, 8);
+}
+
+function looksLikeExperienceNameQuery(query: string): boolean {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return false;
+  if (
+    !EXPERIENCE_NAME_HINT_PATTERN.test(normalizedQuery) &&
+    !EXPERIENCE_NAME_INTENT_PATTERN.test(normalizedQuery)
+  ) {
+    return false;
+  }
+
+  return extractNameQueryTokens(query).length > 0;
+}
+
+function looksLikeSingularExperienceNameQuery(query: string): boolean {
+  return /^experience\s+[a-z0-9]+(?:\s|$)/i.test(normalizeSearchText(query));
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a) return b.length;
+  if (!b) return a.length;
+
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+  const current = Array.from({ length: b.length + 1 }, () => 0);
+
+  for (let i = 1; i <= a.length; i++) {
+    current[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      current[j] = Math.min(
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + cost,
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+
+  return previous[b.length] ?? Number.POSITIVE_INFINITY;
+}
+
+function tokenMatchesTitle(token: string, titleTokens: string[]): boolean {
+  return titleTokens.some((titleToken) => {
+    if (titleToken === token) return true;
+    if (token.length >= 4 && titleToken.includes(token)) return true;
+    if (titleToken.length >= 4 && token.includes(titleToken)) return true;
+    if (Math.min(token.length, titleToken.length) < 4) return false;
+    return levenshteinDistance(token, titleToken) <= 1;
+  });
+}
+
+function scoreTitleMatch(queryTokens: string[], title: string): number {
+  const normalizedTitle = normalizeSearchText(title);
+  if (!normalizedTitle || queryTokens.length === 0) return 0;
+
+  const titleTokens = normalizedTitle.split(/\s+/);
+  const matchedTokens = queryTokens.filter((token) =>
+    tokenMatchesTitle(token, titleTokens),
+  );
+
+  if (matchedTokens.length === 0) return 0;
+
+  const coverage = matchedTokens.length / queryTokens.length;
+  const substringBonus = normalizedTitle.includes(queryTokens.join(" "))
+    ? 40
+    : 0;
+  return coverage * 100 + substringBonus;
+}
+
+async function findDirectTitleMatches(
+  db: any,
+  params: z.infer<typeof searchExperiencesSchema>,
+) {
+  if (
+    !looksLikeExperienceNameQuery(params.query) &&
+    !looksLikeSingularExperienceNameQuery(params.query)
+  ) {
+    return null;
+  }
+
+  const queryTokens = extractNameQueryTokens(params.query);
+  const cityFilter = normalizeSearchText(params.city);
+  const regionFilter = normalizeSearchText(params.region);
+
+  const { data: experiences, error } = await db
+    .from("experiences")
+    .select(
+      "id, title, short_description, type, city, region, avg_rating, reviews_count, thumbnail_url, video_id, host_id",
+    )
+    .eq("status", "published")
+    .not("title", "ilike", "%test%")
+    .limit(100);
+
+  if (error || !experiences) return [];
+
+  const scored = experiences
+    .filter(
+      (experience: any) => !params.type || experience.type === params.type,
+    )
+    .filter((experience: any) => {
+      if (
+        cityFilter &&
+        normalizeSearchText(experience.city).includes(cityFilter) === false
+      ) {
+        return false;
+      }
+
+      if (
+        regionFilter &&
+        normalizeSearchText(experience.region).includes(regionFilter) === false
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .map((experience: any) => ({
+      experience,
+      score: scoreTitleMatch(queryTokens, experience.title || ""),
+    }))
+    .filter(({ score }: { score: number }) => score >= 70)
+    .sort(
+      (
+        a: { score: number; experience: { title?: string | null } },
+        b: { score: number; experience: { title?: string | null } },
+      ) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (a.experience.title || "").localeCompare(
+          b.experience.title || "",
+        );
+      },
+    )
+    .slice(0, params.limit || 4);
+
+  if (scored.length === 0) return [];
+
+  const experienceIds = scored.map(({ experience }: any) => experience.id);
+  const hostIds = scored
+    .map(({ experience }: any) => experience.host_id)
+    .filter(Boolean);
+
+  const [{ data: hosts }, { data: lodgingPrices }, { data: tripPrices }] =
+    await Promise.all([
+      hostIds.length
+        ? db.from("hosts").select("id, name").in("id", hostIds)
+        : Promise.resolve({ data: [] }),
+      db
+        .from("lodging_room_types")
+        .select("experience_id, price_cents")
+        .in("experience_id", experienceIds)
+        .is("deleted_at", null),
+      db
+        .from("experiences_trip")
+        .select("experience_id, price_cents")
+        .in("experience_id", experienceIds),
+    ]);
+
+  const hostById = new Map<string, { name?: string | null }>(
+    (hosts || []).map((host: any) => [host.id, host]),
+  );
+  const priceByExperience = new Map<string, number>();
+
+  for (const row of [...(lodgingPrices || []), ...(tripPrices || [])]) {
+    if (!row.price_cents) continue;
+    const current = priceByExperience.get(row.experience_id);
+    if (current === undefined || row.price_cents < current) {
+      priceByExperience.set(row.experience_id, row.price_cents);
+    }
+  }
+
+  return scored.map(({ experience }: any) => ({
+    ...experience,
+    price_cents: priceByExperience.get(experience.id) ?? null,
+    distance_km: null,
+    has_promo: false,
+    promo_badge: null,
+    promo_discount_type: null,
+    promo_discount_value: null,
+    auto_apply_promo: false,
+    is_available: true,
+    host_name: hostById.get(experience.host_id)?.name ?? null,
+  }));
 }
 
 function resolveMediaAssetUrl(
@@ -522,12 +799,36 @@ export const searchExperiences = tool({
   description: `Search for Okeyo Travel experiences in Morocco using semantic search.
 This tool combines AI-powered semantic search with filters like location, price, dates, and promotions.
 Use this when users ask to find, search, or discover experiences.
-The tool handles city name variants. It keeps requested locations strict unless allow_location_fallback is true.`,
+The tool handles city name variants. Use it to resolve named experiences/properties too: pass the exact name or partial name in query, with limit 4, before asking clarifying questions. Use city for the main catalog city/province. Use region only for stored administrative regions; keep local areas/neighborhoods in query text. Keep type unset for broad "experiences/options/what to do" requests so lodging, trips, and activities can all match. It keeps requested locations strict unless allow_location_fallback is true.`,
   inputSchema: searchExperiencesSchema,
   execute: async (params) => {
     try {
       const supabase = await createClient();
       const db = supabase as any;
+
+      const directTitleMatches = await findDirectTitleMatches(db, params);
+      if (directTitleMatches && directTitleMatches.length > 0) {
+        return {
+          success: true,
+          count: directTitleMatches.length,
+          results: await formatResults(directTitleMatches, db),
+          has_more: directTitleMatches.length >= (params.limit || 4),
+          note: "Résultats trouvés par correspondance directe sur le nom de l'expérience.",
+        };
+      }
+      if (
+        directTitleMatches &&
+        directTitleMatches.length === 0 &&
+        looksLikeSingularExperienceNameQuery(params.query)
+      ) {
+        return {
+          success: true,
+          count: 0,
+          results: [],
+          has_more: false,
+          note: `Aucune expérience ne correspond au nom "${params.query}". Vérifiez l'orthographe ou précisez la destination.`,
+        };
+      }
 
       // Generate embedding for the search query
       let queryEmbedding: number[] | null = null;
@@ -623,7 +924,32 @@ The tool handles city name variants. It keeps requested locations strict unless 
         };
       }
 
-      // --- Attempt 4: Drop location filters only after explicit user consent ---
+      // --- Attempt 4: If the model guessed a type for a broad destination query, relax it ---
+      if (
+        (!results || results.length === 0) &&
+        shouldRetryWithoutTypeFilter(params)
+      ) {
+        const relaxedParams = { ...params, type: undefined };
+        const attempt = await executeSearch(db, queryEmbedding, relaxedParams);
+
+        if (attempt.results && attempt.results.length > 0) {
+          results = attempt.results;
+          searchNote =
+            "Résultats trouvés en gardant la destination demandée, sans filtre de type, car la demande était générale.";
+        }
+      }
+
+      if (results && results.length > 0) {
+        return {
+          success: true,
+          count: results.length,
+          results: await formatResults(results, db),
+          has_more: results.length >= (params.limit || 10),
+          note: searchNote,
+        };
+      }
+
+      // --- Attempt 5: Drop location filters only after explicit user consent ---
       if ((params.city || params.region) && params.allow_location_fallback) {
         const attempt = await executeSearch(db, queryEmbedding, params, {
           city_slug_filter: null,
