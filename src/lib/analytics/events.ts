@@ -49,6 +49,9 @@ export const ANALYTICS_EVENT = {
   AI_TOOL_USED: "ai_tool_used",
   // Performance
   WEB_VITALS: "web_vitals",
+  // Brevo
+  BREVO_EVENT_SENT: "brevo_event_sent",
+  BREVO_EVENT_FAILED: "brevo_event_failed",
 } as const;
 
 export type AnalyticsEventName =

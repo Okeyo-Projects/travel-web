@@ -17,6 +17,8 @@ import {
   identifyAnalyticsUser,
   resetAnalyticsUser,
 } from "@/lib/analytics/posthog";
+import { trackBrevoEvent } from "@/lib/brevo/events";
+import { syncUserToBrevo } from "@/lib/brevo/sync";
 import { createClient } from "@/lib/supabase/client";
 
 export type AuthMode = "login" | "signup" | "forgot-password";
@@ -124,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user = nextSession.user;
       const { data: fetchedProfile } = await supabase
         .from("profiles")
-        .select("is_host, preferred_language, created_at")
+        .select("is_host, preferred_language, created_at, display_name")
         .eq("id", user.id)
         .maybeSingle();
       let profile = normalizeProfileSnapshot(fetchedProfile);
@@ -166,6 +168,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           null,
         created_at: profile?.created_at ?? user.created_at ?? null,
       });
+
+      // Sync to Brevo on every session init (idempotent upsert)
+      const email = user.email;
+      if (email) {
+        const displayName =
+          fetchedProfile?.display_name ?? getFallbackDisplayName(user);
+        const language =
+          fetchedProfile?.preferred_language ??
+          getFallbackPreferredLanguage(user);
+
+        void syncUserToBrevo({ email, displayName, language }).then(() => {
+          // Only track signup event for newly created profiles (within last minute)
+          const createdAt = profile?.created_at;
+          if (createdAt) {
+            const ageMs = Date.now() - new Date(createdAt).getTime();
+            if (ageMs < 60_000) {
+              void trackBrevoEvent(email, "user_signed_up");
+            }
+          }
+        });
+      }
     },
     [supabase],
   );

@@ -17,6 +17,7 @@ import {
 } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { useChatContext } from "@/contexts/ChatContext";
+import { useAuth } from "@/hooks/use-auth";
 import {
   useConversation,
   useCreateConversation,
@@ -24,6 +25,7 @@ import {
 } from "@/hooks/use-conversations";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { trackBrevoEvent } from "@/lib/brevo/events";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { ChatInput } from "./ChatInput";
@@ -285,6 +287,7 @@ export function BookingChat({
     setLockedConversationId,
     startNewConversation,
   } = useChatContext();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -628,6 +631,12 @@ export function BookingChat({
           source: pendingResponse?.source ?? "unknown",
           tool_name: toolName,
         });
+        if (
+          user?.email &&
+          (toolName === "searchExperiences" || toolName === "getLinkedExperiences")
+        ) {
+          void trackBrevoEvent(user.email, "ai_experiences_listed");
+        }
       }
 
       trackedResponseMessageIds.current.add(message.id);
@@ -674,6 +683,9 @@ export function BookingChat({
           conversation_id: currentConvId,
           source,
         });
+        if (user?.email) {
+          void trackBrevoEvent(user.email, "ai_conversation_started");
+        }
         setConversationId(currentConvId);
 
         // Update URL without navigation (to preserve component state)

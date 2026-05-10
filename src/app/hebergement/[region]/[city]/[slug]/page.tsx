@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { ExperienceDetailTracker } from "@/components/experience/ExperienceDetailTracker";
 import { ExperienceDetailView } from "@/components/experience/ExperienceDetailView";
 import { SimilarExperiences } from "@/components/experience/SimilarExperiences";
 import { FooterSection } from "@/components/home/FooterSection";
@@ -41,6 +42,10 @@ export default async function HebergementPage({
 
   return (
     <>
+      <ExperienceDetailTracker
+        experienceId={experience.id}
+        experienceSlug={experience.slug}
+      />
       <ExperienceDetailView
         experience={experience}
         url={url}

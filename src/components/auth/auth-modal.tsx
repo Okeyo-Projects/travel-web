@@ -31,6 +31,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { trackBrevoEvent } from "@/lib/brevo/events";
+import { syncUserToBrevo } from "@/lib/brevo/sync";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/translations-provider";
@@ -210,6 +212,15 @@ export function AuthModal() {
         setIsSubmitting(false);
         return;
       }
+
+      // Sync to Brevo + trigger welcome flow (fire-and-forget)
+      void syncUserToBrevo({
+        email: signupEmail.trim(),
+        displayName: signupName.trim(),
+        language: preferredLanguage,
+      }).then(() => {
+        void trackBrevoEvent(signupEmail.trim(), "user_signed_up");
+      });
     }
 
     if (!data.session) {

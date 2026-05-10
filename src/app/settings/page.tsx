@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { updateBrevoContactAttributes } from "@/lib/brevo/sync";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { createClient } from "@/lib/supabase/client";
 
@@ -72,8 +73,14 @@ export default function SettingsPage() {
         .eq("id", user.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+
+      if (variables.preferred_language && user?.email) {
+        void updateBrevoContactAttributes(user.email, {
+          language: variables.preferred_language,
+        });
+      }
     },
   });
 

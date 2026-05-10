@@ -101,8 +101,7 @@ const DEFAULT_SUGGESTED_PROMPTS: AgentSuggestedPrompts = {
     },
     {
       title: "Piscine et détente",
-      prompt:
-        "Montre-moi un hébergement avec piscine et hammam près de Marrakech.",
+      prompt: "Montre-moi un hébergement avec piscine près de Marrakech.",
     },
     {
       title: "Petit budget",
@@ -120,7 +119,7 @@ const DEFAULT_SUGGESTED_PROMPTS: AgentSuggestedPrompts = {
     },
     {
       title: "Pool and relaxation",
-      prompt: "Show me a stay with a pool and hammam near Marrakech.",
+      prompt: "Show me a stay with a pool near Marrakech.",
     },
     {
       title: "Budget stay",
@@ -168,7 +167,7 @@ type SupabaseQueryBuilder = {
     column: string,
     options?: {
       ascending?: boolean;
-    },
+    }
   ): SupabaseQueryBuilder;
   limit(count: number): SupabaseQueryBuilder;
   maybeSingle(): Promise<SupabaseSingleResult>;
@@ -176,7 +175,7 @@ type SupabaseQueryBuilder = {
 
 type AgentConfigDatabaseClient = {
   from(
-    table: "ai_agent_configs" | "ai_agent_config_versions",
+    table: "ai_agent_configs" | "ai_agent_config_versions"
   ): SupabaseQueryBuilder;
 };
 
@@ -186,7 +185,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function sanitizeStringArray(
   input: unknown,
-  fallback: string[] = [],
+  fallback: string[] = []
 ): string[] {
   if (!Array.isArray(input)) return fallback;
 
@@ -210,7 +209,7 @@ function sanitizeToolArray(input: unknown): AgentToolName[] {
 
   const allowed = new Set(KNOWN_AGENT_TOOLS);
   const selected = sanitizeStringArray(input).filter((tool) =>
-    allowed.has(tool as AgentToolName),
+    allowed.has(tool as AgentToolName)
   ) as AgentToolName[];
 
   return selected.length > 0 ? selected : KNOWN_AGENT_TOOLS;
@@ -280,14 +279,14 @@ function sanitizeRecord(input: unknown): Record<string, unknown> {
 function sanitizeNumber(
   value: unknown,
   fallback: number,
-  opts?: { min?: number; max?: number; integer?: boolean },
+  opts?: { min?: number; max?: number; integer?: boolean }
 ): number {
   const numeric =
     typeof value === "number"
       ? value
       : typeof value === "string"
-        ? Number(value)
-        : NaN;
+      ? Number(value)
+      : NaN;
 
   if (!Number.isFinite(numeric)) return fallback;
 
@@ -417,7 +416,7 @@ export async function loadAgentRuntimeConfig({
         {
           min: 0,
           max: 2,
-        },
+        }
       ),
       maxSteps: sanitizeNumber(versionRow.max_steps, fallback.maxSteps, {
         min: 1,
@@ -440,7 +439,7 @@ export async function loadAgentRuntimeConfig({
           : fallback.fallbackLanguage,
       supportedLanguages: sanitizeStringArray(
         versionRow.supported_languages,
-        fallback.supportedLanguages,
+        fallback.supportedLanguages
       ),
       welcomeMessages: sanitizeWelcomeMessages(versionRow.welcome_messages),
       suggestedPrompts: sanitizeSuggestedPrompts(versionRow.suggested_prompts),

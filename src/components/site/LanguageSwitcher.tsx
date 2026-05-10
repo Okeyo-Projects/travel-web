@@ -1,10 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { LOCALES, type AppLocale } from "@/lib/i18n";
-import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
-import { cn } from "@/lib/utils";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { updateBrevoContactAttributes } from "@/lib/brevo/sync";
+import { type AppLocale, LOCALES } from "@/lib/i18n";
+import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { useSiteI18n } from "./site-i18n";
 
 interface LanguageSwitcherProps {
@@ -25,10 +28,26 @@ export function LanguageSwitcher({
   const { locale, t } = useSiteI18n();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
-  const switchLocale = (nextLocale: AppLocale) => {
+  const switchLocale = async (nextLocale: AppLocale) => {
     if (nextLocale === locale) {
       return;
+    }
+
+    // If logged in, persist language to profile + Brevo before navigating
+    if (user) {
+      const supabase = createClient();
+      void supabase
+        .from("profiles")
+        .update({ preferred_language: nextLocale })
+        .eq("id", user.id);
+
+      if (user.email) {
+        void updateBrevoContactAttributes(user.email, {
+          language: nextLocale,
+        });
+      }
     }
 
     const query = searchParams.toString();

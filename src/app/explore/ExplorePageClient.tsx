@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { trackBrevoEvent } from "@/lib/brevo/events";
 import type { DateRange } from "react-day-picker";
 import { CompactExperienceCard, ExperienceGroup } from "@/components/explore";
 import { ExperienceDetailModal } from "@/components/explore/ExperienceDetailModal";
@@ -67,6 +69,9 @@ export function ExplorePageClient({
   );
   const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
 
+  const { user } = useAuth();
+  const trackedRef = useRef(false);
+
   const [locationInput, setLocationInput] = useState(qParam);
   const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(
     null,
@@ -75,6 +80,14 @@ export function ExplorePageClient({
   useEffect(() => {
     setLocationInput(qParam);
   }, [qParam]);
+
+  useEffect(() => {
+    if (trackedRef.current) return;
+    trackedRef.current = true;
+    if (user?.email) {
+      void trackBrevoEvent(user.email, "page_explore_viewed");
+    }
+  }, [user?.email]);
 
   const activeType = typeParam;
   const dateFrom = dateFromParam || undefined;
