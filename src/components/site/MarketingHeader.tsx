@@ -215,7 +215,7 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
       {/* Mobile menu overlay - portaled to body to escape stacking contexts */}
       {mobileMenuOpen &&
         createPortal(
-          <div className="fixed inset-0 z-[100] md:hidden">
+          <div className="fixed inset-0 z-[100] lg:hidden">
             {/* Backdrop */}
             <button
               type="button"

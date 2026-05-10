@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,9 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  PhoneInput,
   normalizePhoneNumber,
   type PhoneCountry,
-  PhoneInput,
 } from "@/components/ui/phone-input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,6 +33,9 @@ import { syncUserToBrevo } from "@/lib/brevo/sync";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/translations-provider";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 type MessageState = {
   type: "error" | "success";
@@ -300,7 +300,7 @@ export function AuthModal() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: window.location.href,
+        redirectTo: window.location.origin + window.location.pathname,
       },
     });
 
@@ -607,7 +607,7 @@ export function AuthModal() {
           >
             {t("authModal.continueWithGoogle")}
           </Button>
-          <Button
+          {/* <Button
             type="button"
             onClick={() => handleOAuthSignIn("apple")}
             className="h-11 rounded-full bg-black text-white hover:bg-black/90"
@@ -615,7 +615,7 @@ export function AuthModal() {
           >
             <AppleLogo className="mr-2 h-4 w-4" />
             {t("authModal.continueWithApple")}
-          </Button>
+          </Button> */}
         </>
       ) : null}
 

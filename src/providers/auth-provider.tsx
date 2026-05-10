@@ -196,20 +196,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isActive = true;
 
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (!isActive) return;
-        setSession(data.session ?? null);
-        if (data.session?.user) {
-          void identifyUser(data.session);
+    // Handle OAuth callback: exchange the authorization code for a session
+    const handleOAuthCallback = async () => {
+      if (typeof window === "undefined") return;
+
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+
+      if (code) {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("OAuth code exchange failed", error);
+          }
+          // Remove code from URL to prevent re-processing on refresh
+          url.searchParams.delete("code");
+          url.searchParams.delete("state");
+          window.history.replaceState({}, document.title, url.toString());
+        } catch (err) {
+          console.error("OAuth callback handling failed", err);
         }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!isActive) return;
-        setLoading(false);
-      });
+      }
+    };
+
+    handleOAuthCallback().then(() => {
+      if (!isActive) return;
+
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          if (!isActive) return;
+          setSession(data.session ?? null);
+          if (data.session?.user) {
+            void identifyUser(data.session);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          if (!isActive) return;
+          setLoading(false);
+        });
+    });
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession ?? null);
