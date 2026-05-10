@@ -1,10 +1,11 @@
 import { BrevoClient } from "@getbrevo/brevo";
 
-const apiKey = process.env.BREVO_API_KEY;
+// Client-side uses NEXT_PUBLIC_ prefix; server-side falls back to BREVO_API_KEY
+const apiKey = process.env.NEXT_PUBLIC_BREVO_API_KEY || process.env.BREVO_API_KEY;
 
 if (!apiKey) {
   console.warn(
-    "[Brevo] BREVO_API_KEY is not set. Brevo features will be disabled.",
+    "[Brevo] BREVO_API_KEY (or NEXT_PUBLIC_BREVO_API_KEY) is not set. Brevo features will be disabled.",
   );
 }
 
