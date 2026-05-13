@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spec Deep Link Chat — Okeyo Travel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;0,900;1,300;1,700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #f9f6f0;
+  --ink: #18140a;
+  --cream: #f0ead8;
+  --cream2: #e6ddc8;
+  --rust: #b8431a;
+  --rust2: #d4572a;
+  --gold: #b8890a;
+  --sage: #3d6b4a;
+  --sky: #1e5c7a;
+  --muted: #6b6050;
+  --border: #d8d0bc;
+  --code-bg: #1a1610;
+  --code-text: #e8dfc8;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--ink); }
+
+/* ── HEADER ── */
+.hdr {
+  background: var(--ink);
+  padding: 56px 72px 48px;
+  position: relative; overflow: hidden;
+}
+.hdr::before {
+  content:'';
+  position:absolute; top:-80px; right:-60px;
+  width:480px; height:480px;
+  background: radial-gradient(circle, rgba(184,67,26,.2) 0%, transparent 60%);
+}
+.hdr::after {
+  content:'';
+  position:absolute; bottom:-100px; left:15%;
+  width:380px; height:380px;
+  background: radial-gradient(circle, rgba(184,137,10,.12) 0%, transparent 60%);
+}
+.hdr-eyebrow {
+  font-size:10px; font-weight:600; letter-spacing:.2em; text-transform:uppercase;
+  color: var(--rust2); margin-bottom:18px; display:flex; align-items:center; gap:10px;
+  position:relative;
+}
+.hdr-eyebrow::before { content:''; width:28px; height:1px; background:var(--rust2); }
+.hdr h1 {
+  font-family:'Fraunces',serif; font-size:48px; font-weight:900;
+  line-height:1.05; letter-spacing:-.02em; color:#f5f0e8;
+  margin-bottom:14px; position:relative;
+}
+.hdr h1 em { font-style:italic; color: #d4a85a; }
+.hdr-meta {
+  color:#6a6050; font-size:13px; font-weight:300;
+  display:flex; gap:24px; flex-wrap:wrap; position:relative;
+}
+.hdr-meta strong { color:#a09080; font-weight:500; }
+
+/* ── BODY ── */
+.body { padding:56px 72px; max-width:1100px; }
+
+/* ── SECTION TITLE ── */
+.sec {
+  font-family:'Fraunces',serif; font-size:28px; font-weight:700;
+  margin-top:56px; margin-bottom:6px; line-height:1.2;
+}
+.sec em { font-style:italic; color:var(--rust); }
+.sec-sub {
+  font-size:13px; color:var(--muted); font-weight:300;
+  margin-bottom:28px; line-height:1.7; max-width:680px;
+}
+
+/* ── FLOW DIAGRAM ── */
+.flow {
+  display:flex; align-items:center; gap:0;
+  background:#fff; border:1px solid var(--border);
+  border-radius:18px; overflow:hidden; margin-bottom:8px;
+}
+.flow-step {
+  flex:1; padding:22px 20px; position:relative;
+  border-right:1px solid var(--border);
+  text-align:center;
+}
+.flow-step:last-child { border-right:none; }
+.flow-step-num {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--rust); color:#fff;
+  font-family:'Fraunces',serif; font-size:13px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 10px;
+}
+.flow-step-icon { font-size:24px; margin-bottom:8px; }
+.flow-step-title { font-size:12px; font-weight:700; margin-bottom:4px; }
+.flow-step-desc { font-size:11px; color:var(--muted); line-height:1.5; }
+.flow-arrow {
+  font-size:20px; color:var(--rust); padding:0 4px; flex-shrink:0;
+  font-weight:300;
+}
+
+/* ── URL ANATOMY ── */
+.url-box {
+  background:var(--code-bg);
+  border-radius:14px; padding:24px 28px; margin-bottom:8px;
+  font-family:'DM Mono',monospace; font-size:14px;
+  line-height:2;
+}
+.url-base { color:#e8dfc8; }
+.url-path { color:#82d4f0; }
+.url-param { color:#f0c87a; }
+.url-value { color:#90e0a0; }
+.url-amp { color:#e8dfc8; opacity:.4; }
+.url-legend {
+  display:flex; gap:20px; flex-wrap:wrap; margin-top:14px;
+  padding-top:14px; border-top:1px solid #2a2418;
+}
+.url-legend-item { display:flex; align-items:center; gap:8px; font-size:11px; font-family:'DM Sans',sans-serif; color:#8a8070; }
+.url-legend-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+
+/* ── CODE BLOCK ── */
+.code-wrap {
+  background:var(--code-bg); border-radius:14px; overflow:hidden; margin-bottom:8px;
+}
+.code-header {
+  background:#231f18; padding:12px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.code-lang {
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
+  color:var(--rust2); letter-spacing:.08em; text-transform:uppercase;
+}
+.code-file { font-family:'DM Mono',monospace; font-size:11px; color:#6a6050; }
+.code-body { padding:24px 28px; overflow-x:auto; }
+pre {
+  font-family:'DM Mono',monospace; font-size:13px; line-height:1.8;
+  color:var(--code-text); white-space:pre; tab-size:2;
+}
+.c-comment { color:#5a5040; }
+.c-keyword { color:#d4857a; }
+.c-string { color:#90e0a0; }
+.c-variable { color:#82d4f0; }
+.c-function { color:#f0c87a; }
+.c-number { color:#c8a0f0; }
+.c-operator { color:#e8dfc8; opacity:.6; }
+
+/* ── PROMPT BOX ── */
+.prompt-wrap {
+  background: linear-gradient(135deg, #0f1a12, #121a0f);
+  border: 1px solid #2a3a2a;
+  border-radius:16px; overflow:hidden; margin-bottom:8px;
+}
+.prompt-header {
+  background:#162018; padding:14px 22px;
+  display:flex; align-items:center; gap:10px;
+}
+.prompt-icon { font-size:16px; }
+.prompt-label {
+  font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
+  color:#5aaa6a; letter-spacing:.1em; text-transform:uppercase;
+}
+.prompt-sublabel { font-size:11px; color:#3a4a3a; margin-right:auto; }
+.prompt-lang-badge {
+  font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px;
+}
+.prompt-lang-badge.ar { background:rgba(90,170,106,.15); color:#5aaa6a; }
+.prompt-lang-badge.fr { background:rgba(100,140,200,.15); color:#6496d4; }
+.prompt-body { padding:24px 28px; }
+.prompt-body p {
+  font-size:13px; line-height:1.85; color:#a0c0a0;
+  font-weight:300; white-space:pre-wrap;
+}
+.prompt-var {
+  background:rgba(240,200,122,.12); color:#f0c87a;
+  padding:1px 6px; border-radius:4px;
+  font-family:'DM Mono',monospace; font-size:12px;
+}
+.prompt-highlight { color:#d4f0d4; font-weight:500; }
+
+/* ── CONVERSATION MOCKUP ── */
+.convo {
+  background:#fff; border:1px solid var(--border);
+  border-radius:16px; padding:24px; margin-bottom:8px;
+}
+.convo-header {
+  display:flex; align-items:center; gap:10px;
+  padding-bottom:16px; border-bottom:1px solid #f0ead8; margin-bottom:20px;
+}
+.convo-avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg,#e91e63,#ff6b35);
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.convo-name { font-size:13px; font-weight:700; }
+.convo-status {
+  font-size:11px; color:var(--sage); font-weight:500;
+  display:flex; align-items:center; gap:5px;
+}
+.convo-dot { width:6px; height:6px; border-radius:50%; background:var(--sage); }
+.msg { display:flex; gap:10px; margin-bottom:14px; }
+.msg.user { flex-direction:row-reverse; }
+.msg-avatar {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.msg-avatar.ai { background:linear-gradient(135deg,#e91e63,#ff6b35); }
+.msg-avatar.user { background:#f0ead8; }
+.msg-bubble {
+  max-width:75%; padding:12px 16px; border-radius:16px; font-size:13px; line-height:1.6;
+}
+.msg.ai .msg-bubble { background:#f7f4f0; border-radius:4px 16px 16px 16px; }
+.msg.user .msg-bubble { background:var(--rust); color:#fff; border-radius:16px 4px 16px 16px; }
+.msg-bubble strong { font-weight:700; }
+.msg-bubble .price { color:var(--rust); font-weight:700; font-size:15px; }
+.msg-bubble .rating { color:var(--gold); }
+
+.action-buttons { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.action-btn {
+  padding:9px 16px; border-radius:22px; font-size:12px; font-weight:700;
+  cursor:pointer; border:none; font-family:'DM Sans',sans-serif;
+}
+.action-btn.primary { background:var(--rust); color:#fff; }
+.action-btn.secondary { background:#f0ead8; color:var(--ink); border:1px solid var(--border); }
+
+/* ── PROPERTY TABLE ── */
+.prop-table {
+  width:100%; border-collapse:collapse;
+  background:#fff; border-radius:14px; overflow:hidden;
+  border:1px solid var(--border);
+}
+.prop-table th {
+  background:var(--cream); font-size:10px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+  padding:12px 16px; text-align:left; border-bottom:1px solid var(--border);
+}
+.prop-table td {
+  padding:12px 16px; font-size:12px; border-bottom:1px solid #f0ead8;
+  vertical-align:top; line-height:1.5;
+}
+.prop-table tr:last-child td { border-bottom:none; }
+.prop-table .param-name { font-family:'DM Mono',monospace; color:var(--rust); font-size:12px; font-weight:500; }
+.prop-table .param-example { font-family:'DM Mono',monospace; color:var(--sage); font-size:11px; }
+.req-badge { background:rgba(184,67,26,.12); color:var(--rust); padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+.opt-badge { background:rgba(61,107,74,.1); color:var(--sage); padding:2px 8px; border-radius:20px; font-size:10px; font-weight:700; }
+
+/* ── CARDS ── */
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.card {
+  background:#fff; border:1px solid var(--border);
+  border-radius:14px; padding:22px 24px;
+}
+.card-title { font-family:'Fraunces',serif; font-size:15px; font-weight:700; margin-bottom:6px; }
+.card-desc { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:14px; font-weight:300; }
+
+/* ── CHECKLIST ── */
+.checklist { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.checklist li {
+  display:flex; gap:10px; align-items:flex-start;
+  font-size:13px; line-height:1.5; padding:10px 14px;
+  background:var(--cream); border-radius:10px;
+}
+.checklist li .check { color:var(--sage); font-weight:700; flex-shrink:0; }
+.checklist li .tag { font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; background:rgba(184,67,26,.1); color:var(--rust); margin-right:4px; }
+
+/* ── ALERT ── */
+.alert { border-radius:12px; padding:16px 20px; margin-bottom:12px; display:flex; gap:14px; }
+.alert.warn { background:rgba(184,137,10,.08); border:1px solid rgba(184,137,10,.2); }
+.alert.info { background:rgba(30,92,122,.07); border:1px solid rgba(30,92,122,.18); }
+.alert.good { background:rgba(61,107,74,.07); border:1px solid rgba(61,107,74,.18); }
+.alert-icon { font-size:18px; flex-shrink:0; }
+.alert-body { font-size:13px; color:var(--muted); line-height:1.6; font-weight:300; }
+.alert-body strong { color:var(--ink); font-weight:600; }
+
+/* ── FOOTER ── */
+.footer {
+  padding:32px 72px; border-top:1px solid var(--border);
+  color:var(--muted); font-size:12px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.footer strong { color:var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-eyebrow">Spec Technique · Deep Link Chat</div>
+  <h1>Pub Facebook → Chat IA<br><em>Contexte automatique</em></h1>
+  <div class="hdr-meta">
+    <span>🎯 <strong>Option 1 — Le chat prend l'initiative</strong></span>
+    <span>🌐 <strong>okeyotravel.com</strong></span>
+    <span>📋 <strong>Document développeur — Mai 2026</strong></span>
+  </div>
+</div>
+
+<div class="body">
+
+<!-- ══ VUE D'ENSEMBLE ══ -->
+<div class="sec">Vue d'ensemble — <em>Ce qu'on veut faire</em></div>
+<div class="sec-sub">
+  Quand un utilisateur clique sur une pub Facebook d'un riad spécifique, il arrive sur /chat et le chat démarre <strong>automatiquement</strong> avec la présentation complète du riad — sans que l'utilisateur n'ait besoin de taper quoi que ce soit. L'agent IA fait tout le travail et demande directement si l'utilisateur veut réserver.
+</div>
+
+<!-- FLOW -->
+<div class="flow">
+  <div class="flow-step">
+    <div class="flow-step-num">1</div>
+    <div class="flow-step-icon">📱</div>
+    <div class="flow-step-title">Pub Facebook</div>
+    <div class="flow-step-desc">L'user voit la pub du Riad Dar Zitoun dans son feed</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="flow-step-num">2</div>
+    <div class="flow-step-icon">🔗</div>
+    <div class="flow-step-title">Clic sur la pub</div>
+    <div class="flow-step-desc">URL avec paramètre <code style="font-size:10px;color:var(--rust)">/ar/chat?property=dar-zitoun</code></div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="flow-step-num">3</div>
+    <div class="flow-step-icon">⚡</div>
+    <div class="flow-step-title">Lecture du paramètre</div>
+    <div class="flow-step-desc">Le frontend lit <code style="font-size:10px;color:var(--rust)">?property=</code> dans l'URL</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="flow-step-num">4</div>
+    <div class="flow-step-icon">🤖</div>
+    <div class="flow-step-title">Prompt IA injecté</div>
+    <div class="flow-step-desc">Le contexte du riad est envoyé à l'agent IA avant le premier message</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="flow-step-num">5</div>
+    <div class="flow-step-icon">💬</div>
+    <div class="flow-step-title">Chat démarre</div>
+    <div class="flow-step-desc">L'IA présente le riad et propose la réservation automatiquement</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">
+    <div class="flow-step-num">6</div>
+    <div class="flow-step-icon">🎫</div>
+    <div class="flow-step-title">Réservation</div>
+    <div class="flow-step-desc">L'user répond "نعم" et le tunnel de réservation démarre</div>
+  </div>
+</div>
+
+<!-- ══ STRUCTURE URL ══ -->
+<div class="sec" style="margin-top:40px">Structure des <em>URLs</em></div>
+<div class="sec-sub">Chaque pub Facebook aura sa propre URL. Le paramètre <code>property</code> est le slug unique de la propriété dans ta base de données.</div>
+
+<div class="url-box">
+  <div><span class="url-base">https://okeyotravel.com</span><span class="url-path">/ar/chat</span><span class="url-amp">?</span><span class="url-param">property</span><span class="url-amp">=</span><span class="url-value">dar-zitoun</span><span class="url-amp">&</span><span class="url-param">utm_source</span><span class="url-amp">=</span><span class="url-value">fb</span><span class="url-amp">&</span><span class="url-param">utm_medium</span><span class="url-amp">=</span><span class="url-value">paid</span><span class="url-amp">&</span><span class="url-param">utm_campaign</span><span class="url-amp">=</span><span class="url-value">riad-marrakech-mai26</span></div>
+  <div class="url-legend">
+    <div class="url-legend-item"><div class="url-legend-dot" style="background:#82d4f0"></div>/ar/chat — Page chat en arabe (/fr/chat pour FR)</div>
+    <div class="url-legend-item"><div class="url-legend-dot" style="background:#f0c87a"></div>property — Paramètre clé : slug de la propriété</div>
+    <div class="url-legend-item"><div class="url-legend-dot" style="background:#90e0a0"></div>valeur — Slug unique de chaque riad/lodge dans ta DB</div>
+    <div class="url-legend-item"><div class="url-legend-dot" style="background:#c8a0f0"></div>utm_* — Pour tracker dans PostHog par propriété</div>
+  </div>
+</div>
+
+<!-- TABLE PARAMÈTRES -->
+<div class="sec" style="margin-top:40px">Paramètres — <em>Table de référence</em></div>
+<div class="sec-sub">Tous les paramètres URL supportés par le système. Seul <code>property</code> est obligatoire pour déclencher le mode deep link.</div>
+
+<table class="prop-table">
+  <thead>
+    <tr>
+      <th>Paramètre</th>
+      <th>Type</th>
+      <th>Exemple</th>
+      <th>Description</th>
+      <th>Statut</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="param-name">property</td>
+      <td>string</td>
+      <td class="param-example">dar-zitoun</td>
+      <td>Slug unique de la propriété dans la DB. Doit correspondre exactement à l'ID/slug utilisé dans Supabase.</td>
+      <td><span class="req-badge">Requis</span></td>
+    </tr>
+    <tr>
+      <td class="param-name">lang</td>
+      <td>string</td>
+      <td class="param-example">ar / fr / en</td>
+      <td>Langue du chat. Si absent, déduit depuis l'URL (/ar/chat → ar, /fr/chat → fr). Utilisé pour choisir le bon prompt.</td>
+      <td><span class="opt-badge">Optionnel</span></td>
+    </tr>
+    <tr>
+      <td class="param-name">promo</td>
+      <td>string</td>
+      <td class="param-example">OKEYO5</td>
+      <td>Code promo à mentionner dans le premier message de l'IA. Si présent, l'IA annonce le discount dès le début.</td>
+      <td><span class="opt-badge">Optionnel</span></td>
+    </tr>
+    <tr>
+      <td class="param-name">checkin</td>
+      <td>date</td>
+      <td class="param-example">2026-06-15</td>
+      <td>Date d'arrivée pré-remplie. L'IA utilise cette date dans sa présentation des disponibilités.</td>
+      <td><span class="opt-badge">Optionnel</span></td>
+    </tr>
+    <tr>
+      <td class="param-name">nights</td>
+      <td>number</td>
+      <td class="param-example">2</td>
+      <td>Nombre de nuits. Permet à l'IA de calculer et présenter le prix total directement.</td>
+      <td><span class="opt-badge">Optionnel</span></td>
+    </tr>
+    <tr>
+      <td class="param-name">utm_source</td>
+      <td>string</td>
+      <td class="param-example">fb</td>
+      <td>Source tracking PostHog. Permet de savoir quelle pub a généré la conversation et la réservation.</td>
+      <td><span class="opt-badge">Tracking</span></td>
+    </tr>
+    <tr>
+      <td class="param-name">utm_campaign</td>
+      <td>string</td>
+      <td class="param-example">riad-marrakech-mai26</td>
+      <td>Nom de la campagne Facebook. Permet de comparer les performances par campagne dans PostHog.</td>
+      <td><span class="opt-badge">Tracking</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══ CODE JAVASCRIPT ══ -->
+<div class="sec">Code — <em>Frontend (JavaScript)</em></div>
+<div class="sec-sub">Ce code va dans le composant de la page /chat. Il lit l'URL, récupère les données du riad depuis Supabase, et injecte le contexte dans l'agent IA avant de démarrer la conversation.</div>
+
+<div class="code-wrap">
+  <div class="code-header">
+    <span class="code-lang">JavaScript / TypeScript</span>
+    <span class="code-file">app/[lang]/chat/page.tsx (ou ChatPage.jsx)</span>
+  </div>
+  <div class="code-body">
+<pre><span class="c-comment">// ─────────────────────────────────────────────────────
+// ÉTAPE 1 — Lire les paramètres URL à l'arrivée sur /chat
+// ─────────────────────────────────────────────────────</span>
+
+<span class="c-keyword">const</span> <span class="c-function">getDeepLinkParams</span> <span class="c-operator">=</span> () <span class="c-operator">=></span> {
+  <span class="c-keyword">const</span> <span class="c-variable">params</span> <span class="c-operator">=</span> <span class="c-keyword">new</span> <span class="c-function">URLSearchParams</span>(<span class="c-variable">window</span>.<span class="c-variable">location</span>.<span class="c-variable">search</span>)
+  <span class="c-keyword">return</span> {
+    property:  <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'property'</span>),   <span class="c-comment">// ex: "dar-zitoun"</span>
+    lang:      <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'lang'</span>),       <span class="c-comment">// ex: "ar" ou "fr"</span>
+    promo:     <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'promo'</span>),      <span class="c-comment">// ex: "OKEYO5"</span>
+    checkin:   <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'checkin'</span>),    <span class="c-comment">// ex: "2026-06-15"</span>
+    nights:    <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'nights'</span>),     <span class="c-comment">// ex: "2"</span>
+    utmSource: <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'utm_source'</span>), <span class="c-comment">// ex: "fb"</span>
+    utmCampaign: <span class="c-variable">params</span>.<span class="c-function">get</span>(<span class="c-string">'utm_campaign'</span>)
+  }
+}
+
+<span class="c-comment">// ─────────────────────────────────────────────────────
+// ÉTAPE 2 — Récupérer les données du riad depuis Supabase
+// ─────────────────────────────────────────────────────</span>
+
+<span class="c-keyword">const</span> <span class="c-function">fetchPropertyData</span> <span class="c-operator">=</span> <span class="c-keyword">async</span> (<span class="c-variable">slug</span><span class="c-operator">:</span> <span class="c-variable">string</span>) <span class="c-operator">=></span> {
+  <span class="c-keyword">const</span> { <span class="c-variable">data</span>, <span class="c-variable">error</span> } <span class="c-operator">=</span> <span class="c-keyword">await</span> <span class="c-variable">supabase</span>
+    .<span class="c-function">from</span>(<span class="c-string">'properties'</span>)
+    .<span class="c-function">select</span>(<span class="c-string">'*'</span>)
+    .<span class="c-function">eq</span>(<span class="c-string">'slug'</span>, <span class="c-variable">slug</span>)
+    .<span class="c-function">single</span>()
+  
+  <span class="c-keyword">if</span> (<span class="c-variable">error</span> <span class="c-operator">||</span> <span class="c-operator">!</span><span class="c-variable">data</span>) <span class="c-keyword">return</span> <span class="c-keyword">null</span>
+  <span class="c-keyword">return</span> <span class="c-variable">data</span> <span class="c-comment">// { name, name_ar, description_ar, price_per_night, rating, location, amenities, images... }</span>
+}
+
+<span class="c-comment">// ─────────────────────────────────────────────────────
+// ÉTAPE 3 — Construire le contexte à injecter dans l'IA
+// ─────────────────────────────────────────────────────</span>
+
+<span class="c-keyword">const</span> <span class="c-function">buildDeepLinkContext</span> <span class="c-operator">=</span> (
+  <span class="c-variable">property</span><span class="c-operator">:</span> <span class="c-variable">PropertyData</span>,
+  <span class="c-variable">params</span><span class="c-operator">:</span> <span class="c-variable">DeepLinkParams</span>
+) <span class="c-operator">=></span> {
+  <span class="c-keyword">return</span> {
+    <span class="c-comment">// Ce qui sera envoyé au système prompt de l'IA</span>
+    systemContext: {
+      mode: <span class="c-string">'deep_link_property'</span>,
+      property: {
+        id:           <span class="c-variable">property</span>.<span class="c-variable">id</span>,
+        name:         <span class="c-variable">property</span>.<span class="c-variable">name_ar</span>,      <span class="c-comment">// nom en arabe</span>
+        description:  <span class="c-variable">property</span>.<span class="c-variable">description_ar</span>, <span class="c-comment">// desc en arabe</span>
+        price:        <span class="c-variable">property</span>.<span class="c-variable">price_per_night</span>,
+        rating:       <span class="c-variable">property</span>.<span class="c-variable">rating</span>,
+        location:     <span class="c-variable">property</span>.<span class="c-variable">location</span>,
+        amenities:    <span class="c-variable">property</span>.<span class="c-variable">amenities</span>,    <span class="c-comment">// ["piscine", "hammam", ...]</span>
+        images:       <span class="c-variable">property</span>.<span class="c-variable">images</span>.<span class="c-function">slice</span>(<span class="c-number">0</span>, <span class="c-number">3</span>)
+      },
+      userContext: {
+        source:       <span class="c-variable">params</span>.<span class="c-variable">utmSource</span>,   <span class="c-comment">// "fb" → vient d'une pub Facebook</span>
+        promo:        <span class="c-variable">params</span>.<span class="c-variable">promo</span>,       <span class="c-comment">// "OKEYO5" si présent</span>
+        checkin:      <span class="c-variable">params</span>.<span class="c-variable">checkin</span>,     <span class="c-comment">// date si dans l'URL</span>
+        nights:       <span class="c-variable">params</span>.<span class="c-variable">nights</span>       <span class="c-comment">// nuits si dans l'URL</span>
+      }
+    }
+  }
+}
+
+<span class="c-comment">// ─────────────────────────────────────────────────────
+// ÉTAPE 4 — Démarrer la conversation automatiquement
+// À appeler dans useEffect() au montage du composant
+// ─────────────────────────────────────────────────────</span>
+
+<span class="c-keyword">useEffect</span>(() <span class="c-operator">=></span> {
+  <span class="c-keyword">const</span> <span class="c-function">initDeepLink</span> <span class="c-operator">=</span> <span class="c-keyword">async</span> () <span class="c-operator">=></span> {
+    <span class="c-keyword">const</span> <span class="c-variable">params</span> <span class="c-operator">=</span> <span class="c-function">getDeepLinkParams</span>()
+    
+    <span class="c-comment">// Pas de paramètre property → affichage normal du chat</span>
+    <span class="c-keyword">if</span> (<span class="c-operator">!</span><span class="c-variable">params</span>.<span class="c-variable">property</span>) <span class="c-keyword">return</span>
+    
+    <span class="c-comment">// Tracker dans PostHog pour mesurer les conversions par pub</span>
+    <span class="c-variable">posthog</span>.<span class="c-function">capture</span>(<span class="c-string">'deep_link_chat_opened'</span>, {
+      property_slug: <span class="c-variable">params</span>.<span class="c-variable">property</span>,
+      utm_source:    <span class="c-variable">params</span>.<span class="c-variable">utmSource</span>,
+      utm_campaign:  <span class="c-variable">params</span>.<span class="c-variable">utmCampaign</span>
+    })
+
+    <span class="c-comment">// Récupérer les données du riad</span>
+    <span class="c-keyword">const</span> <span class="c-variable">property</span> <span class="c-operator">=</span> <span class="c-keyword">await</span> <span class="c-function">fetchPropertyData</span>(<span class="c-variable">params</span>.<span class="c-variable">property</span>)
+    <span class="c-keyword">if</span> (<span class="c-operator">!</span><span class="c-variable">property</span>) <span class="c-keyword">return</span> <span class="c-comment">// propriété non trouvée → chat normal</span>
+
+    <span class="c-comment">// Construire le contexte et démarrer le chat automatiquement</span>
+    <span class="c-keyword">const</span> <span class="c-variable">context</span> <span class="c-operator">=</span> <span class="c-function">buildDeepLinkContext</span>(<span class="c-variable">property</span>, <span class="c-variable">params</span>)
+    
+    <span class="c-comment">// Envoyer le premier message IA automatiquement (sans input user)</span>
+    <span class="c-function">startChatWithContext</span>(<span class="c-variable">context</span>) <span class="c-comment">// ta fonction existante d'envoi de message</span>
+  }
+
+  <span class="c-function">initDeepLink</span>()
+}, []) <span class="c-comment">// exécuté une seule fois au montage</span></pre>
+  </div>
+</div>
+
+<!-- ══ PROMPT IA ══ -->
+<div class="sec">Prompt — <em>Agent IA (version arabe)</em></div>
+<div class="sec-sub">Ce prompt système est injecté automatiquement quand un paramètre <code>property</code> est détecté. Il remplace ou complète ton system prompt habituel. L'IA sait qu'elle doit présenter ce riad spécifique et proposer la réservation.</div>
+
+<div class="prompt-wrap">
+  <div class="prompt-header">
+    <span class="prompt-icon">🤖</span>
+    <span class="prompt-label">System Prompt — Deep Link Mode</span>
+    <span class="prompt-sublabel">injecté automatiquement</span>
+    <span class="prompt-lang-badge ar">عربي</span>
+  </div>
+  <div class="prompt-body">
+    <p>أنت مساعد حجز سفر لمنصة Okeyo Travel. لقد وصل المستخدم من إعلان فيسبوك لـ <span class="prompt-var">{{property.name}}</span>.
+
+<span class="prompt-highlight">مهمتك في هذه المحادثة:</span>
+1. قدّم <span class="prompt-var">{{property.name}}</span> بشكل جذاب وفوري — ابدأ بدون انتظار أي رسالة من المستخدم
+2. اذكر السعر (<span class="prompt-var">{{property.price_per_night}}</span> درهم/ليلة)، التقييم (<span class="prompt-var">{{property.rating}}</span>/5)، والموقع (<span class="prompt-var">{{property.location}}</span>)
+3. اذكر 3 مميزات بارزة من: <span class="prompt-var">{{property.amenities}}</span>
+4. في نهاية رسالتك الأولى، اسأل مباشرة: <span class="prompt-highlight">"هل تريد أن أحجز لك؟ أخبرني بتاريخ وصولك وعدد الليالي 🗓️"</span>
+5. إذا قال المستخدم "نعم" أو أعطاك تواريخ — انتقل مباشرة إلى تأكيد الحجز
+
+<span class="prompt-highlight">معلومات الإقامة:</span>
+- الاسم: <span class="prompt-var">{{property.name}}</span>
+- الوصف: <span class="prompt-var">{{property.description}}</span>
+- السعر: <span class="prompt-var">{{property.price_per_night}}</span> درهم/ليلة
+- التقييم: <span class="prompt-var">{{property.rating}}</span>/5 ⭐
+- الموقع: <span class="prompt-var">{{property.location}}</span>
+- المميزات: <span class="prompt-var">{{property.amenities}}</span>
+
+<span class="prompt-highlight">السياق الإضافي:</span>
+{{#if promo}}- لدى المستخدم كود خصم <span class="prompt-var">{{promo}}</span> — اذكره في نهاية رسالتك الأولى{{/if}}
+{{#if checkin}}- المستخدم يفكر في تاريخ <span class="prompt-var">{{checkin}}</span>{{/if}}
+{{#if nights}}- ولمدة <span class="prompt-var">{{nights}}</span> ليالٍ{{/if}}
+
+<span class="prompt-highlight">أسلوب الرد:</span>
+- احتفظ بنبرة دافئة وشخصية، لا رسمية
+- استخدم emojis باعتدال 🏨 🌟 🗓️
+- لا تسأل أكثر من سؤال واحد في نفس الوقت
+- إذا لم يرد المستخدم على سؤال الحجز، اعرض بدلاً من ذلك خيارات مشابهة أخرى</p>
+  </div>
+</div>
+
+<div class="prompt-wrap" style="margin-top:12px">
+  <div class="prompt-header">
+    <span class="prompt-icon">🤖</span>
+    <span class="prompt-label">System Prompt — Deep Link Mode</span>
+    <span class="prompt-sublabel">même logique, langue différente</span>
+    <span class="prompt-lang-badge fr">Français</span>
+  </div>
+  <div class="prompt-body">
+    <p>Tu es un assistant de réservation pour Okeyo Travel. L'utilisateur arrive d'une pub Facebook pour <span class="prompt-var">{{property.name}}</span>.
+
+<span class="prompt-highlight">Ta mission dans cette conversation :</span>
+1. Présente <span class="prompt-var">{{property.name}}</span> de façon chaleureuse et immédiate — sans attendre de message de l'utilisateur
+2. Mentionne le prix (<span class="prompt-var">{{property.price_per_night}}</span> MAD/nuit), la note (<span class="prompt-var">{{property.rating}}</span>/5) et la localisation
+3. Cite 3 points forts de : <span class="prompt-var">{{property.amenities}}</span>
+4. Termine ton premier message par : <span class="prompt-highlight">"Vous souhaitez que je vous fasse la réservation ? Dites-moi vos dates et je m'occupe de tout 🗓️"</span>
+5. Si l'utilisateur dit "oui" ou donne des dates — passe directement à la confirmation
+
+{{#if promo}}<span class="prompt-highlight">Important :</span> L'utilisateur a un code promo <span class="prompt-var">{{promo}}</span> → mentionne-le dans ton premier message{{/if}}</p>
+  </div>
+</div>
+
+<!-- ══ APERÇU CONVERSATION ══ -->
+<div class="sec">Aperçu — <em>Ce que voit l'utilisateur</em></div>
+<div class="sec-sub">Simulation de la conversation générée automatiquement quand un utilisateur clique sur la pub du Riad Dar Zitoun. L'utilisateur n'a rien tapé — l'IA a démarré seule.</div>
+
+<div class="convo">
+  <div class="convo-header">
+    <div class="convo-avatar">🧭</div>
+    <div>
+      <div class="convo-name">مساعد Okeyo</div>
+      <div class="convo-status"><div class="convo-dot"></div>متاح الآن</div>
+    </div>
+  </div>
+
+  <!-- Message IA automatique -->
+  <div class="msg ai">
+    <div class="msg-avatar ai">🧭</div>
+    <div style="flex:1">
+      <div class="msg-bubble">
+        🏨 <strong>مرحباً! رأيت إعلان دار الزيتون على فيسبوك؟</strong><br><br>
+        إليك ما يميزه — رياض أصيل في قلب مدينة مراكش العتيقة، على بُعد خطوات من ساحة جامع الفنا.<br><br>
+        ✨ <strong>المميزات الرئيسية:</strong><br>
+        🏊 مسبح خاص هادئ في الباحة<br>
+        🛁 حمام مغربي تقليدي بالزليج<br>
+        🥐 إفطار مغربي فاخر كل صباح<br><br>
+        <span class="rating">⭐ 4.9/5</span> · <span class="price">850 درهم / ليلة</span><br><br>
+        هل تريد أن أحجز لك؟ أخبرني بتاريخ وصولك وعدد الليالي 🗓️
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn primary">نعم، أريد الحجز ✓</button>
+        <button class="action-btn secondary">أريد معرفة المزيد</button>
+        <button class="action-btn secondary">أبحث عن شيء آخر</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Réponse user -->
+  <div class="msg user" style="margin-top:16px">
+    <div class="msg-avatar user">👤</div>
+    <div class="msg-bubble">نعم، أريد الحجز ليلة 20 يونيو ليلتين</div>
+  </div>
+
+  <!-- Suite IA -->
+  <div class="msg ai">
+    <div class="msg-avatar ai">🧭</div>
+    <div style="flex:1">
+      <div class="msg-bubble">
+        ممتاز! 🎉 إليك تفاصيل حجزك:<br><br>
+        🏨 <strong>دار الزيتون</strong> — مراكش<br>
+        📅 الوصول: الجمعة 20 يونيو<br>
+        📅 المغادرة: الأحد 22 يونيو<br>
+        🌙 ليلتان × 850 درهم<br>
+        💰 <strong>المجموع: 1 700 درهم</strong><br><br>
+        🎁 لديك كود خصم <strong style="color:var(--rust)">OKEYO5</strong> — خصم 85 درهم<br>
+        ✅ <strong>الإجمالي بعد الخصم: 1 615 درهم</strong><br><br>
+        هل تؤكد الحجز؟
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn primary">تأكيد الحجز →</button>
+        <button class="action-btn secondary">تعديل التواريخ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ÉVÉNEMENTS POSTHOG ══ -->
+<div class="sec">Tracking — <em>Événements PostHog à ajouter</em></div>
+<div class="sec-sub">Ces événements permettront de mesurer précisément le ROI de chaque pub Facebook. Tu pourras voir dans PostHog combien de clics de pub ont abouti à une réservation, par propriété et par campagne.</div>
+
+<div class="code-wrap">
+  <div class="code-header">
+    <span class="code-lang">PostHog Events</span>
+    <span class="code-file">À ajouter dans le code du chat</span>
+  </div>
+  <div class="code-body">
+<pre><span class="c-comment">// 1. Quand le chat deep link s'ouvre</span>
+<span class="c-variable">posthog</span>.<span class="c-function">capture</span>(<span class="c-string">'deep_link_chat_opened'</span>, {
+  property_slug: <span class="c-string">'dar-zitoun'</span>,
+  utm_source:    <span class="c-string">'fb'</span>,
+  utm_campaign:  <span class="c-string">'riad-marrakech-mai26'</span>
+})
+
+<span class="c-comment">// 2. Quand l'user répond au premier message de l'IA</span>
+<span class="c-variable">posthog</span>.<span class="c-function">capture</span>(<span class="c-string">'deep_link_first_reply'</span>, {
+  property_slug: <span class="c-string">'dar-zitoun'</span>,
+  reply_type:    <span class="c-string">'booking_intent'</span> <span class="c-comment">// ou 'more_info' ou 'other'</span>
+})
+
+<span class="c-comment">// 3. Quand la réservation est confirmée</span>
+<span class="c-variable">posthog</span>.<span class="c-function">capture</span>(<span class="c-string">'deep_link_booking_completed'</span>, {
+  property_slug: <span class="c-string">'dar-zitoun'</span>,
+  revenue_mad:   <span class="c-number">1615</span>,
+  utm_campaign:  <span class="c-string">'riad-marrakech-mai26'</span>,
+  promo_used:    <span class="c-string">'OKEYO5'</span>
+})</pre>
+  </div>
+</div>
+
+<!-- ══ EXEMPLES URLS PAR PUB ══ -->
+<div class="sec">Exemples — <em>Une URL par pub Facebook</em></div>
+<div class="sec-sub">Chaque annonce Facebook doit avoir sa propre URL avec le bon paramètre. Voici les URLs à créer pour tes premières campagnes.</div>
+
+<div class="code-wrap">
+  <div class="code-header">
+    <span class="code-lang">URLs Campagnes Facebook</span>
+    <span class="code-file">À coller dans Meta Ads Manager → URL de destination</span>
+  </div>
+  <div class="code-body">
+<pre><span class="c-comment">── Pub 1 : Riad Dar Zitoun — Marrakech ──────────────────</span>
+<span class="c-variable">AR:</span> <span class="c-string">https://okeyotravel.com/ar/chat?property=dar-zitoun&utm_source=fb&utm_medium=paid&utm_campaign=riad-casa-mai26&promo=OKEYO5</span>
+<span class="c-variable">FR:</span> <span class="c-string">https://okeyotravel.com/fr/chat?property=dar-zitoun&utm_source=fb&utm_medium=paid&utm_campaign=riad-casa-mai26&promo=OKEYO5</span>
+
+<span class="c-comment">── Pub 2 : Lodge Atlas ──────────────────────────────────</span>
+<span class="c-variable">AR:</span> <span class="c-string">https://okeyotravel.com/ar/chat?property=atlas-lodge&utm_source=fb&utm_medium=paid&utm_campaign=lodge-atlas-mai26</span>
+<span class="c-variable">FR:</span> <span class="c-string">https://okeyotravel.com/fr/chat?property=atlas-lodge&utm_source=fb&utm_medium=paid&utm_campaign=lodge-atlas-mai26</span>
+
+<span class="c-comment">── Pub 3 : Maison d'hôtes Chefchaouen ──────────────────</span>
+<span class="c-variable">AR:</span> <span class="c-string">https://okeyotravel.com/ar/chat?property=chefchaouen-blue&utm_source=fb&utm_medium=paid&utm_campaign=chefchaouen-mai26</span>
+
+<span class="c-comment">── Pub 4 : Riad avec dates pré-remplies ─────────────────</span>
+<span class="c-variable">AR:</span> <span class="c-string">https://okeyotravel.com/ar/chat?property=dar-zitoun&checkin=2026-06-20&nights=2&utm_source=fb&utm_medium=paid</span>
+<span class="c-comment">   → L'IA utilisera ces dates directement dans sa présentation</span></pre>
+  </div>
+</div>
+
+<!-- ══ CHECKLIST DÉVELOPPEUR ══ -->
+<div class="sec">Checklist — <em>Tout ce qu'il faut faire</em></div>
+<div class="sec-sub">À donner à ton développeur. Chaque item est indépendant et peut être fait dans l'ordre.</div>
+
+<div class="grid2">
+  <div class="card">
+    <div class="card-title">🔧 Backend / IA</div>
+    <div class="card-desc">Modifications côté serveur et prompt de l'agent</div>
+    <ul class="checklist">
+      <li><span class="check">□</span><div><span class="tag">IA</span>Modifier le système de prompt pour accepter un contexte <code>property</code> en paramètre optionnel</div></li>
+      <li><span class="check">□</span><div><span class="tag">IA</span>Créer les 2 versions du prompt deep link (arabe + français) avec les variables <code>{{property.*}}</code></div></li>
+      <li><span class="check">□</span><div><span class="tag">DB</span>Vérifier que la table <code>properties</code> a bien les champs : <code>slug</code>, <code>name_ar</code>, <code>description_ar</code>, <code>amenities</code>, <code>price_per_night</code>, <code>rating</code></div></li>
+      <li><span class="check">□</span><div><span class="tag">API</span>Créer ou vérifier l'endpoint <code>GET /api/properties/:slug</code> qui retourne les données publiques de la propriété</div></li>
+      <li><span class="check">□</span><div><span class="tag">DB</span>S'assurer que chaque propriété a un <code>slug</code> unique (ex: <code>dar-zitoun</code>)</div></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-title">🖥️ Frontend / Chat</div>
+    <div class="card-desc">Modifications dans le composant de la page /chat</div>
+    <ul class="checklist">
+      <li><span class="check">□</span><div><span class="tag">JS</span>Ajouter la fonction <code>getDeepLinkParams()</code> qui lit l'URL au montage</div></li>
+      <li><span class="check">□</span><div><span class="tag">JS</span>Appeler <code>fetchPropertyData(slug)</code> si paramètre présent</div></li>
+      <li><span class="check">□</span><div><span class="tag">JS</span>Injecter le contexte dans le premier appel à l'agent IA via <code>startChatWithContext()</code></div></li>
+      <li><span class="check">□</span><div><span class="tag">UX</span>Afficher un état de chargement (spinner ou skeleton) pendant que les données du riad se chargent</div></li>
+      <li><span class="check">□</span><div><span class="tag">UX</span>Fallback propre si le slug n'existe pas → chat normal sans erreur visible</div></li>
+      <li><span class="check">□</span><div><span class="tag">PH</span>Ajouter les 3 événements PostHog de tracking</div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══ ALERTES ══ -->
+<div class="sec" style="margin-top:40px">Points d'attention</div>
+
+<div class="alert warn">
+  <div class="alert-icon">⚠️</div>
+  <div class="alert-body">
+    <strong>Le slug doit être en minuscules avec tirets, sans accents.</strong> Assure-toi que les slugs dans ta DB correspondent exactement à ceux dans les URLs Facebook. Une typo = chat normal affiché sans contexte (mais pas d'erreur visible pour l'user).
+  </div>
+</div>
+<div class="alert info">
+  <div class="alert-icon">💡</div>
+  <div class="alert-body">
+    <strong>Mise en cache recommandée.</strong> Les données des propriétés changent rarement — mets en cache le résultat de <code>fetchPropertyData()</code> pendant 1h (Redis ou localStorage) pour éviter un appel Supabase à chaque clic de pub Facebook.
+  </div>
+</div>
+<div class="alert good">
+  <div class="alert-icon">✅</div>
+  <div class="alert-body">
+    <strong>Ce système est rétrocompatible.</strong> Si l'URL ne contient pas de paramètre <code>property</code> (visite directe, partage de lien, etc.), le chat s'affiche normalement avec les suggestions habituelles. Aucune régression possible.
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <span>Spec Deep Link Chat · <strong>Okeyo Travel</strong> · Mai 2026</span>
+  <span style="font-family:'Fraunces',serif;font-weight:700;color:var(--rust)">okeyotravel.com</span>
+</div>
+
+</body>
+</html>

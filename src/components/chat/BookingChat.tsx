@@ -26,15 +26,28 @@ import {
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { trackBrevoEvent } from "@/lib/brevo/events";
+import {
+  type ActiveChatDeepLink,
+  buildChatDeepLinkRequest,
+  CHAT_DEEP_LINK_BOOTSTRAP_MESSAGE,
+  type ChatDeepLinkParams,
+  classifyChatDeepLinkReply,
+  isChatDeepLinkBootstrapText,
+} from "@/lib/chat/deep-link";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
 import { ChatInput } from "./ChatInput";
 import { ChatWelcome } from "./ChatWelcome";
+import {
+  ExperienceCardsGrid,
+  type ExperienceGridItem,
+} from "./ExperienceCardsGrid";
 import { type AssistantFeedbackValue, MessageList } from "./MessageList";
 
 interface BookingChatProps {
   initialConversationId?: string | null;
   initialMessage?: string;
+  initialDeepLink?: ChatDeepLinkParams | null;
 }
 
 interface PublicAgentConfigResponse {
@@ -61,7 +74,8 @@ type ChatSendSource =
   | "typed"
   | "welcome_suggestion"
   | "quick_reply"
-  | "initial_prompt";
+  | "initial_prompt"
+  | "deep_link_bootstrap";
 
 type ChatMessage = UIMessage & {
   content?: string;
@@ -238,10 +252,25 @@ function hasRenderableAssistantContent(
   });
 }
 
+function extractMessageText(message: ChatMessage): string {
+  const content =
+    typeof message.content === "string" ? message.content.trim() : "";
+
+  if (content) return content;
+  return extractTextFromParts(message.parts);
+}
+
 function shouldPersistMessage(
   message: ChatMessage,
   status: "submitted" | "streaming" | "ready" | "error",
 ): boolean {
+  if (
+    message.role === "user" &&
+    isChatDeepLinkBootstrapText(extractMessageText(message))
+  ) {
+    return false;
+  }
+
   if (message.role !== "assistant") return true;
   if (status !== "ready") return false;
 
@@ -271,6 +300,7 @@ function buildPersistedMessagePayload(message: ChatMessage) {
 export function BookingChat({
   initialConversationId,
   initialMessage,
+  initialDeepLink,
 }: BookingChatProps) {
   const { locale, t } = useSiteI18n();
   const {
@@ -291,6 +321,11 @@ export function BookingChat({
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [resolvedDeepLink, setResolvedDeepLink] =
+    useState<ActiveChatDeepLink | null>(null);
+  const [deepLinkStatus, setDeepLinkStatus] = useState<
+    "idle" | "resolving" | "ready" | "bootstrapping" | "active" | "fallback"
+  >(initialDeepLink && !initialConversationId ? "resolving" : "idle");
   const [messageFeedbackById, setMessageFeedbackById] = useState<
     Partial<Record<string, AssistantFeedbackValue>>
   >({});
@@ -306,6 +341,8 @@ export function BookingChat({
     new Map<string, AssistantResponseAnalyticsContext>(),
   );
   const hasTrackedBookingCreatedRef = useRef(false);
+  const hasTrackedDeepLinkOpenedRef = useRef(false);
+  const hasTrackedDeepLinkFirstReplyRef = useRef(false);
   const hasTrackedInputFocusRef = useRef(false);
   const pendingResponseRef = useRef<{
     source: ChatSendSource;
@@ -459,12 +496,16 @@ export function BookingChat({
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
+    setResolvedDeepLink(null);
+    setDeepLinkStatus("idle");
     isSendingRef.current = false;
     inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
     trackedResponseMessageIds.current.clear();
     assistantResponseContextRef.current.clear();
+    hasTrackedDeepLinkOpenedRef.current = false;
+    hasTrackedDeepLinkFirstReplyRef.current = false;
     hasTrackedInputFocusRef.current = false;
     pendingResponseRef.current = null;
     setMessageFeedbackById({});
@@ -489,16 +530,21 @@ export function BookingChat({
     setMessages([]);
     setInput("");
     setIsCreatingConversation(false);
+    setResolvedDeepLink(null);
+    setDeepLinkStatus(initialDeepLink ? "resolving" : "idle");
     isSendingRef.current = false;
     inFlightTextRef.current = null;
     persistedMessageIds.current.clear();
     persistingMessageIds.current.clear();
     trackedResponseMessageIds.current.clear();
     assistantResponseContextRef.current.clear();
+    hasTrackedDeepLinkOpenedRef.current = false;
+    hasTrackedDeepLinkFirstReplyRef.current = false;
     hasTrackedInputFocusRef.current = false;
     pendingResponseRef.current = null;
     setMessageFeedbackById({});
   }, [
+    initialDeepLink,
     pathname,
     setConversationId,
     setLockedBookingId,
@@ -511,6 +557,69 @@ export function BookingChat({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!mounted) return;
+
+    if (!initialDeepLink || initialConversationId) {
+      setResolvedDeepLink(null);
+      setDeepLinkStatus("idle");
+      return;
+    }
+
+    let isCancelled = false;
+    setDeepLinkStatus("resolving");
+
+    const resolveDeepLink = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set("lang", initialDeepLink.requestedLanguage ?? locale);
+
+        const response = await fetch(
+          `/api/experiences/deeplink/${encodeURIComponent(initialDeepLink.identifier)}?${params.toString()}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        if (isCancelled) return;
+
+        if (!response.ok) {
+          setResolvedDeepLink(null);
+          setDeepLinkStatus("fallback");
+          return;
+        }
+
+        const data = (await response.json()) as {
+          experience?: ActiveChatDeepLink["experience"];
+        };
+
+        if (!data.experience) {
+          setResolvedDeepLink(null);
+          setDeepLinkStatus("fallback");
+          return;
+        }
+
+        setResolvedDeepLink({
+          ...initialDeepLink,
+          experience: data.experience,
+        });
+        setDeepLinkStatus("ready");
+      } catch (error) {
+        console.warn("Failed to resolve chat deep link:", error);
+        if (isCancelled) return;
+        setResolvedDeepLink(null);
+        setDeepLinkStatus("fallback");
+      }
+    };
+
+    void resolveDeepLink();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [initialConversationId, initialDeepLink, locale, mounted]);
+
   // Auto-send initial message from home page input
   const hasSentInitialMessage = useRef(false);
   const sendInitialMessage = useEffectEvent((message: string) => {
@@ -518,10 +627,50 @@ export function BookingChat({
   });
 
   useEffect(() => {
-    if (!mounted || !initialMessage || hasSentInitialMessage.current) return;
+    if (
+      !mounted ||
+      !initialMessage ||
+      hasSentInitialMessage.current ||
+      !!initialDeepLink
+    ) {
+      return;
+    }
     hasSentInitialMessage.current = true;
     sendInitialMessage(initialMessage);
-  }, [mounted, initialMessage, sendInitialMessage]);
+  }, [initialDeepLink, mounted, initialMessage, sendInitialMessage]);
+
+  const sendDeepLinkBootstrap = useEffectEvent(() => {
+    if (!resolvedDeepLink || hasTrackedDeepLinkOpenedRef.current) return;
+
+    const resolvedSlug =
+      resolvedDeepLink.experience.slug ?? resolvedDeepLink.identifier;
+
+    hasTrackedDeepLinkOpenedRef.current = true;
+    setDeepLinkStatus("bootstrapping");
+    captureEvent(ANALYTICS_EVENT.DEEP_LINK_CHAT_OPENED, {
+      experience_id: resolvedDeepLink.experience.id,
+      experience_slug: resolvedSlug,
+      property_slug: resolvedSlug,
+      source_param: resolvedDeepLink.sourceParam,
+      utm_source: resolvedDeepLink.utmSource,
+      utm_medium: resolvedDeepLink.utmMedium,
+      utm_campaign: resolvedDeepLink.utmCampaign,
+    });
+
+    void sendUserMessage(
+      CHAT_DEEP_LINK_BOOTSTRAP_MESSAGE,
+      "deep_link_bootstrap",
+    ).finally(() => {
+      setDeepLinkStatus((current) =>
+        current === "fallback" ? "fallback" : "active",
+      );
+    });
+  });
+
+  useEffect(() => {
+    if (!mounted || deepLinkStatus !== "ready" || !resolvedDeepLink) return;
+    sendDeepLinkBootstrap();
+  }, [deepLinkStatus, mounted, resolvedDeepLink, sendDeepLinkBootstrap]);
 
   // Load public agent config for welcome messages and suggestions
   useEffect(() => {
@@ -633,7 +782,8 @@ export function BookingChat({
         });
         if (
           user?.email &&
-          (toolName === "searchExperiences" || toolName === "getLinkedExperiences")
+          (toolName === "searchExperiences" ||
+            toolName === "getLinkedExperiences")
         ) {
           void trackBrevoEvent(user.email, "ai_experiences_listed");
         }
@@ -643,7 +793,35 @@ export function BookingChat({
     }
 
     pendingResponseRef.current = null;
-  }, [activeConversationId, messages, status]);
+  }, [activeConversationId, messages, status, user?.email]);
+
+  useEffect(() => {
+    if (!resolvedDeepLink || hasTrackedDeepLinkFirstReplyRef.current) return;
+
+    const firstVisibleUserMessage = messages.find((message) => {
+      if (message.role !== "user") return false;
+      return !isChatDeepLinkBootstrapText(extractMessageText(message));
+    });
+
+    if (!firstVisibleUserMessage) return;
+
+    const text = extractMessageText(firstVisibleUserMessage);
+    const resolvedSlug =
+      resolvedDeepLink.experience.slug ?? resolvedDeepLink.identifier;
+
+    captureEvent(ANALYTICS_EVENT.DEEP_LINK_FIRST_REPLY, {
+      conversation_id: activeConversationId,
+      experience_id: resolvedDeepLink.experience.id,
+      experience_slug: resolvedSlug,
+      property_slug: resolvedSlug,
+      reply_type: classifyChatDeepLinkReply(text),
+      utm_source: resolvedDeepLink.utmSource,
+      utm_medium: resolvedDeepLink.utmMedium,
+      utm_campaign: resolvedDeepLink.utmCampaign,
+    });
+
+    hasTrackedDeepLinkFirstReplyRef.current = true;
+  }, [activeConversationId, messages, resolvedDeepLink]);
 
   const sendUserMessage = async (
     text: string,
@@ -697,12 +875,14 @@ export function BookingChat({
       }
 
       setInput("");
-      captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
-        conversation_id: currentConvId,
-        has_tool_call: false,
-        message_length: normalizedText.length,
-        source,
-      });
+      if (source !== "deep_link_bootstrap") {
+        captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_SENT, {
+          conversation_id: currentConvId,
+          has_tool_call: false,
+          message_length: normalizedText.length,
+          source,
+        });
+      }
       await sendMessage(
         { text: normalizedText },
         {
@@ -710,6 +890,9 @@ export function BookingChat({
             sessionId,
             conversationId: currentConvId,
             language: effectiveLanguage,
+            deepLink: resolvedDeepLink
+              ? buildChatDeepLinkRequest(resolvedDeepLink)
+              : null,
             userLocation: userLocation
               ? { lat: userLocation.lat, lng: userLocation.lng }
               : null,
@@ -718,6 +901,10 @@ export function BookingChat({
       );
     } catch (error) {
       console.error("Failed to send message:", error);
+      if (source === "deep_link_bootstrap") {
+        setDeepLinkStatus("fallback");
+        hasTrackedDeepLinkOpenedRef.current = false;
+      }
       captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_FAILED, {
         error_message: error instanceof Error ? error.message : String(error),
         source,
@@ -792,6 +979,36 @@ export function BookingChat({
     });
     await sendUserMessage(reply, "quick_reply");
   };
+
+  const handleDeepLinkBookingConfirmed = useEffectEvent(
+    (summary: {
+      booking_id: string;
+      total_cents: number;
+      currency: string;
+    }) => {
+      if (!resolvedDeepLink) return;
+
+      const resolvedSlug =
+        resolvedDeepLink.experience.slug ?? resolvedDeepLink.identifier;
+
+      captureEvent(ANALYTICS_EVENT.DEEP_LINK_BOOKING_COMPLETED, {
+        booking_id: summary.booking_id,
+        conversation_id: activeConversationId,
+        experience_id: resolvedDeepLink.experience.id,
+        experience_slug: resolvedSlug,
+        property_slug: resolvedSlug,
+        revenue_currency: summary.currency,
+        revenue_mad:
+          summary.currency === "MAD"
+            ? Math.round(summary.total_cents / 100)
+            : undefined,
+        utm_source: resolvedDeepLink.utmSource,
+        utm_medium: resolvedDeepLink.utmMedium,
+        utm_campaign: resolvedDeepLink.utmCampaign,
+        promo_used: resolvedDeepLink.promo,
+      });
+    },
+  );
 
   const handleAssistantFeedback = (
     messageId: string,
@@ -875,6 +1092,45 @@ export function BookingChat({
     !!initialConversationId &&
     (!isConversationAccessReady ||
       (loadingConversation && messages.length === 0));
+  const showDeepLinkPendingLoading =
+    !activeConversationId &&
+    messages.length === 0 &&
+    (deepLinkStatus === "resolving" ||
+      deepLinkStatus === "ready" ||
+      deepLinkStatus === "bootstrapping");
+  const effectiveIsLoading = isLoading || showDeepLinkPendingLoading;
+  const deepLinkLeadingCard = useMemo(() => {
+    if (!resolvedDeepLink) return null;
+
+    const experience: ExperienceGridItem = {
+      id: resolvedDeepLink.experience.id,
+      slug: resolvedDeepLink.experience.slug,
+      title: resolvedDeepLink.experience.title,
+      description: resolvedDeepLink.experience.description,
+      type: resolvedDeepLink.experience.type,
+      city: resolvedDeepLink.experience.city,
+      region: resolvedDeepLink.experience.region ?? undefined,
+      price_mad: resolvedDeepLink.experience.priceMad ?? 0,
+      currency: resolvedDeepLink.experience.currency,
+      rating: resolvedDeepLink.experience.rating ?? undefined,
+      reviews_count: resolvedDeepLink.experience.reviewCount,
+      thumbnail_url: resolvedDeepLink.experience.thumbnailUrl ?? undefined,
+      video_url: resolvedDeepLink.experience.videoUrl ?? undefined,
+      video_hls_url: resolvedDeepLink.experience.videoHlsUrl ?? undefined,
+      host_name: resolvedDeepLink.experience.hostName ?? undefined,
+      gallery: resolvedDeepLink.experience.gallery,
+      rooms: resolvedDeepLink.experience.rooms.map((room) => ({
+        name: room.name,
+        type: room.type ?? undefined,
+        price_mad: room.priceMad ?? 0,
+        capacity_beds: room.capacityBeds ?? undefined,
+        max_persons: room.maxPersons ?? undefined,
+        photos: room.photos,
+      })),
+    };
+
+    return <ExperienceCardsGrid experiences={[experience]} />;
+  }, [resolvedDeepLink]);
 
   if (shouldShowConversationLoader) {
     return (
@@ -889,7 +1145,10 @@ export function BookingChat({
   // - No active conversation selected
   // - NOT in the process of creating a conversation
   const showWelcome =
-    messages.length === 0 && !activeConversationId && !isCreatingConversation;
+    messages.length === 0 &&
+    !activeConversationId &&
+    !isCreatingConversation &&
+    !showDeepLinkPendingLoading;
 
   const fallbackLanguage = publicAgentConfig?.fallback_language || "fr";
   const supportedLanguagesRaw = publicAgentConfig?.supported_languages ?? [];
@@ -941,10 +1200,12 @@ export function BookingChat({
             >
               <MessageList
                 messages={messages}
-                isLoading={isLoading}
+                isLoading={effectiveIsLoading}
+                leadingContent={deepLinkLeadingCard}
                 onQuickReply={(reply) => void handleQuickReply(reply)}
                 messageFeedbackById={messageFeedbackById}
                 onAssistantFeedback={handleAssistantFeedback}
+                onBookingConfirmed={handleDeepLinkBookingConfirmed}
                 activeConversationId={activeConversationId}
                 lockedBookingId={isConversationLocked ? lockedBookingId : null}
                 isConversationLocked={isConversationLocked}
@@ -988,7 +1249,7 @@ export function BookingChat({
             handleSubmit={handleSubmit}
             onSubmitMessage={() => void sendUserMessage(input)}
             onInputFocus={handleInputFocus}
-            isLoading={isLoading}
+            isLoading={effectiveIsLoading}
             onRequestLocation={handleRequestLocation}
           />
         )}

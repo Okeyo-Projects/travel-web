@@ -50,6 +50,7 @@ export interface BookingIntentSummary {
 interface BookingConfirmCardProps {
   summary: BookingIntentSummary;
   conversationId?: string | null;
+  onBookingConfirmed?: (summary: BookingIntentSummary) => void;
 }
 
 function formatDate(dateStr: string, locale: string) {
@@ -316,6 +317,7 @@ function BookingCheckoutModal({
 export function BookingConfirmCard({
   summary,
   conversationId,
+  onBookingConfirmed,
 }: BookingConfirmCardProps) {
   const { locale, t, dir } = useSiteI18n();
   const intlLocale = getIntlLocale(locale);
@@ -376,6 +378,7 @@ export function BookingConfirmCard({
       setLockedConversationId(activeConversationId);
     }
     setLockedBookingId(summary.booking_id);
+    onBookingConfirmed?.(summary);
   };
 
   if (!mainItem) return null;

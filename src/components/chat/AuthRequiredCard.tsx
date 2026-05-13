@@ -12,6 +12,11 @@ interface AuthRequiredCardProps {
 export function AuthRequiredCard({ reason }: AuthRequiredCardProps) {
   const { t } = useSiteI18n();
   const { loading, openAuthModal } = useAuth();
+  const displayReason =
+    !reason ||
+    reason.trim() === "User not authenticated. Please sign in to book."
+      ? t("chat.authRequired.fallbackReason")
+      : reason;
 
   return (
     <div className="rounded-xl border bg-muted/30 p-4">
@@ -20,17 +25,26 @@ export function AuthRequiredCard({ reason }: AuthRequiredCardProps) {
           <Lock className="h-4 w-4" />
         </div>
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">
-            {reason || t("chat.authRequired.fallbackReason")}
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            disabled={loading}
-            onClick={() => openAuthModal({ mode: "login" })}
-          >
-            {t("chat.authRequired.login")}
-          </Button>
+          <p className="text-sm text-muted-foreground">{displayReason}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              disabled={loading}
+              onClick={() => openAuthModal({ mode: "login" })}
+            >
+              {t("chat.authRequired.login")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={loading}
+              onClick={() => openAuthModal({ mode: "signup" })}
+            >
+              {t("chat.authRequired.register")}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

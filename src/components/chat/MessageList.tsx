@@ -6,6 +6,7 @@ import { Compass, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
+import { isChatDeepLinkBootstrapText } from "@/lib/chat/deep-link";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { cn } from "@/lib/utils";
 import { AuthRequiredCard } from "./AuthRequiredCard";
@@ -43,12 +44,14 @@ export type AssistantFeedbackValue = "positive" | "negative";
 interface MessageListProps {
   messages: Message[];
   isLoading: boolean;
+  leadingContent?: ReactNode;
   onQuickReply?: (reply: string) => void;
   messageFeedbackById?: Partial<Record<string, AssistantFeedbackValue>>;
   onAssistantFeedback?: (
     messageId: string,
     value: AssistantFeedbackValue,
   ) => void;
+  onBookingConfirmed?: (summary: BookingIntentSummary) => void;
   activeConversationId?: string | null;
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
@@ -65,7 +68,10 @@ function getLastAssistantTextLength(messages: Message[]): number {
         length += part.text.length;
       }
     }
-    if (typeof message.content === "string" && message.content.length > length) {
+    if (
+      typeof message.content === "string" &&
+      message.content.length > length
+    ) {
       length = message.content.length;
     }
     return length;
@@ -634,9 +640,11 @@ function isExperienceOptionDetailsData(
 export function MessageList({
   messages,
   isLoading,
+  leadingContent,
   onQuickReply,
   messageFeedbackById,
   onAssistantFeedback,
+  onBookingConfirmed,
   activeConversationId,
   lockedBookingId,
   isConversationLocked = false,
@@ -669,6 +677,8 @@ export function MessageList({
       dir={dir}
       className="flex-1 w-full max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6"
     >
+      {leadingContent}
+
       {messages.map((message) => (
         <MessageItem
           key={message.id}
@@ -678,6 +688,7 @@ export function MessageList({
           onQuickReply={onQuickReply}
           messageFeedback={messageFeedbackById?.[message.id]}
           onAssistantFeedback={onAssistantFeedback}
+          onBookingConfirmed={onBookingConfirmed}
           activeConversationId={activeConversationId}
           lockedBookingId={lockedBookingId}
           isConversationLocked={isConversationLocked}
@@ -708,6 +719,7 @@ function MessageItem({
   onQuickReply,
   messageFeedback,
   onAssistantFeedback,
+  onBookingConfirmed,
   activeConversationId,
   lockedBookingId,
   isConversationLocked = false,
@@ -722,6 +734,7 @@ function MessageItem({
     messageId: string,
     value: AssistantFeedbackValue,
   ) => void;
+  onBookingConfirmed?: (summary: BookingIntentSummary) => void;
   activeConversationId?: string | null;
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
@@ -734,6 +747,7 @@ function MessageItem({
   if (isUser) {
     const text = extractUserMessageText(message);
     if (!text) return null;
+    if (isChatDeepLinkBootstrapText(text)) return null;
 
     return (
       <motion.div
@@ -796,10 +810,7 @@ function MessageItem({
       </div>
 
       <div className="flex-1 space-y-4 overflow-hidden">
-        <div
-          ref={isLastMessage ? textEndRef : undefined}
-          className="space-y-3"
-        >
+        <div ref={isLastMessage ? textEndRef : undefined} className="space-y-3">
           {textBlocks.map((block) => (
             <div
               key={block.key}
@@ -819,6 +830,7 @@ function MessageItem({
                 component={block.content.component}
                 data={block.content.data}
                 onQuickReply={onQuickReply}
+                onBookingConfirmed={onBookingConfirmed}
                 activeConversationId={activeConversationId}
                 lockedBookingId={lockedBookingId}
                 isConversationLocked={isConversationLocked}
@@ -1205,6 +1217,7 @@ function UIBlock({
   component,
   data,
   onQuickReply,
+  onBookingConfirmed,
   activeConversationId,
   lockedBookingId,
   isConversationLocked = false,
@@ -1212,6 +1225,7 @@ function UIBlock({
   component: string;
   data: unknown;
   onQuickReply?: (reply: string) => void;
+  onBookingConfirmed?: (summary: BookingIntentSummary) => void;
   activeConversationId?: string | null;
   lockedBookingId?: string | null;
   isConversationLocked?: boolean;
@@ -1292,6 +1306,7 @@ function UIBlock({
         <BookingConfirmCard
           summary={data}
           conversationId={activeConversationId}
+          onBookingConfirmed={onBookingConfirmed}
         />
       );
 

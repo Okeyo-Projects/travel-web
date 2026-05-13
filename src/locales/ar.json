@@ -958,8 +958,9 @@
       "newConversation": "محادثة جديدة"
     },
     "authRequired": {
-      "fallbackReason": "يجب تسجيل الدخول لإتمام الحجز.",
-      "login": "تسجيل الدخول"
+      "fallbackReason": "سجّل الدخول أو أنشئ حسابًا لحفظ هذه الإقامة ومتابعة حجزك.",
+      "login": "تسجيل الدخول",
+      "register": "إنشاء حساب"
     },
     "bookingConfirm": {
       "errorConfirm": "تعذر تأكيد الحجز.",

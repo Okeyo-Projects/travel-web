@@ -1,19 +1,19 @@
 "use client";
 
-import parse from "html-react-parser";
-import Image from "next/image";
-import { type ReactNode, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { prepareExperienceRichText } from "@/lib/experience-rich-text";
 import {
-  type AppLocale,
   getIntlLocale,
   getLocalizedDescription,
   translateTag,
+  type AppLocale,
 } from "@/lib/i18n";
 import { getImageUrl } from "@/utils/functions";
+import parse from "html-react-parser";
+import Image from "next/image";
+import { useState, type ReactNode } from "react";
 
 type Primitive = string | number | boolean | null | undefined;
 
@@ -688,11 +688,11 @@ export function ExperienceDetailsPanel({
           </Section>
         ) : null}
 
-        {promotionEntries.length > 0 ? (
+        {/* {promotionEntries.length > 0 ? (
           <Section title={t("chat.experienceDetails.promotions")}>
             <KeyValueGrid entries={promotionEntries} />
           </Section>
-        ) : null}
+        ) : null} */}
 
         {Array.isArray(details.recent_reviews) &&
         details.recent_reviews.length > 0 ? (

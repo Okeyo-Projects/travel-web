@@ -958,8 +958,9 @@
       "newConversation": "Nouvelle conversation"
     },
     "authRequired": {
-      "fallbackReason": "Vous devez être connecté pour réserver.",
-      "login": "Se connecter"
+      "fallbackReason": "Connectez-vous ou créez un compte pour enregistrer ce séjour et reprendre votre réservation.",
+      "login": "Se connecter",
+      "register": "Créer un compte"
     },
     "bookingConfirm": {
       "errorConfirm": "Impossible de confirmer la réservation.",

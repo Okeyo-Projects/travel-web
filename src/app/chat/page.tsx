@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { BookingChat } from "@/components/chat/BookingChat";
 import { JsonLd } from "@/components/seo/json-ld";
+import {
+  getFirstSearchParamValue,
+  parseChatDeepLinkSearchParams,
+} from "@/lib/chat/deep-link";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { buildLocaleAlternates, localizeHref } from "@/lib/routing/locale-path";
 
@@ -35,10 +39,14 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale, t } = await getRequestTranslator();
-  const { q } = await searchParams;
+  const params = await searchParams;
+  const deepLink = parseChatDeepLinkSearchParams(params);
+  const initialMessage = deepLink
+    ? undefined
+    : (getFirstSearchParamValue(params.q) ?? undefined);
 
   return (
     <>
@@ -52,7 +60,7 @@ export default async function ChatPage({
           inLanguage: locale,
         }}
       />
-      <BookingChat initialMessage={q} />
+      <BookingChat initialMessage={initialMessage} initialDeepLink={deepLink} />
     </>
   );
 }

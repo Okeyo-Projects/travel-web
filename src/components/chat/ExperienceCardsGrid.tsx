@@ -13,6 +13,7 @@ interface RoomInfo {
 
 export interface ExperienceGridItem {
   id: string;
+  slug?: string | null;
   title: string;
   description?: string;
   type: "lodging" | "trip" | "activity";
@@ -30,6 +31,7 @@ export interface ExperienceGridItem {
   video_hls_url?: string;
   host_name?: string;
   rooms?: RoomInfo[];
+  gallery?: string[];
 }
 
 export interface ExperienceCardsGridProps {

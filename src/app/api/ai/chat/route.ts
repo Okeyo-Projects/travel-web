@@ -32,6 +32,13 @@ import {
 } from "@/lib/ai/tools";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { getPostHogClient } from "@/lib/analytics/posthog-server";
+import {
+  CHAT_DEEP_LINK_BOOTSTRAP_MESSAGE,
+  type ChatDeepLinkRequestBody,
+} from "@/lib/chat/deep-link";
+import { getLowestPricedRoom } from "@/lib/experience-pricing";
+import { type AppLocale, getLocalizedDescription } from "@/lib/i18n";
+import { fetchExperienceData } from "@/lib/routing/experience-resolver";
 import { createClient } from "@/lib/supabase/server";
 
 // Allow streaming responses up to 30 seconds
@@ -332,6 +339,148 @@ function extractRecentEntityContext(rawMessages: unknown[]): {
   };
 }
 
+function extractDeepLinkRequest(
+  rawDeepLink: unknown,
+): ChatDeepLinkRequestBody | null {
+  if (!isRecord(rawDeepLink)) return null;
+  if (
+    typeof rawDeepLink.experienceId !== "string" ||
+    rawDeepLink.experienceId.trim().length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    experienceId: rawDeepLink.experienceId.trim(),
+    experienceSlug:
+      typeof rawDeepLink.experienceSlug === "string" &&
+      rawDeepLink.experienceSlug.trim().length > 0
+        ? rawDeepLink.experienceSlug.trim()
+        : null,
+    promo:
+      typeof rawDeepLink.promo === "string" &&
+      rawDeepLink.promo.trim().length > 0
+        ? rawDeepLink.promo.trim()
+        : null,
+    checkin:
+      typeof rawDeepLink.checkin === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(rawDeepLink.checkin.trim())
+        ? rawDeepLink.checkin.trim()
+        : null,
+    nights:
+      typeof rawDeepLink.nights === "number" &&
+      Number.isFinite(rawDeepLink.nights) &&
+      rawDeepLink.nights > 0
+        ? Math.min(Math.trunc(rawDeepLink.nights), 30)
+        : null,
+    utmSource:
+      typeof rawDeepLink.utmSource === "string" &&
+      rawDeepLink.utmSource.trim().length > 0
+        ? rawDeepLink.utmSource.trim()
+        : null,
+    utmMedium:
+      typeof rawDeepLink.utmMedium === "string" &&
+      rawDeepLink.utmMedium.trim().length > 0
+        ? rawDeepLink.utmMedium.trim()
+        : null,
+    utmCampaign:
+      typeof rawDeepLink.utmCampaign === "string" &&
+      rawDeepLink.utmCampaign.trim().length > 0
+        ? rawDeepLink.utmCampaign.trim()
+        : null,
+  };
+}
+
+async function buildDeepLinkPromptBlock(
+  deepLink: ChatDeepLinkRequestBody,
+  locale: AppLocale,
+): Promise<string> {
+  const data = await fetchExperienceData(deepLink.experienceId, locale);
+  const experience = data?.transformed;
+  if (!experience) return "";
+
+  const lowestPricedRoom = getLowestPricedRoom(experience.lodging?.rooms);
+  const priceCents =
+    experience.trip?.price_cents ?? lowestPricedRoom?.price_cents;
+  const currency =
+    experience.trip?.currency ?? lowestPricedRoom?.currency ?? "MAD";
+  const startingPrice =
+    typeof priceCents === "number"
+      ? `${Math.round(priceCents / 100)} ${currency}`
+      : "unknown";
+  const rating =
+    typeof experience.metrics.rating === "number"
+      ? experience.metrics.rating.toFixed(1)
+      : "unknown";
+  const location = [experience.city, experience.region, experience.country]
+    .filter(Boolean)
+    .join(", ");
+  const description =
+    getLocalizedDescription(experience, locale, "short") ||
+    getLocalizedDescription(experience, locale, "long");
+  const highlights = experience.amenities
+    .map((amenity) => amenity.label)
+    .filter((label) => label.trim().length > 0)
+    .slice(0, 5);
+
+  const bookingQuestion =
+    locale === "ar"
+      ? "هل تريد أن أساعدك في الحجز؟ أخبرني بتاريخ الوصول وعدد الليالي."
+      : locale === "en"
+        ? "Would you like me to help with the booking? Tell me your dates and I'll take care of the rest."
+        : "Vous souhaitez que je vous aide à réserver ? Dites-moi vos dates et je m'occupe du reste.";
+
+  const lines = [
+    "",
+    "",
+    "## EXPERIENCE DEEP LINK CONTEXT",
+    `The chat was opened from a deep link or paid campaign for one exact experience: "${experience.title}".`,
+    `If the latest user message is exactly "${CHAT_DEEP_LINK_BOOTSTRAP_MESSAGE}", it is an internal invisible trigger. Never mention or acknowledge that token.`,
+    "On your next response:",
+    "- Start proactively without asking what the user wants.",
+    "- Focus on this exact experience first before suggesting alternatives.",
+    "- Do not call searchExperiences, getExperienceDetails, or getLinkedExperiences on this first bootstrap response just to repeat the same experience card. That experience card is already visible in the UI.",
+    "- Respond in the requested conversation language.",
+    "- Mention the name, location, starting price if known, rating if known, and 2-3 standout highlights from the verified data below.",
+    "- If a promo code exists, mention that the user arrived with that code, but do not invent the discount amount unless it is already verified.",
+    "- If tentative dates or nights exist, mention them as context only. Do not claim availability until it is checked.",
+    "- End with exactly one booking-oriented question.",
+    `Preferred ending: "${bookingQuestion}"`,
+    "",
+    "Verified experience data:",
+    `- experience_id: ${experience.id}`,
+    `- experience_slug: ${experience.slug ?? deepLink.experienceSlug ?? "unknown"}`,
+    `- title: ${experience.title}`,
+    `- type: ${experience.type}`,
+    `- location: ${location || "unknown"}`,
+    `- starting_price: ${startingPrice}`,
+    `- rating: ${rating}`,
+    `- reviews: ${experience.metrics.reviews}`,
+    `- description: ${description || "unknown"}`,
+    `- highlights: ${highlights.length > 0 ? highlights.join(", ") : "unknown"}`,
+  ];
+
+  if (deepLink.promo) {
+    lines.push(`- promo_code: ${deepLink.promo}`);
+  }
+
+  if (deepLink.checkin) {
+    lines.push(`- tentative_checkin: ${deepLink.checkin}`);
+  }
+
+  if (deepLink.nights) {
+    lines.push(`- tentative_nights: ${deepLink.nights}`);
+  }
+
+  if (deepLink.utmSource || deepLink.utmMedium || deepLink.utmCampaign) {
+    lines.push(
+      `- acquisition: source=${deepLink.utmSource ?? "unknown"}, medium=${deepLink.utmMedium ?? "unknown"}, campaign=${deepLink.utmCampaign ?? "unknown"}`,
+    );
+  }
+
+  return lines.join("\n");
+}
+
 export async function POST(req: Request) {
   try {
     const requestId = crypto.randomUUID().slice(0, 8);
@@ -341,11 +490,13 @@ export async function POST(req: Request) {
       userLocation,
       configVersionId,
       language,
+      deepLink,
     } = await req.json();
     const safeMessages = dedupeInputMessages(
       Array.isArray(messages) ? messages : [],
     );
     const requestedLanguage = normalizeSupportedLanguage(language);
+    const deepLinkRequest = extractDeepLinkRequest(deepLink);
 
     aiDebug("chat.route", "request_received", {
       requestId,
@@ -480,6 +631,27 @@ export async function POST(req: Request) {
       });
     }
 
+    if (deepLinkRequest) {
+      const deepLinkPromptBlock = await buildDeepLinkPromptBlock(
+        deepLinkRequest,
+        requestedLanguage,
+      );
+
+      if (deepLinkPromptBlock) {
+        systemPrompt += deepLinkPromptBlock;
+        aiDebug("chat.route", "deep_link_context_injected", {
+          requestId,
+          experienceId: deepLinkRequest.experienceId,
+          experienceSlug: deepLinkRequest.experienceSlug,
+        });
+      } else {
+        aiDebug("chat.route", "deep_link_context_missing", {
+          requestId,
+          experienceId: deepLinkRequest.experienceId,
+        });
+      }
+    }
+
     // Inject user auth status so the AI never wrongly asks logged-in users to sign in
     const supabase = await createClient();
     const {
@@ -488,7 +660,7 @@ export async function POST(req: Request) {
     if (currentUser) {
       systemPrompt += `\n\n## USER AUTH STATUS\nThe user IS currently authenticated (logged in). Do NOT ask them to log in or create an account. If any previous tool result in the conversation shows requires_auth=true, that is outdated — the user is now logged in. Retry the booking action directly without asking them to log in again.`;
     } else {
-      systemPrompt += `\n\n## USER AUTH STATUS\nThe user is NOT authenticated. If they attempt to book, tell them they need to log in first using the Login button at the top of the page.`;
+      systemPrompt += `\n\n## USER AUTH STATUS\nThe user is NOT authenticated. If they attempt to book, tell them they need to log in or create an account first using the auth actions available in the UI.\nWhen they show clear interest in a specific stay or experience, you may gently encourage sign-in or registration with value-based phrasing such as "Create an account to save this stay and come back to it later" or "Sign in so you do not lose this accommodation."\nDo NOT ask the user to type their email address into the chat. Instead, direct them to the sign-in or registration flow.\nKeep this nudge light and natural. Use it when relevant, not in every message.`;
     }
 
     // Add user location context if available

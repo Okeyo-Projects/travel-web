@@ -958,8 +958,9 @@
       "newConversation": "New conversation"
     },
     "authRequired": {
-      "fallbackReason": "You need to be signed in to book.",
-      "login": "Sign in"
+      "fallbackReason": "Sign in or create an account to save this stay and continue your booking.",
+      "login": "Sign in",
+      "register": "Create account"
     },
     "bookingConfirm": {
       "errorConfirm": "We could not confirm the booking.",
