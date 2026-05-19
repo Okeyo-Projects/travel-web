@@ -29,6 +29,13 @@ type RawRoom = {
   photos?: string[] | null;
 };
 
+type RawCity = {
+  slug: string;
+  name: string;
+  name_ar: string | null;
+  region: string | null;
+};
+
 type RawExperience = {
   id: string;
   title: string;
@@ -132,6 +139,8 @@ export interface ExploreSearchResult {
   fetchedCount: number;
 }
 
+type LocationSearchMode = "city" | "region";
+
 const SORT_DEFAULT: ExperienceSort = "newest";
 
 const EXPERIENCE_LIST_SELECT = `
@@ -218,6 +227,14 @@ function enumerateDateRange(
 
 function isValidIsoDate(value: string | undefined | null): value is string {
   return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
+}
+
+function normalizeLocationTerm(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase();
 }
 
 function applySort<T extends QueryWithOrder<T>>(
@@ -310,11 +327,20 @@ function mapExperienceWithMeta(exp: RawExperience): ExploreExperienceWithMeta {
   return {
     id: exp.id,
     title: exp.title,
-    slug: (exp as Record<string, unknown>).slug as string | null ?? null,
+    slug: ((exp as Record<string, unknown>).slug as string | null) ?? null,
     short_description: exp.short_description,
-    short_description_en: (exp as Record<string, unknown>).short_description_en as string | null ?? null,
-    short_description_fr: (exp as Record<string, unknown>).short_description_fr as string | null ?? null,
-    short_description_ar: (exp as Record<string, unknown>).short_description_ar as string | null ?? null,
+    short_description_en:
+      ((exp as Record<string, unknown>).short_description_en as
+        | string
+        | null) ?? null,
+    short_description_fr:
+      ((exp as Record<string, unknown>).short_description_fr as
+        | string
+        | null) ?? null,
+    short_description_ar:
+      ((exp as Record<string, unknown>).short_description_ar as
+        | string
+        | null) ?? null,
     city: exp.city,
     region: exp.region,
     city_linked: Array.isArray(exp.city_linked)
@@ -547,22 +573,12 @@ async function applyAvailabilityFilters(
   return items.filter((item) => availableExperienceIds.has(item.id));
 }
 
-export async function fetchExploreSearchResults(
-  input: ExploreSearchInput = {},
-): Promise<ExploreSearchResult> {
-  const supabase = await createClient();
-  const {
-    type,
-    search,
-    limit = 20,
-    offset = 0,
-    sort = SORT_DEFAULT,
-    priceMin,
-    priceMax,
-    guests,
-    dateFrom,
-    dateTo,
-  } = input;
+function buildExploreSearchQuery(
+  supabase: SupabaseClient,
+  input: ExploreSearchInput,
+  citySlugs?: string[],
+) {
+  const { type, limit = 20, offset = 0, sort = SORT_DEFAULT } = input;
 
   let query = supabase
     .from("experiences" as never)
@@ -574,30 +590,33 @@ export async function fetchExploreSearchResults(
     query = query.eq("type", type);
   }
 
-  if (search) {
-    const hasArabic = /[\u0600-\u06FF]/.test(search);
-    const hasEnglish = /^[a-zA-Z0-9\s]+$/.test(search);
-
-    let searchColumn = "search_vector_fr";
-    let config: "french" | "english" | "arabic" = "french";
-
-    if (hasArabic) {
-      searchColumn = "search_vector_ar";
-      config = "arabic";
-    } else if (hasEnglish) {
-      searchColumn = "search_vector_en";
-      config = "english";
-    }
-
-    query = query.or(
-      `${searchColumn}.wfts(${config}).${search},title.ilike.%${search}%,short_description.ilike.%${search}%`,
-    );
+  if (citySlugs?.length) {
+    query = query.in("city_slug" as never, citySlugs);
   }
 
   query = applySort(query, sort);
-  query = query.range(offset, offset + limit - 1);
+  return query.range(offset, offset + limit - 1);
+}
 
-  const { data, error } = await query;
+async function executeExploreSearch(
+  supabase: SupabaseClient,
+  input: ExploreSearchInput,
+  citySlugs?: string[],
+): Promise<ExploreSearchResult> {
+  const { priceMin, priceMax, guests, dateFrom, dateTo } = input;
+
+  if (citySlugs && citySlugs.length === 0) {
+    return {
+      items: [],
+      fetchedCount: 0,
+    };
+  }
+
+  const { data, error } = await buildExploreSearchQuery(
+    supabase,
+    input,
+    citySlugs,
+  );
   if (error) {
     throw error;
   }
@@ -632,6 +651,77 @@ export async function fetchExploreSearchResults(
     items: availabilityFilteredItems.map(stripExperienceMeta),
     fetchedCount: (data || []).length,
   };
+}
+
+async function fetchMatchingCitySlugs(
+  supabase: SupabaseClient,
+  search: string,
+  mode: LocationSearchMode,
+): Promise<string[]> {
+  const normalizedSearch = normalizeLocationTerm(search);
+
+  if (!normalizedSearch) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("cities" as never)
+    .select("slug, name, name_ar, region")
+    .eq("is_active" as never, true)
+    .is("deleted_at" as never, null);
+
+  if (error) {
+    throw error;
+  }
+
+  const seenSlugs = new Set<string>();
+  const matchingSlugs: string[] = [];
+
+  for (const city of (data || []) as RawCity[]) {
+    const cityNameMatches =
+      normalizeLocationTerm(city.name).includes(normalizedSearch) ||
+      normalizeLocationTerm(city.name_ar || "").includes(normalizedSearch) ||
+      normalizeLocationTerm(city.slug).includes(normalizedSearch);
+    const regionMatches = normalizeLocationTerm(city.region || "").includes(
+      normalizedSearch,
+    );
+    const matches = mode === "city" ? cityNameMatches : regionMatches;
+
+    if (!matches || seenSlugs.has(city.slug)) {
+      continue;
+    }
+
+    seenSlugs.add(city.slug);
+    matchingSlugs.push(city.slug);
+  }
+
+  return matchingSlugs;
+}
+
+export async function fetchExploreSearchResults(
+  input: ExploreSearchInput = {},
+): Promise<ExploreSearchResult> {
+  const supabase = await createClient();
+  const search = input.search?.trim();
+
+  if (!search) {
+    return executeExploreSearch(supabase, input);
+  }
+
+  const citySlugs = await fetchMatchingCitySlugs(supabase, search, "city");
+  const cityResults = await executeExploreSearch(supabase, input, citySlugs);
+
+  if (cityResults.items.length > 0) {
+    return cityResults;
+  }
+
+  const regionSlugs = await fetchMatchingCitySlugs(supabase, search, "region");
+
+  if (regionSlugs.length === 0) {
+    return cityResults;
+  }
+
+  return executeExploreSearch(supabase, input, regionSlugs);
 }
 
 export async function fetchSimilarExperiences(input: {
@@ -674,12 +764,16 @@ export async function fetchSimilarExperiences(input: {
         .order("avg_rating" as never, { ascending: false, nullsFirst: false })
         .limit(limit);
 
-      return ((fallback ?? []) as RawExperience[]).map(mapExperienceWithMeta).map(stripExperienceMeta);
+      return ((fallback ?? []) as RawExperience[])
+        .map(mapExperienceWithMeta)
+        .map(stripExperienceMeta);
     }
     return [];
   }
 
-  return (data as RawExperience[]).map(mapExperienceWithMeta).map(stripExperienceMeta);
+  return (data as RawExperience[])
+    .map(mapExperienceWithMeta)
+    .map(stripExperienceMeta);
 }
 
 export async function fetchFeaturedExperiences(

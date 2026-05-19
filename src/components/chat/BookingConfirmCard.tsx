@@ -8,6 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PhoneRequirementDialog } from "@/components/booking/PhoneRequirementDialog";
 import { useSiteI18n } from "@/components/site/site-i18n";
 
 // Track which booking IDs have already had their modal auto-opened,
@@ -24,7 +25,9 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useChatContext } from "@/contexts/ChatContext";
+import { useAuth } from "@/hooks/use-auth";
 import { getIntlLocale } from "@/lib/i18n";
+import { getProfilePhone } from "@/lib/profile-phone";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -93,9 +96,42 @@ function BookingCheckoutModal({
   const { locale, t, dir } = useSiteI18n();
   const intlLocale = getIntlLocale(locale);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const { user, openAuthModal } = useAuth();
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (skipPhoneCheck = false) => {
+    if (isConfirming || isCheckingPhone) return;
+
+    if (!user?.id) {
+      toast.error(t("booking.steps.review.loginRequired"));
+      openAuthModal({ mode: "login" });
+      return;
+    }
+
+    if (!skipPhoneCheck) {
+      setIsCheckingPhone(true);
+      try {
+        const supabase = createClient();
+        const phone = await getProfilePhone(supabase, user.id);
+
+        if (!phone) {
+          setPhoneDialogOpen(true);
+          return;
+        }
+      } catch (phoneError) {
+        const message =
+          phoneError instanceof Error
+            ? phoneError.message
+            : t("chat.bookingConfirm.errorConfirm");
+        toast.error(message);
+        return;
+      } finally {
+        setIsCheckingPhone(false);
+      }
+    }
+
     setIsConfirming(true);
     try {
       const supabase = createClient();
@@ -298,10 +334,10 @@ function BookingCheckoutModal({
               </Button>
               <Button
                 className="flex-1"
-                onClick={handleConfirm}
-                disabled={isConfirming}
+                onClick={() => void handleConfirm()}
+                disabled={isConfirming || isCheckingPhone}
               >
-                {isConfirming ? (
+                {isConfirming || isCheckingPhone ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : null}
                 {t("chat.bookingConfirm.confirm")}
@@ -310,6 +346,11 @@ function BookingCheckoutModal({
           </div>
         )}
       </DialogContent>
+      <PhoneRequirementDialog
+        open={phoneDialogOpen}
+        onOpenChange={setPhoneDialogOpen}
+        onSuccess={() => handleConfirm(true)}
+      />
     </Dialog>
   );
 }

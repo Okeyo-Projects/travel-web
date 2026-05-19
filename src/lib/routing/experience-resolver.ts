@@ -44,7 +44,18 @@ export async function resolveExperienceId(
 
   if (bySlug?.id) return bySlug.id;
 
-  // 3. Legacy slug fallback: if the title changed, use the trailing UUID prefix.
+  // 3. Old slug fallback for manually changed slugs in admin.
+  const { data: byOldSlug } = await supabase
+    .from("experiences" as never)
+    .select("id")
+    .eq("old_slug" as never, normalized)
+    .eq("status" as never, "published")
+    .is("deleted_at" as never, null)
+    .maybeSingle<{ id: string }>();
+
+  if (byOldSlug?.id) return byOldSlug.id;
+
+  // 4. Legacy slug fallback: if the title changed, use the trailing UUID prefix.
   const legacyIdSegment = getExperienceIdSegmentFromIdentifier(normalized);
 
   if (legacyIdSegment) {
@@ -62,10 +73,10 @@ export async function resolveExperienceId(
     }
   }
 
-  // 4. Composite slug fallback for records without a persisted slug.
+  // 5. Composite slug fallback for records without a persisted slug.
   const { data: candidates } = await supabase
     .from("experiences" as never)
-    .select("id, title, slug")
+    .select("id, title, slug, old_slug")
     .eq("status" as never, "published")
     .is("deleted_at" as never, null)
     .limit(500);
@@ -75,6 +86,7 @@ export async function resolveExperienceId(
       id: string;
       title: string;
       slug?: string | null;
+      old_slug?: string | null;
     }>;
 
     const match = typedCandidates.find((candidate) => {
@@ -84,6 +96,15 @@ export async function resolveExperienceId(
           : null;
 
       if (storedSlug && storedSlug === normalized) {
+        return true;
+      }
+
+      const oldSlug =
+        typeof candidate.old_slug === "string"
+          ? candidate.old_slug.trim().toLowerCase()
+          : null;
+
+      if (oldSlug && oldSlug === normalized) {
         return true;
       }
 

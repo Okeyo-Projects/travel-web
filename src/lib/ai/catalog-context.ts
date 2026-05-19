@@ -302,7 +302,11 @@ export async function loadCatalogContext(
             `- **Prochains départs:** ${expDepartures
               .slice(0, 3)
               .map(
-                (d: { depart_at: string; seats_available: number; seats_total: number }) =>
+                (d: {
+                  depart_at: string;
+                  seats_available: number;
+                  seats_total: number;
+                }) =>
                   `${new Date(d.depart_at).toLocaleDateString(locale === "en" ? "en-US" : locale === "ar" ? "ar-MA" : "fr-FR")} (${d.seats_available}/${d.seats_total})`,
               )
               .join(", ")}`,
@@ -325,7 +329,11 @@ export async function loadCatalogContext(
             `- **Prochaines sessions:** ${expSessions
               .slice(0, 3)
               .map(
-                (s: { start_at: string; capacity_available: number; capacity_total: number }) =>
+                (s: {
+                  start_at: string;
+                  capacity_available: number;
+                  capacity_total: number;
+                }) =>
                   `${new Date(s.start_at).toLocaleDateString(locale === "en" ? "en-US" : locale === "ar" ? "ar-MA" : "fr-FR")} (${s.capacity_available}/${s.capacity_total})`,
               )
               .join(", ")}`,
@@ -344,7 +352,7 @@ export async function loadCatalogContext(
       `- When searching, use the experience IDs and exact city/region names from above.`,
     );
     lines.push(
-      `- Use the region filter only for stored administrative regions. For local destinations like "Imlil", "Ouirgane", or "Lala Takerkousst", keep the locality in the query and use city "Marrakech" when relevant.`,
+      `- Use the region filter only for stored administrative regions. For local destinations like "Imlil", "Ouirgane", or "Lala Takerkousst", use the exact catalog city/locality when it exists; otherwise keep the locality in the query text.`,
     );
     lines.push(
       `- Keep the type filter empty for broad "experiences", "options", or "what to do" searches; only set type when the user explicitly asks for lodging, trips, or activities.`,

@@ -426,56 +426,68 @@ BEGIN
       '{
         "fr": [
           {
-            "title": "Riad romantique",
-            "prompt": "Je cherche un riad romantique à Marrakech pour ce week-end."
+            "title": "Essaouira",
+            "prompt": "Essaouira"
           },
           {
-            "title": "Lodge calme dans l’Atlas",
-            "prompt": "Je cherche un lodge calme dans l’Atlas pour 2 nuits."
+            "title": "Marrakech",
+            "prompt": "Marrakech"
           },
           {
-            "title": "Piscine et détente",
-            "prompt": "Montre-moi un hébergement avec piscine et hammam près de Marrakech."
+            "title": "Chefchaouen",
+            "prompt": "Chefchaouen"
           },
           {
-            "title": "Petit budget",
-            "prompt": "Je veux une maison d’hôtes petit budget à Chefchaouen."
+            "title": "Imlil",
+            "prompt": "Imlil"
+          },
+          {
+            "title": "Lalla Takerkoust",
+            "prompt": "Lalla Takerkoust"
           }
         ],
         "en": [
           {
-            "title": "Romantic riad",
-            "prompt": "I am looking for a romantic riad in Marrakech for this weekend."
+            "title": "Essaouira",
+            "prompt": "Essaouira"
           },
           {
-            "title": "Quiet Atlas lodge",
-            "prompt": "I am looking for a quiet lodge in the Atlas for 2 nights."
+            "title": "Marrakech",
+            "prompt": "Marrakech"
           },
           {
-            "title": "Pool and relaxation",
-            "prompt": "Show me a stay with a pool and hammam near Marrakech."
+            "title": "Chefchaouen",
+            "prompt": "Chefchaouen"
           },
           {
-            "title": "Budget stay",
-            "prompt": "I want a budget guesthouse in Chefchaouen."
+            "title": "Imlil",
+            "prompt": "Imlil"
+          },
+          {
+            "title": "Lalla Takerkoust",
+            "prompt": "Lalla Takerkoust"
           }
         ],
         "ar": [
           {
-            "title": "رياض رومانسي",
-            "prompt": "أبحث عن رياض رومانسي في مراكش لعطلة نهاية الأسبوع."
+            "title": "الصويرة",
+            "prompt": "الصويرة"
           },
           {
-            "title": "لودج هادئ في الأطلس",
-            "prompt": "أبحث عن لودج هادئ في الأطلس لمدة ليلتين."
+            "title": "مراكش",
+            "prompt": "مراكش"
           },
           {
-            "title": "مسبح واسترخاء",
-            "prompt": "اعرض لي إقامة مع مسبح وحمام قرب مراكش."
+            "title": "شفشاون",
+            "prompt": "شفشاون"
           },
           {
-            "title": "ميزانية محدودة",
-            "prompt": "أريد دار ضيافة اقتصادية في شفشاون."
+            "title": "إمليل",
+            "prompt": "إمليل"
+          },
+          {
+            "title": "للا تكركوست",
+            "prompt": "للا تكركوست"
           }
         ]
       }'::jsonb,

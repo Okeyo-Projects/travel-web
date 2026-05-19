@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { type AppLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 import { getLocaleFromPathname } from "@/lib/routing/locale-path";
 import {
-  buildLegacyExperienceSlug,
   buildExperienceSlug,
+  buildLegacyExperienceSlug,
   getExperienceIdSegmentFromIdentifier,
 } from "@/lib/routing/slugs";
 import { createClient } from "@/lib/supabase/client";
@@ -693,6 +693,13 @@ async function fetchRoomItemsMap(
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+type ExperienceIdCandidate = {
+  id: string;
+  title?: string | null;
+  slug?: string | null;
+  old_slug?: string | null;
+};
+
 function normalizeIdentifier(value: string): string {
   return decodeURIComponent(value).trim().toLowerCase();
 }
@@ -726,6 +733,22 @@ async function resolveExperienceId(
     return directSlugMatch.id;
   }
 
+  const { data: oldSlugMatch, error: oldSlugError } = await supabase
+    .from("experiences")
+    .select("id")
+    .eq("old_slug", normalizedIdentifier)
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .maybeSingle<{ id: string }>();
+
+  if (oldSlugError) {
+    throw oldSlugError;
+  }
+
+  if (oldSlugMatch?.id) {
+    return oldSlugMatch.id;
+  }
+
   const legacyIdSegment =
     getExperienceIdSegmentFromIdentifier(normalizedIdentifier);
 
@@ -750,7 +773,7 @@ async function resolveExperienceId(
 
   const { data: candidates, error: candidateError } = await supabase
     .from("experiences")
-    .select("id,title,slug")
+    .select("id,title,slug,old_slug")
     .eq("status", "published")
     .is("deleted_at", null)
     .limit(500);
@@ -759,7 +782,9 @@ async function resolveExperienceId(
     throw candidateError;
   }
 
-  const match = (candidates || []).find((candidate: any) => {
+  const typedCandidates = (candidates ?? []) as ExperienceIdCandidate[];
+
+  const match = typedCandidates.find((candidate) => {
     const storedSlug =
       typeof candidate.slug === "string"
         ? candidate.slug.trim().toLowerCase()
@@ -768,14 +793,24 @@ async function resolveExperienceId(
       return true;
     }
 
+    const oldSlug =
+      typeof candidate.old_slug === "string"
+        ? candidate.old_slug.trim().toLowerCase()
+        : null;
+    if (oldSlug && oldSlug === normalizedIdentifier) {
+      return true;
+    }
+
+    if (typeof candidate.title !== "string") {
+      return false;
+    }
+
     return (
       buildLegacyExperienceSlug({
         title: candidate.title,
         id: candidate.id,
         slug: candidate.slug,
       }) === normalizedIdentifier ||
-      typeof candidate.title === "string" &&
-      typeof candidate.id === "string" &&
       buildExperienceSlug({ title: candidate.title, id: candidate.id }) ===
         normalizedIdentifier
     );

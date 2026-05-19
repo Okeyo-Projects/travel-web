@@ -8,6 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useChatContext } from "@/contexts/ChatContext";
 import { cn } from "@/lib/utils";
 
+const TYPING_SPEED = 30;
+const DELETING_SPEED = 15;
+const PAUSE_AFTER_TYPE = 2500;
+const PAUSE_AFTER_DELETE = 400;
+
 interface ChatInputProps {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -31,6 +36,10 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { userLocation } = useChatContext();
   const [isFocused, setIsFocused] = useState(false);
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState("");
+  const [isDeletingPlaceholder, setIsDeletingPlaceholder] = useState(false);
+  const placeholderText = t("chat.input.placeholder");
+  const shouldAnimatePlaceholder = !input.trim() && !isFocused;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -39,6 +48,57 @@ export function ChatInput({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   });
+
+  useEffect(() => {
+    if (shouldAnimatePlaceholder) {
+      setAnimatedPlaceholder("");
+      setIsDeletingPlaceholder(false);
+      return;
+    }
+
+    setAnimatedPlaceholder(placeholderText);
+    setIsDeletingPlaceholder(false);
+  }, [placeholderText, shouldAnimatePlaceholder]);
+
+  useEffect(() => {
+    if (!shouldAnimatePlaceholder) {
+      return;
+    }
+
+    if (!isDeletingPlaceholder && animatedPlaceholder === placeholderText) {
+      const timeout = setTimeout(
+        () => setIsDeletingPlaceholder(true),
+        PAUSE_AFTER_TYPE,
+      );
+      return () => clearTimeout(timeout);
+    }
+
+    if (isDeletingPlaceholder && animatedPlaceholder === "") {
+      const timeout = setTimeout(
+        () => setIsDeletingPlaceholder(false),
+        PAUSE_AFTER_DELETE,
+      );
+      return () => clearTimeout(timeout);
+    }
+
+    const timeout = setTimeout(
+      () => {
+        setAnimatedPlaceholder(
+          isDeletingPlaceholder
+            ? placeholderText.slice(0, animatedPlaceholder.length - 1)
+            : placeholderText.slice(0, animatedPlaceholder.length + 1),
+        );
+      },
+      isDeletingPlaceholder ? DELETING_SPEED : TYPING_SPEED,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [
+    animatedPlaceholder,
+    isDeletingPlaceholder,
+    placeholderText,
+    shouldAnimatePlaceholder,
+  ]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -74,7 +134,7 @@ export function ChatInput({
               onInputFocus?.();
             }}
             onBlur={() => setIsFocused(false)}
-            placeholder={t("chat.input.placeholder")}
+            placeholder={animatedPlaceholder}
             className="min-h-[50px] sm:min-h-[56px] max-h-[140px] sm:max-h-[200px] w-full resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-3.5 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-base [text-align:start]"
             rows={1}
           />

@@ -322,6 +322,9 @@ EMAIL_FROM_NAME = "env(EMAIL_FROM_NAME)"
 # Set to "true" to use Resend dashboard templates instead of React Email
 USE_RESEND_TEMPLATES = "env(USE_RESEND_TEMPLATES)"
 
+[functions.payzone-webhook]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

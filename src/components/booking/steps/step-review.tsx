@@ -14,6 +14,7 @@ import posthog from "posthog-js";
 import * as React from "react";
 import { toast } from "sonner";
 import { useBookingContext } from "@/components/booking/booking-context";
+import { PhoneRequirementDialog } from "@/components/booking/PhoneRequirementDialog";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +24,8 @@ import { useCreateBooking } from "@/hooks/use-booking-mutations";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
 import { getIntlLocale } from "@/lib/i18n";
+import { getProfilePhone } from "@/lib/profile-phone";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 export function StepReview() {
@@ -43,6 +46,8 @@ export function StepReview() {
   } = useBookingContext();
 
   const [noteTemplate, setNoteTemplate] = React.useState<string | null>(null);
+  const [phoneDialogOpen, setPhoneDialogOpen] = React.useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = React.useState(false);
   const noteTemplates = [
     t("booking.steps.review.noteTemplates.one"),
     t("booking.steps.review.noteTemplates.two"),
@@ -74,8 +79,8 @@ export function StepReview() {
     }).format(amountCents / 100);
   };
 
-  const handleSubmit = async () => {
-    if (isSubmitting) return;
+  const handleSubmit = async (skipPhoneCheck = false) => {
+    if (isSubmitting || isCheckingPhone) return;
 
     if (!experience || !quote) {
       toast.error(t("booking.steps.review.errorToast"));
@@ -89,6 +94,25 @@ export function StepReview() {
       toast.error(t("booking.steps.review.loginRequired"));
       openAuthModal({ mode: "login" });
       return;
+    }
+
+    if (!skipPhoneCheck) {
+      setIsCheckingPhone(true);
+      try {
+        const supabase = createClient();
+        const phone = await getProfilePhone(supabase, user.id);
+
+        if (!phone) {
+          setPhoneDialogOpen(true);
+          return;
+        }
+      } catch (phoneError) {
+        toast.error(t("booking.steps.review.errorToast"));
+        console.error("Failed to check booking phone requirement:", phoneError);
+        return;
+      } finally {
+        setIsCheckingPhone(false);
+      }
     }
 
     try {
@@ -329,16 +353,23 @@ export function StepReview() {
           className="w-full"
           size="lg"
           onClick={() => void handleSubmit()}
-          disabled={isSubmitting}
-          aria-busy={isSubmitting}
+          disabled={isSubmitting || isCheckingPhone}
+          aria-busy={isSubmitting || isCheckingPhone}
         >
-          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+          {(isSubmitting || isCheckingPhone) && (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          )}
           {t("booking.steps.review.confirm")}
         </Button>
         <p className="text-xs text-center text-muted-foreground mt-2">
           {t("booking.steps.review.notice")}
         </p>
       </div>
+      <PhoneRequirementDialog
+        open={phoneDialogOpen}
+        onOpenChange={setPhoneDialogOpen}
+        onSuccess={() => handleSubmit(true)}
+      />
       {/* 
       <PayzoneBadge /> */}
     </div>

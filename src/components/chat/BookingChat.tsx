@@ -1162,14 +1162,6 @@ export function BookingChat({
       ? browserLanguage
       : fallbackLanguage;
 
-  const welcomeEntry =
-    publicAgentConfig?.welcome_messages?.[effectiveLanguage] ||
-    publicAgentConfig?.welcome_messages?.[fallbackLanguage];
-
-  const suggestedPrompts =
-    publicAgentConfig?.suggested_prompts?.[effectiveLanguage] ||
-    publicAgentConfig?.suggested_prompts?.[fallbackLanguage];
-
   return (
     <div className="flex h-full min-h-0 flex-col bg-background relative overflow-hidden">
       {/* Messages Area */}
@@ -1186,9 +1178,6 @@ export function BookingChat({
               <ChatWelcome
                 onSelectSuggestion={handleSuggestionClick}
                 disabled={isLoading || isCreatingConversation}
-                welcomeTitle={welcomeEntry?.title}
-                welcomeDescription={welcomeEntry?.description}
-                suggestedPrompts={suggestedPrompts}
               />
             </motion.div>
           ) : (

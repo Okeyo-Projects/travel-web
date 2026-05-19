@@ -930,25 +930,30 @@
       "disclaimer": "AI can make mistakes. Please verify important details."
     },
     "welcome": {
-      "defaultTitle": "Hello, I am your travel assistant",
-      "defaultDescription": "I can help you find the right stay in Morocco, compare rooms, and prepare your booking.",
-      "suggestionLabel": "Suggestion {count}",
+      "greeting": "Salam! 👋",
+      "intro": "I’m Okeyo, your travel companion in Morocco 🇲🇦",
+      "description": "Whether you’re looking for a riad, a guesthouse, or a hostel, I’ll find the perfect place for you in seconds. And if you have questions about Morocco, I’m here for that too! ✨",
+      "question": "Which city would you like?",
       "suggestions": {
         "one": {
-          "title": "Romantic riad",
-          "prompt": "I am looking for a romantic riad in Marrakech for this weekend."
+          "label": "Essaouira",
+          "prompt": "Essaouira"
         },
         "two": {
-          "title": "Quiet Atlas lodge",
-          "prompt": "I am looking for a quiet lodge in the Atlas for 2 nights."
+          "label": "Marrakech",
+          "prompt": "Marrakech"
         },
         "three": {
-          "title": "Pool and relaxation",
-          "prompt": "Show me a stay with a pool and hammam near Marrakech."
+          "label": "Chefchaouen",
+          "prompt": "Chefchaouen"
         },
         "four": {
-          "title": "Budget stay",
-          "prompt": "I want a budget guesthouse in Chefchaouen."
+          "label": "Imlil",
+          "prompt": "Imlil"
+        },
+        "five": {
+          "label": "Lalla Takerkoust",
+          "prompt": "Lalla Takerkoust"
         }
       }
     },
@@ -1523,6 +1528,16 @@
     "messages": {
       "quickReplies": "Quick replies",
       "addNote": "Add a note"
+    },
+    "phoneRequirement": {
+      "title": "Add your phone number",
+      "description": "To complete this booking, add a phone number so the host can reach you if needed.",
+      "label": "Phone number",
+      "countryLabel": "Phone country",
+      "placeholder": "6 12 34 56 78",
+      "save": "Save and continue",
+      "saving": "Saving...",
+      "errorSave": "We could not save your phone number. Please try again."
     }
   },
   "experienceDetails": {

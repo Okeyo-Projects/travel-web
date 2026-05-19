@@ -934,6 +934,7 @@ export type Database = {
           location: unknown;
           long_description: string;
           metadata: Json | null;
+          old_slug: string | null;
           published_at: string | null;
           region: string | null;
           rejected_reason: string | null;
@@ -967,6 +968,7 @@ export type Database = {
           location: unknown;
           long_description: string;
           metadata?: Json | null;
+          old_slug?: string | null;
           published_at?: string | null;
           region?: string | null;
           rejected_reason?: string | null;
@@ -1000,6 +1002,7 @@ export type Database = {
           location?: unknown;
           long_description?: string;
           metadata?: Json | null;
+          old_slug?: string | null;
           published_at?: string | null;
           region?: string | null;
           rejected_reason?: string | null;

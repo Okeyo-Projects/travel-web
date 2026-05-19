@@ -20,7 +20,7 @@ const searchExperiencesSchema = z.object({
     .string()
     .optional()
     .describe(
-      'Filter by stored administrative region (e.g., "Marrakech-Safi", "Tanger-Tétouan-Al Hoceïma"). Do not put local areas like "Imlil", "Ouirgane", or "Lala Takerkousst" here; keep them in the natural-language query with city="Marrakech".',
+      'Filter by stored administrative region (e.g., "Marrakech-Safi", "Tanger-Tétouan-Al Hoceïma"). Do not put local areas like "Imlil", "Ouirgane", or "Lala Takerkousst" here. If the locality exists as a catalog city, prefer that exact city filter; otherwise keep it in the natural-language query.',
     ),
   max_price_mad: z
     .number()
@@ -166,6 +166,29 @@ const EXPERIENCE_NAME_HINT_PATTERN =
 const EXPERIENCE_NAME_INTENT_PATTERN =
   /\b(visiter|voir|montrer|details|détails|reserver|réserver|book|visit|show)\b/i;
 
+const QUERY_LOCALITY_OVERRIDES: Array<{
+  canonicalCity: string;
+  aliases: string[];
+}> = [
+  {
+    canonicalCity: "Imlil",
+    aliases: ["imlil"],
+  },
+  {
+    canonicalCity: "Ouirgane",
+    aliases: ["ouirgane"],
+  },
+  {
+    canonicalCity: "Lalla Takerkoust",
+    aliases: [
+      "lalla takerkoust",
+      "lalla takerkousst",
+      "lala takerkoust",
+      "lala takerkousst",
+    ],
+  },
+];
+
 const GENERIC_NAME_QUERY_TOKENS = new Set([
   "auberge",
   "book",
@@ -200,6 +223,17 @@ function normalizeSearchText(value: string | undefined): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function extractQueryLocalityOverrides(query: string): string[] {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return [];
+
+  return QUERY_LOCALITY_OVERRIDES.filter(({ aliases }) =>
+    aliases.some((alias) =>
+      normalizedQuery.includes(normalizeSearchText(alias)),
+    ),
+  ).map(({ canonicalCity }) => canonicalCity);
 }
 
 function shouldRetryWithoutTypeFilter(
@@ -799,7 +833,7 @@ export const searchExperiences = tool({
   description: `Search for Okeyo Travel experiences in Morocco using semantic search.
 This tool combines AI-powered semantic search with filters like location, price, dates, and promotions.
 Use this when users ask to find, search, or discover experiences.
-The tool handles city name variants. Use it to resolve named experiences/properties too: pass the exact name or partial name in query, with limit 4, before asking clarifying questions. Use city for the main catalog city/province. Use region only for stored administrative regions; keep local areas/neighborhoods in query text. Keep type unset for broad "experiences/options/what to do" requests so lodging, trips, and activities can all match. It keeps requested locations strict unless allow_location_fallback is true.`,
+The tool handles city name variants. Use it to resolve named experiences/properties too: pass the exact name or partial name in query, with limit 4, before asking clarifying questions. Use the exact catalog city when the user names one, including Atlas localities such as Imlil or Ouirgane if they exist in inventory. Use region only for stored administrative regions; keep local areas/neighborhoods out of the region filter. Keep type unset for broad "experiences/options/what to do" requests so lodging, trips, and activities can all match. It keeps requested locations strict unless allow_location_fallback is true.`,
   inputSchema: searchExperiencesSchema,
   execute: async (params) => {
     try {
@@ -853,6 +887,9 @@ The tool handles city name variants. Use it to resolve named experiences/propert
 
       const cityCandidates = buildLocationCandidates(params.city);
       const regionCandidates = buildLocationCandidates(params.region);
+      const queryLocalityCandidates = extractQueryLocalityOverrides(
+        params.query,
+      );
 
       // --- Attempt 1: Exact search as requested; SQL resolves canonical city_slug/region ---
       let { results, error } = await executeSearch(
@@ -882,8 +919,33 @@ The tool handles city name variants. Use it to resolve named experiences/propert
         };
       }
 
-      // --- Attempt 2: If city was specified, try text variants against city field ---
+      // --- Attempt 2: Recover from overly broad city filters when the query names an exact locality ---
+      for (const candidate of queryLocalityCandidates) {
+        if (
+          normalizeSearchText(candidate) === normalizeSearchText(params.city)
+        ) {
+          continue;
+        }
+
+        const attempt = await executeSearch(db, queryEmbedding, params, {
+          city_slug_filter: null,
+          city_filter: candidate,
+          region_filter: null,
+        });
+
+        if (attempt.results && attempt.results.length > 0) {
+          results = attempt.results;
+          searchNote = `Résultats trouvés en donnant priorité à la localité explicite "${candidate}".`;
+          break;
+        }
+      }
+
+      // --- Attempt 3: If city was specified, try text variants against city field ---
       for (const candidate of cityCandidates) {
+        if (results && results.length > 0) {
+          break;
+        }
+
         const attempt = await executeSearch(db, queryEmbedding, params, {
           city_slug_filter: null,
           city_filter: candidate,
@@ -897,7 +959,7 @@ The tool handles city name variants. Use it to resolve named experiences/propert
         }
       }
 
-      // --- Attempt 3: Try region text variants ---
+      // --- Attempt 4: Try region text variants ---
       if (!results || results.length === 0) {
         for (const candidate of regionCandidates) {
           const attempt = await executeSearch(db, queryEmbedding, params, {
@@ -924,7 +986,7 @@ The tool handles city name variants. Use it to resolve named experiences/propert
         };
       }
 
-      // --- Attempt 4: If the model guessed a type for a broad destination query, relax it ---
+      // --- Attempt 5: If the model guessed a type for a broad destination query, relax it ---
       if (
         (!results || results.length === 0) &&
         shouldRetryWithoutTypeFilter(params)
@@ -949,7 +1011,7 @@ The tool handles city name variants. Use it to resolve named experiences/propert
         };
       }
 
-      // --- Attempt 5: Drop location filters only after explicit user consent ---
+      // --- Attempt 6: Drop location filters only after explicit user consent ---
       if ((params.city || params.region) && params.allow_location_fallback) {
         const attempt = await executeSearch(db, queryEmbedding, params, {
           city_slug_filter: null,

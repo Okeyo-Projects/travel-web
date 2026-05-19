@@ -1,125 +1,56 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Compass,
-  Hotel,
-  type LucideIcon,
-  Map as MapIcon,
-  Tag,
-} from "lucide-react";
+import { Compass } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
-
-type SuggestedPrompt =
-  | string
-  | {
-      title?: string;
-      prompt?: string;
-    };
 
 interface ChatWelcomeProps {
   onSelectSuggestion: (suggestion: string) => void;
   disabled?: boolean;
-  welcomeTitle?: string;
-  welcomeDescription?: string;
-  suggestedPrompts?: SuggestedPrompt[];
 }
 
-type WelcomeSuggestion = {
-  icon: LucideIcon;
-  title: string;
-  prompt: string;
-  color: string;
-};
+const MESSAGE_DELAY_MS = 300;
+const SUGGESTION_KEYS = ["one", "two", "three", "four", "five"] as const;
 
 export function ChatWelcome({
   onSelectSuggestion,
   disabled = false,
-  welcomeTitle,
-  welcomeDescription,
-  suggestedPrompts,
 }: ChatWelcomeProps) {
   const { t, dir } = useSiteI18n();
-  const defaultSuggestions: WelcomeSuggestion[] = [
-    {
-      icon: Hotel,
-      title: t("chat.welcome.suggestions.one.title"),
-      prompt: t("chat.welcome.suggestions.one.prompt"),
-      color: "text-rose-500 bg-rose-500/10",
-    },
-    {
-      icon: MapIcon,
-      title: t("chat.welcome.suggestions.two.title"),
-      prompt: t("chat.welcome.suggestions.two.prompt"),
-      color: "text-emerald-500 bg-emerald-500/10",
-    },
-    {
-      icon: Compass,
-      title: t("chat.welcome.suggestions.three.title"),
-      prompt: t("chat.welcome.suggestions.three.prompt"),
-      color: "text-blue-500 bg-blue-500/10",
-    },
-    {
-      icon: Tag,
-      title: t("chat.welcome.suggestions.four.title"),
-      prompt: t("chat.welcome.suggestions.four.prompt"),
-      color: "text-amber-500 bg-amber-500/10",
-    },
-  ];
+  const [isVisible, setIsVisible] = useState(false);
+  const suggestions = SUGGESTION_KEYS.map((key) => ({
+    prompt: t(`chat.welcome.suggestions.${key}.prompt`),
+    label: t(`chat.welcome.suggestions.${key}.label`),
+  }));
+  const welcomeParagraphs = useMemo(
+    () => [
+      t("chat.welcome.greeting"),
+      t("chat.welcome.intro"),
+      t("chat.welcome.description"),
+      t("chat.welcome.question"),
+    ],
+    [t],
+  );
 
-  const iconPalette = [Hotel, MapIcon, Compass, Tag];
-  const colorPalette = [
-    "text-rose-500 bg-rose-500/10",
-    "text-emerald-500 bg-emerald-500/10",
-    "text-blue-500 bg-blue-500/10",
-    "text-amber-500 bg-amber-500/10",
-  ];
+  useEffect(() => {
+    setIsVisible(false);
 
-  const configuredSuggestions =
-    Array.isArray(suggestedPrompts) && suggestedPrompts.length > 0
-      ? suggestedPrompts
-          .slice(0, 4)
-          .map((entry, index): WelcomeSuggestion | null => {
-            const configuredTitle =
-              typeof entry === "object" && entry !== null
-                ? entry.title?.trim()
-                : "";
-            const prompt =
-              typeof entry === "string"
-                ? entry.trim()
-                : entry?.prompt?.trim() || "";
+    const timeoutId = window.setTimeout(() => {
+      setIsVisible(true);
+    }, MESSAGE_DELAY_MS);
 
-            if (!prompt) return null;
-
-            return {
-              icon: iconPalette[index % iconPalette.length],
-              title:
-                configuredTitle ||
-                defaultSuggestions[index]?.title ||
-                t("chat.welcome.suggestionLabel", { count: index + 1 }),
-              prompt,
-              color: colorPalette[index % colorPalette.length],
-            };
-          })
-          .filter((suggestion): suggestion is WelcomeSuggestion =>
-            Boolean(suggestion),
-          )
-      : [];
-
-  const suggestions =
-    configuredSuggestions.length > 0
-      ? configuredSuggestions
-      : defaultSuggestions;
-
-  const title = welcomeTitle || t("chat.welcome.defaultTitle");
-  const description =
-    welcomeDescription || t("chat.welcome.defaultDescription");
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
+        delayChildren: 0.08,
         staggerChildren: 0.1,
       },
     },
@@ -131,55 +62,60 @@ export function ChatWelcome({
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:p-4 max-w-4xl mx-auto w-full">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-6 sm:mb-12"
-      >
-        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
-          <Compass className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
-        </div>
-        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight mb-3 sm:mb-4">
-          {title}
-        </h1>
-        <p className="text-sm sm:text-lg text-muted-foreground max-w-xl mx-auto">
-          {description}
-        </p>
-      </motion.div>
+    <div
+      dir={dir}
+      className="w-full max-w-3xl mx-auto px-3 py-4 sm:px-4 sm:py-6"
+    >
+      {isVisible ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="flex items-start gap-3 sm:gap-4"
+        >
+          <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary shadow-sm sm:h-8 sm:w-8">
+            <Compass className="h-4 w-4 text-primary-foreground" />
+          </div>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        dir={dir}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-3xl"
-      >
-        {suggestions.map((suggestion) => (
-          <motion.button
-            key={suggestion.prompt}
-            type="button"
-            variants={item}
-            disabled={disabled}
-            dir="auto"
-            onClick={() => onSelectSuggestion(suggestion.prompt)}
-            className="group flex items-start gap-4 p-4 rounded-xl border bg-card hover:bg-accent/50 hover:border-primary/30 transition-all [text-align:start] disabled:opacity-50 disabled:pointer-events-none"
-          >
-            <div
-              className={`p-3 rounded-lg ${suggestion.color} group-hover:scale-110 transition-transform`}
+          <div className="flex-1 space-y-4 overflow-hidden">
+            <div className="space-y-3">
+              <div
+                dir="auto"
+                className="prose prose-neutral max-w-none break-words text-[15px] sm:text-base dark:prose-invert"
+              >
+                <div className="space-y-3">
+                  {welcomeParagraphs.map((paragraph) => (
+                    <p key={paragraph} className="leading-relaxed text-base">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="show"
+              className="flex flex-wrap gap-2.5"
             >
-              <suggestion.icon className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1">{suggestion.title}</h3>
-              <p className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                {suggestion.prompt}
-              </p>
-            </div>
-          </motion.button>
-        ))}
-      </motion.div>
+              {suggestions.map((suggestion) => (
+                <motion.button
+                  key={suggestion.prompt}
+                  type="button"
+                  variants={item}
+                  disabled={disabled}
+                  dir="auto"
+                  onClick={() => onSelectSuggestion(suggestion.prompt)}
+                  className="rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-all hover:border-primary/30 hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {suggestion.label}
+                </motion.button>
+              ))}
+            </motion.div>
+          </div>
+        </motion.div>
+      ) : null}
     </div>
   );
 }

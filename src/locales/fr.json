@@ -930,25 +930,30 @@
       "disclaimer": "L’IA peut faire des erreurs. Vérifiez les informations importantes."
     },
     "welcome": {
-      "defaultTitle": "Bonjour, je suis votre assistant voyage",
-      "defaultDescription": "Je peux vous aider à trouver le bon séjour au Maroc, comparer les chambres et préparer votre réservation.",
-      "suggestionLabel": "Suggestion {count}",
+      "greeting": "Salam ! 👋",
+      "intro": "Je suis Okeyo, ton compagnon de voyage au Maroc 🇲🇦",
+      "description": "Que tu cherches un riad, une maison d'hôtes ou une auberge — je trouve l'endroit parfait pour toi en quelques secondes. Et si tu as des questions sur le Maroc, je suis là aussi ! ✨",
+      "question": "Quelle ville voulez-vous ?",
       "suggestions": {
         "one": {
-          "title": "Riad romantique",
-          "prompt": "Je cherche un riad romantique à Marrakech pour ce week-end."
+          "label": "Essaouira",
+          "prompt": "Essaouira"
         },
         "two": {
-          "title": "Lodge calme dans l’Atlas",
-          "prompt": "Je cherche un lodge calme dans l’Atlas pour 2 nuits."
+          "label": "Marrakech",
+          "prompt": "Marrakech"
         },
         "three": {
-          "title": "Piscine et détente",
-          "prompt": "Montre-moi un hébergement avec piscine et hammam près de Marrakech."
+          "label": "Chefchaouen",
+          "prompt": "Chefchaouen"
         },
         "four": {
-          "title": "Petit budget",
-          "prompt": "Je veux une maison d’hôtes petit budget à Chefchaouen."
+          "label": "Imlil",
+          "prompt": "Imlil"
+        },
+        "five": {
+          "label": "Lalla Takerkoust",
+          "prompt": "Lalla Takerkoust"
         }
       }
     },
@@ -1523,6 +1528,16 @@
     "messages": {
       "quickReplies": "Réponses rapides",
       "addNote": "Ajouter une note"
+    },
+    "phoneRequirement": {
+      "title": "Ajoutez votre numéro de téléphone",
+      "description": "Pour finaliser cette réservation, ajoutez un numéro de téléphone afin que l’hôte puisse vous joindre si nécessaire.",
+      "label": "Numéro de téléphone",
+      "countryLabel": "Pays du numéro",
+      "placeholder": "6 12 34 56 78",
+      "save": "Enregistrer et continuer",
+      "saving": "Enregistrement...",
+      "errorSave": "Impossible d’enregistrer votre numéro de téléphone. Veuillez réessayer."
     }
   },
   "experienceDetails": {

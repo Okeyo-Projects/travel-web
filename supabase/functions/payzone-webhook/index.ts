@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsHeaders } from '../_shared/cors.ts';
 import { hmacSha256Hex } from '../_shared/utils-crypto.ts';
+import { sendPaymentReceipt } from '../_shared/brevo-email.ts';
 
 type InternalPaymentStatus =
   | 'pending'
@@ -216,26 +217,114 @@ serve(async (req) => {
         const experienceTitle = bookingData.experience?.title || 'Experience';
         const experienceId = bookingData.experience?.id;
 
-        // Guest: booking confirmed
-        await supabaseAdmin.functions.invoke('send-push-notification', {
-          body: {
-            type: 'booking_confirmed',
-            userId: bookingData.guest_id,
-            data: { booking_id: bookingId, experience_id: experienceId },
-            variables: { experience: experienceTitle },
-          },
-        });
-
-        // Host: payment received
-        if (bookingData.host_id) {
+        // ── Push notifications (existing) ──
+        try {
+          // Guest: booking confirmed
           await supabaseAdmin.functions.invoke('send-push-notification', {
             body: {
-              type: 'booking_paid',
-              userId: bookingData.host_id,
+              type: 'booking_confirmed',
+              userId: bookingData.guest_id,
               data: { booking_id: bookingId, experience_id: experienceId },
               variables: { experience: experienceTitle },
             },
           });
+
+          // Host: payment received
+          if (bookingData.host_id) {
+            await supabaseAdmin.functions.invoke('send-push-notification', {
+              body: {
+                type: 'booking_paid',
+                userId: bookingData.host_id,
+                data: { booking_id: bookingId, experience_id: experienceId },
+                variables: { experience: experienceTitle },
+              },
+            });
+          }
+        } catch (pushError) {
+          console.error('[payzone-webhook] Push notification error (non-blocking):', (pushError as Error).message);
+        }
+
+        // ── Brevo payment receipt email to guest (new) ──
+        try {
+          // Fetch guest profile
+          const { data: guestProfile, error: guestError } = await supabaseAdmin
+            .from('profiles')
+            .select('email, display_name, preferred_language')
+            .eq('id', bookingData.guest_id)
+            .maybeSingle();
+
+          if (guestError) {
+            console.error('[payzone-webhook] Failed to fetch guest profile for email:', guestError.message);
+          } else if (guestProfile?.email) {
+            // Fetch host profile
+            const { data: hostProfile, error: hostError } = await supabaseAdmin
+              .from('profiles')
+              .select('display_name, phone')
+              .eq('id', bookingData.host_id)
+              .maybeSingle();
+
+            if (hostError) {
+              console.warn('[payzone-webhook] Failed to fetch host profile:', hostError.message);
+            }
+
+            // Fetch booking pricing details (fees are on bookings, not payments)
+            let feesCents = 0;
+            let subtotalCents = 0;
+            let guestsCount = 0;
+            let bookingDate = '';
+            try {
+              const { data: bookingDetails } = await supabaseAdmin
+                .from('bookings')
+                .select('price_fees_cents, price_subtotal_cents, price_total_cents, adults, children, from_date, to_date')
+                .eq('id', bookingId)
+                .maybeSingle();
+
+              if (bookingDetails) {
+                feesCents = bookingDetails.price_fees_cents || 0;
+                subtotalCents = bookingDetails.price_subtotal_cents || (payment.amount_cents - feesCents);
+                guestsCount = (bookingDetails.adults || 0) + (bookingDetails.children || 0);
+                bookingDate = bookingDetails.from_date === bookingDetails.to_date
+                  ? bookingDetails.from_date
+                  : `${bookingDetails.from_date} → ${bookingDetails.to_date}`;
+              } else {
+                subtotalCents = payment.amount_cents || 0;
+              }
+            } catch (bookingFetchError) {
+              console.warn('[payzone-webhook] Could not fetch booking pricing details:', (bookingFetchError as Error).message);
+              subtotalCents = payment.amount_cents || 0;
+            }
+
+            const totalCents = payment.amount_cents || 0;
+
+            const emailResult = await sendPaymentReceipt({
+              guestEmail: guestProfile.email,
+              guestName: guestProfile.display_name,
+              guestLang: guestProfile.preferred_language,
+              bookingId: bookingId,
+              experienceName: experienceTitle,
+              bookingDate: bookingDate,
+              guestsCount: guestsCount,
+              hostName: hostProfile?.display_name,
+              subtotal: (subtotalCents / 100).toFixed(2),
+              serviceFee: (feesCents / 100).toFixed(2),
+              totalPaid: (totalCents / 100).toFixed(2),
+              paymentMethod: 'Carte bancaire',
+              paymentDate: new Date().toISOString(),
+              bookingUrl: `https://okeyo.ma/bookings/${bookingId}`,
+              hostPhone: hostProfile?.phone,
+            });
+
+            if (emailResult.success) {
+              console.log('[payzone-webhook] Payment receipt email sent:', emailResult.messageId);
+            } else {
+              console.error('[payzone-webhook] Payment receipt email failed:', emailResult.error);
+            }
+          } else {
+            console.warn('[payzone-webhook] Guest email not found, skipping receipt for booking:', bookingId);
+          }
+        } catch (emailError) {
+          console.error('[payzone-webhook] Unexpected error sending payment receipt (non-blocking):', (emailError as Error).message);
+          // Never throw — email failure must not affect payment processing
         }
       }
     }

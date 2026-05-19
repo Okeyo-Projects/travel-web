@@ -1,13 +1,16 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ExperienceDetailTracker } from "@/components/experience/ExperienceDetailTracker";
 import { ExperienceDetailView } from "@/components/experience/ExperienceDetailView";
 import { SimilarExperiences } from "@/components/experience/SimilarExperiences";
 import { FooterSection } from "@/components/home/FooterSection";
 import { createTranslator, resolveLocale } from "@/lib/i18n";
 import { fetchExperienceData } from "@/lib/routing/experience-resolver";
+import {
+  localizeExperiencePath,
+  localizeHref,
+} from "@/lib/routing/locale-path";
 import { buildExperienceHref } from "@/lib/routing/slugs";
-import { localizeExperiencePath, localizeHref } from "@/lib/routing/locale-path";
 
 export const revalidate = 3600;
 
@@ -16,7 +19,7 @@ export default async function HebergementPage({
 }: {
   params: Promise<{ region: string; city: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { region, city, slug } = await params;
 
   const requestHeaders = await headers();
   const locale = resolveLocale(requestHeaders.get("x-locale"));
@@ -38,7 +41,18 @@ export default async function HebergementPage({
     city: experience.city,
   });
 
-  const url = localizeHref(localizeExperiencePath(canonicalPath, locale), locale);
+  const requestedPath = `/hebergement/${region}/${city}/${slug}`;
+
+  if (requestedPath !== canonicalPath) {
+    permanentRedirect(
+      localizeHref(localizeExperiencePath(canonicalPath, locale), locale),
+    );
+  }
+
+  const url = localizeHref(
+    localizeExperiencePath(canonicalPath, locale),
+    locale,
+  );
 
   return (
     <>
