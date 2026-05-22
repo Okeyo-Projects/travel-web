@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,8 @@ import {
   type PhoneCountry,
   PhoneInput,
 } from "@/components/ui/phone-input";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
 
 interface AnonymousLeadCaptureModalProps {
   open: boolean;
@@ -45,6 +47,16 @@ export function AnonymousLeadCaptureModal({
   const [phoneCountry, setPhoneCountry] = useState<PhoneCountry>("MA");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const analyticsContext = useMemo(
+    () => ({
+      source: "chat_modal",
+      pathname,
+      locale,
+      conversation_id: conversationId,
+      has_client_id: !!clientId,
+    }),
+    [clientId, conversationId, locale, pathname],
+  );
 
   useEffect(() => {
     if (open) return;
@@ -56,6 +68,12 @@ export function AnonymousLeadCaptureModal({
     setError(null);
     setIsSubmitting(false);
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    captureEvent(ANALYTICS_EVENT.CHAT_LEAD_CAPTURE_OPENED, analyticsContext);
+  }, [analyticsContext, open]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -112,6 +130,12 @@ export function AnonymousLeadCaptureModal({
         );
       }
 
+      captureEvent(ANALYTICS_EVENT.CHAT_LEAD_CAPTURE_SUBMITTED, {
+        ...analyticsContext,
+        has_name: name.trim().length > 0,
+        has_email: normalizedEmail.length > 0,
+        phone_country: phoneCountry,
+      });
       onSubmitted();
     } catch (submitError) {
       setError(
@@ -122,6 +146,16 @@ export function AnonymousLeadCaptureModal({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLaterClick = () => {
+    captureEvent(ANALYTICS_EVENT.CHAT_LEAD_CAPTURE_LATER_CLICKED, {
+      ...analyticsContext,
+      has_name: name.trim().length > 0,
+      has_email: email.trim().length > 0,
+      has_phone: phone.trim().length > 0,
+    });
+    onDismiss();
   };
 
   const clearError = () => {
@@ -256,7 +290,7 @@ export function AnonymousLeadCaptureModal({
                 <button
                   type="button"
                   className="mx-auto block text-sm font-medium text-slate-400 underline-offset-4 transition-colors hover:text-slate-600 hover:underline"
-                  onClick={onDismiss}
+                  onClick={handleLaterClick}
                   disabled={isSubmitting}
                 >
                   {t("chat.leadCapture.later")}
