@@ -957,6 +957,26 @@
         }
       }
     },
+    "leadCapture": {
+      "eyebrow": "🇲🇦",
+      "title": "On construit Okeyo pour vous — avec passion, depuis le Maroc.",
+      "description": "Rejoignez-nous gratuitement et gagnez -10%, votre historique de voyage, et peut-être une nuit offerte 🌙",
+      "fields": {
+        "nameLabel": "Nom",
+        "namePlaceholder": "Nom",
+        "phoneLabel": "Numéro",
+        "phonePlaceholder": "6 12 34 56 78",
+        "phoneCountryLabel": "Pays du numéro",
+        "phoneRequiredCaption": "Obligatoire",
+        "emailLabel": "Email",
+        "emailPlaceholder": "Email"
+      },
+      "submit": "Rejoindre gratuitement",
+      "later": "Plus tard",
+      "messages": {
+        "submitError": "Impossible d’enregistrer vos informations pour le moment. Réessayez."
+      }
+    },
     "locked": {
       "title": "Réservation envoyée",
       "description": "Cette conversation est terminée.",

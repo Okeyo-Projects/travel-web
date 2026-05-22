@@ -40,15 +40,6 @@ function getCountryName(country: PhoneCountry) {
   return countryNames.of(country) ?? country;
 }
 
-function getCountryFlag(country: PhoneCountry) {
-  return String.fromCodePoint(
-    ...country
-      .toUpperCase()
-      .split("")
-      .map((letter) => letter.charCodeAt(0) + 127397),
-  );
-}
-
 function buildCountryOptions() {
   const preferred = new Set(PREFERRED_COUNTRIES);
   const countries = getCountries() as PhoneCountry[];
@@ -57,7 +48,6 @@ function buildCountryOptions() {
     .map((country) => ({
       country,
       dialCode: getCountryCallingCode(country),
-      flag: getCountryFlag(country),
       name: getCountryName(country),
       preferred: preferred.has(country),
     }))
@@ -131,12 +121,11 @@ function PhoneInput({
         <SelectTrigger
           id={id ? `${id}-country` : undefined}
           aria-label={countryLabel}
-          className="h-full w-[140px] shrink-0 rounded-none border-0 border-r bg-transparent px-3 pr-2 shadow-none focus:ring-0 focus-visible:ring-0 sm:w-[152px]"
+          className="h-full min-w-[108px] shrink-0 rounded-none border-0 border-r bg-transparent px-3 pr-3 shadow-none focus:ring-0 focus-visible:ring-0 sm:min-w-[116px]"
         >
           <SelectValue>
             {selectedCountry ? (
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="shrink-0">{selectedCountry.flag}</span>
+              <span className="flex min-w-0 items-center gap-1.5 leading-none">
                 <span className="truncate font-medium">
                   +{selectedCountry.dialCode}
                 </span>
@@ -154,9 +143,8 @@ function PhoneInput({
             <SelectItem
               key={option.country}
               value={option.country}
-              textValue={`${option.flag} +${option.dialCode}`}
+              textValue={`${option.name} +${option.dialCode}`}
             >
-              <span className="min-w-7 shrink-0">{option.flag}</span>
               <span className="flex-1 truncate">{option.name}</span>
               <span className="text-muted-foreground">+{option.dialCode}</span>
             </SelectItem>

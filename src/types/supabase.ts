@@ -1771,6 +1771,45 @@ export type Database = {
           },
         ];
       };
+      potential_users: {
+        Row: {
+          created_at: string;
+          email: string | null;
+          id: string;
+          locale: string | null;
+          metadata: Json;
+          name: string | null;
+          phone: string;
+          phone_country: string | null;
+          source: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          locale?: string | null;
+          metadata?: Json;
+          name?: string | null;
+          phone: string;
+          phone_country?: string | null;
+          source?: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          locale?: string | null;
+          metadata?: Json;
+          name?: string | null;
+          phone?: string;
+          phone_country?: string | null;
+          source?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;

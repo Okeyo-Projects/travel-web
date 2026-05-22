@@ -36,6 +36,7 @@ import {
 } from "@/lib/chat/deep-link";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { localizeHref, stripLocalePrefix } from "@/lib/routing/locale-path";
+import { AnonymousLeadCaptureModal } from "./AnonymousLeadCaptureModal";
 import { ChatInput } from "./ChatInput";
 import { ChatWelcome } from "./ChatWelcome";
 import {
@@ -85,6 +86,11 @@ type AssistantResponseAnalyticsContext = {
   source: ChatSendSource | "unknown";
   latencyMs: number | null;
 };
+
+const ANONYMOUS_CHAT_LEAD_MODAL_DELAY_MS = 3_000;
+const ANONYMOUS_CHAT_LEAD_MODAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1_000;
+const ANONYMOUS_CHAT_LEAD_MODAL_STORAGE_KEY =
+  "okeyo:chat:anonymous-lead-modal-next-prompt-at";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -317,10 +323,11 @@ export function BookingChat({
     setLockedConversationId,
     startNewConversation,
   } = useChatContext();
-  const { user } = useAuth();
+  const { user, loading: authLoading, authModalOpen } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [input, setInput] = useState("");
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [anonymousLeadModalOpen, setAnonymousLeadModalOpen] = useState(false);
   const [resolvedDeepLink, setResolvedDeepLink] =
     useState<ActiveChatDeepLink | null>(null);
   const [deepLinkStatus, setDeepLinkStatus] = useState<
@@ -387,6 +394,59 @@ export function BookingChat({
   }, [mounted]);
 
   const isLoading = status === "submitted" || status === "streaming";
+
+  const setAnonymousLeadModalCooldown = useEffectEvent(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(
+        ANONYMOUS_CHAT_LEAD_MODAL_STORAGE_KEY,
+        String(Date.now() + ANONYMOUS_CHAT_LEAD_MODAL_COOLDOWN_MS),
+      );
+    } catch {
+      // Ignore localStorage failures in private browsing or blocked storage.
+    }
+  });
+
+  useEffect(() => {
+    if (!mounted || authLoading || user || authModalOpen) return;
+
+    let nextPromptAt = 0;
+
+    try {
+      nextPromptAt = Number.parseInt(
+        window.localStorage.getItem(ANONYMOUS_CHAT_LEAD_MODAL_STORAGE_KEY) ??
+          "0",
+        10,
+      );
+    } catch {
+      nextPromptAt = 0;
+    }
+
+    if (Number.isFinite(nextPromptAt) && nextPromptAt > Date.now()) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAnonymousLeadModalOpen(true);
+      setAnonymousLeadModalCooldown();
+    }, ANONYMOUS_CHAT_LEAD_MODAL_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    authLoading,
+    authModalOpen,
+    mounted,
+    setAnonymousLeadModalCooldown,
+    user,
+  ]);
+
+  useEffect(() => {
+    if (!user && !authModalOpen) return;
+    setAnonymousLeadModalOpen(false);
+  }, [authModalOpen, user]);
 
   useEffect(() => {
     if (status === "ready" || status === "error") {
@@ -1243,6 +1303,20 @@ export function BookingChat({
           />
         )}
       </div>
+
+      <AnonymousLeadCaptureModal
+        open={anonymousLeadModalOpen}
+        clientId={clientId}
+        conversationId={activeConversationId}
+        onDismiss={() => {
+          setAnonymousLeadModalCooldown();
+          setAnonymousLeadModalOpen(false);
+        }}
+        onSubmitted={() => {
+          setAnonymousLeadModalCooldown();
+          setAnonymousLeadModalOpen(false);
+        }}
+      />
     </div>
   );
 }

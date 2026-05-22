@@ -957,6 +957,26 @@
         }
       }
     },
+    "leadCapture": {
+      "eyebrow": "🇲🇦",
+      "title": "نبني Okeyo من أجلكم، بشغف ومن قلب المغرب.",
+      "description": "انضموا إلينا مجانًا، واحصلوا على خصم 10%، وسجل رحلاتكم، وربما ليلة مجانية أيضًا 🌙",
+      "fields": {
+        "nameLabel": "الاسم",
+        "namePlaceholder": "الاسم",
+        "phoneLabel": "رقم الهاتف",
+        "phonePlaceholder": "6 12 34 56 78",
+        "phoneCountryLabel": "بلد رقم الهاتف",
+        "phoneRequiredCaption": "مطلوب",
+        "emailLabel": "البريد الإلكتروني",
+        "emailPlaceholder": "البريد الإلكتروني"
+      },
+      "submit": "انضموا مجانًا",
+      "later": "لاحقًا",
+      "messages": {
+        "submitError": "تعذر حفظ معلوماتكم الآن. يرجى المحاولة مرة أخرى."
+      }
+    },
     "locked": {
       "title": "تم إرسال الحجز",
       "description": "انتهت هذه المحادثة.",

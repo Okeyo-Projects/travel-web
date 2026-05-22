@@ -957,6 +957,26 @@
         }
       }
     },
+    "leadCapture": {
+      "eyebrow": "🇲🇦",
+      "title": "We’re building Okeyo for you, with passion from Morocco.",
+      "description": "Join us for free, get 10% off, keep your travel history, and maybe even enjoy a complimentary night 🌙",
+      "fields": {
+        "nameLabel": "Name",
+        "namePlaceholder": "Name",
+        "phoneLabel": "Phone number",
+        "phonePlaceholder": "6 12 34 56 78",
+        "phoneCountryLabel": "Phone number country",
+        "phoneRequiredCaption": "Required",
+        "emailLabel": "Email",
+        "emailPlaceholder": "Email"
+      },
+      "submit": "Join for free",
+      "later": "Maybe later",
+      "messages": {
+        "submitError": "We could not save your information right now. Please try again."
+      }
+    },
     "locked": {
       "title": "Booking sent",
       "description": "This conversation is finished.",
