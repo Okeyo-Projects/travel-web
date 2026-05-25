@@ -16,20 +16,29 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const staticPaths = [
-    "/",
-    "/explore",
-    "/blog",
-    "/chat",
-    "/about",
-    "/support",
-    "/terms",
-    "/privacy",
-  ];
+    { path: "/", changeFrequency: "daily", priority: 1 },
+    { path: "/explore", changeFrequency: "daily", priority: 0.9 },
+    { path: "/blog", changeFrequency: "daily", priority: 0.8 },
+    { path: "/chat", changeFrequency: "weekly", priority: 0.7 },
+    { path: "/about", changeFrequency: "monthly", priority: 0.6 },
+    { path: "/partner", changeFrequency: "weekly", priority: 0.8 },
+    { path: "/support", changeFrequency: "monthly", priority: 0.6 },
+    { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
+    { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
+  ] satisfies Array<{
+    path: string;
+    changeFrequency: NonNullable<
+      MetadataRoute.Sitemap[number]["changeFrequency"]
+    >;
+    priority: number;
+  }>;
 
-  const staticRoutes: MetadataRoute.Sitemap = staticPaths.flatMap((path) =>
+  const staticRoutes: MetadataRoute.Sitemap = staticPaths.flatMap((route) =>
     LOCALES.map((locale) => ({
-      url: `${SITE_URL}${localizeHref(path, locale)}`,
+      url: `${SITE_URL}${localizeHref(route.path, locale)}`,
       lastModified: now,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
     })),
   );
 
@@ -126,9 +135,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     experienceRoutes = experiences
       .filter(
         (exp) =>
-          exp.city &&
-          exp.title &&
-          !exp.title.toLowerCase().includes("test"),
+          exp.city && exp.title && !exp.title.toLowerCase().includes("test"),
       )
       .flatMap((exp) => {
         const path = buildExperienceHref({

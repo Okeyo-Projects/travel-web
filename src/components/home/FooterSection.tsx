@@ -14,6 +14,7 @@ export function FooterSection() {
   const companyLinks = [
     { label: t("home.footer.links.explore"), href: "/explore" },
     { label: t("home.footer.links.about"), href: "/about" },
+    { label: t("home.footer.links.partner"), href: "/partner" },
     { label: t("home.footer.links.blog"), href: "/blog" },
     { label: t("home.footer.links.privacy"), href: "/privacy" },
     { label: t("home.footer.links.terms"), href: "/terms" },

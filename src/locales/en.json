@@ -25,7 +25,8 @@
     "travelerMode": "Traveler mode",
     "switchToTraveler": "Switch to traveler mode",
     "switchToHost": "Switch to host mode",
-    "blog": "Blog"
+    "blog": "Blog",
+    "partner": "Partners"
   },
   "language": {
     "label": "Language",
@@ -455,6 +456,7 @@
       "links": {
         "explore": "Explore",
         "about": "About Us",
+        "partner": "Partners",
         "blog": "Blog",
         "privacy": "Privacy Policy",
         "terms": "Terms of Service",

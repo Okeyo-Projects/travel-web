@@ -1,7 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/i18n";
-import { EXPERIENCE_ROUTE_ALIASES } from "@/lib/routing/locale-path";
+import {
+  EXPERIENCE_ROUTE_ALIASES,
+  localizeStaticPath,
+  normalizeLocalizedStaticPath,
+} from "@/lib/routing/locale-path";
 
 const PUBLIC_FILE = /\.[^/]+$/;
 
@@ -102,8 +106,22 @@ export function middleware(request: NextRequest) {
   }
 
   if (isSupportedLocale(firstSegment)) {
-    let rewrittenPath =
+    const localePath =
       pathname.replace(new RegExp(`^/${firstSegment}`), "") || "/";
+    const canonicalLocalizedPath = localizeStaticPath(localePath, firstSegment);
+
+    if (canonicalLocalizedPath !== localePath) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = `/${firstSegment}${canonicalLocalizedPath}`;
+      const response = NextResponse.redirect(redirectUrl, 308);
+      response.headers.set("Content-Security-Policy", csp);
+      Object.entries(getCacheHeaders()).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
+    }
+
+    let rewrittenPath = normalizeLocalizedStaticPath(localePath);
 
     // Normalize locale-translated experience segment aliases → /hebergement/
     for (const alias of EXPERIENCE_ROUTE_ALIASES) {
@@ -139,8 +157,17 @@ export function middleware(request: NextRequest) {
   }
 
   const redirectUrl = request.nextUrl.clone();
+  const defaultLocalePath =
+    pathname === "/"
+      ? "/"
+      : localizeStaticPath(
+          normalizeLocalizedStaticPath(pathname),
+          DEFAULT_LOCALE,
+        );
   redirectUrl.pathname =
-    pathname === "/" ? `/${DEFAULT_LOCALE}` : `/${DEFAULT_LOCALE}${pathname}`;
+    defaultLocalePath === "/"
+      ? `/${DEFAULT_LOCALE}`
+      : `/${DEFAULT_LOCALE}${defaultLocalePath}`;
 
   const response = NextResponse.redirect(redirectUrl, 308);
   response.headers.set("Content-Security-Policy", csp);

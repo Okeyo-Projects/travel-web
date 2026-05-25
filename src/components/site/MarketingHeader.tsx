@@ -161,6 +161,12 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
                 {t("header.about")}
               </Link>
               <Link
+                href={localizeHref("/partner", pathname)}
+                className="transition-colors hover:text-white"
+              >
+                {t("header.partner")}
+              </Link>
+              <Link
                 href={localizeHref("/blog", pathname)}
                 className="transition-colors hover:text-white"
               >
@@ -267,6 +273,12 @@ export function MarketingHeader({ className }: MarketingHeaderProps) {
                       className="text-white/90 text-lg py-3 px-4 rounded-lg hover:bg-white/10 transition-colors"
                     >
                       {t("header.about")}
+                    </Link>
+                    <Link
+                      href={localizeHref("/partner", pathname)}
+                      className="text-white/90 text-lg py-3 px-4 rounded-lg hover:bg-white/10 transition-colors"
+                    >
+                      {t("header.partner")}
                     </Link>
                     <Link
                       href={localizeHref("/blog", pathname)}

@@ -25,7 +25,8 @@
     "travelerMode": "وضع المسافر",
     "switchToTraveler": "التبديل إلى وضع المسافر",
     "switchToHost": "التبديل إلى وضع المضيف",
-    "blog": "المدونة"
+    "blog": "المدونة",
+    "partner": "الشركاء"
   },
   "language": {
     "label": "اللغة",
@@ -455,6 +456,7 @@
       "links": {
         "explore": "استكشف",
         "about": "من نحن",
+        "partner": "الشركاء",
         "blog": "المدونة",
         "privacy": "سياسة الخصوصية",
         "terms": "شروط الاستخدام",

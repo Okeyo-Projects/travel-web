@@ -5,6 +5,16 @@ import {
   LOCALES,
 } from "@/lib/i18n";
 
+const PARTNER_ROUTE_PATHS: Record<AppLocale, string> = {
+  fr: "/devenir-partenaire",
+  ar: "/devenir-partenaire",
+  en: "/become-partner",
+};
+
+const LOCALIZED_STATIC_PATHS = {
+  "/partner": PARTNER_ROUTE_PATHS,
+} as const satisfies Record<string, Record<AppLocale, string>>;
+
 // Maps the internal /hebergement/ segment to its locale-specific public-facing equivalent.
 // Arabic keeps the French word; only English gets a translated segment.
 export const EXPERIENCE_ROUTE_SEGMENT: Record<AppLocale, string> = {
@@ -22,6 +32,47 @@ export function localizeExperiencePath(
 ): string {
   const segment = EXPERIENCE_ROUTE_SEGMENT[locale];
   return internalPath.replace(/^\/hebergement\//, `/${segment}/`);
+}
+
+function normalizePathname(pathname: string): string {
+  const withLeadingSlash = pathname.startsWith("/") ? pathname : `/${pathname}`;
+
+  if (withLeadingSlash === "/") {
+    return withLeadingSlash;
+  }
+
+  return withLeadingSlash.replace(/\/+$/, "") || "/";
+}
+
+export function normalizeLocalizedStaticPath(pathname: string): string {
+  const normalizedPathname = normalizePathname(pathname);
+
+  for (const [internalPath, localizedPaths] of Object.entries(
+    LOCALIZED_STATIC_PATHS,
+  )) {
+    if (normalizedPathname === internalPath) {
+      return internalPath;
+    }
+
+    if (Object.values(localizedPaths).includes(normalizedPathname)) {
+      return internalPath;
+    }
+  }
+
+  return normalizedPathname;
+}
+
+export function localizeStaticPath(
+  pathname: string,
+  locale: AppLocale,
+): string {
+  const internalPath = normalizeLocalizedStaticPath(pathname);
+
+  return (
+    LOCALIZED_STATIC_PATHS[
+      internalPath as keyof typeof LOCALIZED_STATIC_PATHS
+    ]?.[locale] ?? internalPath
+  );
 }
 
 function splitHref(href: string) {
@@ -64,11 +115,15 @@ export function stripLocalePrefix(pathname: string | null | undefined): string {
   }
 
   if (!isSupportedLocale(segments[0])) {
-    return pathname.startsWith("/") ? pathname : `/${pathname}`;
+    return normalizeLocalizedStaticPath(
+      pathname.startsWith("/") ? pathname : `/${pathname}`,
+    );
   }
 
   const stripped = `/${segments.slice(1).join("/")}`;
-  return stripped === "/" ? "/" : stripped.replace(/\/+$/, "");
+  return normalizeLocalizedStaticPath(
+    stripped === "/" ? "/" : stripped.replace(/\/+$/, ""),
+  );
 }
 
 export function localizeHref(
@@ -98,7 +153,7 @@ export function localizeHref(
     return `/${locale}${suffix}`;
   }
 
-  return `/${locale}${withoutLocale}${suffix}`;
+  return `/${locale}${localizeStaticPath(withoutLocale, locale)}${suffix}`;
 }
 
 /**
