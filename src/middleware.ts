@@ -8,6 +8,7 @@ import {
 } from "@/lib/routing/locale-path";
 
 const PUBLIC_FILE = /\.[^/]+$/;
+const POSTHOG_PROXY_PATH = "/internal/collect";
 
 // C9: Legacy typo redirects (expand as data fixes are confirmed)
 const LEGACY_REDIRECTS: Record<string, string> = {
@@ -18,6 +19,7 @@ function shouldBypass(pathname: string): boolean {
   return (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
+    pathname.startsWith(POSTHOG_PROXY_PATH) ||
     pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/robots.txt") ||
     pathname.startsWith("/sitemap.xml") ||
@@ -48,7 +50,8 @@ export function middleware(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
 
   const getCacheHeaders = () => {
-    const isApiRoute = pathname.startsWith("/api");
+    const isApiRoute =
+      pathname.startsWith("/api") || pathname.startsWith(POSTHOG_PROXY_PATH);
 
     if (isApiRoute) {
       return {
