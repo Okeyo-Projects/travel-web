@@ -1,8 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +12,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  PhoneInput,
   normalizePhoneNumber,
   type PhoneCountry,
-  PhoneInput,
 } from "@/components/ui/phone-input";
 import { ANALYTICS_EVENT } from "@/lib/analytics/events";
 import { captureEvent } from "@/lib/analytics/posthog";
+import { Loader2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 interface AnonymousLeadCaptureModalProps {
   open: boolean;
@@ -276,6 +276,11 @@ export function AnonymousLeadCaptureModal({
               ) : null}
 
               <div className="space-y-3 pt-2">
+                {/* <LegalNotice
+                  className="text-center"
+                  textClassName="text-xs text-slate-500"
+                  onLinkClick={onDismiss}
+                /> */}
                 <Button
                   type="submit"
                   className="h-12 w-full rounded-2xl bg-[#ff1f7a] text-base font-semibold text-white shadow-[0_18px_32px_rgba(255,31,122,0.28)] hover:bg-[#e1176d]"

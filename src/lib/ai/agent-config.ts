@@ -14,7 +14,9 @@ export type AgentToolName =
   | "suggestDateOptions"
   | "selectRoomType"
   | "getExperienceOptionDetails"
-  | "getWeather";
+  | "getWeather"
+  | "getCityInformation"
+  | "getTopicInformation";
 
 export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
   "searchExperiences",
@@ -31,6 +33,8 @@ export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
   "selectRoomType",
   "getExperienceOptionDetails",
   "getWeather",
+  "getCityInformation",
+  "getTopicInformation",
 ];
 
 export type AgentWelcomeMessages = Record<

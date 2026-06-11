@@ -21,7 +21,9 @@ import {
   createSelectRoomTypeTool,
   createSuggestDateOptionsTool,
   findSimilar,
+  getCityInformation,
   getExperienceDetails,
+  getTopicInformation,
   getExperienceOptionDetails,
   getExperiencePromos,
   getLinkedExperiences,
@@ -532,6 +534,8 @@ export async function POST(req: Request) {
       selectRoomType,
       getExperienceOptionDetails,
       getWeather,
+      getCityInformation,
+      getTopicInformation,
     };
 
     // Keep interactive quick replies available even if older config versions

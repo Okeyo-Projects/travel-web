@@ -1,5 +1,8 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { LegalNotice } from "@/components/legal/LegalNotice";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,9 +22,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  PhoneInput,
   normalizePhoneNumber,
   type PhoneCountry,
+  PhoneInput,
 } from "@/components/ui/phone-input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,9 +36,6 @@ import { syncUserToBrevo } from "@/lib/brevo/sync";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/translations-provider";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 type MessageState = {
   type: "error" | "success";
@@ -82,6 +82,8 @@ export function AuthModal() {
   const [signupPassword, setSignupPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<MessageState | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authModalOpen) {
@@ -94,6 +96,8 @@ export function AuthModal() {
       setSignupPhoneCountry("MA");
       setSignupPassword("");
       setMessage(null);
+      setTermsAccepted(false);
+      setTermsError(null);
     }
   }, [authModalOpen]);
 
@@ -137,6 +141,13 @@ export function AuthModal() {
     event.preventDefault();
     setIsSubmitting(true);
     setMessage(null);
+    setTermsError(null);
+
+    if (!termsAccepted) {
+      setTermsError(t("authModal.legalCheckboxRequired"));
+      setIsSubmitting(false);
+      return;
+    }
 
     if (!signupName.trim()) {
       setMessage({ type: "error", text: t("authModal.messages.nameRequired") });
@@ -517,6 +528,21 @@ export function AuthModal() {
               {message.text}
             </div>
           ) : null}
+          <LegalNotice
+            requireCheckbox
+            checkboxChecked={termsAccepted}
+            onCheckboxChange={(checked) => {
+              setTermsAccepted(checked);
+              if (checked) setTermsError(null);
+            }}
+            checkboxError={termsError ?? undefined}
+            textClassName="text-sm text-muted-foreground"
+            onLinkClick={closeAuthModal}
+          />
+          <LegalNotice
+            variant="dataProcessing"
+            textClassName="text-xs text-muted-foreground"
+          />
           <Button
             type="submit"
             className="h-11 rounded-full bg-[#ff2566] text-white hover:bg-[#e0205a]"
@@ -619,23 +645,13 @@ export function AuthModal() {
         </>
       ) : null}
 
-      <p className="text-center text-xs leading-6 text-muted-foreground">
-        {t("authModal.legalPrefix")}{" "}
-        <Link
-          href={localizeHref("/terms", pathname)}
-          className="font-medium text-foreground hover:text-primary"
-        >
-          {t("authModal.legalTerms")}
-        </Link>{" "}
-        {t("authModal.legalAnd")}{" "}
-        <Link
-          href={localizeHref("/privacy", pathname)}
-          className="font-medium text-foreground hover:text-primary"
-        >
-          {t("authModal.legalPrivacy")}
-        </Link>
-        .
-      </p>
+      {authMode !== "signup" && (
+        <LegalNotice
+          className="text-center"
+          textClassName="text-xs leading-6 text-muted-foreground"
+          onLinkClick={closeAuthModal}
+        />
+      )}
     </div>
   );
 

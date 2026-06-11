@@ -1,5 +1,19 @@
 "use client";
 
+import { PhoneRequirementDialog } from "@/components/booking/PhoneRequirementDialog";
+import { useBookingContext } from "@/components/booking/booking-context";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { useCreateBooking } from "@/hooks/use-booking-mutations";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import { getIntlLocale } from "@/lib/i18n";
+import { getProfilePhone } from "@/lib/profile-phone";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import {
   BedDouble,
   Calendar,
@@ -13,20 +27,6 @@ import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 import * as React from "react";
 import { toast } from "sonner";
-import { useBookingContext } from "@/components/booking/booking-context";
-import { PhoneRequirementDialog } from "@/components/booking/PhoneRequirementDialog";
-import { useSiteI18n } from "@/components/site/site-i18n";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/hooks/use-auth";
-import { useCreateBooking } from "@/hooks/use-booking-mutations";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { getIntlLocale } from "@/lib/i18n";
-import { getProfilePhone } from "@/lib/profile-phone";
-import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
 
 export function StepReview() {
   const { locale, t } = useSiteI18n();
@@ -364,6 +364,11 @@ export function StepReview() {
         <p className="text-xs text-center text-muted-foreground mt-2">
           {t("booking.steps.review.notice")}
         </p>
+        {/* <LegalNotice
+          variant="bookingDataProcessing"
+          className="text-center mt-2"
+          textClassName="text-xs text-muted-foreground"
+        /> */}
       </div>
       <PhoneRequirementDialog
         open={phoneDialogOpen}

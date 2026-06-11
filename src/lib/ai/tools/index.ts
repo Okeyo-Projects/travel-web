@@ -4,6 +4,8 @@ export { checkAvailability } from "./check-availability";
 export { getWeather } from "./get-weather";
 export { createBookingIntent } from "./create-booking-intent";
 export { findSimilar } from "./find-similar";
+export { getCityInformation } from "./get-city-information";
+export { getTopicInformation } from "./get-topic-information";
 export { getExperienceDetails } from "./get-experience-details";
 export { getExperienceOptionDetails } from "./get-experience-option-details";
 export { getExperiencePromos } from "./get-experience-promos";

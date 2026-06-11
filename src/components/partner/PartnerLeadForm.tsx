@@ -268,7 +268,10 @@ export function PartnerLeadForm({ locale, copy }: PartnerLeadFormProps) {
             copy.submit
           )}
         </Button>
-        <p className="text-xs leading-5 text-slate-500">{copy.privacy}</p>
+        {/* <LegalNotice
+          className="text-center"
+          textClassName="text-xs leading-5 text-slate-500"
+        /> */}
       </div>
     </form>
   );

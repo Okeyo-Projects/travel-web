@@ -2498,6 +2498,28 @@ export type Database = {
         Args: { newname: string; oldname: string; version: string };
         Returns: undefined;
       };
+      get_city_information: {
+        Args: { p_city_slug: string };
+        Returns: Array<{
+          id: string;
+          title: string;
+          content: string;
+          summary: string | null;
+          priority: number;
+          created_at: string;
+        }>;
+      };
+      get_topic_information: {
+        Args: { p_topic_slug: string };
+        Returns: Array<{
+          id: string;
+          title: string;
+          content: string;
+          summary: string | null;
+          priority: number;
+          created_at: string;
+        }>;
+      };
       _postgis_index_extent: {
         Args: { col: string; tbl: unknown };
         Returns: unknown;

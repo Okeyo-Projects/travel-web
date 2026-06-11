@@ -66,6 +66,9 @@
     "legalTerms": "Terms of Service",
     "legalAnd": "and",
     "legalPrivacy": "Privacy Policy",
+    "dataProcessingNotice": "Through this form, PRONOV collects your personal data for the management of customer accounts, commercial transactions, and customer relations. This processing has been declared to / authorized by the CNDP under number ................ The personal data collected may be transmitted to PRONOV in accordance with the transfer request filed with the CNDP.",
+    "bookingDataProcessingNotice": "Through this form, PRONOV collects your personal data for the management of customer accounts, commercial transactions, and customer relations. This processing has been declared to / authorized by the CNDP under number ................ The personal data collected may be transmitted to PRONOV in accordance with the transfer request filed with the CNDP. You may contact PRONOV to exercise your rights of access, rectification, and objection in accordance with the provisions of Law No. 09-08.",
+    "rightsNotice": "You may contact PRONOV to exercise your rights of access, rectification, and objection in accordance with the provisions of Law No. 09-08.",
     "messages": {
       "nameRequired": "Please enter your name.",
       "phoneRequired": "Please enter your phone number.",
@@ -114,7 +117,10 @@
       "phoneLabel": "Phone number",
       "phoneCountryLabel": "Phone country",
       "phonePlaceholder": "6 12 34 56 78"
-    }
+    },
+    "legalMore": "more",
+    "legalLess": "less",
+    "legalCheckboxRequired": "You must agree to the Terms and Privacy Policy to continue."
   },
   "resetPasswordPage": {
     "title": "Choose a new password",

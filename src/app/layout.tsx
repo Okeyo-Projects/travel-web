@@ -100,6 +100,9 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       site: "@okeyotravel",
     },
+    verification: {
+      google: "phk6Ve-SMuQdnC2NZXeYOOR_E80HgS7wS2Uz1CrWnXg",
+    },
     alternates: buildLocaleAlternates("/", locale),
   };
 }

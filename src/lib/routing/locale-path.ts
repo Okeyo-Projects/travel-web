@@ -19,7 +19,7 @@ const LOCALIZED_STATIC_PATHS = {
 // Arabic keeps the French word; only English gets a translated segment.
 export const EXPERIENCE_ROUTE_SEGMENT: Record<AppLocale, string> = {
   fr: "hebergement",
-  ar: "hebergement",
+  ar: "accommodation",
   en: "accommodation",
 };
 
