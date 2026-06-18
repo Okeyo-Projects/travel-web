@@ -19,6 +19,7 @@ import {
   ExperienceCardsGrid,
   type ExperienceGridItem,
 } from "./ExperienceCardsGrid";
+import { GuideItemCardsGrid } from "./GuideItemCardsGrid";
 import {
   type ExperienceDetailsData,
   ExperienceDetailsPanel,
@@ -30,6 +31,7 @@ import {
 import { LocationRequest } from "./LocationRequest";
 import { QuickReplies } from "./QuickReplies";
 import { type RoomTypeOptionItem, RoomTypeSelector } from "./RoomTypeSelector";
+import type { GuideItemChatCardData } from "@/types/guide-items";
 
 type Message = UIMessage & { content?: string | null };
 type ExperienceResult = Record<string, unknown>;
@@ -285,6 +287,23 @@ function extractLinkedExperienceResults(
   if (!isRecord(output) || output.success !== true) return null;
   if (!Array.isArray(output.linked_experiences)) return null;
   return output.linked_experiences.filter(isRecord);
+}
+
+function extractGuideItemCards(
+  output: unknown,
+): GuideItemChatCardData[] | null {
+  if (!isRecord(output) || output.success !== true) return null;
+  if (output.type !== "guide_item_cards") return null;
+  if (!Array.isArray(output.items)) return null;
+  return output.items.filter(
+    (item): item is GuideItemChatCardData =>
+      isRecord(item) &&
+      typeof item.id === "string" &&
+      typeof item.slug === "string" &&
+      typeof item.kind_slug === "string" &&
+      typeof item.city_slug === "string" &&
+      typeof item.title === "string",
+  );
 }
 
 function extractLocationReason(output: unknown): string {
@@ -556,6 +575,22 @@ function isExperienceCardsData(
     isRecord(data) &&
     Array.isArray(data.experiences) &&
     data.experiences.every((item) => isRecord(item))
+  );
+}
+
+function isGuideItemCardsData(
+  data: unknown,
+): data is { items: GuideItemChatCardData[] } {
+  return (
+    isRecord(data) &&
+    Array.isArray(data.items) &&
+    data.items.every(
+      (item) =>
+        isRecord(item) &&
+        typeof item.id === "string" &&
+        typeof item.title === "string" &&
+        typeof item.city_slug === "string",
+    )
   );
 }
 
@@ -970,6 +1005,32 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
     }
 
     if (
+      part.type === "tool-searchGuideItems" &&
+      part.state === "output-available"
+    ) {
+      const items = extractGuideItemCards(part.output);
+      if (!items || items.length === 0) continue;
+
+      const ids = items.map((item) => item.id).filter(Boolean);
+      const signature =
+        ids.length > 0
+          ? `guide_item_cards:${ids.join(",")}`
+          : "guide_item_cards:empty";
+
+      pushUniqueBlock(
+        {
+          key: signature,
+          type: "ui",
+          content: {
+            component: "guide_item_cards",
+            data: { items },
+          },
+        },
+        signature,
+      );
+    }
+
+    if (
       part.type === "tool-getLinkedExperiences" &&
       part.state === "output-available"
     ) {
@@ -1233,6 +1294,10 @@ function UIBlock({
   const { t } = useSiteI18n();
 
   switch (component) {
+    case "guide_item_cards":
+      if (!isGuideItemCardsData(data)) return null;
+      return <GuideItemCardsGrid items={data.items} />;
+
     case "experience_cards":
       if (!isExperienceCardsData(data)) return null;
       return (

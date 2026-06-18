@@ -1,5 +1,5 @@
-import { arSA, enUS, fr } from "date-fns/locale";
 import type { Locale as DateFnsLocale } from "date-fns/locale";
+import { arSA, enUS, fr } from "date-fns/locale";
 import arMessages from "@/locales/ar.json";
 import enMessages from "@/locales/en.json";
 import frMessages from "@/locales/fr.json";
@@ -58,6 +58,26 @@ export function translateTag(tag: string, t: Translator): string {
   const key = `tags.${tag.toLowerCase().replace(/\s+/g, "_")}`;
   const translated = t(key);
   return translated === key ? tag : translated;
+}
+
+export function getLocalizedI18nValue(
+  map: unknown,
+  locale: AppLocale,
+  fallbacks: AppLocale[] = ["fr", "en", "ar"],
+): string {
+  if (!map || typeof map !== "object" || Array.isArray(map)) {
+    return "";
+  }
+
+  const candidates = [locale, ...fallbacks];
+  for (const key of candidates) {
+    const value = (map as Record<string, unknown>)[key];
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+  }
+
+  return "";
 }
 
 export function getLocalizedDescription(
@@ -158,7 +178,6 @@ export function getDateFnsLocale(
       return enUS;
     case "ar":
       return arSA;
-    case "fr":
     default:
       return fr;
   }

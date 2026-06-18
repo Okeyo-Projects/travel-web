@@ -2448,6 +2448,295 @@ export type Database = {
           },
         ];
       };
+      guide_item_embedding_sync: {
+        Row: {
+          attempts: number;
+          changed_reason: string | null;
+          created_at: string;
+          embedding_status: string;
+          error_message: string | null;
+          guide_item_id: string;
+          last_embedding_model: string | null;
+          last_embedding_text_hash: string | null;
+          last_embedding_source_changed_at: string | null;
+          last_guide_item_changed_at: string;
+          last_guide_item_embedded_at: string | null;
+          metadata: Json;
+          updated_at: string;
+        };
+        Insert: {
+          attempts?: number;
+          changed_reason?: string | null;
+          created_at?: string;
+          embedding_status?: string;
+          error_message?: string | null;
+          guide_item_id: string;
+          last_embedding_model?: string | null;
+          last_embedding_text_hash?: string | null;
+          last_embedding_source_changed_at?: string | null;
+          last_guide_item_changed_at?: string;
+          last_guide_item_embedded_at?: string | null;
+          metadata?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          attempts?: number;
+          changed_reason?: string | null;
+          created_at?: string;
+          embedding_status?: string;
+          error_message?: string | null;
+          guide_item_id?: string;
+          last_embedding_model?: string | null;
+          last_embedding_text_hash?: string | null;
+          last_embedding_source_changed_at?: string | null;
+          last_guide_item_changed_at?: string;
+          last_guide_item_embedded_at?: string | null;
+          metadata?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guide_item_embedding_sync_guide_item_id_fkey";
+            columns: ["guide_item_id"];
+            isOneToOne: true;
+            referencedRelation: "guide_items";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      guide_item_reviews: {
+        Row: {
+          author_country: string | null;
+          author_name: string | null;
+          comment_i18n: Json;
+          created_at: string;
+          guide_item_id: string;
+          id: string;
+          metadata: Json;
+          rating: number | null;
+          reviewed_at: string | null;
+          source: string | null;
+          tags: string[];
+          title_i18n: Json | null;
+          updated_at: string;
+        };
+        Insert: {
+          author_country?: string | null;
+          author_name?: string | null;
+          comment_i18n: Json;
+          created_at?: string;
+          guide_item_id: string;
+          id?: string;
+          metadata?: Json;
+          rating?: number | null;
+          reviewed_at?: string | null;
+          source?: string | null;
+          tags?: string[];
+          title_i18n?: Json | null;
+          updated_at?: string;
+        };
+        Update: {
+          author_country?: string | null;
+          author_name?: string | null;
+          comment_i18n?: Json;
+          created_at?: string;
+          guide_item_id?: string;
+          id?: string;
+          metadata?: Json;
+          rating?: number | null;
+          reviewed_at?: string | null;
+          source?: string | null;
+          tags?: string[];
+          title_i18n?: Json | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guide_item_reviews_guide_item_id_fkey";
+            columns: ["guide_item_id"];
+            isOneToOne: false;
+            referencedRelation: "guide_items";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      guide_item_types: {
+        Row: {
+          created_at: string;
+          description_i18n: Json | null;
+          icon: string | null;
+          is_active: boolean;
+          label_i18n: Json;
+          metadata: Json;
+          slug: string;
+          sort_order: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description_i18n?: Json | null;
+          icon?: string | null;
+          is_active?: boolean;
+          label_i18n: Json;
+          metadata?: Json;
+          slug: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description_i18n?: Json | null;
+          icon?: string | null;
+          is_active?: boolean;
+          label_i18n?: Json;
+          metadata?: Json;
+          slug?: string;
+          sort_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      guide_items: {
+        Row: {
+          address_text: string | null;
+          agence_name: string | null;
+          author_avatar_url: string | null;
+          author_name: string | null;
+          city_slug: string;
+          contact_email: string | null;
+          contact_phones: string[];
+          created_at: string;
+          currency: string;
+          deleted_at: string | null;
+          description_i18n: Json | null;
+          embedded_at: string | null;
+          embedding: string | null;
+          embedding_text: string | null;
+          gallery_urls: string[];
+          hero_image_url: string | null;
+          id: string;
+          kind_slug: string;
+          lat: number | null;
+          lng: number | null;
+          metadata: Json;
+          menu_image_urls: string[];
+          payment_i18n: Json | null;
+          price_range: string | null;
+          rating_avg: number | null;
+          reviews: Json;
+          reviews_count: number;
+          slug: string;
+          source_platforms: string[];
+          source_url: string | null;
+          status: string;
+          subtype: string | null;
+          summary_i18n: Json | null;
+          tags: string[];
+          title_i18n: Json;
+          updated_at: string;
+          verified: boolean;
+          video_gallery_url: string[];
+          video_url: string | null;
+        };
+        Insert: {
+          address_text?: string | null;
+          agence_name?: string | null;
+          author_avatar_url?: string | null;
+          author_name?: string | null;
+          city_slug: string;
+          contact_email?: string | null;
+          contact_phones?: string[];
+          created_at?: string;
+          currency?: string;
+          deleted_at?: string | null;
+          description_i18n?: Json | null;
+          embedded_at?: string | null;
+          embedding?: string | null;
+          embedding_text?: string | null;
+          gallery_urls?: string[];
+          hero_image_url?: string | null;
+          id?: string;
+          kind_slug: string;
+          lat?: number | null;
+          lng?: number | null;
+          metadata?: Json;
+          menu_image_urls?: string[];
+          payment_i18n?: Json | null;
+          price_range?: string | null;
+          rating_avg?: number | null;
+          reviews?: Json;
+          reviews_count?: number;
+          slug: string;
+          source_platforms?: string[];
+          source_url?: string | null;
+          status?: string;
+          subtype?: string | null;
+          summary_i18n?: Json | null;
+          tags?: string[];
+          title_i18n: Json;
+          updated_at?: string;
+          verified?: boolean;
+          video_gallery_url?: string[];
+          video_url?: string | null;
+        };
+        Update: {
+          address_text?: string | null;
+          agence_name?: string | null;
+          author_avatar_url?: string | null;
+          author_name?: string | null;
+          city_slug?: string;
+          contact_email?: string | null;
+          contact_phones?: string[];
+          created_at?: string;
+          currency?: string;
+          deleted_at?: string | null;
+          description_i18n?: Json | null;
+          embedded_at?: string | null;
+          embedding?: string | null;
+          embedding_text?: string | null;
+          gallery_urls?: string[];
+          hero_image_url?: string | null;
+          id?: string;
+          kind_slug?: string;
+          lat?: number | null;
+          lng?: number | null;
+          metadata?: Json;
+          menu_image_urls?: string[];
+          payment_i18n?: Json | null;
+          price_range?: string | null;
+          rating_avg?: number | null;
+          reviews?: Json;
+          reviews_count?: number;
+          slug?: string;
+          source_platforms?: string[];
+          source_url?: string | null;
+          status?: string;
+          subtype?: string | null;
+          summary_i18n?: Json | null;
+          tags?: string[];
+          title_i18n?: Json;
+          updated_at?: string;
+          verified?: boolean;
+          video_gallery_url?: string[];
+          video_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "guide_items_city_slug_fkey";
+            columns: ["city_slug"];
+            isOneToOne: false;
+            referencedRelation: "cities";
+            referencedColumns: ["slug"];
+          },
+          {
+            foreignKeyName: "guide_items_kind_slug_fkey";
+            columns: ["kind_slug"];
+            isOneToOne: false;
+            referencedRelation: "guide_item_types";
+            referencedColumns: ["slug"];
+          },
+        ];
+      };
     };
     Views: {
       geography_columns: {
@@ -2489,6 +2778,25 @@ export type Database = {
           f_table_schema?: unknown | null;
           srid?: number | null;
           type?: string | null;
+        };
+        Relationships: [];
+      };
+      pending_guide_item_embeddings: {
+        Row: {
+          changed_reason: string | null;
+          city_slug: string | null;
+          created_at: string | null;
+          embedding_status: string | null;
+          error_message: string | null;
+          hours_pending: number | null;
+          id: string | null;
+          kind_slug: string | null;
+          last_embedding_source_changed_at: string | null;
+          last_guide_item_changed_at: string | null;
+          last_guide_item_embedded_at: string | null;
+          attempts: number | null;
+          slug: string | null;
+          updated_at: string | null;
         };
         Relationships: [];
       };
@@ -4310,6 +4618,99 @@ export type Database = {
           table_name: string;
         };
         Returns: string;
+      };
+      generate_guide_item_embedding_text: {
+        Args: { p_guide_item_id: string };
+        Returns: string;
+      };
+      get_guide_item_embedding_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      get_guide_items_needing_embedding: {
+        Args: { p_limit?: number };
+        Returns: Array<{
+          guide_item_id: string;
+          slug: string;
+          city_slug: string;
+          last_guide_item_changed_at: string;
+          last_guide_item_embedded_at: string | null;
+          last_embedding_source_changed_at: string | null;
+          embedding_status: string;
+        }>;
+      };
+      manually_trigger_guide_item_embeddings: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      mark_guide_item_embedding_changed: {
+        Args: {
+          p_guide_item_id: string;
+          p_reason?: string;
+        };
+        Returns: undefined;
+      };
+      record_guide_item_embedding_failed: {
+        Args: {
+          p_guide_item_id: string;
+          p_error_message: string;
+        };
+        Returns: undefined;
+      };
+      record_guide_item_embedding_running: {
+        Args: { p_guide_item_id: string };
+        Returns: string;
+      };
+      record_guide_item_embedding_synced: {
+        Args: {
+          p_guide_item_id: string;
+          p_embedding_model?: string;
+          p_embedding_text_hash?: string;
+          p_source_changed_at?: string;
+        };
+        Returns: undefined;
+      };
+      search_guide_items: {
+        Args: {
+          p_query_embedding?: string | null;
+          p_text_query?: string | null;
+          p_city_slug?: string | null;
+          p_kinds?: string[] | null;
+          p_limit?: number;
+          p_min_similarity?: number;
+          p_include_unpublished?: boolean;
+        };
+        Returns: Array<{
+          id: string;
+          slug: string;
+          kind_slug: string;
+          subtype: string | null;
+          city_slug: string;
+          title_i18n: Json;
+          summary_i18n: Json | null;
+          description_i18n: Json | null;
+          payment_i18n: Json | null;
+          address_text: string | null;
+          lat: number | null;
+          lng: number | null;
+          author_name: string | null;
+          author_avatar_url: string | null;
+          hero_image_url: string | null;
+          gallery_urls: string[];
+          video_url: string | null;
+          video_gallery_url: string[];
+          rating_avg: number | null;
+          reviews_count: number;
+          price_range: string | null;
+          currency: string;
+          tags: string[];
+          source_url: string | null;
+          verified: boolean;
+          status: string;
+          semantic_score: number | null;
+          text_rank: number | null;
+          relevance_score: number | null;
+        }>;
       };
     };
     Enums: {

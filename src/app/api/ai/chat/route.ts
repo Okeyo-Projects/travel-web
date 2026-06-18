@@ -18,6 +18,7 @@ import {
   checkAvailability,
   createBookingIntent,
   createOfferQuickRepliesTool,
+  createSearchGuideItemsTool,
   createSelectRoomTypeTool,
   createSuggestDateOptionsTool,
   findSimilar,
@@ -516,10 +517,12 @@ export async function POST(req: Request) {
     });
 
     const offerQuickReplies = createOfferQuickRepliesTool(requestedLanguage);
+    const searchGuideItems = createSearchGuideItemsTool(requestedLanguage);
     const suggestDateOptions = createSuggestDateOptionsTool(requestedLanguage);
     const selectRoomType = createSelectRoomTypeTool(requestedLanguage);
 
     const allTools = {
+      searchGuideItems,
       searchExperiences,
       getExperienceDetails,
       checkAvailability,
@@ -542,6 +545,7 @@ export async function POST(req: Request) {
     // have an outdated enabled_tools list.
     const enabledToolNames = new Set<AgentToolName>([
       ...agentConfig.enabledTools,
+      "searchGuideItems",
       "offerQuickReplies",
       "suggestDateOptions",
       "selectRoomType",

@@ -15,6 +15,10 @@ export {
   offerQuickReplies,
 } from "./offer-quick-replies";
 export { requestUserLocation } from "./request-location";
+export {
+  createSearchGuideItemsTool,
+  searchGuideItems,
+} from "./search-guide-items";
 export { searchExperiences } from "./search-experiences";
 export { createSelectRoomTypeTool, selectRoomType } from "./select-room-type";
 export {

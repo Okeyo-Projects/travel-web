@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
+    "typecheck": "tsc --noEmit",
+    "supabase:types": "supabase gen types typescript --project-id nfqamqrxgpyuhjhedllg --schema public > src/types/supabase.ts",
     "embeddings:generate": "node scripts/generate-embeddings.js",
     "payzone:check": "node scripts/check-payzone-flow.mjs",
     "supabase:check-sync": "node scripts/check-supabase-sync.mjs",

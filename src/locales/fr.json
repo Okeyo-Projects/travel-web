@@ -1088,6 +1088,40 @@
       "book": "Réserver",
       "distanceKm": "{value} km"
     },
+    "guideItemCard": {
+      "kind": {
+        "restaurant": "Restaurant",
+        "transport": "Transport",
+        "wellness": "Bien-être",
+        "shopping": "Shopping",
+        "museum": "Musée",
+        "activity": "Activité",
+        "other": "Autre"
+      },
+      "captionsLabel": "Sous-titres",
+      "pauseVideo": "Mettre la vidéo en pause",
+      "openGalleryImage": "Ouvrir l'image {count} de {title}",
+      "videoAlt": "{title} vidéo {count}",
+      "noImage": "Pas d'image",
+      "galleryAlt": "{title} image {count}",
+      "authorPrefix": "Par {author}",
+      "authorFallback": "Okeyo",
+      "verified": "Vérifié",
+      "verifiedCount": "{count} vérifié",
+      "details": "Détails",
+      "distanceKm": "{value} km",
+      "showDistance": "Afficher la distance",
+      "locationDenied": "Localisation refusée",
+      "hours": "Horaires",
+      "contact": "Contact",
+      "price": "Prix",
+      "payment": "Paiement",
+      "menu": "Menu",
+      "menuImageAlt": "Image du menu {count} de {title}",
+      "openMenuImage": "Ouvrir l'image du menu {count} de {title}",
+      "reviews": "Avis",
+      "reviewsCount": "{count} avis"
+    },
     "roomSelector": {
       "room": {
         "one": "chambre",
@@ -1816,5 +1850,18 @@
   },
   "experienceGroup": {
     "viewAll": "Voir tout"
+  },
+  "guide": {
+    "search": {
+      "title": "Guide de voyage",
+      "subtitle": "Découvrez les meilleures adresses locales recommandées par Okeyo.",
+      "errorTitle": "La recherche a échoué",
+      "errorFallback": "Veuillez réessayer dans un instant.",
+      "emptyTitle": "Aucun résultat",
+      "emptyDescription": "Essayez une autre recherche ou retirez certains filtres.",
+      "initialTitle": "Recherchez dans le guide",
+      "initialDescription": "Entrez un mot-clé, choisissez une ville ou une catégorie pour commencer.",
+      "resultsCount": "{count} résultat(s)"
+    }
   }
 }

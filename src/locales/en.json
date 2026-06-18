@@ -1088,6 +1088,40 @@
       "book": "Book",
       "distanceKm": "{value} km"
     },
+    "guideItemCard": {
+      "kind": {
+        "restaurant": "Restaurant",
+        "transport": "Transport",
+        "wellness": "Wellness",
+        "shopping": "Shopping",
+        "museum": "Museum",
+        "activity": "Activity",
+        "other": "Other"
+      },
+      "captionsLabel": "Captions",
+      "pauseVideo": "Pause video",
+      "openGalleryImage": "Open image {count} for {title}",
+      "videoAlt": "{title} video {count}",
+      "noImage": "No image",
+      "galleryAlt": "{title} image {count}",
+      "authorPrefix": "By {author}",
+      "authorFallback": "Okeyo",
+      "verified": "Verified",
+      "verifiedCount": "{count} verified",
+      "details": "Details",
+      "distanceKm": "{value} km",
+      "showDistance": "Show distance",
+      "locationDenied": "Location denied",
+      "hours": "Hours",
+      "contact": "Contact",
+      "price": "Price",
+      "payment": "Payment",
+      "menu": "Menu",
+      "menuImageAlt": "{title} menu image {count}",
+      "openMenuImage": "Open menu image {count} for {title}",
+      "reviews": "Reviews",
+      "reviewsCount": "{count} reviews"
+    },
     "roomSelector": {
       "room": {
         "one": "room",
@@ -1816,5 +1850,18 @@
   },
   "experienceGroup": {
     "viewAll": "View all"
+  },
+  "guide": {
+    "search": {
+      "title": "Travel Guide",
+      "subtitle": "Discover the best local spots recommended by Okeyo.",
+      "errorTitle": "Search failed",
+      "errorFallback": "Please try again in a moment.",
+      "emptyTitle": "No results",
+      "emptyDescription": "Try a different search or remove some filters.",
+      "initialTitle": "Search the guide",
+      "initialDescription": "Enter a keyword, choose a city or a category to get started.",
+      "resultsCount": "{count} result(s)"
+    }
   }
 }

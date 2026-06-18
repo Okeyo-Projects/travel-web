@@ -1088,6 +1088,40 @@
       "book": "احجز",
       "distanceKm": "{value} كم"
     },
+    "guideItemCard": {
+      "kind": {
+        "restaurant": "مطعم",
+        "transport": "مواصلات",
+        "wellness": "عافية",
+        "shopping": "تسوق",
+        "museum": "متحف",
+        "activity": "نشاط",
+        "other": "آخر"
+      },
+      "captionsLabel": "التسميات التوضيحية",
+      "pauseVideo": "إيقاف الفيديو مؤقتاً",
+      "openGalleryImage": "فتح الصورة {count} لـ {title}",
+      "videoAlt": "{title} فيديو {count}",
+      "noImage": "لا توجد صورة",
+      "galleryAlt": "{title} صورة {count}",
+      "authorPrefix": "بواسطة {author}",
+      "authorFallback": "Okeyo",
+      "verified": "موثق",
+      "verifiedCount": "{count} موثق",
+      "details": "التفاصيل",
+      "distanceKm": "{value} كم",
+      "showDistance": "إظهار المسافة",
+      "locationDenied": "تم رفض الموقع",
+      "hours": "ساعات العمل",
+      "contact": "التواصل",
+      "price": "السعر",
+      "payment": "الدفع",
+      "menu": "القائمة",
+      "menuImageAlt": "صورة القائمة {count} لـ {title}",
+      "openMenuImage": "فتح صورة القائمة {count} لـ {title}",
+      "reviews": "المراجعات",
+      "reviewsCount": "{count} مراجعات"
+    },
     "roomSelector": {
       "room": {
         "one": "غرفة",
@@ -1816,5 +1850,18 @@
   },
   "experienceGroup": {
     "viewAll": "عرض الكل"
+  },
+  "guide": {
+    "search": {
+      "title": "دليل السفر",
+      "subtitle": "اكتشف أفضل الأماكن المحلية الموصى بها من Okeyo.",
+      "errorTitle": "فشل البحث",
+      "errorFallback": "يرجى المحاولة مرة أخرى لاحقًا.",
+      "emptyTitle": "لا توجد نتائج",
+      "emptyDescription": "جرب بحثًا مختلفًا أو أزل بعض عوامل التصفية.",
+      "initialTitle": "ابحث في الدليل",
+      "initialDescription": "أدخل كلمة مفتاحية أو اختر مدينة أو فئة للبدء.",
+      "resultsCount": "{count} نتيجة"
+    }
   }
 }
