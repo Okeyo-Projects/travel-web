@@ -25,6 +25,8 @@ export type GuideItemSearchRow =
   Database["public"]["Functions"]["search_guide_items"]["Returns"][number];
 
 export interface GuideItemSearchResult extends GuideItemSearchRow {
+  author_name?: string | null;
+  author_avatar_url?: string | null;
   agence_name?: string | null;
   contact_email?: string | null;
   contact_phones?: string[];

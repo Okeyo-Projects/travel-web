@@ -4693,8 +4693,6 @@ export type Database = {
           address_text: string | null;
           lat: number | null;
           lng: number | null;
-          author_name: string | null;
-          author_avatar_url: string | null;
           hero_image_url: string | null;
           gallery_urls: string[];
           video_url: string | null;

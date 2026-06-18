@@ -2,9 +2,9 @@ import { tool } from "ai";
 import { z } from "zod";
 import { embedQuery } from "@/lib/embeddings";
 import { mapGuideItemSearchRowToChatCardData } from "@/lib/guide-items";
+import { searchGuideItemsWithFallback } from "@/lib/guide-items-search";
 import type { AppLocale } from "@/lib/i18n";
 import { createServiceRoleClientOrThrow } from "@/lib/supabase/service-role";
-import type { GuideItemSearchResult } from "@/types/guide-items";
 
 const searchGuideItemsSchema = z.object({
   query: z
@@ -110,30 +110,15 @@ Call this tool whenever you want guide-item cards to appear in the chat UI. Do n
         }
 
         const supabase = createServiceRoleClientOrThrow();
-        const { data, error } = await supabase.rpc("search_guide_items", {
-          p_query_embedding: queryEmbedding
-            ? JSON.stringify(queryEmbedding)
-            : null,
-          p_text_query: textQuery,
-          p_city_slug: citySlug,
-          p_kinds: normalizedKinds,
-          p_limit: limit,
-          p_min_similarity: minSimilarity,
-          p_include_unpublished: false,
+        const { results } = await searchGuideItemsWithFallback(supabase, {
+          queryEmbedding,
+          textQuery,
+          citySlug,
+          kinds: normalizedKinds,
+          limit,
+          minSimilarity,
+          includeUnpublished: false,
         });
-
-        if (error) {
-          console.error("searchGuideItems RPC error:", error);
-          return {
-            success: false,
-            type: "guide_item_cards",
-            count: 0,
-            items: [],
-            error: error.message,
-          };
-        }
-
-        const results = (data ?? []) as GuideItemSearchResult[];
 
         if (results.length === 0) {
           return {
@@ -145,80 +130,6 @@ Call this tool whenever you want guide-item cards to appear in the chat UI. Do n
               ? `No guide items found for ${citySlug}.`
               : "No guide items found.",
           };
-        }
-
-        const { data: guideItemRows, error: guideItemError } = await supabase
-          .from("guide_items")
-          .select(
-            "id, author_name, author_avatar_url, agence_name, contact_email, contact_phones, source_platforms, reviews, metadata, payment_i18n, menu_image_urls",
-          )
-          .in(
-            "id",
-            results.map((result) => result.id),
-          );
-
-        if (!guideItemError && guideItemRows) {
-          const guideItemById = new Map(
-            (
-              guideItemRows as Array<
-                Record<string, unknown> & {
-                  id: string;
-                }
-              >
-            ).map((row) => [row.id, row] as const),
-          );
-
-          for (const result of results) {
-            const guideItem = guideItemById.get(result.id);
-            if (!guideItem) continue;
-
-            Object.assign(result, {
-              author_name:
-                typeof guideItem.author_name === "string"
-                  ? guideItem.author_name
-                  : null,
-              author_avatar_url:
-                typeof guideItem.author_avatar_url === "string"
-                  ? guideItem.author_avatar_url
-                  : null,
-              agence_name:
-                typeof guideItem.agence_name === "string"
-                  ? guideItem.agence_name
-                  : null,
-              contact_email:
-                typeof guideItem.contact_email === "string"
-                  ? guideItem.contact_email
-                  : null,
-              contact_phones: Array.isArray(guideItem.contact_phones)
-                ? guideItem.contact_phones.filter(
-                    (value): value is string => typeof value === "string",
-                  )
-                : [],
-              source_platforms: Array.isArray(guideItem.source_platforms)
-                ? guideItem.source_platforms.filter(
-                    (value): value is string => typeof value === "string",
-                  )
-                : [],
-              reviews: Array.isArray(guideItem.reviews) ? guideItem.reviews : [],
-              metadata:
-                guideItem.metadata &&
-                typeof guideItem.metadata === "object" &&
-                !Array.isArray(guideItem.metadata)
-                  ? guideItem.metadata
-                  : null,
-              payment_i18n:
-                guideItem.payment_i18n &&
-                typeof guideItem.payment_i18n === "object" &&
-                !Array.isArray(guideItem.payment_i18n)
-                  ? guideItem.payment_i18n
-                  : null,
-              menu_image_urls: Array.isArray(guideItem.menu_image_urls)
-                ? guideItem.menu_image_urls.filter(
-                    (value): value is string => typeof value === "string",
-                  )
-                : [],
-            });
-          }
         }
 
         const items = results.map((result) =>
