@@ -176,7 +176,11 @@
     "or": "ou",
     "and": "et",
     "image": "Image",
-    "pageNumber": "Page {page}"
+    "pageNumber": "Page {page}",
+    "zoomIn": "Zoomer",
+    "zoomOut": "Dézoomer",
+    "resetZoom": "Réinitialiser le zoom",
+    "imageZoom": "Zoom {value}"
   },
   "host": {
     "loadingWorkspace": "Chargement de l'espace hôte...",
@@ -1114,13 +1118,18 @@
       "locationDenied": "Localisation refusée",
       "hours": "Horaires",
       "contact": "Contact",
+      "openWhatsApp": "Ouvrir la conversation WhatsApp avec {phone}",
+      "whatsappMessage": "Bonjour {author}, je viens de Okeyo Travel et je souhaite réserver {title}. Pouvez-vous me partager les disponibilités et les tarifs, s'il vous plaît ?",
       "price": "Prix",
       "payment": "Paiement",
       "menu": "Menu",
       "menuImageAlt": "Image du menu {count} de {title}",
       "openMenuImage": "Ouvrir l'image du menu {count} de {title}",
       "reviews": "Avis",
-      "reviewsCount": "{count} avis"
+      "reviewsCount": "{count} avis",
+      "readMore": "Lire plus",
+      "readLess": "Lire moins",
+      "showMoreReviews": "Voir {count} avis de plus"
     },
     "roomSelector": {
       "room": {

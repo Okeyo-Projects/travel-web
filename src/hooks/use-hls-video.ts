@@ -29,15 +29,18 @@ export function useHlsVideo(
     if (isHlsSrc(src)) {
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = src;
+        video.load();
       } else if (Hls.isSupported()) {
         hls = new Hls();
         hls.loadSource(src);
         hls.attachMedia(video);
       } else {
         video.src = src;
+        video.load();
       }
     } else {
       video.src = src;
+      video.load();
     }
 
     return () => {

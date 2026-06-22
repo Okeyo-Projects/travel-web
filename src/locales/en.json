@@ -176,7 +176,11 @@
     "or": "or",
     "and": "and",
     "image": "Image",
-    "pageNumber": "Page {page}"
+    "pageNumber": "Page {page}",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetZoom": "Reset zoom",
+    "imageZoom": "Zoom {value}"
   },
   "host": {
     "loadingWorkspace": "Loading host workspace...",
@@ -1114,13 +1118,18 @@
       "locationDenied": "Location denied",
       "hours": "Hours",
       "contact": "Contact",
+      "openWhatsApp": "Open WhatsApp chat with {phone}",
+      "whatsappMessage": "Hi {author}, I'm coming from Okeyo Travel and I would like to book {title}. Could you please share the availability and pricing?",
       "price": "Price",
       "payment": "Payment",
       "menu": "Menu",
       "menuImageAlt": "{title} menu image {count}",
       "openMenuImage": "Open menu image {count} for {title}",
       "reviews": "Reviews",
-      "reviewsCount": "{count} reviews"
+      "reviewsCount": "{count} reviews",
+      "readMore": "Read more",
+      "readLess": "Read less",
+      "showMoreReviews": "See {count} more reviews"
     },
     "roomSelector": {
       "room": {

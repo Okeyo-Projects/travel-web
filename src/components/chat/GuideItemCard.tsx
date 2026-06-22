@@ -1,18 +1,5 @@
 "use client";
 
-import { useSiteI18n } from "@/components/site/site-i18n";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { useGeoDistance } from "@/hooks/use-geo-distance";
-import { useHlsVideo } from "@/hooks/use-hls-video";
-import { useImageViewer } from "@/hooks/use-image-viewer";
-import { ANALYTICS_EVENT } from "@/lib/analytics/events";
-import { captureEvent } from "@/lib/analytics/posthog";
-import { getIntlLocale, type AppLocale } from "@/lib/i18n";
-import { localizeHref } from "@/lib/routing/locale-path";
-import { cn } from "@/lib/utils";
-import type { GuideItemChatCardData, GuideItemKind } from "@/types/guide-items";
-import { IMAGE_BLUR_DATA_URL, getImageUrl } from "@/utils/functions";
 import parse from "html-react-parser";
 import {
   Building2,
@@ -25,17 +12,33 @@ import {
   Play,
   Star,
   User,
-  Verified
+  Verified,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSiteI18n } from "@/components/site/site-i18n";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { useGeoDistance } from "@/hooks/use-geo-distance";
+import { useHlsVideo } from "@/hooks/use-hls-video";
+import { useImageViewer } from "@/hooks/use-image-viewer";
+import { ANALYTICS_EVENT } from "@/lib/analytics/events";
+import { captureEvent } from "@/lib/analytics/posthog";
+import { type AppLocale, getIntlLocale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import type { GuideItemChatCardData, GuideItemKind } from "@/types/guide-items";
+import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
 
 interface GuideItemCardProps {
   item: GuideItemChatCardData;
   onSelect?: () => void;
   onShare?: () => void;
+}
+
+interface VideoThumbnailPreviewProps {
+  src: string;
+  alt: string;
 }
 
 function getSourceLabel(sourceUrl: string): string {
@@ -108,19 +111,111 @@ function getMetadataText(value: unknown): string | null {
   return null;
 }
 
-export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
+function getWhatsAppHref(phone: string, message: string): string {
+  const digits = phone.replace(/\D+/g, "");
+  const encodedMessage = encodeURIComponent(message);
+  return digits
+    ? `https://wa.me/${digits}?text=${encodedMessage}`
+    : `https://wa.me/?text=${encodedMessage}`;
+}
+
+function VideoThumbnailPreview({ src, alt }: VideoThumbnailPreviewProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [hasFrame, setHasFrame] = useState(false);
+
+  useHlsVideo(videoRef, src);
+
+  useEffect(() => {
+    setHasFrame(false);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const tryRevealFirstFrame = () => {
+      if (video.currentTime > 0) {
+        setHasFrame(true);
+        return;
+      }
+
+      const seekTime =
+        Number.isFinite(video.duration) && video.duration > 0.1 ? 0.1 : 0;
+
+      if (seekTime === 0) {
+        setHasFrame(true);
+        return;
+      }
+
+      try {
+        video.currentTime = seekTime;
+      } catch {
+        setHasFrame(true);
+      }
+    };
+
+    const handleSeeked = () => {
+      setHasFrame(true);
+      video.pause();
+    };
+
+    const handleError = () => {
+      setHasFrame(false);
+    };
+
+    video.pause();
+    video.addEventListener("loadeddata", tryRevealFirstFrame);
+    video.addEventListener("canplay", tryRevealFirstFrame);
+    video.addEventListener("seeked", handleSeeked);
+    video.addEventListener("error", handleError);
+
+    return () => {
+      video.removeEventListener("loadeddata", tryRevealFirstFrame);
+      video.removeEventListener("canplay", tryRevealFirstFrame);
+      video.removeEventListener("seeked", handleSeeked);
+      video.removeEventListener("error", handleError);
+    };
+  }, []);
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        className={cn(
+          "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+          hasFrame ? "opacity-100" : "opacity-0",
+        )}
+        aria-label={alt}
+        muted
+        playsInline
+        preload="auto"
+      />
+
+      {!hasFrame && (
+        <div className="flex h-full w-full items-center justify-center bg-muted">
+          <Play className="h-8 w-8 text-muted-foreground" />
+        </div>
+      )}
+    </>
+  );
+}
+
+export function GuideItemCard({ item }: GuideItemCardProps) {
   const { locale, t, dir } = useSiteI18n();
   const isRtl = dir === "rtl";
-  const pathname = usePathname();
   const { openImageViewer, Viewer } = useImageViewer();
   const { permission, isRequesting, requestPermission, getDistanceKm } =
     useGeoDistance();
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasActiveVideoFrame, setHasActiveVideoFrame] = useState(false);
+  const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
+  const [expandedReviewKeys, setExpandedReviewKeys] = useState<string[]>([]);
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(
     item.video_url ?? null,
   );
   const videoRef = useRef<HTMLVideoElement>(null);
+  const shouldAutoPlayRef = useRef(false);
 
   const kindLabels: Record<GuideItemKind, string> = {
     restaurant: t("chat.guideItemCard.kind.restaurant"),
@@ -149,7 +244,7 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
   const videoGallery = item.video_gallery_url ?? [];
   const allVideos = useMemo(() => {
     const main = item.video_url ? [item.video_url] : [];
-    return [...main, ...videoGallery];
+    return [...new Set([...main, ...videoGallery])];
   }, [item.video_url, videoGallery]);
 
   const distanceKm = useMemo(() => {
@@ -168,30 +263,75 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !activeVideoUrl) return;
 
-    if (isPlaying) {
-      void video.play().catch(() => {
-        setIsPlaying(false);
-      });
-    } else {
-      video.pause();
-    }
-  }, [isPlaying]);
+    const handlePlay = () => {
+      setIsPlaying(true);
+      shouldAutoPlayRef.current = false;
+    };
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+    const handleCanPlay = () => {
+      if (shouldAutoPlayRef.current) {
+        void video.play().catch(() => {
+          setIsPlaying(false);
+        });
+      }
+    };
+
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("canplay", handleCanPlay);
+
+    return () => {
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [activeVideoUrl]);
+
+  useEffect(() => {
+    if (!item.id) return;
+    setVisibleReviewsCount(3);
+    setExpandedReviewKeys([]);
+  }, [item.id]);
+
+  useEffect(() => {
+    setActiveVideoUrl(item.video_url ?? item.video_gallery_url?.[0] ?? null);
+    setHasActiveVideoFrame(false);
+    setIsPlaying(false);
+    shouldAutoPlayRef.current = false;
+  }, [item.video_gallery_url, item.video_url]);
 
   const handlePlayToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setIsPlaying((prev) => !prev);
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      shouldAutoPlayRef.current = true;
+      video.muted = false;
+      void video.play().catch(() => {
+        setIsPlaying(false);
+      });
+      return;
+    }
+
+    shouldAutoPlayRef.current = false;
+    video.pause();
   };
 
   const handleSelectVideo = (url: string) => {
-    if (activeVideoUrl === url && isPlaying) {
-      setIsPlaying(false);
+    if (activeVideoUrl === url) {
+      shouldAutoPlayRef.current = true;
       return;
     }
+
+    shouldAutoPlayRef.current = true;
     setActiveVideoUrl(url);
-    setIsPlaying(true);
+    setIsPlaying(false);
   };
 
   const galleryAlts = galleryImages.map((_, i) =>
@@ -205,7 +345,6 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
     ? getImageUrl(item.hero_image_url)
     : null;
 
-  const detailHref = localizeHref(`/guide/${item.slug ?? item.id}`, pathname);
   const hasVideos = allVideos.length > 0;
   const mediaAspectClass =
     activeVideoUrl || item.hero_image_url ? "aspect-[9/16]" : "aspect-video";
@@ -217,13 +356,31 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
     ? allVideos.filter((url) => url !== activeVideoUrl)
     : allVideos;
   const sourceLabel = item.source_url ? getSourceLabel(item.source_url) : null;
+  const contactAuthor =
+    item.author_name ?? t("chat.guideItemCard.authorFallback");
+  const whatsappMessage = t("chat.guideItemCard.whatsappMessage", {
+    author: contactAuthor,
+    title: item.title,
+  });
   const openingHoursText = getMetadataText(
     item.metadata?.opening_hours ??
       item.metadata?.hours ??
       item.metadata?.hours_text,
   );
-  const visibleReviews =
-    item.reviews?.filter((review) => review.content)?.slice(0, 3) ?? [];
+  const reviews = item.reviews?.filter((review) => review.content) ?? [];
+  const visibleReviews = reviews.slice(0, visibleReviewsCount);
+  const remainingReviewsCount = Math.max(
+    0,
+    reviews.length - visibleReviews.length,
+  );
+
+  const toggleExpandedReview = (reviewKey: string) => {
+    setExpandedReviewKeys((prev) =>
+      prev.includes(reviewKey)
+        ? prev.filter((key) => key !== reviewKey)
+        : [...prev, reviewKey],
+    );
+  };
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -237,15 +394,45 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
           {activeVideoUrl && (
             <video
               ref={videoRef}
+              key={activeVideoUrl}
               className={cn(
-                "w-full h-full object-contain",
-                isPlaying ? "block" : "hidden",
+                "absolute inset-0 h-full w-full transition-opacity duration-300",
+                isPlaying
+                  ? "object-contain opacity-100"
+                  : "object-cover opacity-100",
               )}
               playsInline
               loop
-              muted
-              preload="none"
+              preload="auto"
+              onLoadedData={(event) => {
+                const video = event.currentTarget;
+
+                if (video.currentTime > 0) {
+                  setHasActiveVideoFrame(true);
+                  return;
+                }
+
+                const seekTime =
+                  Number.isFinite(video.duration) && video.duration > 0.1
+                    ? 0.1
+                    : 0;
+
+                if (seekTime === 0) {
+                  setHasActiveVideoFrame(true);
+                  return;
+                }
+
+                try {
+                  video.currentTime = seekTime;
+                } catch {
+                  setHasActiveVideoFrame(true);
+                }
+              }}
+              onSeeked={() => {
+                setHasActiveVideoFrame(true);
+              }}
               onError={() => {
+                setHasActiveVideoFrame(false);
                 captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
                   src: activeVideoUrl,
                   context: "chat_guide_item_card",
@@ -263,10 +450,12 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
           <div
             className={cn(
               "absolute inset-0 transition-opacity duration-300",
-              isPlaying ? "opacity-0" : "opacity-100",
+              activeVideoUrl && hasActiveVideoFrame
+                ? "opacity-0"
+                : "opacity-100",
             )}
           >
-            {heroImageSrc ? (
+            {!activeVideoUrl && heroImageSrc ? (
               <Image
                 src={heroImageSrc}
                 alt={item.title}
@@ -361,21 +550,13 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
               count: i + 1,
             })}
           >
-            {heroImageSrc ? (
-              <Image
-                src={heroImageSrc}
-                alt={t("chat.guideItemCard.videoAlt", {
-                  title: item.title,
-                  count: i + 1,
-                })}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Play className="w-8 h-8 text-muted-foreground" />
-              </div>
-            )}
+            <VideoThumbnailPreview
+              src={url}
+              alt={t("chat.guideItemCard.videoAlt", {
+                title: item.title,
+                count: i + 1,
+              })}
+            />
             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
               <Play className="w-8 h-8 text-white fill-white" />
             </div>
@@ -489,7 +670,9 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
               </div>
               <div className="space-y-1">
                 <p className="font-medium text-foreground">{item.city_slug}</p>
-                {item.address_text && <p className="line-clamp-2">{item.address_text}</p>}
+                {item.address_text && (
+                  <p className="line-clamp-2">{item.address_text}</p>
+                )}
               </div>
             </div>
 
@@ -510,9 +693,7 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
                 className="inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-xs text-primary hover:underline disabled:opacity-50 disabled:no-underline"
               >
                 <Navigation className="w-3.5 h-3.5" />
-                <span>
-                  {t("chat.guideItemCard.showDistance")}
-                </span>
+                <span>{t("chat.guideItemCard.showDistance")}</span>
               </button>
             ) : null}
           </div>
@@ -545,8 +726,13 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
               {item.contact_phones?.map((phone) => (
                 <Link
                   key={phone}
-                  href={`tel:${phone}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                  href={getWhatsAppHref(phone, whatsappMessage)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={t("chat.guideItemCard.openWhatsApp", {
+                    phone,
+                  })}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs text-green-700 transition-colors hover:bg-green-100 hover:text-green-800"
                 >
                   <Phone className="h-3.5 w-3.5" />
                   <span>{phone}</span>
@@ -564,14 +750,21 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
                   <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
                     {t("chat.guideItemCard.price")}
                   </p>
-                  <p className="text-xl sm:text-2xl font-bold">{item.price_range}</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {item.price_range}
+                  </p>
                 </div>
                 <p className="text-xs text-muted-foreground">{item.currency}</p>
               </div>
             )}
 
             {item.payment && (
-              <p className={cn("text-xs text-muted-foreground", item.price_range && "mt-2")}>
+              <p
+                className={cn(
+                  "text-xs text-muted-foreground",
+                  item.price_range && "mt-2",
+                )}
+              >
                 <span className="font-medium text-foreground">
                   {t("chat.guideItemCard.payment")}:
                 </span>{" "}
@@ -616,14 +809,20 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
         {item.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {item.tags.slice(0, 6).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-[10px] px-2 py-0">
+              <Badge
+                key={tag}
+                variant="outline"
+                className="text-[10px] px-2 py-0"
+              >
                 {tag}
               </Badge>
             ))}
           </div>
         )}
 
-        {(item.rating_avg != null || visibleReviews.length > 0 || item.reviews_count > 0) && (
+        {(item.rating_avg != null ||
+          visibleReviews.length > 0 ||
+          item.reviews_count > 0) && (
           <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -637,12 +836,12 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
                     </span>
                     <div className="pb-1">
                       <div className="flex items-center gap-0.5 text-yellow-500">
-                        {Array.from({ length: 5 }).map((_, index) => (
+                        {[1, 2, 3, 4, 5].map((star) => (
                           <Star
-                            key={index}
+                            key={star}
                             className={cn(
                               "h-3.5 w-3.5",
-                              index < Math.round(item.rating_avg ?? 0)
+                              star <= Math.round(item.rating_avg ?? 0)
                                 ? "fill-current"
                                 : "",
                             )}
@@ -673,67 +872,112 @@ export function GuideItemCard({ item, onSelect, onShare }: GuideItemCardProps) {
               )}
             </div>
 
-            {visibleReviews.map((review, index) => (
-              <div
-                key={`${item.id}-review-${review.name}-${review.created_at}-${index}`}
-                className="rounded-lg border bg-background/80 p-3 space-y-2"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {review.user_image ? (
-                      <Image
-                        src={getImageUrl(review.user_image) ?? ""}
-                        alt={review.name}
-                        width={32}
-                        height={32}
-                        className="h-8 w-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                        <User className="h-4 w-4 text-muted-foreground" />
+            {visibleReviews.map((review, index) => {
+              const reviewKey = `${item.id}-review-${review.name}-${review.created_at}-${index}`;
+              const isReviewExpanded = expandedReviewKeys.includes(reviewKey);
+              const canExpandReview = review.content.trim().length > 180;
+
+              return (
+                <div
+                  key={reviewKey}
+                  className="rounded-lg border bg-background/80 p-3 space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {review.user_image ? (
+                        <Image
+                          src={getImageUrl(review.user_image) ?? ""}
+                          alt={review.name}
+                          width={32}
+                          height={32}
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {review.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {[
+                            review.source,
+                            formatReviewDate(review.created_at, locale),
+                          ]
+                            .filter(Boolean)
+                            .join(" • ")}
+                        </p>
+                      </div>
+                    </div>
+
+                    {review.note != null && (
+                      <div className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-medium">
+                        <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                        <span>{review.note.toFixed(1)}</span>
                       </div>
                     )}
-
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {review.name}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {[review.source, formatReviewDate(review.created_at, locale)]
-                          .filter(Boolean)
-                          .join(" • ")}
-                      </p>
-                    </div>
                   </div>
 
-                  {review.note != null && (
-                    <div className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-medium">
-                      <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                      <span>{review.note.toFixed(1)}</span>
+                  <p
+                    className={cn(
+                      "text-sm text-muted-foreground",
+                      !isReviewExpanded && "line-clamp-4",
+                    )}
+                  >
+                    {review.content}
+                  </p>
+
+                  {canExpandReview && (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandedReview(reviewKey)}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      {isReviewExpanded
+                        ? t("chat.guideItemCard.readLess")
+                        : t("chat.guideItemCard.readMore")}
+                    </button>
+                  )}
+
+                  {review.tags && review.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {review.tags.slice(0, 4).map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="text-[10px] px-2 py-0"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
                   )}
                 </div>
+              );
+            })}
 
-                <p className="text-sm text-muted-foreground line-clamp-4">
-                  {review.content}
-                </p>
-
-                {review.tags && review.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {review.tags.slice(0, 4).map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-[10px] px-2 py-0">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+            {remainingReviewsCount > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setVisibleReviewsCount((prev) =>
+                    Math.min(prev + 3, reviews.length),
+                  )
+                }
+                className="w-full rounded-lg border border-dashed px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-background/70"
+              >
+                {t("chat.guideItemCard.showMoreReviews", {
+                  count: Math.min(3, remainingReviewsCount),
+                })}
+              </button>
+            )}
           </div>
         )}
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-
           <div className="flex w-full sm:w-auto gap-2">
             {/* {onSelect ? (
               <Button

@@ -1,9 +1,17 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  RotateCcw,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
 import { useT } from "@/providers/translations-provider";
 
 interface ImageViewerProps {
@@ -13,6 +21,14 @@ interface ImageViewerProps {
   onClose: () => void;
 }
 
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.5;
+
+function clampZoom(value: number): number {
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+}
+
 export function ImageViewer({
   images,
   imageAlts,
@@ -20,39 +36,104 @@ export function ImageViewer({
   onClose,
 }: ImageViewerProps) {
   const t = useT();
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [mounted, setMounted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [zoom, setZoom] = useState(MIN_ZOOM);
+  const activeScrollRef = useRef<HTMLDivElement>(null);
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "center",
+    loop: images.length > 1,
+    startIndex: initialIndex,
+    watchDrag: zoom === MIN_ZOOM,
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Allow switching images
+  const resetZoom = useCallback(() => {
+    setZoom(MIN_ZOOM);
+  }, []);
+
   const handlePrevious = useCallback(
     (e?: React.MouseEvent) => {
       e?.stopPropagation();
-      setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+      emblaApi?.scrollPrev();
     },
-    [images.length],
+    [emblaApi],
   );
 
   const handleNext = useCallback(
     (e?: React.MouseEvent) => {
       e?.stopPropagation();
-      setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+      emblaApi?.scrollNext();
     },
-    [images.length],
+    [emblaApi],
   );
+
+  const zoomIn = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setZoom((prev) => clampZoom(prev + ZOOM_STEP));
+  }, []);
+
+  const zoomOut = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setZoom((prev) => clampZoom(prev - ZOOM_STEP));
+  }, []);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const updateIndex = () => {
+      setCurrentIndex(emblaApi.selectedScrollSnap());
+      setZoom(MIN_ZOOM);
+    };
+
+    emblaApi.scrollTo(initialIndex, true);
+    updateIndex();
+    emblaApi.on("select", updateIndex);
+    emblaApi.on("reInit", updateIndex);
+
+    return () => {
+      emblaApi.off("select", updateIndex);
+      emblaApi.off("reInit", updateIndex);
+    };
+  }, [emblaApi, initialIndex]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") handlePrevious();
-      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        handlePrevious();
+        return;
+      }
+
+      if (e.key === "ArrowRight") {
+        handleNext();
+        return;
+      }
+
+      if (e.key === "+" || e.key === "=") {
+        zoomIn();
+        return;
+      }
+
+      if (e.key === "-") {
+        zoomOut();
+        return;
+      }
+
+      if (e.key === "0") {
+        resetZoom();
+      }
     };
+
     window.addEventListener("keydown", handleKeyDown);
 
-    // Prevent scrolling behind
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
@@ -60,68 +141,160 @@ export function ImageViewer({
       window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = originalOverflow;
     };
-  }, [onClose, handlePrevious, handleNext]);
+  }, [handleNext, handlePrevious, onClose, resetZoom, zoomIn, zoomOut]);
+
+  const setActiveScrollNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return;
+
+      activeScrollRef.current = node;
+
+      if (zoom === MIN_ZOOM) {
+        node.scrollTo({ left: 0, top: 0 });
+        return;
+      }
+
+      node.scrollTo({
+        left: Math.max(0, (node.scrollWidth - node.clientWidth) / 2),
+        top: Math.max(0, (node.scrollHeight - node.clientHeight) / 2),
+      });
+    },
+    [zoom],
+  );
+
+  useEffect(() => {
+    setActiveScrollNode(activeScrollRef.current);
+  }, [setActiveScrollNode]);
 
   if (!images || images.length === 0 || !mounted) return null;
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      {/* Close Button */}
+    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm">
       <button
         type="button"
-        className="absolute top-4 right-4 p-2 text-white bg-white/10 rounded-full hover:bg-white/20 transition-colors z-[101]"
+        aria-label={t("common.close")}
+        className="absolute inset-0"
         onClick={onClose}
-      >
-        <X className="w-6 h-6" />
-      </button>
+      />
 
-      {/* Main Image Container */}
-      <div
-        className="relative w-full h-full md:w-4/5 md:h-4/5 flex items-center justify-center p-4 outline-none"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative w-full h-full select-none">
-          <Image
-            src={images[currentIndex]}
-            alt={imageAlts?.[currentIndex] ?? `${t("common.image")} ${currentIndex + 1}`}
-            fill
-            className="object-contain"
-            priority
-            quality={100}
-            unoptimized={images[currentIndex].includes("supabase")}
-          />
-        </div>
-
-        {/* Navigation Overlays */}
-        {images.length > 1 && (
-          <>
-            <button
-              type="button"
-              className="absolute left-4 md:-left-12 top-1/2 -translate-y-1/2 p-2 text-white bg-white/10 rounded-full hover:bg-white/20 transition-colors"
-              onClick={handlePrevious}
-            >
-              <ChevronLeft className="w-8 h-8" />
-            </button>
-            <button
-              type="button"
-              className="absolute right-4 md:-right-12 top-1/2 -translate-y-1/2 p-2 text-white bg-white/10 rounded-full hover:bg-white/20 transition-colors"
-              onClick={handleNext}
-            >
-              <ChevronRight className="w-8 h-8" />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Image Counter */}
-      {images.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/10 text-white rounded-full text-sm font-medium tracking-wider">
+      <div className="absolute inset-x-4 top-4 z-[101] flex items-center justify-between gap-3">
+        <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium tracking-wider text-white">
           {currentIndex + 1} / {images.length}
         </div>
-      )}
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label={t("common.zoomOut")}
+            className="rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 disabled:opacity-50"
+            disabled={zoom <= MIN_ZOOM}
+            onClick={zoomOut}
+          >
+            <Minus className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("common.zoomIn")}
+            className="rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 disabled:opacity-50"
+            disabled={zoom >= MAX_ZOOM}
+            onClick={zoomIn}
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("common.resetZoom")}
+            className="rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 disabled:opacity-50"
+            disabled={zoom === MIN_ZOOM}
+            onClick={resetZoom}
+          >
+            <RotateCcw className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label={t("common.close")}
+            className="rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            onClick={onClose}
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+      </div>
+
+      <div className="absolute inset-x-0 bottom-4 z-[101] flex items-center justify-center">
+        <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white/90">
+          {t("common.imageZoom", { value: `${Math.round(zoom * 100)}%` })}
+        </div>
+      </div>
+
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="relative h-full w-full px-4 pb-16 pt-20 md:px-16">
+          <div ref={emblaRef} className="h-full overflow-hidden">
+            <div className="flex h-full">
+              {images.map((src, index) => (
+                <div
+                  key={`${src}-${imageAlts?.[index] ?? "image"}`}
+                  className="h-full min-w-0 shrink-0 grow-0 basis-full"
+                >
+                  <div
+                    ref={index === currentIndex ? setActiveScrollNode : null}
+                    className={cn(
+                      "h-full overflow-auto overscroll-contain rounded-2xl",
+                      zoom > MIN_ZOOM ? "cursor-grab" : "cursor-default",
+                    )}
+                    style={{
+                      touchAction: zoom > MIN_ZOOM ? "pan-x pan-y" : "auto",
+                    }}
+                  >
+                    <div className="flex min-h-full min-w-full items-center justify-center p-4">
+                      {/* biome-ignore lint/performance/noImgElement: Viewer needs native scrollable zoom behavior. */}
+                      <img
+                        src={src}
+                        alt={
+                          imageAlts?.[index] ??
+                          `${t("common.image")} ${index + 1}`
+                        }
+                        draggable={false}
+                        onDoubleClick={() =>
+                          setZoom((prev) =>
+                            prev === MIN_ZOOM ? clampZoom(prev + 1) : MIN_ZOOM,
+                          )
+                        }
+                        className="select-none rounded-xl object-contain shadow-2xl"
+                        style={{
+                          maxHeight: `${zoom * 100}%`,
+                          maxWidth: `${zoom * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label={t("common.previous")}
+                className="absolute left-4 top-1/2 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:left-6"
+                onClick={handlePrevious}
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+              <button
+                type="button"
+                aria-label={t("common.next")}
+                className="absolute right-4 top-1/2 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:right-6"
+                onClick={handleNext}
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>,
     document.body,
   );

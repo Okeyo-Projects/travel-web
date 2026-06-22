@@ -5,17 +5,20 @@ import {
   localizeHref,
 } from "@/lib/routing/locale-path";
 import { buildCategorySlug, buildExperienceHref } from "@/lib/routing/slugs";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClientOrThrow } from "@/lib/supabase/service-role";
 import {
   fetchAllCategoriesForSitemap,
   fetchAllPostsForSitemap,
 } from "@/lib/wordpress";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://okeyotravel.com";
+export const revalidate = 1800;
 
-function toDateString(date: Date | string): string {
+function toDateString(date: Date | string, fallback: Date): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toISOString().split("T")[0];
+  return Number.isNaN(d.getTime())
+    ? fallback.toISOString().split("T")[0]
+    : d.toISOString().split("T")[0];
 }
 
 function buildAlternates(
@@ -27,6 +30,62 @@ function buildAlternates(
   }
   languages["x-default"] = languages["fr"];
   return { languages };
+}
+
+async function fetchCatalogDataForSitemap() {
+  const supabase = createServiceRoleClientOrThrow();
+
+  const [categoriesResult, experiencesResult] = await Promise.all([
+    supabase
+      .from("categories" as never)
+      .select(`
+        id,
+        title,
+        slug,
+        updated_at,
+        experience_categories(
+          experience:experiences!inner(
+            id,
+            status
+          )
+        )
+      `)
+      .eq("is_active" as never, true),
+    supabase
+      .from("experiences" as never)
+      .select("id, title, slug, city, region, updated_at")
+      .eq("status" as never, "published")
+      .not("city", "is", null)
+      .not("title", "is", null),
+  ]);
+
+  if (categoriesResult.error) {
+    throw categoriesResult.error;
+  }
+
+  if (experiencesResult.error) {
+    throw experiencesResult.error;
+  }
+
+  return {
+    categories: (categoriesResult.data ?? []) as Array<{
+      id: string;
+      title: { fr?: string; en?: string; ar?: string } | string;
+      slug?: string | null;
+      updated_at: string;
+      experience_categories?: Array<{
+        experience: { id: string; status: string };
+      }>;
+    }>,
+    experiences: (experiencesResult.data ?? []) as Array<{
+      id: string;
+      title: string;
+      slug?: string | null;
+      city: string;
+      region?: string | null;
+      updated_at: string;
+    }>,
+  };
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -46,7 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = staticPaths.flatMap((route) =>
     LOCALES.map((locale) => ({
       url: `${SITE_URL}${localizeHref(route.path, locale)}`,
-      lastModified: toDateString(now),
+      lastModified: toDateString(now, now),
       changeFrequency: route.changeFrequency,
       priority: route.priority,
       alternates: buildAlternates((l) => localizeHref(route.path, l)),
@@ -58,9 +117,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let blogPostRoutes: MetadataRoute.Sitemap = [];
   let blogCategoryRoutes: MetadataRoute.Sitemap = [];
 
-  const [wpPosts, wpCategories] = await Promise.allSettled([
+  const [wpPosts, wpCategories, catalogData] = await Promise.allSettled([
     fetchAllPostsForSitemap(),
     fetchAllCategoriesForSitemap(),
+    fetchCatalogDataForSitemap(),
   ]);
 
   if (wpPosts.status === "fulfilled") {
@@ -84,7 +144,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
       return group.map((post) => ({
         url: `${SITE_URL}${localizeHref(`/blog/${post.slug}`, post.locale)}`,
-        lastModified: toDateString(new Date(post.modified)),
+        lastModified: toDateString(post.modified, now),
         changeFrequency: "monthly" as const,
         priority: 0.7,
         alternates: { languages },
@@ -115,7 +175,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         return group.map((cat) => ({
           url: `${SITE_URL}${localizeHref(`/blog/category/${cat.slug}`, cat.locale)}`,
-          lastModified: toDateString(now),
+          lastModified: toDateString(now, now),
           changeFrequency: "monthly" as const,
           priority: 0.5,
           alternates: { languages },
@@ -124,53 +184,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
   }
 
-  try {
-    const supabase = await createClient();
-
-    const [categoriesResult, experiencesResult] = await Promise.all([
-      supabase
-        .from("categories" as never)
-        .select(`
-          id,
-          title,
-          slug,
-          updated_at,
-          experience_categories(
-            experience:experiences!inner(
-              id,
-              status
-            )
-          )
-        `)
-        .eq("is_active" as never, true),
-      supabase
-        .from("experiences" as never)
-        .select("id, title, slug, city, region, updated_at")
-        .eq("status" as never, "published")
-        .not("city", "is", null)
-        .not("title", "is", null),
-    ]);
-
-    const categories = (categoriesResult.data ?? []) as Array<{
-      id: string;
-      title: { fr?: string; en?: string; ar?: string } | string;
-      slug?: string | null;
-      updated_at: string;
-      experience_categories?: Array<{
-        experience: { id: string; status: string };
-      }>;
-    }>;
-
-    const experiences = (experiencesResult.data ?? []) as Array<{
-      id: string;
-      title: string;
-      slug?: string | null;
-      city: string;
-      region?: string | null;
-      updated_at: string;
-    }>;
-
-    categoryRoutes = categories
+  if (catalogData.status === "fulfilled") {
+    categoryRoutes = catalogData.value.categories
       .filter((cat) => {
         const hasPublishedExperience =
           cat.experience_categories?.some(
@@ -187,7 +202,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
           return LOCALES.map((locale) => ({
             url: `${SITE_URL}${localizeHref(path, locale)}`,
-            lastModified: toDateString(new Date(cat.updated_at)),
+            lastModified: toDateString(cat.updated_at, now),
             changeFrequency: "monthly" as const,
             priority: 0.8,
             alternates,
@@ -195,7 +210,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         });
       });
 
-    experienceRoutes = experiences
+    experienceRoutes = catalogData.value.experiences
       .filter(
         (exp) =>
           exp.city && exp.title && !exp.title.toLowerCase().includes("test"),
@@ -215,14 +230,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         return LOCALES.map((locale) => ({
           url: `${SITE_URL}${localizeHref(localizeExperiencePath(path, locale), locale)}`,
-          lastModified: toDateString(new Date(exp.updated_at)),
+          lastModified: toDateString(exp.updated_at, now),
           changeFrequency: "monthly" as const,
           priority: 0.8,
           alternates,
         }));
       });
-  } catch {
-    // Supabase unavailable at build time — static routes still served
   }
 
   return [

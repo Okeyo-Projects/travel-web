@@ -176,7 +176,11 @@
     "or": "أو",
     "and": "و",
     "image": "صورة",
-    "pageNumber": "الصفحة {page}"
+    "pageNumber": "الصفحة {page}",
+    "zoomIn": "تكبير",
+    "zoomOut": "تصغير",
+    "resetZoom": "إعادة تعيين التكبير",
+    "imageZoom": "التكبير {value}"
   },
   "host": {
     "loadingWorkspace": "جارٍ تحميل مساحة المضيف...",
@@ -1114,13 +1118,18 @@
       "locationDenied": "تم رفض الموقع",
       "hours": "ساعات العمل",
       "contact": "التواصل",
+      "openWhatsApp": "فتح محادثة واتساب مع {phone}",
+      "whatsappMessage": "مرحباً {author}، أنا قادم من Okeyo Travel وأرغب في حجز {title}. هل يمكنك مشاركة التوفر والأسعار من فضلك؟",
       "price": "السعر",
       "payment": "الدفع",
       "menu": "القائمة",
       "menuImageAlt": "صورة القائمة {count} لـ {title}",
       "openMenuImage": "فتح صورة القائمة {count} لـ {title}",
       "reviews": "المراجعات",
-      "reviewsCount": "{count} مراجعات"
+      "reviewsCount": "{count} مراجعات",
+      "readMore": "اقرأ المزيد",
+      "readLess": "عرض أقل",
+      "showMoreReviews": "عرض {count} مراجعات إضافية"
     },
     "roomSelector": {
       "room": {
