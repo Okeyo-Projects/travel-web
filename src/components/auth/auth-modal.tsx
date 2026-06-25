@@ -1,7 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { LegalNotice } from "@/components/legal/LegalNotice";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,9 +20,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  PhoneInput,
   normalizePhoneNumber,
   type PhoneCountry,
-  PhoneInput,
 } from "@/components/ui/phone-input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,6 +34,8 @@ import { syncUserToBrevo } from "@/lib/brevo/sync";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { cn } from "@/lib/utils";
 import { useT } from "@/providers/translations-provider";
+import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 type MessageState = {
   type: "error" | "success";
@@ -624,7 +624,7 @@ export function AuthModal() {
             <Separator className="flex-1" />
           </div>
 
-          <Button
+          {/* <Button
             type="button"
             variant="outline"
             onClick={() => handleOAuthSignIn("google")}
@@ -632,7 +632,7 @@ export function AuthModal() {
             disabled={isSubmitting}
           >
             {t("authModal.continueWithGoogle")}
-          </Button>
+          </Button> */}
           {/* <Button
             type="button"
             onClick={() => handleOAuthSignIn("apple")}
