@@ -9,7 +9,7 @@ const GUIDE_ITEM_ENRICH_SELECT =
   "id, author_name, author_avatar_url, agence_name, contact_email, contact_phones, source_platforms, reviews, metadata, payment_i18n, menu_image_urls";
 
 const GUIDE_ITEM_FALLBACK_SELECT =
-  "id, slug, kind_slug, subtype, city_slug, title_i18n, summary_i18n, description_i18n, payment_i18n, address_text, lat, lng, author_name, author_avatar_url, hero_image_url, gallery_urls, video_url, video_gallery_url, rating_avg, reviews_count, price_range, currency, tags, source_url, verified, status, agence_name, contact_email, contact_phones, source_platforms, reviews, metadata, menu_image_urls, updated_at";
+  "id, slug, kind_slug, subtype, city_slug, title_i18n, summary_i18n, description_i18n, payment_i18n, important_notes_i18n, address_text, lat, lng, author_name, author_avatar_url, hero_image_url, gallery_urls, video_url, video_gallery_url, rating_avg, reviews_count, price_range, currency, tags, source_url, verified, status, agence_name, contact_email, contact_phones, source_platforms, reviews, metadata, menu_image_urls, updated_at";
 
 type GuideItemSearchClient = SupabaseClient<Database>;
 
@@ -125,6 +125,7 @@ function toGuideItemSearchResult(
     summary_i18n: row.summary_i18n,
     description_i18n: row.description_i18n,
     payment_i18n: row.payment_i18n,
+    important_notes_i18n: row.important_notes_i18n,
     address_text: row.address_text,
     lat: row.lat,
     lng: row.lng,
