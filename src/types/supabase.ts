@@ -2615,6 +2615,7 @@ export type Database = {
           gallery_urls: string[];
           hero_image_url: string | null;
           id: string;
+          important_notes_i18n: Json | null;
           kind_slug: string;
           lat: number | null;
           lng: number | null;
@@ -2656,6 +2657,7 @@ export type Database = {
           gallery_urls?: string[];
           hero_image_url?: string | null;
           id?: string;
+          important_notes_i18n?: Json | null;
           kind_slug: string;
           lat?: number | null;
           lng?: number | null;
@@ -2697,6 +2699,7 @@ export type Database = {
           gallery_urls?: string[];
           hero_image_url?: string | null;
           id?: string;
+          important_notes_i18n?: Json | null;
           kind_slug?: string;
           lat?: number | null;
           lng?: number | null;
@@ -4690,6 +4693,7 @@ export type Database = {
           summary_i18n: Json | null;
           description_i18n: Json | null;
           payment_i18n: Json | null;
+          important_notes_i18n: Json | null;
           address_text: string | null;
           lat: number | null;
           lng: number | null;

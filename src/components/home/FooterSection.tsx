@@ -1,12 +1,21 @@
 "use client";
 
-import { Facebook, Instagram, Send, Twitter } from "lucide-react";
+import { Facebook, Instagram, Send, Youtube } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { SVGProps } from "react";
 import { PayzoneBadge } from "@/components/payment/PayzoneBadge";
 import { localizeHref } from "@/lib/routing/locale-path";
 import { useT } from "@/providers/translations-provider";
+
+function TikTokIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M15.74 3c.31 1.76 1.36 3.2 3.26 3.32v2.35a5.55 5.55 0 0 1-3.15-1v5.87a5.54 5.54 0 1 1-5.31-5.53v2.43a3.12 3.12 0 1 0 2.89 3.11V3h2.31Z" />
+    </svg>
+  );
+}
 
 export function FooterSection() {
   const pathname = usePathname();
@@ -19,6 +28,32 @@ export function FooterSection() {
     { label: t("home.footer.links.privacy"), href: "/privacy" },
     { label: t("home.footer.links.terms"), href: "/terms" },
     { label: t("home.footer.links.support"), href: "/support" },
+  ];
+  const socialLinks = [
+    {
+      href: "https://web.facebook.com/OKEYOAPP",
+      label: t("home.footer.social.facebook"),
+      icon: Facebook,
+      className: "border-primary text-primary",
+    },
+    {
+      href: "https://www.instagram.com/okeyo.travel/",
+      label: t("home.footer.social.instagram"),
+      icon: Instagram,
+      className: "border-white/80 text-white",
+    },
+    {
+      href: "https://www.youtube.com/@OKEYOTRAVEL",
+      label: t("home.footer.social.youtube"),
+      icon: Youtube,
+      className: "border-white/80 text-white",
+    },
+    {
+      href: "https://www.tiktok.com/@okeyotravel",
+      label: t("home.footer.social.tiktok"),
+      icon: TikTokIcon,
+      className: "border-white/80 text-white",
+    },
   ];
 
   return (
@@ -44,27 +79,18 @@ export function FooterSection() {
             </p>
 
             <div className="mt-6 flex items-center gap-3">
-              <button
-                type="button"
-                aria-label={t("home.footer.social.facebook")}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-primary text-primary"
-              >
-                <Facebook className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                aria-label={t("home.footer.social.instagram")}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-white"
-              >
-                <Instagram className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                aria-label={t("home.footer.social.twitter")}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-white"
-              >
-                <Twitter className="h-4 w-4" />
-              </button>
+              {socialLinks.map(({ href, label, icon: Icon, className }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors hover:bg-white/10 ${className}`}
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
             </div>
           </div>
 

@@ -9,8 +9,16 @@ import type {
 const WP_API_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL ?? "";
 const WP_LANGUAGE_PARAM = "lang";
 
+function normalizeWpBaseUrl(url: string): string {
+  return url
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/wp-admin$/, "")
+    .replace(/\/wp-json(?:\/wp\/v2)?$/, "");
+}
+
 function baseUrl(): string {
-  return `${WP_API_URL}/wp-json/wp/v2`;
+  return `${normalizeWpBaseUrl(WP_API_URL)}/wp-json/wp/v2`;
 }
 
 function withLocaleParam(
