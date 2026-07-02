@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 export type AgentToolName =
+  | "planTripWithGuideItems"
   | "searchGuideItems"
   | "searchExperiences"
   | "getExperienceDetails"
@@ -20,6 +21,7 @@ export type AgentToolName =
   | "getTopicInformation";
 
 export const KNOWN_AGENT_TOOLS: AgentToolName[] = [
+  "planTripWithGuideItems",
   "searchGuideItems",
   "searchExperiences",
   "getExperienceDetails",

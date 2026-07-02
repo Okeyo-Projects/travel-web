@@ -18,16 +18,17 @@ import {
   checkAvailability,
   createBookingIntent,
   createOfferQuickRepliesTool,
+  createPlanTripWithGuideItemsTool,
   createSearchGuideItemsTool,
   createSelectRoomTypeTool,
   createSuggestDateOptionsTool,
   findSimilar,
   getCityInformation,
   getExperienceDetails,
-  getTopicInformation,
   getExperienceOptionDetails,
   getExperiencePromos,
   getLinkedExperiences,
+  getTopicInformation,
   getWeather,
   requestUserLocation,
   searchExperiences,
@@ -517,11 +518,14 @@ export async function POST(req: Request) {
     });
 
     const offerQuickReplies = createOfferQuickRepliesTool(requestedLanguage);
+    const planTripWithGuideItems =
+      createPlanTripWithGuideItemsTool(requestedLanguage);
     const searchGuideItems = createSearchGuideItemsTool(requestedLanguage);
     const suggestDateOptions = createSuggestDateOptionsTool(requestedLanguage);
     const selectRoomType = createSelectRoomTypeTool(requestedLanguage);
 
     const allTools = {
+      planTripWithGuideItems,
       searchGuideItems,
       searchExperiences,
       getExperienceDetails,
@@ -545,6 +549,7 @@ export async function POST(req: Request) {
     // have an outdated enabled_tools list.
     const enabledToolNames = new Set<AgentToolName>([
       ...agentConfig.enabledTools,
+      "planTripWithGuideItems",
       "searchGuideItems",
       "offerQuickReplies",
       "suggestDateOptions",

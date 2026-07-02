@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { isChatDeepLinkBootstrapText } from "@/lib/chat/deep-link";
 import { parseMessageContent } from "@/lib/chat/parse-message";
 import { cn } from "@/lib/utils";
+import type { GuideItemChatCardData } from "@/types/guide-items";
 import { AuthRequiredCard } from "./AuthRequiredCard";
 import {
   BookingConfirmCard,
@@ -19,7 +20,6 @@ import {
   ExperienceCardsGrid,
   type ExperienceGridItem,
 } from "./ExperienceCardsGrid";
-import { GuideItemCardsGrid } from "./GuideItemCardsGrid";
 import {
   type ExperienceDetailsData,
   ExperienceDetailsPanel,
@@ -28,10 +28,11 @@ import {
   type ExperienceOptionDetailsData,
   ExperienceOptionDetailsPanel,
 } from "./ExperienceOptionDetailsPanel";
+import { GuideItemCardsGrid } from "./GuideItemCardsGrid";
 import { LocationRequest } from "./LocationRequest";
 import { QuickReplies } from "./QuickReplies";
 import { type RoomTypeOptionItem, RoomTypeSelector } from "./RoomTypeSelector";
-import type { GuideItemChatCardData } from "@/types/guide-items";
+import { TripPlanBlock, type TripPlanData } from "./TripPlanBlock";
 
 type Message = UIMessage & { content?: string | null };
 type ExperienceResult = Record<string, unknown>;
@@ -304,6 +305,14 @@ function extractGuideItemCards(
       typeof item.city_slug === "string" &&
       typeof item.title === "string",
   );
+}
+
+function extractTripPlan(output: unknown): TripPlanData | null {
+  if (!isRecord(output) || output.success !== true) return null;
+  if (output.type !== "trip_plan") return null;
+  if (typeof output.city !== "string") return null;
+  if (!Array.isArray(output.plan) || output.plan.length === 0) return null;
+  return output as unknown as TripPlanData;
 }
 
 function extractLocationReason(output: unknown): string {
@@ -594,6 +603,17 @@ function isGuideItemCardsData(
   );
 }
 
+function isTripPlanData(data: unknown): data is TripPlanData {
+  return (
+    isRecord(data) &&
+    data.success === true &&
+    data.type === "trip_plan" &&
+    typeof data.city === "string" &&
+    Array.isArray(data.plan) &&
+    data.plan.length > 0
+  );
+}
+
 function isLocationRequestData(data: unknown): data is { reason: string } {
   return isRecord(data) && typeof data.reason === "string";
 }
@@ -809,6 +829,7 @@ function MessageItem({
     "experience_cards",
     "experience_details",
     "option_details",
+    "trip_plan",
     "quick_replies",
     "date_options",
     "room_type_selector",
@@ -934,6 +955,27 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
   const parts = (message.parts || []) as unknown[];
   const blocks: ParsedBlock[] = [];
   const seenSignatures = new Set<string>();
+  const hasTripPlan = parts.some(
+    (rawPart) =>
+      isRecord(rawPart) &&
+      rawPart.type === "tool-planTripWithGuideItems" &&
+      rawPart.state === "output-available" &&
+      Boolean(extractTripPlan(rawPart.output)),
+  );
+  const tripPlanAccommodations = hasTripPlan
+    ? parts
+        .filter(
+          (rawPart): rawPart is ToolPart =>
+            isRecord(rawPart) &&
+            rawPart.type === "tool-searchExperiences" &&
+            rawPart.state === "output-available",
+        )
+        .flatMap((rawPart) => extractSearchResults(rawPart.output) ?? [])
+        .filter(
+          (experience): experience is ExperienceResult =>
+            isRecord(experience) && experience.type === "lodging",
+        )
+    : [];
 
   const pushUniqueBlock = (block: ParsedBlock, signature: string) => {
     if (seenSignatures.has(signature)) return;
@@ -981,6 +1023,14 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
     ) {
       const experiences = extractSearchResults(part.output);
       if (!experiences || experiences.length === 0) continue;
+      if (
+        hasTripPlan &&
+        experiences.every(
+          (experience) => isRecord(experience) && experience.type === "lodging",
+        )
+      ) {
+        continue;
+      }
 
       const ids = experiences
         .map((exp) => (typeof exp.id === "string" ? exp.id : ""))
@@ -1005,9 +1055,41 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
     }
 
     if (
+      part.type === "tool-planTripWithGuideItems" &&
+      part.state === "output-available"
+    ) {
+      const tripPlan = extractTripPlan(part.output);
+      if (!tripPlan) continue;
+
+      const accommodationIds = tripPlanAccommodations
+        .map((experience) =>
+          typeof experience.id === "string" ? experience.id : "",
+        )
+        .filter(Boolean)
+        .join(",");
+      const signature = `trip_plan:${tripPlan.city_slug}:${tripPlan.days_requested}:${accommodationIds}`;
+
+      pushUniqueBlock(
+        {
+          key: signature,
+          type: "ui",
+          content: {
+            component: "trip_plan",
+            data: {
+              ...tripPlan,
+              accommodations: tripPlanAccommodations,
+            },
+          },
+        },
+        signature,
+      );
+    }
+
+    if (
       part.type === "tool-searchGuideItems" &&
       part.state === "output-available"
     ) {
+      if (hasTripPlan) continue;
       const items = extractGuideItemCards(part.output);
       if (!items || items.length === 0) continue;
 
@@ -1305,6 +1387,10 @@ function UIBlock({
           experiences={data.experiences as unknown as ExperienceGridItem[]}
         />
       );
+
+    case "trip_plan":
+      if (!isTripPlanData(data)) return null;
+      return <TripPlanBlock plan={data} />;
 
     case "location_request":
       if (!isLocationRequestData(data)) return null;
