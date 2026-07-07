@@ -551,7 +551,7 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
             {allVideos.map((url, i) => (
               <div
                 key={`${item.id}-video-${url}`}
-                className="aspect-video w-[75vw] shrink-0 snap-start sm:w-[340px]"
+                className="aspect-[9/16] w-[50vw] shrink-0 snap-start sm:w-[300px]"
               >
                 <InlineGuideItemVideoCard
                   src={url}

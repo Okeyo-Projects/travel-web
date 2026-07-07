@@ -168,9 +168,9 @@ function CompactGuideItemPreview({
 }) {
   const [open, setOpen] = useState(false);
   const card = item.card;
-  const thumbnailSrc = card?.hero_image_url
-    ? getImageUrl(card.hero_image_url)
-    : null;
+  const thumbnailSource =
+    card?.hero_image_url ?? card?.gallery_urls?.[0] ?? null;
+  const thumbnailSrc = thumbnailSource ? getImageUrl(thumbnailSource) : null;
 
   return (
     <>
