@@ -14,7 +14,7 @@ import {
   Verified,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -160,17 +160,61 @@ function kindLabel(
 function CompactGuideItemPreview({
   item,
   labels,
+  locale,
   t,
 }: {
   item: TripPlanGuideItem;
   labels: (typeof LABELS)[keyof typeof LABELS];
+  locale: string;
   t: ReturnType<typeof useSiteI18n>["t"];
 }) {
   const [open, setOpen] = useState(false);
   const card = item.card;
+  const [detailCard, setDetailCard] = useState(card ?? null);
   const thumbnailSource =
     card?.hero_image_url ?? card?.gallery_urls?.[0] ?? null;
   const thumbnailSrc = thumbnailSource ? getImageUrl(thumbnailSource) : null;
+
+  useEffect(() => {
+    setDetailCard(card ?? null);
+  }, [card]);
+
+  useEffect(() => {
+    if (!open || !card) return;
+
+    const loadedReviewsCount = detailCard?.reviews?.length ?? 0;
+    if (loadedReviewsCount >= card.reviews_count) return;
+
+    const controller = new AbortController();
+
+    void fetch(`/api/guide-items/${card.id}?locale=${locale}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Guide item request failed with ${response.status}`);
+        }
+        return (await response.json()) as { item?: GuideItemChatCardData };
+      })
+      .then((payload) => {
+        if (payload.item) {
+          setDetailCard(payload.item);
+        }
+      })
+      .catch((error: unknown) => {
+        if (
+          error instanceof Error &&
+          (error.name === "AbortError" || controller.signal.aborted)
+        ) {
+          return;
+        }
+        console.error("Failed to hydrate guide item modal details:", error);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [card, detailCard?.reviews?.length, locale, open]);
 
   return (
     <>
@@ -268,10 +312,10 @@ function CompactGuideItemPreview({
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-2xl">
             <DialogHeader className="shrink-0 border-b px-6 pt-6 pb-4 pr-14">
-              <DialogTitle>{card.title}</DialogTitle>
+              <DialogTitle>{detailCard?.title ?? card.title}</DialogTitle>
             </DialogHeader>
             <div className="overflow-y-auto p-4 sm:p-6">
-              <GuideItemCard item={card} />
+              <GuideItemCard item={detailCard ?? card} />
             </div>
           </DialogContent>
         </Dialog>
@@ -513,6 +557,7 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
                       <CompactGuideItemPreview
                         item={slot.item}
                         labels={labels}
+                        locale={locale}
                         t={t}
                       />
                     ) : (
