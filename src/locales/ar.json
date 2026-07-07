@@ -1104,7 +1104,11 @@
         "other": "آخر"
       },
       "captionsLabel": "التسميات التوضيحية",
+      "playVideo": "تشغيل فيديو {title}",
       "pauseVideo": "إيقاف الفيديو مؤقتاً",
+      "stopVideo": "إيقاف الفيديو",
+      "muteVideo": "كتم صوت الفيديو",
+      "unmuteVideo": "إلغاء كتم صوت الفيديو",
       "openGalleryImage": "فتح الصورة {count} لـ {title}",
       "videoAlt": "{title} فيديو {count}",
       "noImage": "لا توجد صورة",

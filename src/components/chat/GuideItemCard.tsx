@@ -8,11 +8,15 @@ import {
   Mail,
   MapPin,
   Navigation,
+  Pause,
   Phone,
   Play,
+  Square,
   Star,
   User,
   Verified,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -119,15 +123,36 @@ function getWhatsAppHref(phone: string, message: string): string {
     : `https://wa.me/?text=${encodedMessage}`;
 }
 
-function VideoThumbnailPreview({ src, alt }: VideoThumbnailPreviewProps) {
+function InlineGuideItemVideoCard({
+  src,
+  alt,
+  title,
+  locale,
+  isRtl,
+  playLabel,
+  pauseLabel,
+  stopLabel,
+  muteLabel,
+  unmuteLabel,
+  captionsLabel,
+}: VideoThumbnailPreviewProps & {
+  title: string;
+  locale: AppLocale;
+  isRtl: boolean;
+  playLabel: string;
+  pauseLabel: string;
+  stopLabel: string;
+  muteLabel: string;
+  unmuteLabel: string;
+  captionsLabel: string;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const shouldAutoPlayRef = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [hasFrame, setHasFrame] = useState(false);
 
   useHlsVideo(videoRef, src);
-
-  useEffect(() => {
-    setHasFrame(false);
-  }, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -177,26 +202,235 @@ function VideoThumbnailPreview({ src, alt }: VideoThumbnailPreviewProps) {
     };
   }, []);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      shouldAutoPlayRef.current = false;
+      captureEvent(ANALYTICS_EVENT.VIDEO_PLAYED, {
+        src,
+        context: "chat_guide_item_card",
+      });
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+      captureEvent(ANALYTICS_EVENT.VIDEO_PAUSED, {
+        src,
+        context: "chat_guide_item_card",
+      });
+    };
+
+    const handleCanPlay = () => {
+      if (!shouldAutoPlayRef.current) return;
+      void video.play().catch(() => {
+        setIsPlaying(false);
+      });
+    };
+
+    video.addEventListener("play", handlePlay);
+    video.addEventListener("pause", handlePause);
+    video.addEventListener("canplay", handleCanPlay);
+
+    return () => {
+      video.removeEventListener("play", handlePlay);
+      video.removeEventListener("pause", handlePause);
+      video.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [src]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = isMuted;
+  }, [isMuted]);
+
+  const handlePlayToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      shouldAutoPlayRef.current = true;
+      void video.play().catch(() => {
+        setIsPlaying(false);
+      });
+      return;
+    }
+
+    shouldAutoPlayRef.current = false;
+    video.pause();
+  };
+
+  const handleStop = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    shouldAutoPlayRef.current = false;
+    video.pause();
+
+    const resetTime =
+      Number.isFinite(video.duration) && video.duration > 0.1 ? 0.1 : 0;
+
+    try {
+      video.currentTime = resetTime;
+      setHasFrame(true);
+    } catch {
+      setHasFrame(false);
+    }
+  };
+
+  const handleMuteToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsMuted((prev) => {
+      const next = !prev;
+      captureEvent(
+        next ? ANALYTICS_EVENT.VIDEO_MUTED : ANALYTICS_EVENT.VIDEO_UNMUTED,
+        {
+          src,
+          context: "chat_guide_item_card",
+        },
+      );
+      return next;
+    });
+  };
+
   return (
-    <>
+    <div className="relative h-full w-full overflow-hidden rounded-lg bg-muted group">
       <video
         ref={videoRef}
         className={cn(
-          "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
-          hasFrame ? "opacity-100" : "opacity-0",
+          "absolute inset-0 h-full w-full transition-opacity duration-300",
+          isPlaying ? "object-contain opacity-100" : "object-cover opacity-100",
         )}
         aria-label={alt}
-        muted
         playsInline
         preload="auto"
-      />
+        loop
+        onLoadedData={(event) => {
+          const video = event.currentTarget;
+
+          if (video.currentTime > 0) {
+            setHasFrame(true);
+            return;
+          }
+
+          const seekTime =
+            Number.isFinite(video.duration) && video.duration > 0.1 ? 0.1 : 0;
+
+          if (seekTime === 0) {
+            setHasFrame(true);
+            return;
+          }
+
+          try {
+            video.currentTime = seekTime;
+          } catch {
+            setHasFrame(true);
+          }
+        }}
+        onSeeked={() => {
+          setHasFrame(true);
+        }}
+        onError={() => {
+          setHasFrame(false);
+          captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
+            src,
+            context: "chat_guide_item_card",
+          });
+        }}
+      >
+        <track kind="captions" srcLang={locale} label={captionsLabel} />
+      </video>
 
       {!hasFrame && (
-        <div className="flex h-full w-full items-center justify-center bg-muted">
+        <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-muted">
           <Play className="h-8 w-8 text-muted-foreground" />
         </div>
       )}
-    </>
+
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-all group-hover:bg-black/20 pointer-events-none z-10">
+          <button
+            type="button"
+            onClick={handlePlayToggle}
+            aria-label={playLabel}
+            className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-background/30 text-white backdrop-blur-md transition-transform duration-300 hover:scale-105 hover:bg-background/40"
+          >
+            <Play
+              className={cn(
+                "h-7 w-7 fill-current",
+                isRtl ? "mr-0.5" : "ml-0.5",
+              )}
+            />
+          </button>
+        </div>
+      )}
+
+      {isPlaying && (
+        <button
+          type="button"
+          className="absolute inset-0 z-10 cursor-pointer"
+          aria-label={pauseLabel}
+          onClick={handlePlayToggle}
+        />
+      )}
+
+      <div className="absolute bottom-2 right-2 z-20 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handlePlayToggle}
+          aria-label={isPlaying ? pauseLabel : playLabel}
+          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-black/80"
+        >
+          {isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play
+              className={cn(
+                "h-4 w-4 fill-current",
+                isRtl ? "mr-0.5" : "ml-0.5",
+              )}
+            />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleStop}
+          aria-label={stopLabel}
+          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-black/80"
+        >
+          <Square className="h-4 w-4 fill-current" />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleMuteToggle}
+          aria-label={isMuted ? unmuteLabel : muteLabel}
+          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md transition-colors hover:bg-black/80"
+        >
+          {isMuted ? (
+            <VolumeX className="h-4 w-4" />
+          ) : (
+            <Volume2 className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+
+      <div className="absolute left-2 top-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-md">
+        {title}
+      </div>
+    </div>
   );
 }
 
@@ -207,15 +441,8 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
   const { permission, isRequesting, requestPermission, getDistanceKm } =
     useGeoDistance();
 
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasActiveVideoFrame, setHasActiveVideoFrame] = useState(false);
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
   const [expandedReviewKeys, setExpandedReviewKeys] = useState<string[]>([]);
-  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(
-    item.video_url ?? null,
-  );
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const shouldAutoPlayRef = useRef(false);
 
   const kindLabels: Record<GuideItemKind, string> = {
     restaurant: t("chat.guideItemCard.kind.restaurant"),
@@ -259,80 +486,11 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
     return getDistanceKm(item.lat, item.lng);
   }, [item.lat, item.lng, getDistanceKm]);
 
-  useHlsVideo(videoRef, activeVideoUrl);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !activeVideoUrl) return;
-
-    const handlePlay = () => {
-      setIsPlaying(true);
-      shouldAutoPlayRef.current = false;
-    };
-    const handlePause = () => {
-      setIsPlaying(false);
-    };
-    const handleCanPlay = () => {
-      if (shouldAutoPlayRef.current) {
-        void video.play().catch(() => {
-          setIsPlaying(false);
-        });
-      }
-    };
-
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("canplay", handleCanPlay);
-
-    return () => {
-      video.removeEventListener("play", handlePlay);
-      video.removeEventListener("pause", handlePause);
-      video.removeEventListener("canplay", handleCanPlay);
-    };
-  }, [activeVideoUrl]);
-
   useEffect(() => {
     if (!item.id) return;
     setVisibleReviewsCount(3);
     setExpandedReviewKeys([]);
   }, [item.id]);
-
-  useEffect(() => {
-    setActiveVideoUrl(item.video_url ?? item.video_gallery_url?.[0] ?? null);
-    setHasActiveVideoFrame(false);
-    setIsPlaying(false);
-    shouldAutoPlayRef.current = false;
-  }, [item.video_gallery_url, item.video_url]);
-
-  const handlePlayToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      shouldAutoPlayRef.current = true;
-      video.muted = false;
-      void video.play().catch(() => {
-        setIsPlaying(false);
-      });
-      return;
-    }
-
-    shouldAutoPlayRef.current = false;
-    video.pause();
-  };
-
-  const handleSelectVideo = (url: string) => {
-    if (activeVideoUrl === url) {
-      shouldAutoPlayRef.current = true;
-      return;
-    }
-
-    shouldAutoPlayRef.current = true;
-    setActiveVideoUrl(url);
-    setIsPlaying(false);
-  };
 
   const galleryAlts = galleryImages.map((_, i) =>
     t("chat.guideItemCard.galleryAlt", { title: item.title, count: i + 1 }),
@@ -346,15 +504,6 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
     : null;
 
   const hasVideos = allVideos.length > 0;
-  const mediaAspectClass =
-    activeVideoUrl || item.hero_image_url ? "aspect-[9/16]" : "aspect-video";
-  const mediaFrameClassName = cn(
-    "relative w-[50vw] sm:w-[300px] shrink-0 overflow-hidden rounded-lg bg-muted",
-    mediaAspectClass,
-  );
-  const inactiveVideoUrls = activeVideoUrl
-    ? allVideos.filter((url) => url !== activeVideoUrl)
-    : allVideos;
   const sourceLabel = item.source_url ? getSourceLabel(item.source_url) : null;
   const contactAuthor =
     item.author_name ?? t("chat.guideItemCard.authorFallback");
@@ -384,184 +533,56 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div
-        className={cn(
-          "flex gap-3 overflow-x-auto px-4 pt-4 snap-x scrollbar-hide",
-          !hasVideos && "justify-center sm:justify-start",
-        )}
-      >
-        <div className={cn(mediaFrameClassName, "snap-start group")}>
-          {activeVideoUrl && (
-            <video
-              ref={videoRef}
-              key={activeVideoUrl}
-              className={cn(
-                "absolute inset-0 h-full w-full transition-opacity duration-300",
-                isPlaying
-                  ? "object-contain opacity-100"
-                  : "object-cover opacity-100",
-              )}
-              playsInline
-              loop
-              preload="auto"
-              onLoadedData={(event) => {
-                const video = event.currentTarget;
-
-                if (video.currentTime > 0) {
-                  setHasActiveVideoFrame(true);
-                  return;
-                }
-
-                const seekTime =
-                  Number.isFinite(video.duration) && video.duration > 0.1
-                    ? 0.1
-                    : 0;
-
-                if (seekTime === 0) {
-                  setHasActiveVideoFrame(true);
-                  return;
-                }
-
-                try {
-                  video.currentTime = seekTime;
-                } catch {
-                  setHasActiveVideoFrame(true);
-                }
-              }}
-              onSeeked={() => {
-                setHasActiveVideoFrame(true);
-              }}
-              onError={() => {
-                setHasActiveVideoFrame(false);
-                captureEvent(ANALYTICS_EVENT.VIDEO_ERROR, {
-                  src: activeVideoUrl,
-                  context: "chat_guide_item_card",
-                });
-              }}
-            >
-              <track
-                kind="captions"
-                srcLang={locale}
-                label={t("chat.guideItemCard.captionsLabel")}
-              />
-            </video>
-          )}
-
-          <div
-            className={cn(
-              "absolute inset-0 transition-opacity duration-300",
-              activeVideoUrl && hasActiveVideoFrame
-                ? "opacity-0"
-                : "opacity-100",
-            )}
-          >
-            {!activeVideoUrl && heroImageSrc ? (
-              <Image
-                src={heroImageSrc}
-                alt={item.title}
-                fill
-                placeholder="blur"
-                blurDataURL={IMAGE_BLUR_DATA_URL}
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <span className="text-muted-foreground">
-                  {t("chat.guideItemCard.noImage")}
-                </span>
+      <div className="space-y-3 px-4 pt-4">
+        {(heroImageSrc || hasVideos) && (
+          <div className="flex gap-3 overflow-x-auto snap-x scrollbar-hide">
+            {heroImageSrc && (
+              <div className="group relative aspect-video w-[75vw] shrink-0 snap-start overflow-hidden rounded-lg bg-muted sm:w-[340px]">
+                <Image
+                  src={heroImageSrc}
+                  alt={item.title}
+                  fill
+                  placeholder="blur"
+                  blurDataURL={IMAGE_BLUR_DATA_URL}
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
               </div>
             )}
-          </div>
-
-          {activeVideoUrl && !isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-all pointer-events-none z-10">
-              <button
-                type="button"
-                onClick={handlePlayToggle}
-                className="pointer-events-auto w-16 h-16 rounded-full flex items-center justify-center bg-background/30 backdrop-blur-md border border-white/30 text-white hover:scale-110 transition-transform duration-300 hover:bg-background/40"
+            {allVideos.map((url, i) => (
+              <div
+                key={`${item.id}-video-${url}`}
+                className="aspect-video w-[75vw] shrink-0 snap-start sm:w-[340px]"
               >
-                <Play
-                  className={cn("w-8 h-8 fill-white", isRtl ? "mr-1" : "ml-1")}
+                <InlineGuideItemVideoCard
+                  src={url}
+                  alt={t("chat.guideItemCard.videoAlt", {
+                    title: item.title,
+                    count: i + 1,
+                  })}
+                  title={item.title}
+                  locale={locale}
+                  isRtl={isRtl}
+                  playLabel={t("chat.guideItemCard.playVideo", {
+                    title: item.title,
+                  })}
+                  pauseLabel={t("chat.guideItemCard.pauseVideo")}
+                  stopLabel={t("chat.guideItemCard.stopVideo")}
+                  muteLabel={t("chat.guideItemCard.muteVideo")}
+                  unmuteLabel={t("chat.guideItemCard.unmuteVideo")}
+                  captionsLabel={t("chat.guideItemCard.captionsLabel")}
                 />
-              </button>
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        )}
 
-          {isPlaying && (
-            <button
-              type="button"
-              className="absolute inset-0 z-10 cursor-pointer"
-              aria-label={t("chat.guideItemCard.pauseVideo")}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handlePlayToggle(e);
-              }}
-            />
-          )}
-
-          <Badge
-            className={cn(
-              "absolute top-2 bg-background/80 backdrop-blur-sm text-foreground z-20",
-              isRtl ? "right-2" : "left-2",
-            )}
-          >
-            {kindLabels[item.kind_slug] ?? item.kind_slug}
-          </Badge>
-
-          {item.verified && (
-            <Badge
-              className={cn(
-                "absolute top-2 z-20 gap-1",
-                isRtl ? "left-2" : "right-2",
-              )}
-              variant="secondary"
-            >
-              <Verified className="w-3 h-3" />
-              {t("chat.guideItemCard.verified")}
-            </Badge>
-          )}
-
-          {item.rating_avg != null && (
-            <div
-              className={cn(
-                "absolute bottom-2 z-20 flex items-center gap-1 rounded-full bg-black/60 backdrop-blur-sm px-2 py-1 text-xs font-semibold text-white",
-                isRtl ? "left-2" : "right-2",
-              )}
-            >
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-              {item.rating_avg.toFixed(1)}
-            </div>
-          )}
-        </div>
-
-        {inactiveVideoUrls.map((url, i) => (
-          <button
-            type="button"
-            key={`${item.id}-video-${url}`}
-            onClick={() => handleSelectVideo(url)}
-            className={cn(
-              mediaFrameClassName,
-              "snap-start border text-left transition-colors",
-              activeVideoUrl === url ? "border-primary" : "border-border",
-            )}
-            aria-label={t("chat.guideItemCard.videoAlt", {
-              title: item.title,
-              count: i + 1,
-            })}
-          >
-            <VideoThumbnailPreview
-              src={url}
-              alt={t("chat.guideItemCard.videoAlt", {
-                title: item.title,
-                count: i + 1,
-              })}
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-              <Play className="w-8 h-8 text-white fill-white" />
-            </div>
-          </button>
-        ))}
+        {!heroImageSrc && !hasVideos && (
+          <div className="flex aspect-video items-center justify-center rounded-lg bg-muted">
+            <span className="text-muted-foreground">
+              {t("chat.guideItemCard.noImage")}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Image gallery */}
@@ -602,6 +623,28 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
               {item.summary}
             </p>
           )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">
+              {kindLabels[item.kind_slug] ?? item.kind_slug}
+            </Badge>
+            {item.verified && (
+              <Badge variant="secondary" className="gap-1">
+                <Verified className="h-3 w-3" />
+                {t("chat.guideItemCard.verified")}
+              </Badge>
+            )}
+            {item.rating_avg != null && (
+              <span className="inline-flex items-center gap-1 rounded-full border bg-muted/40 px-2.5 py-1 text-xs font-medium text-foreground">
+                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                {item.rating_avg.toFixed(1)}
+                {item.reviews_count > 0 && (
+                  <span className="text-muted-foreground">
+                    ({item.reviews_count})
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

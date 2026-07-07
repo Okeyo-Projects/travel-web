@@ -1104,7 +1104,11 @@
         "other": "Autre"
       },
       "captionsLabel": "Sous-titres",
+      "playVideo": "Lire la vidéo de {title}",
       "pauseVideo": "Mettre la vidéo en pause",
+      "stopVideo": "Arrêter la vidéo",
+      "muteVideo": "Couper le son de la vidéo",
+      "unmuteVideo": "Réactiver le son de la vidéo",
       "openGalleryImage": "Ouvrir l'image {count} de {title}",
       "videoAlt": "{title} vidéo {count}",
       "noImage": "Pas d'image",

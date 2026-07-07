@@ -1,3 +1,5 @@
+import { tool } from "ai";
+import { z } from "zod";
 import { embedQuery } from "@/lib/embeddings";
 import { mapGuideItemSearchRowToChatCardData } from "@/lib/guide-items";
 import { searchGuideItemsWithFallback } from "@/lib/guide-items-search";
@@ -8,8 +10,6 @@ import type {
   GuideItemKind,
   GuideItemSearchResult,
 } from "@/types/guide-items";
-import { tool } from "ai";
-import { z } from "zod";
 
 const guideItemKindSchema = z.enum([
   "restaurant",
@@ -254,10 +254,7 @@ function candidateFromResult(
     source_url: row.source_url,
     verified: row.verified,
     relevance_score: row.relevance_score,
-    card: {
-      ...card,
-      reviews: card.reviews?.slice(0, 3) ?? [],
-    },
+    card,
   };
 }
 
@@ -279,13 +276,35 @@ function rankCandidates(candidates: PlanCandidate[]): PlanCandidate[] {
   });
 }
 
+function normalizeCandidateToken(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getCandidateSignature(candidate: PlanCandidate): string {
+  const slug = normalizeCandidateToken(candidate.slug);
+  if (slug) return `${candidate.kind}:${slug}`;
+
+  const title = normalizeCandidateToken(candidate.title);
+  const address = normalizeCandidateToken(candidate.address_text);
+  return `${candidate.kind}:${title}:${address}`;
+}
+
 function takeNext(
   candidates: PlanCandidate[],
-  usedIds: Set<string>,
+  usedSignatures: Set<string>,
 ): PlanCandidate | null {
-  const candidate = candidates.find((item) => !usedIds.has(item.id));
+  const candidate = candidates.find(
+    (item) => !usedSignatures.has(getCandidateSignature(item)),
+  );
   if (!candidate) return null;
-  usedIds.add(candidate.id);
+  usedSignatures.add(getCandidateSignature(candidate));
   return candidate;
 }
 
@@ -381,8 +400,9 @@ function uniqueCandidates(groups: PlanCandidate[][]): PlanCandidate[] {
 
   for (const group of groups) {
     for (const candidate of group) {
-      if (seen.has(candidate.id)) continue;
-      seen.add(candidate.id);
+      const signature = getCandidateSignature(candidate);
+      if (seen.has(signature)) continue;
+      seen.add(signature);
       output.push(candidate);
     }
   }
@@ -417,77 +437,99 @@ The tool returns structured source items, card data, and a draft schedule for th
         const dailyActivityLimit = Math.min(Math.max(input.days * 3, 8), 20);
         const dailyRestaurantLimit = Math.min(Math.max(input.days * 2, 6), 16);
 
-        const [morningItems, afternoonItems, restaurantItems, transportItems] =
-          await Promise.all([
-            searchBucket({
-              city,
-              citySlug,
-              interests,
-              nearText,
-              budgetMad: input.budgetMad,
-              budgetScope: input.budgetScope,
-              bucket: "morning sightseeing activity museum culture",
-              kinds: activityKinds,
-              limit: dailyActivityLimit,
-              locale: defaultLocale,
-              centerLat: input.centerLat,
-              centerLng: input.centerLng,
-            }),
-            searchBucket({
-              city,
-              citySlug,
-              interests,
-              nearText,
-              budgetMad: input.budgetMad,
-              budgetScope: input.budgetScope,
-              bucket: "afternoon activity shopping wellness local experience",
-              kinds: activityKinds,
-              limit: dailyActivityLimit,
-              locale: defaultLocale,
-              centerLat: input.centerLat,
-              centerLng: input.centerLng,
-            }),
-            input.includeRestaurants
-              ? searchBucket({
-                  city,
-                  citySlug,
-                  interests,
-                  nearText,
-                  budgetMad: input.budgetMad,
-                  budgetScope: input.budgetScope,
-                  bucket: "restaurant lunch dinner food",
-                  kinds: ["restaurant"],
-                  limit: dailyRestaurantLimit,
-                  locale: defaultLocale,
-                  centerLat: input.centerLat,
-                  centerLng: input.centerLng,
-                })
-              : Promise.resolve([]),
-            input.includeTransport
-              ? searchBucket({
-                  city,
-                  citySlug,
-                  interests,
-                  nearText,
-                  budgetMad: input.budgetMad,
-                  budgetScope: input.budgetScope,
-                  bucket: "transport taxi transfer getting around",
-                  kinds: ["transport"],
-                  limit: 4,
-                  locale: defaultLocale,
-                  centerLat: input.centerLat,
-                  centerLng: input.centerLng,
-                })
-              : Promise.resolve([]),
-          ]);
+        const [
+          morningItems,
+          afternoonItems,
+          lunchItems,
+          dinnerItems,
+          transportItems,
+        ] = await Promise.all([
+          searchBucket({
+            city,
+            citySlug,
+            interests,
+            nearText,
+            budgetMad: input.budgetMad,
+            budgetScope: input.budgetScope,
+            bucket: "morning sightseeing activity museum culture",
+            kinds: activityKinds,
+            limit: dailyActivityLimit,
+            locale: defaultLocale,
+            centerLat: input.centerLat,
+            centerLng: input.centerLng,
+          }),
+          searchBucket({
+            city,
+            citySlug,
+            interests,
+            nearText,
+            budgetMad: input.budgetMad,
+            budgetScope: input.budgetScope,
+            bucket: "afternoon activity shopping wellness local experience",
+            kinds: activityKinds,
+            limit: dailyActivityLimit,
+            locale: defaultLocale,
+            centerLat: input.centerLat,
+            centerLng: input.centerLng,
+          }),
+          input.includeRestaurants
+            ? searchBucket({
+                city,
+                citySlug,
+                interests,
+                nearText,
+                budgetMad: input.budgetMad,
+                budgetScope: input.budgetScope,
+                bucket: "restaurant lunch casual local food midday",
+                kinds: ["restaurant"],
+                limit: dailyRestaurantLimit,
+                locale: defaultLocale,
+                centerLat: input.centerLat,
+                centerLng: input.centerLng,
+              })
+            : Promise.resolve([]),
+          input.includeRestaurants
+            ? searchBucket({
+                city,
+                citySlug,
+                interests,
+                nearText,
+                budgetMad: input.budgetMad,
+                budgetScope: input.budgetScope,
+                bucket:
+                  "restaurant dinner rooftop romantic traditional food evening",
+                kinds: ["restaurant"],
+                limit: dailyRestaurantLimit,
+                locale: defaultLocale,
+                centerLat: input.centerLat,
+                centerLng: input.centerLng,
+              })
+            : Promise.resolve([]),
+          input.includeTransport
+            ? searchBucket({
+                city,
+                citySlug,
+                interests,
+                nearText,
+                budgetMad: input.budgetMad,
+                budgetScope: input.budgetScope,
+                bucket: "transport taxi transfer getting around",
+                kinds: ["transport"],
+                limit: 4,
+                locale: defaultLocale,
+                centerLat: input.centerLat,
+                centerLng: input.centerLng,
+              })
+            : Promise.resolve([]),
+        ]);
 
         const windows = TIME_WINDOWS[input.pace];
-        const usedIds = new Set<string>();
+        const usedSignatures = new Set<string>();
         const days = Array.from({ length: input.days }, (_, index) => {
-          const morning = takeNext(morningItems, usedIds);
-          const lunch = takeNext(restaurantItems, usedIds);
-          const afternoon = takeNext(afternoonItems, usedIds);
-          const dinner = takeNext(restaurantItems, usedIds);
+          const morning = takeNext(morningItems, usedSignatures);
+          const lunch = takeNext(lunchItems, usedSignatures);
+          const afternoon = takeNext(afternoonItems, usedSignatures);
+          const dinner = takeNext(dinnerItems, usedSignatures);
 
           const slots: PlanSlot[] = [
             {
@@ -525,7 +567,8 @@ The tool returns structured source items, card data, and a draft schedule for th
         const sourceItems = uniqueCandidates([
           morningItems,
           afternoonItems,
-          restaurantItems,
+          lunchItems,
+          dinnerItems,
           transportItems,
         ]);
 
@@ -549,10 +592,10 @@ The tool returns structured source items, card data, and a draft schedule for th
           plan: days,
           transport_options: transportItems,
           source_items: sourceItems,
-          note:""
-            // sourceItems.length > 0
-            //   ? "Draft itinerary built from published guide_items."
-            //   : "No published guide_items matched this itinerary request.",
+          note: "",
+          // sourceItems.length > 0
+          //   ? "Draft itinerary built from published guide_items."
+          //   : "No published guide_items matched this itinerary request.",
         };
       } catch (error) {
         console.error("planTripWithGuideItems tool error:", error);

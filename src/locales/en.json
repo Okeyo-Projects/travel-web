@@ -1104,7 +1104,11 @@
         "other": "Other"
       },
       "captionsLabel": "Captions",
+      "playVideo": "Play video for {title}",
       "pauseVideo": "Pause video",
+      "stopVideo": "Stop video",
+      "muteVideo": "Mute video",
+      "unmuteVideo": "Unmute video",
       "openGalleryImage": "Open image {count} for {title}",
       "videoAlt": "{title} video {count}",
       "noImage": "No image",

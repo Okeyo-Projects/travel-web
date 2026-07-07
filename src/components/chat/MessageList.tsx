@@ -826,6 +826,7 @@ function MessageItem({
   if (parsedContent.length === 0) return null;
   const canSubmitFeedback = !isLoading || !isLastMessage;
   const afterMessageComponents = new Set<string>([
+    "guide_item_cards",
     "experience_cards",
     "experience_details",
     "option_details",

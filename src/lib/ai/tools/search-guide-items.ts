@@ -40,8 +40,10 @@ const searchGuideItemsSchema = z.object({
     .min(1)
     .max(12)
     .optional()
-    .default(6)
-    .describe("Maximum number of guide items to return."),
+    .default(3)
+    .describe(
+      "Maximum number of guide items to return. Use 1 when the user asks for one best option.",
+    ),
   minSimilarity: z
     .number()
     .min(0)
@@ -89,7 +91,8 @@ export function createSearchGuideItemsTool(defaultLocale: AppLocale = "fr") {
   return tool({
     description: `Search curated local guide items such as restaurants, transport options, wellness places, museums, shopping spots, and other non-bookable recommendations.
 Use this when the user asks for where to eat, a taxi or transfer, a spa or hammam, a museum, local shopping, or general local recommendations in a city.
-Call this tool whenever you want guide-item cards to appear in the chat UI. Do not only describe the recommendation in text if cards should be shown.`,
+Call this tool whenever you want guide-item cards to appear in the chat UI. Do not only describe the recommendation in text if cards should be shown.
+Set limit deliberately: 1 for a single best pick, around 3 for a short list, and only higher when the user explicitly asks for several options.`,
     inputSchema: searchGuideItemsSchema,
     execute: async ({ query, city, kinds, limit, minSimilarity }) => {
       try {

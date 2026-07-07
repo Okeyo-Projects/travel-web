@@ -266,11 +266,13 @@ function CompactGuideItemPreview({
 
       {card && (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-            <DialogHeader>
+          <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-2xl">
+            <DialogHeader className="shrink-0 border-b px-6 pt-6 pb-4 pr-14">
               <DialogTitle>{card.title}</DialogTitle>
             </DialogHeader>
-            <GuideItemCard item={card} />
+            <div className="overflow-y-auto p-4 sm:p-6">
+              <GuideItemCard item={card} />
+            </div>
           </DialogContent>
         </Dialog>
       )}
@@ -364,11 +366,13 @@ function CompactExperiencePreview({
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="shrink-0 border-b px-6 pt-6 pb-4 pr-14">
             <DialogTitle>{experience.title}</DialogTitle>
           </DialogHeader>
-          <ExperienceCard experience={experience} />
+          <div className="overflow-y-auto p-4 sm:p-6">
+            <ExperienceCard experience={experience} />
+          </div>
         </DialogContent>
       </Dialog>
     </>
