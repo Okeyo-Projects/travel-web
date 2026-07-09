@@ -1,8 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  GuideItemRow,
-  GuideItemSearchResult,
-} from "@/types/guide-items";
+import type { GuideItemRow, GuideItemSearchResult } from "@/types/guide-items";
 import type { Database, Json } from "@/types/supabase";
 
 const GUIDE_ITEM_ENRICH_SELECT =
@@ -32,6 +29,36 @@ interface GuideItemSearchCandidate {
 export interface SearchGuideItemsResult {
   results: GuideItemSearchResult[];
   usedFallback: boolean;
+}
+
+const CITY_SLUG_ALIASES: Record<string, string> = {
+  casa: "casablanca",
+  chaouen: "chefchaouen",
+  chefchaoun: "chefchaouen",
+  fes: "fez",
+  fez: "fez",
+  marakech: "marrakech",
+  marrakeche: "marrakech",
+  marrakesh: "marrakech",
+  marrekch: "marrakech",
+  souira: "essaouira",
+  tanger: "tangier",
+  tanja: "tangier",
+};
+
+export function normalizeGuideItemCitySlug(
+  value: string | null,
+): string | null {
+  if (!value) return null;
+
+  const slug = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return CITY_SLUG_ALIASES[slug] ?? slug;
 }
 
 function asStringArray(value: unknown): string[] {
@@ -90,7 +117,10 @@ function buildGuideItemSearchText(row: GuideItemRow): string {
     .trim();
 }
 
-function scoreGuideItem(row: GuideItemRow, textQuery: string | null): number | null {
+function scoreGuideItem(
+  row: GuideItemRow,
+  textQuery: string | null,
+): number | null {
   if (!textQuery) return null;
 
   const normalizedQuery = normalizeSearchText(textQuery);
@@ -104,7 +134,9 @@ function scoreGuideItem(row: GuideItemRow, textQuery: string | null): number | n
   if (!normalizedHaystack) return 0;
 
   const haystackTokens = new Set(tokenize(haystack));
-  const matches = queryTokens.filter((token) => haystackTokens.has(token)).length;
+  const matches = queryTokens.filter((token) =>
+    haystackTokens.has(token),
+  ).length;
   const tokenScore = matches / queryTokens.length;
   const phraseBoost = normalizedHaystack.includes(normalizedQuery) ? 0.35 : 0;
 
@@ -194,13 +226,17 @@ async function enrichGuideItemResults(
     return {
       ...result,
       author_name:
-        typeof guideItem.author_name === "string" ? guideItem.author_name : null,
+        typeof guideItem.author_name === "string"
+          ? guideItem.author_name
+          : null,
       author_avatar_url:
         typeof guideItem.author_avatar_url === "string"
           ? guideItem.author_avatar_url
           : null,
       agence_name:
-        typeof guideItem.agence_name === "string" ? guideItem.agence_name : null,
+        typeof guideItem.agence_name === "string"
+          ? guideItem.agence_name
+          : null,
       contact_email:
         typeof guideItem.contact_email === "string"
           ? guideItem.contact_email
@@ -219,6 +255,8 @@ async function fallbackGuideItemSearch(
   supabase: GuideItemSearchClient,
   params: SearchGuideItemsParams,
 ): Promise<GuideItemSearchResult[]> {
+  const citySlug = normalizeGuideItemCitySlug(params.citySlug);
+
   let query = supabase
     .from("guide_items")
     .select(GUIDE_ITEM_FALLBACK_SELECT)
@@ -228,8 +266,8 @@ async function fallbackGuideItemSearch(
     query = query.eq("status", "published");
   }
 
-  if (params.citySlug) {
-    query = query.eq("city_slug", params.citySlug);
+  if (citySlug) {
+    query = query.eq("city_slug", citySlug);
   }
 
   if (params.kinds && params.kinds.length > 0) {
@@ -259,7 +297,7 @@ async function fallbackGuideItemSearch(
     filteredCandidates =
       matchedCandidates.length > 0
         ? matchedCandidates
-        : params.citySlug || (params.kinds?.length ?? 0) > 0
+        : citySlug || (params.kinds?.length ?? 0) > 0
           ? candidates
           : [];
   }
@@ -276,7 +314,8 @@ async function fallbackGuideItemSearch(
         return (right.row.rating_avg ?? -1) - (left.row.rating_avg ?? -1);
       }
       return (
-        new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime()
+        new Date(right.updated_at).getTime() -
+        new Date(left.updated_at).getTime()
       );
     })
     .slice(0, params.limit)
@@ -289,12 +328,14 @@ export async function searchGuideItemsWithFallback(
   supabase: GuideItemSearchClient,
   params: SearchGuideItemsParams,
 ): Promise<SearchGuideItemsResult> {
+  const citySlug = normalizeGuideItemCitySlug(params.citySlug);
+
   const { data, error } = await supabase.rpc("search_guide_items", {
     p_query_embedding: params.queryEmbedding
       ? JSON.stringify(params.queryEmbedding)
       : null,
     p_text_query: params.textQuery,
-    p_city_slug: params.citySlug,
+    p_city_slug: citySlug,
     p_kinds: params.kinds,
     p_limit: params.limit,
     p_min_similarity: params.minSimilarity,
@@ -307,8 +348,27 @@ export async function searchGuideItemsWithFallback(
       (data ?? []) as GuideItemSearchResult[],
     );
 
+    if (results.length > 0) {
+      return {
+        results,
+        usedFallback: false,
+      };
+    }
+
+    if (citySlug || (params.kinds?.length ?? 0) > 0) {
+      const fallbackResults = await fallbackGuideItemSearch(supabase, {
+        ...params,
+        citySlug,
+      });
+
+      return {
+        results: fallbackResults,
+        usedFallback: true,
+      };
+    }
+
     return {
-      results,
+      results: [],
       usedFallback: false,
     };
   }

@@ -942,6 +942,7 @@
       "shareLocation": "Share my location",
       "responding": "Okeyo is replying. You can queue your next message.",
       "queued": "Message queued. It will send after this reply.",
+      "sendError": "We could not get a reply right now. Please try again.",
       "disclaimer": "AI can make mistakes. Please verify important details."
     },
     "welcome": {
@@ -1024,10 +1025,10 @@
       "title": "Access to your location",
       "description": "We use your location to find the most relevant stays and activities nearby.",
       "errors": {
-        "unsupported": "Geolocation is not supported by your browser.",
-        "unavailable": "We could not retrieve your location.",
-        "permissionDenied": "Location permission was denied.",
-        "timeout": "The location request timed out."
+        "unsupported": "Your browser does not support location sharing.",
+        "unavailable": "We could not find your location right now. Please check your connection and try again.",
+        "permissionDenied": "Location access is blocked. Please allow location access in your browser settings and try again.",
+        "timeout": "Finding your location took too long. Please try again."
       },
       "loading": "Locating...",
       "share": "Share my location"

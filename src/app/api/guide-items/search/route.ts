@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const citySlug = normalizeOptionalString(payload.citySlug);
     const kinds = normalizeStringArray(payload.kinds);
     const limit = normalizeNumber(payload.limit, 1, 100) ?? 10;
-    const minSimilarity = normalizeNumber(payload.minSimilarity, 0, 1) ?? 0.7;
+    const minSimilarity = normalizeNumber(payload.minSimilarity, 0, 1) ?? 0.55;
 
     let queryEmbedding: number[] | null = null;
     if (query) {

@@ -9,12 +9,19 @@ export type GeoPermissionState =
   | "denied"
   | "unavailable";
 
+export type GeoLocationErrorReason =
+  | "unsupported"
+  | "permissionDenied"
+  | "unavailable"
+  | "timeout";
+
 export interface UseGeoDistanceResult {
   permission: GeoPermissionState;
   isRequesting: boolean;
   currentLat: number | null;
   currentLng: number | null;
   error: string | null;
+  errorReason: GeoLocationErrorReason | null;
   requestPermission: () => void;
   getDistanceKm: (lat: number, lng: number) => number | null;
 }
@@ -51,6 +58,9 @@ export function useGeoDistance(): UseGeoDistanceResult {
     lng: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorReason, setErrorReason] = useState<GeoLocationErrorReason | null>(
+    null,
+  );
   const sharedPosition = chatContext?.userLocation ?? null;
   const effectivePosition = sharedPosition ?? position;
 
@@ -90,12 +100,14 @@ export function useGeoDistance(): UseGeoDistanceResult {
   const requestPermission = useCallback(() => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       setPermission("unavailable");
+      setErrorReason("unsupported");
       setError("Geolocation is not supported by this browser.");
       return;
     }
 
     setIsRequesting(true);
     setError(null);
+    setErrorReason(null);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -109,18 +121,27 @@ export function useGeoDistance(): UseGeoDistanceResult {
           timestamp: Date.now(),
         });
         setPermission("granted");
+        setErrorReason(null);
+        setError(null);
         setIsRequesting(false);
       },
       (err) => {
         setIsRequesting(false);
         if (err.code === err.PERMISSION_DENIED) {
           setPermission("denied");
+          setErrorReason("permissionDenied");
           setError("Location permission denied.");
         } else if (err.code === err.POSITION_UNAVAILABLE) {
           setPermission("unavailable");
+          setErrorReason("unavailable");
           setError("Location information is unavailable.");
+        } else if (err.code === err.TIMEOUT) {
+          setPermission("unavailable");
+          setErrorReason("timeout");
+          setError("The location request timed out.");
         } else {
           setPermission("unavailable");
+          setErrorReason("unavailable");
           setError("Unable to retrieve your location.");
         }
       },
@@ -147,6 +168,7 @@ export function useGeoDistance(): UseGeoDistanceResult {
     currentLat: effectivePosition?.lat ?? null,
     currentLng: effectivePosition?.lng ?? null,
     error,
+    errorReason,
     requestPermission,
     getDistanceKm,
   };

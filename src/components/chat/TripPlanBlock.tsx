@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { useImageViewer } from "@/hooks/use-image-viewer";
 import { cn } from "@/lib/utils";
 import type { GuideItemChatCardData, GuideItemKind } from "@/types/guide-items";
 import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
@@ -161,6 +162,7 @@ function CompactGuideItemPreview({
   const [open, setOpen] = useState(false);
   const card = item.card;
   const [detailCard, setDetailCard] = useState(card ?? null);
+  const { openImageViewer, Viewer } = useImageViewer();
   const thumbnailSource =
     card?.hero_image_url ?? card?.gallery_urls?.[0] ?? null;
   const thumbnailSrc = thumbnailSource ? getImageUrl(thumbnailSource) : null;
@@ -205,6 +207,15 @@ function CompactGuideItemPreview({
       controller.abort();
     };
   }, [card, detailCard?.reviews?.length, locale, open]);
+
+  const openImageViewerFromModal = (
+    images: string[],
+    index: number,
+    alts?: string[],
+  ) => {
+    setOpen(false);
+    openImageViewer(images, index, alts);
+  };
 
   return (
     <>
@@ -305,11 +316,15 @@ function CompactGuideItemPreview({
               <DialogTitle>{detailCard?.title ?? card.title}</DialogTitle>
             </DialogHeader>
             <div className="overflow-y-auto p-4 sm:p-6">
-              <GuideItemCard item={detailCard ?? card} />
+              <GuideItemCard
+                item={detailCard ?? card}
+                onOpenImageViewer={openImageViewerFromModal}
+              />
             </div>
           </DialogContent>
         </Dialog>
       )}
+      {Viewer}
     </>
   );
 }

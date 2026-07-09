@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { toast } from "sonner";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { useChatContext } from "@/contexts/ChatContext";
 import { useAuth } from "@/hooks/use-auth";
@@ -387,6 +388,21 @@ export function BookingChat({
   const { messages, status, sendMessage, setMessages } = useChat<ChatMessage>({
     transport,
     messages: [],
+    onFinish: () => {
+      isSendingRef.current = false;
+      inFlightTextRef.current = null;
+    },
+    onError: (error) => {
+      console.error("Chat stream error:", error);
+      toast.error(t("chat.input.sendError"));
+      captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_FAILED, {
+        error_message: error.message,
+        source: pendingResponseRef.current?.source ?? "unknown",
+      });
+      isSendingRef.current = false;
+      inFlightTextRef.current = null;
+      pendingResponseRef.current = null;
+    },
   });
 
   const browserLanguage = useMemo(() => {
@@ -1031,7 +1047,10 @@ export function BookingChat({
       conversation_id: activeConversationId,
     });
 
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      toast.error(t("chat.location.errors.unsupported"));
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -1047,6 +1066,21 @@ export function BookingChat({
       },
       (error) => {
         console.error("Error getting location:", error);
+        let errorMessage = t("chat.location.errors.unavailable");
+
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = t("chat.location.errors.permissionDenied");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = t("chat.location.errors.unavailable");
+            break;
+          case error.TIMEOUT:
+            errorMessage = t("chat.location.errors.timeout");
+            break;
+        }
+
+        toast.error(errorMessage);
         captureEvent(ANALYTICS_EVENT.CHAT_LOCATION_DENIED, {
           conversation_id: activeConversationId,
           error_code: error.code,

@@ -173,11 +173,11 @@ export function ImageViewer({
       <button
         type="button"
         aria-label={t("common.close")}
-        className="absolute inset-0"
+        className="absolute inset-0 z-0"
         onClick={onClose}
       />
 
-      <div className="absolute inset-x-4 top-4 z-[201] flex items-center justify-between gap-3">
+      <div className="absolute inset-x-4 top-4 z-20 flex items-center justify-between gap-3">
         <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium tracking-wider text-white">
           {currentIndex + 1} / {images.length}
         </div>
@@ -221,13 +221,13 @@ export function ImageViewer({
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-4 z-[201] flex items-center justify-center">
+      <div className="absolute inset-x-0 bottom-4 z-20 flex items-center justify-center">
         <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white/90">
           {t("common.imageZoom", { value: `${Math.round(zoom * 100)}%` })}
         </div>
       </div>
 
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="relative z-10 flex h-full w-full items-center justify-center">
         <div className="relative h-full w-full px-4 pb-16 pt-20 md:px-16">
           <div ref={emblaRef} className="h-full overflow-hidden">
             <div className="flex h-full">

@@ -942,6 +942,7 @@
       "shareLocation": "Partager ma position",
       "responding": "Okeyo répond. Vous pouvez mettre votre prochain message en attente.",
       "queued": "Message en attente. Il sera envoyé après cette réponse.",
+      "sendError": "Nous n’avons pas pu obtenir de réponse pour le moment. Veuillez réessayer.",
       "disclaimer": "L’IA peut faire des erreurs. Vérifiez les informations importantes."
     },
     "welcome": {
@@ -1024,10 +1025,10 @@
       "title": "Accès à votre position",
       "description": "Nous utilisons votre position pour trouver les hébergements et activités les plus pertinents autour de vous.",
       "errors": {
-        "unsupported": "La géolocalisation n’est pas supportée par votre navigateur.",
-        "unavailable": "Impossible d’obtenir votre position.",
-        "permissionDenied": "La permission de géolocalisation a été refusée.",
-        "timeout": "La demande de position a expiré."
+        "unsupported": "Votre navigateur ne prend pas en charge le partage de position.",
+        "unavailable": "Nous n’avons pas pu trouver votre position pour le moment. Vérifiez votre connexion puis réessayez.",
+        "permissionDenied": "L’accès à la position est bloqué. Autorisez la position dans les réglages de votre navigateur puis réessayez.",
+        "timeout": "La recherche de votre position a pris trop de temps. Veuillez réessayer."
       },
       "loading": "Localisation...",
       "share": "Partager ma position"

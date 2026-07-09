@@ -21,6 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +39,11 @@ interface GuideItemCardProps {
   item: GuideItemChatCardData;
   onSelect?: () => void;
   onShare?: () => void;
+  onOpenImageViewer?: (
+    images: string[],
+    index: number,
+    alts?: string[],
+  ) => void;
 }
 
 interface VideoThumbnailPreviewProps {
@@ -434,15 +440,20 @@ function InlineGuideItemVideoCard({
   );
 }
 
-export function GuideItemCard({ item }: GuideItemCardProps) {
+export function GuideItemCard({ item, onOpenImageViewer }: GuideItemCardProps) {
   const { locale, t, dir } = useSiteI18n();
   const isRtl = dir === "rtl";
-  const { openImageViewer, Viewer } = useImageViewer();
-  const { permission, isRequesting, requestPermission, getDistanceKm } =
-    useGeoDistance();
+  const { openImageViewer: openLocalImageViewer, Viewer } = useImageViewer();
+  const {
+    isRequesting,
+    requestPermission,
+    getDistanceKm,
+    errorReason: locationErrorReason,
+  } = useGeoDistance();
 
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
   const [expandedReviewKeys, setExpandedReviewKeys] = useState<string[]>([]);
+  const lastLocationErrorRef = useRef<string | null>(null);
 
   const kindLabels: Record<GuideItemKind, string> = {
     restaurant: t("chat.guideItemCard.kind.restaurant"),
@@ -492,6 +503,19 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
     setExpandedReviewKeys([]);
   }, [item.id]);
 
+  useEffect(() => {
+    if (!locationErrorReason) {
+      lastLocationErrorRef.current = null;
+      return;
+    }
+
+    const errorMessage = t(`chat.location.errors.${locationErrorReason}`);
+    if (lastLocationErrorRef.current === errorMessage) return;
+
+    lastLocationErrorRef.current = errorMessage;
+    toast.error(errorMessage);
+  }, [locationErrorReason, t]);
+
   const galleryAlts = galleryImages.map((_, i) =>
     t("chat.guideItemCard.galleryAlt", { title: item.title, count: i + 1 }),
   );
@@ -526,6 +550,8 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
         : [...prev, reviewKey],
     );
   };
+
+  const openCardImageViewer = onOpenImageViewer ?? openLocalImageViewer;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -576,7 +602,7 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                openImageViewer(galleryImages, i, galleryAlts);
+                openCardImageViewer(galleryImages, i, galleryAlts);
               }}
             >
               <Image
@@ -712,7 +738,7 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
               <button
                 type="button"
                 onClick={requestPermission}
-                disabled={isRequesting || permission === "unavailable"}
+                disabled={isRequesting}
                 className="inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-xs text-primary hover:underline disabled:opacity-50 disabled:no-underline"
               >
                 <Navigation className="w-3.5 h-3.5" />
@@ -815,7 +841,7 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
-                    openImageViewer(menuImages, i, menuImageAlts);
+                    openCardImageViewer(menuImages, i, menuImageAlts);
                   }}
                 >
                   <Image
@@ -1052,7 +1078,7 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
           </div>
         </div>
       </CardContent>
-      {Viewer}
+      {!onOpenImageViewer && Viewer}
     </Card>
   );
 }

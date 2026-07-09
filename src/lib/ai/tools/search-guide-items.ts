@@ -2,7 +2,10 @@ import { tool } from "ai";
 import { z } from "zod";
 import { embedQuery } from "@/lib/embeddings";
 import { mapGuideItemSearchRowToChatCardData } from "@/lib/guide-items";
-import { searchGuideItemsWithFallback } from "@/lib/guide-items-search";
+import {
+  normalizeGuideItemCitySlug,
+  searchGuideItemsWithFallback,
+} from "@/lib/guide-items-search";
 import type { AppLocale } from "@/lib/i18n";
 import { createServiceRoleClientOrThrow } from "@/lib/supabase/service-role";
 
@@ -49,7 +52,7 @@ const searchGuideItemsSchema = z.object({
     .min(0)
     .max(1)
     .optional()
-    .default(0.7)
+    .default(0.55)
     .describe("Minimum semantic similarity threshold."),
 });
 
@@ -62,12 +65,14 @@ function normalizeOptionalString(value: string | undefined): string | null {
 function normalizeCitySlug(value: string | null): string | null {
   if (!value) return null;
 
-  return value
+  const slug = value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+  return normalizeGuideItemCitySlug(slug);
 }
 
 function normalizeKinds(

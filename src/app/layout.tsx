@@ -9,6 +9,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import FacebookPixel from "@/components/FacebookPixel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { FloatingChatButton } from "@/components/site/FloatingChatButton";
+import { Toaster } from "@/components/ui/sonner";
 import {
   createTranslator,
   getLocaleDirection,
@@ -199,6 +200,7 @@ export default async function RootLayout({
                   <main className="flex-1">{children}</main>
                   <FloatingChatButton />
                   <AuthModal />
+                  <Toaster richColors position="top-center" />
                 </ViewModeProvider>
               </AuthProvider>
             </QueryProvider>
