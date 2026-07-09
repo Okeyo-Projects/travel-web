@@ -940,35 +940,18 @@
       "placeholder": "Ask your question...",
       "locationEnabled": "Location enabled",
       "shareLocation": "Share my location",
+      "responding": "Okeyo is replying. You can queue your next message.",
+      "queued": "Message queued. It will send after this reply.",
       "disclaimer": "AI can make mistakes. Please verify important details."
     },
     "welcome": {
-      "greeting": "Salam! 👋",
-      "intro": "I’m Okeyo, your travel companion in Morocco 🇲🇦",
-      "description": "Whether you’re looking for a riad, a guesthouse, or a hostel, I’ll find the perfect place for you in seconds. And if you have questions about Morocco, I’m here for that too! ✨",
-      "question": "Which city would you like?",
-      "suggestions": {
-        "one": {
-          "label": "Essaouira",
-          "prompt": "Essaouira"
-        },
-        "two": {
-          "label": "Marrakech",
-          "prompt": "Marrakech"
-        },
-        "three": {
-          "label": "Chefchaouen",
-          "prompt": "Chefchaouen"
-        },
-        "four": {
-          "label": "Imlil",
-          "prompt": "Imlil"
-        },
-        "five": {
-          "label": "Lalla Takerkoust",
-          "prompt": "Lalla Takerkoust"
-        }
-      }
+      "greeting": "👋 Salam! 🇲🇦✨",
+      "intro": "I'm Okeyo, your travel companion in Morocco.",
+      "description": "I can recommend the best restaurants 🍽️, activities to do 🎨, places to visit 🌿, and hidden gems only locals know ✨.",
+      "itinerary": "🗺️ I can also create a complete itinerary based on your budget and what you feel like doing. And in some destinations, I can suggest beautiful stays 🏡.",
+      "closing": "✨ Just tell me what you want to experience... and I'll handle the rest.",
+      "testPrompt": "🤔 Want to do a quick test for Essaouira? Just type \"Yes\" 😉",
+      "question": "🗺️ I can also create a complete itinerary based on your budget and what you feel like doing. And in some destinations, I can suggest beautiful stays 🏡.\n\n✨ Just tell me what you want to experience... and I'll handle the rest.\n\n🤔 Want to do a quick test for Essaouira? Just type \"Yes\" 😉"
     },
     "leadCapture": {
       "eyebrow": "🇲🇦",

@@ -21,6 +21,16 @@ const guideItemKindSchema = z.enum([
   "other",
 ]);
 
+const travelPartySchema = z.enum([
+  "solo",
+  "couple",
+  "family",
+  "friends",
+  "group",
+  "business",
+  "other",
+]);
+
 const planTripWithGuideItemsSchema = z.object({
   city: z
     .string()
@@ -40,6 +50,11 @@ const planTripWithGuideItemsSchema = z.object({
     .max(20)
     .optional()
     .describe("Total number of travelers, when known."),
+  travelParty: travelPartySchema
+    .optional()
+    .describe(
+      "Trip party type when known, for example solo, couple, family, friends, group, or business.",
+    ),
   budgetMad: z
     .number()
     .int()
@@ -122,34 +137,31 @@ type PlanCandidate = {
   card: GuideItemChatCardData;
 };
 
-type PlanSlot = {
-  time: string;
-  label: "morning" | "lunch" | "afternoon" | "dinner";
+type PlanItem = {
   item: PlanCandidate | null;
   why: string;
 };
 
-const TIME_WINDOWS: Record<
+type DailyPlanStepKind = "activity" | "meal";
+
+const DAILY_STEP_TEMPLATES: Record<
   PlanTripInput["pace"],
-  Record<PlanSlot["label"], string>
+  {
+    withRestaurants: DailyPlanStepKind[];
+    withoutRestaurants: DailyPlanStepKind[];
+  }
 > = {
   relaxed: {
-    morning: "10:00-12:30",
-    lunch: "13:00-14:30",
-    afternoon: "16:00-18:00",
-    dinner: "19:30-21:00",
+    withRestaurants: ["activity", "activity", "meal"],
+    withoutRestaurants: ["activity", "activity"],
   },
   balanced: {
-    morning: "09:30-12:00",
-    lunch: "12:30-14:00",
-    afternoon: "15:00-17:30",
-    dinner: "19:30-21:00",
+    withRestaurants: ["activity", "activity", "meal", "activity"],
+    withoutRestaurants: ["activity", "activity", "activity"],
   },
   full: {
-    morning: "09:00-11:30",
-    lunch: "12:00-13:30",
-    afternoon: "14:30-17:30",
-    dinner: "20:00-21:30",
+    withRestaurants: ["activity", "activity", "meal", "activity", "meal"],
+    withoutRestaurants: ["activity", "activity", "activity", "activity"],
   },
 };
 
@@ -207,6 +219,7 @@ function buildSearchQuery({
   nearText,
   budgetMad,
   budgetScope,
+  travelParty,
   bucket,
 }: {
   city: string;
@@ -214,12 +227,14 @@ function buildSearchQuery({
   nearText: string | null;
   budgetMad?: number;
   budgetScope: PlanTripInput["budgetScope"];
+  travelParty?: PlanTripInput["travelParty"];
   bucket: string;
 }): string {
   return [
     city,
     bucket,
     ...interests,
+    travelParty ? `${travelParty} trip` : null,
     nearText ? `near ${nearText}` : null,
     budgetMad ? `budget ${budgetMad} MAD ${budgetScope}` : null,
   ]
@@ -308,7 +323,7 @@ function takeNext(
   return candidate;
 }
 
-function whyForSlot(
+function whyForPlanItem(
   item: PlanCandidate | null,
   nearText: string | null,
   budgetMad?: number,
@@ -330,6 +345,26 @@ function whyForSlot(
   return parts.join("; ");
 }
 
+function interleaveCandidates(groups: PlanCandidate[][]): PlanCandidate[] {
+  const seen = new Set<string>();
+  const output: PlanCandidate[] = [];
+  const maxLength = Math.max(...groups.map((group) => group.length), 0);
+
+  for (let index = 0; index < maxLength; index += 1) {
+    for (const group of groups) {
+      const candidate = group[index];
+      if (!candidate) continue;
+
+      const signature = getCandidateSignature(candidate);
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      output.push(candidate);
+    }
+  }
+
+  return output;
+}
+
 async function searchBucket({
   city,
   citySlug,
@@ -337,6 +372,7 @@ async function searchBucket({
   nearText,
   budgetMad,
   budgetScope,
+  travelParty,
   bucket,
   kinds,
   limit,
@@ -350,6 +386,7 @@ async function searchBucket({
   nearText: string | null;
   budgetMad?: number;
   budgetScope: PlanTripInput["budgetScope"];
+  travelParty?: PlanTripInput["travelParty"];
   bucket: string;
   kinds: GuideItemKind[];
   limit: number;
@@ -363,6 +400,7 @@ async function searchBucket({
     nearText,
     budgetMad,
     budgetScope,
+    travelParty,
     bucket,
   });
 
@@ -451,6 +489,7 @@ The tool returns structured source items, card data, and a draft schedule for th
             nearText,
             budgetMad: input.budgetMad,
             budgetScope: input.budgetScope,
+            travelParty: input.travelParty,
             bucket: "morning sightseeing activity museum culture",
             kinds: activityKinds,
             limit: dailyActivityLimit,
@@ -465,6 +504,7 @@ The tool returns structured source items, card data, and a draft schedule for th
             nearText,
             budgetMad: input.budgetMad,
             budgetScope: input.budgetScope,
+            travelParty: input.travelParty,
             bucket: "afternoon activity shopping wellness local experience",
             kinds: activityKinds,
             limit: dailyActivityLimit,
@@ -480,6 +520,7 @@ The tool returns structured source items, card data, and a draft schedule for th
                 nearText,
                 budgetMad: input.budgetMad,
                 budgetScope: input.budgetScope,
+                travelParty: input.travelParty,
                 bucket: "restaurant lunch casual local food midday",
                 kinds: ["restaurant"],
                 limit: dailyRestaurantLimit,
@@ -496,6 +537,7 @@ The tool returns structured source items, card data, and a draft schedule for th
                 nearText,
                 budgetMad: input.budgetMad,
                 budgetScope: input.budgetScope,
+                travelParty: input.travelParty,
                 bucket:
                   "restaurant dinner rooftop romantic traditional food evening",
                 kinds: ["restaurant"],
@@ -513,6 +555,7 @@ The tool returns structured source items, card data, and a draft schedule for th
                 nearText,
                 budgetMad: input.budgetMad,
                 budgetScope: input.budgetScope,
+                travelParty: input.travelParty,
                 bucket: "transport taxi transfer getting around",
                 kinds: ["transport"],
                 limit: 4,
@@ -523,44 +566,31 @@ The tool returns structured source items, card data, and a draft schedule for th
             : Promise.resolve([]),
         ]);
 
-        const windows = TIME_WINDOWS[input.pace];
+        const activityItems = interleaveCandidates([
+          morningItems,
+          afternoonItems,
+        ]);
+        const mealItems = interleaveCandidates([lunchItems, dinnerItems]);
+        const dailyTemplate = input.includeRestaurants
+          ? DAILY_STEP_TEMPLATES[input.pace].withRestaurants
+          : DAILY_STEP_TEMPLATES[input.pace].withoutRestaurants;
         const usedSignatures = new Set<string>();
         const days = Array.from({ length: input.days }, (_, index) => {
-          const morning = takeNext(morningItems, usedSignatures);
-          const lunch = takeNext(lunchItems, usedSignatures);
-          const afternoon = takeNext(afternoonItems, usedSignatures);
-          const dinner = takeNext(dinnerItems, usedSignatures);
+          const items: PlanItem[] = dailyTemplate.map((stepKind) => {
+            const nextItem =
+              stepKind === "meal"
+                ? takeNext(mealItems, usedSignatures)
+                : takeNext(activityItems, usedSignatures);
 
-          const slots: PlanSlot[] = [
-            {
-              time: windows.morning,
-              label: "morning",
-              item: morning,
-              why: whyForSlot(morning, nearText, input.budgetMad),
-            },
-            {
-              time: windows.lunch,
-              label: "lunch",
-              item: lunch,
-              why: whyForSlot(lunch, nearText, input.budgetMad),
-            },
-            {
-              time: windows.afternoon,
-              label: "afternoon",
-              item: afternoon,
-              why: whyForSlot(afternoon, nearText, input.budgetMad),
-            },
-            {
-              time: windows.dinner,
-              label: "dinner",
-              item: dinner,
-              why: whyForSlot(dinner, nearText, input.budgetMad),
-            },
-          ];
+            return {
+              item: nextItem,
+              why: whyForPlanItem(nextItem, nearText, input.budgetMad),
+            };
+          });
 
           return {
             day: index + 1,
-            slots,
+            items,
           };
         });
 
@@ -579,6 +609,7 @@ The tool returns structured source items, card data, and a draft schedule for th
           city_slug: citySlug,
           days_requested: input.days,
           travelers: input.travelers ?? null,
+          travel_party: input.travelParty ?? null,
           budget_mad: input.budgetMad ?? null,
           budget_scope: input.budgetScope,
           pace: input.pace,
@@ -587,7 +618,8 @@ The tool returns structured source items, card data, and a draft schedule for th
             "Only use returned guide-item facts for names, prices, payment notes, addresses, ratings, and distance.",
             "Do not invent opening hours or exact travel times unless present in item data.",
             "If budget is restrictive and item prices are missing, label the plan as budget-aware but not price-guaranteed.",
-            "If important slots have null items, ask one targeted follow-up or explain the catalog gap.",
+            "Do not propose the same guide item twice in the same day; prefer unique options across the trip when the catalog allows it.",
+            "If important plan items have null results, ask one targeted follow-up or explain the catalog gap.",
           ],
           plan: days,
           transport_options: transportItems,

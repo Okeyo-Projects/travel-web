@@ -940,35 +940,18 @@
       "placeholder": "Posez votre question...",
       "locationEnabled": "Position activée",
       "shareLocation": "Partager ma position",
+      "responding": "Okeyo répond. Vous pouvez mettre votre prochain message en attente.",
+      "queued": "Message en attente. Il sera envoyé après cette réponse.",
       "disclaimer": "L’IA peut faire des erreurs. Vérifiez les informations importantes."
     },
     "welcome": {
-      "greeting": "Salam ! 👋",
-      "intro": "Je suis Okeyo, ton compagnon de voyage au Maroc 🇲🇦",
-      "description": "Que tu cherches un riad, une maison d'hôtes ou une auberge — je trouve l'endroit parfait pour toi en quelques secondes. Et si tu as des questions sur le Maroc, je suis là aussi ! ✨",
-      "question": "Quelle ville voulez-vous ?",
-      "suggestions": {
-        "one": {
-          "label": "Essaouira",
-          "prompt": "Essaouira"
-        },
-        "two": {
-          "label": "Marrakech",
-          "prompt": "Marrakech"
-        },
-        "three": {
-          "label": "Chefchaouen",
-          "prompt": "Chefchaouen"
-        },
-        "four": {
-          "label": "Imlil",
-          "prompt": "Imlil"
-        },
-        "five": {
-          "label": "Lalla Takerkoust",
-          "prompt": "Lalla Takerkoust"
-        }
-      }
+      "greeting": "👋 Salam ! 🇲🇦✨",
+      "intro": "Je suis Okeyo, ton compagnon de voyage au Maroc.",
+      "description": "Je peux te recommander les meilleurs restaurants 🍽️, des activités à faire 🎨, des lieux à visiter 🌿 et des hidden gems que seuls les locaux connaissent ✨.",
+      "itinerary": "🗺️ Je peux aussi te créer un itinéraire complet selon ton budget et tes envies. Et dans certaines destinations, je peux te proposer de magnifiques hébergements 🏡.",
+      "closing": "✨ Dis-moi simplement ce que tu as envie de vivre… et je m'occupe du reste.",
+      "testPrompt": "🤔 Tu veux qu'on fasse un petit test pour Essaouira ? Tape simplement « Oui » 😉",
+      "question": "🗺️ Je peux aussi te créer un itinéraire complet selon ton budget et tes envies. Et dans certaines destinations, je peux te proposer de magnifiques hébergements 🏡.\n\n✨ Dis-moi simplement ce que tu as envie de vivre… et je m'occupe du reste.\n\n🤔 Tu veux qu'on fasse un petit test pour Essaouira ? Tape simplement « Oui » 😉"
     },
     "leadCapture": {
       "eyebrow": "🇲🇦",

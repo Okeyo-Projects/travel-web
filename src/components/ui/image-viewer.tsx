@@ -169,7 +169,7 @@ export function ImageViewer({
   if (!images || images.length === 0 || !mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm">
       <button
         type="button"
         aria-label={t("common.close")}
@@ -177,7 +177,7 @@ export function ImageViewer({
         onClick={onClose}
       />
 
-      <div className="absolute inset-x-4 top-4 z-[101] flex items-center justify-between gap-3">
+      <div className="absolute inset-x-4 top-4 z-[201] flex items-center justify-between gap-3">
         <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium tracking-wider text-white">
           {currentIndex + 1} / {images.length}
         </div>
@@ -221,7 +221,7 @@ export function ImageViewer({
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-4 z-[101] flex items-center justify-center">
+      <div className="absolute inset-x-0 bottom-4 z-[201] flex items-center justify-center">
         <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-medium text-white/90">
           {t("common.imageZoom", { value: `${Math.round(zoom * 100)}%` })}
         </div>
@@ -278,7 +278,7 @@ export function ImageViewer({
               <button
                 type="button"
                 aria-label={t("common.previous")}
-                className="absolute left-4 top-1/2 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:left-6"
+                className="absolute left-4 top-1/2 z-[201] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:left-6"
                 onClick={handlePrevious}
               >
                 <ChevronLeft className="h-8 w-8" />
@@ -286,7 +286,7 @@ export function ImageViewer({
               <button
                 type="button"
                 aria-label={t("common.next")}
-                className="absolute right-4 top-1/2 z-[101] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:right-6"
+                className="absolute right-4 top-1/2 z-[201] -translate-y-1/2 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20 md:right-6"
                 onClick={handleNext}
               >
                 <ChevronRight className="h-8 w-8" />

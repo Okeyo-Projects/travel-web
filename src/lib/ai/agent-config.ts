@@ -81,19 +81,19 @@ const DEFAULT_SUPPORTED_LANGUAGES = ["fr", "en", "ar"];
 
 const DEFAULT_WELCOME_MESSAGES: AgentWelcomeMessages = {
   fr: {
-    title: "Bonjour, je suis votre assistant voyage",
+    title: "👋 Salam ! 🇲🇦✨",
     description:
-      "Je peux vous aider à trouver le bon séjour au Maroc, comparer les chambres et préparer votre réservation.",
+      "Je suis Okeyo, ton compagnon de voyage au Maroc. Je peux recommander restaurants, activités, lieux à visiter, hidden gems, itinéraires et hébergements selon tes envies.",
   },
   en: {
-    title: "Hello, I am your travel assistant",
+    title: "👋 Salam! 🇲🇦✨",
     description:
-      "I can help you find the right stay in Morocco, compare rooms, and prepare your booking.",
+      "I'm Okeyo, your travel companion in Morocco. I can recommend restaurants, activities, places to visit, hidden gems, itineraries, and stays based on what you want to experience.",
   },
   ar: {
-    title: "مرحبًا، أنا مساعدك في السفر",
+    title: "👋 سلام! 🇲🇦✨",
     description:
-      "يمكنني مساعدتك في العثور على الإقامة المناسبة في المغرب ومقارنة الغرف وتحضير الحجز.",
+      "أنا Okeyo، رفيق سفرك في المغرب. يمكنني اقتراح مطاعم وأنشطة وأماكن للزيارة وجواهر مخفية وبرامج سفر وإقامات حسب رغباتك.",
   },
 };
 

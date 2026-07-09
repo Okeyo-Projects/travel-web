@@ -395,6 +395,75 @@ function extractDeepLinkRequest(
   };
 }
 
+function getMessageRole(rawMessage: unknown): string {
+  if (!isRecord(rawMessage)) return "";
+  return typeof rawMessage.role === "string" ? rawMessage.role : "";
+}
+
+function getMessageText(rawMessage: unknown): string {
+  if (!isRecord(rawMessage)) return "";
+
+  if (typeof rawMessage.content === "string") {
+    return rawMessage.content.trim();
+  }
+
+  if (!Array.isArray(rawMessage.parts)) return "";
+
+  return rawMessage.parts
+    .map((part) => {
+      if (!isRecord(part)) return "";
+      if (part.type !== "text") return "";
+      return typeof part.text === "string" ? part.text : "";
+    })
+    .filter((text) => text.trim().length > 0)
+    .join("\n")
+    .trim();
+}
+
+function isDeepLinkBootstrapMessage(rawMessage: unknown): boolean {
+  if (getMessageRole(rawMessage) !== "user") return false;
+  return getMessageText(rawMessage) === CHAT_DEEP_LINK_BOOTSTRAP_MESSAGE;
+}
+
+function isFirstVisibleUserTurn(rawMessages: unknown[]): boolean {
+  let visibleUserMessageCount = 0;
+
+  for (const message of rawMessages) {
+    if (getMessageRole(message) !== "user") continue;
+    if (isDeepLinkBootstrapMessage(message)) continue;
+    visibleUserMessageCount += 1;
+    if (visibleUserMessageCount > 1) return false;
+  }
+
+  return visibleUserMessageCount === 1;
+}
+
+function buildFirstUserTurnWelcomeContext(
+  language: ReturnType<typeof normalizeSupportedLanguage>,
+  welcomeText: string,
+): string {
+  const yesByLanguage = {
+    fr: '"oui"',
+    en: '"yes"',
+    ar: '"نعم"',
+  } satisfies Record<ReturnType<typeof normalizeSupportedLanguage>, string>;
+
+  return [
+    "",
+    "",
+    "## FIRST USER TURN WELCOME CONTEXT",
+    "This is the first visible user message in this conversation.",
+    "Before the user typed, the UI showed this localized welcome text:",
+    welcomeText
+      .split("\\n")
+      .map((line) => `- ${line}`)
+      .join("\n"),
+    `If the user's first message is a short affirmation like ${yesByLanguage[language]}, "oui", "yes", "ok", or "نعم", interpret it as accepting the quick Essaouira test from that welcome text.`,
+    "For that case, continue in the user's language and start a concise Essaouira-focused test: recommend a practical mix of restaurants, activities, places to visit, hidden gems, and optionally ask one useful follow-up about budget or trip style.",
+    "Do not ask what they mean by the affirmation.",
+  ].join("\n");
+}
+
 async function buildDeepLinkPromptBlock(
   deepLink: ChatDeepLinkRequestBody,
   locale: AppLocale,
@@ -555,6 +624,7 @@ export async function POST(req: Request) {
       "suggestDateOptions",
       "selectRoomType",
       "getExperienceOptionDetails",
+      "getWeather",
     ]);
 
     const enabledTools = Object.fromEntries(
@@ -644,6 +714,17 @@ export async function POST(req: Request) {
       });
     }
 
+    if (isFirstVisibleUserTurn(safeMessages)) {
+      systemPrompt += buildFirstUserTurnWelcomeContext(
+        requestedLanguage,
+        greetingTemplate,
+      );
+      aiDebug("chat.route", "first_user_turn_welcome_context_injected", {
+        requestId,
+        requestedLanguage,
+      });
+    }
+
     if (deepLinkRequest) {
       const deepLinkPromptBlock = await buildDeepLinkPromptBlock(
         deepLinkRequest,
@@ -675,6 +756,8 @@ export async function POST(req: Request) {
     } else {
       systemPrompt += `\n\n## USER AUTH STATUS\nThe user is NOT authenticated. If they attempt to book, tell them they need to log in or create an account first using the auth actions available in the UI.\nWhen they show clear interest in a specific stay or experience, you may gently encourage sign-in or registration with value-based phrasing such as "Create an account to save this stay and come back to it later" or "Sign in so you do not lose this accommodation."\nDo NOT ask the user to type their email address into the chat. Instead, direct them to the sign-in or registration flow.\nKeep this nudge light and natural. Use it when relevant, not in every message.`;
     }
+
+    systemPrompt += `\n\n## LIVE WEATHER RULE\nFor current weather, temperature, rain, wind, or forecast questions, call getWeather before answering. Use the returned current and forecast data, mention the exact date when the user uses relative dates, and do not answer live weather questions from general climate knowledge alone.`;
 
     // Add user location context if available
     if (userLocation?.lat && userLocation?.lng) {

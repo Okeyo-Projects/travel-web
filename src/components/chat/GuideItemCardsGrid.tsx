@@ -10,6 +10,18 @@ export interface GuideItemCardsGridProps {
   onShareItem?: (itemId: string) => void;
 }
 
+function getItemContext(item: GuideItemChatCardData): string | null {
+  const details = [
+    item.summary,
+    item.price_range ? `${item.price_range} ${item.currency}` : null,
+    item.rating_avg != null ? `${item.rating_avg.toFixed(1)}/5` : null,
+  ]
+    .map((value) => (typeof value === "string" ? value.trim() : null))
+    .filter((value): value is string => Boolean(value));
+
+  return details.length > 0 ? details.join(" • ") : null;
+}
+
 export function GuideItemCardsGrid({
   items,
   onSelectItem,
@@ -41,14 +53,30 @@ export function GuideItemCardsGrid({
       )}
 
       <div className="flex flex-col gap-6">
-        {items.map((item) => (
-          <GuideItemCard
-            key={item.id}
-            item={item}
-            onSelect={onSelectItem ? () => onSelectItem(item.id) : undefined}
-            onShare={onShareItem ? () => onShareItem(item.id) : undefined}
-          />
-        ))}
+        {items.map((item) => {
+          const itemContext = getItemContext(item);
+
+          return (
+            <div key={item.id} className="space-y-3">
+              {itemContext ? (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    {item.title}
+                  </span>{" "}
+                  {itemContext}
+                </p>
+              ) : null}
+
+              <GuideItemCard
+                item={item}
+                onSelect={
+                  onSelectItem ? () => onSelectItem(item.id) : undefined
+                }
+                onShare={onShareItem ? () => onShareItem(item.id) : undefined}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

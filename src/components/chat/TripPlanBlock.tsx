@@ -4,13 +4,8 @@ import {
   BedDouble,
   CalendarDays,
   ChevronRight,
-  Clock,
-  Compass,
   MapPin,
-  Moon,
   Star,
-  Sun,
-  Utensils,
   Verified,
 } from "lucide-react";
 import Image from "next/image";
@@ -31,8 +26,6 @@ import { ExperienceCard } from "./ExperienceCard";
 import type { ExperienceGridItem } from "./ExperienceCardsGrid";
 import { GuideItemCard } from "./GuideItemCard";
 
-type TripPlanSlotLabel = "morning" | "lunch" | "afternoon" | "dinner";
-
 export interface TripPlanGuideItem {
   id: string;
   kind: GuideItemKind;
@@ -49,16 +42,20 @@ export interface TripPlanGuideItem {
   card?: GuideItemChatCardData;
 }
 
-export interface TripPlanSlot {
-  time: string;
-  label: TripPlanSlotLabel;
+export interface TripPlanItem {
   item: TripPlanGuideItem | null;
   why: string;
 }
 
 export interface TripPlanDay {
   day: number;
-  slots: TripPlanSlot[];
+  items?: TripPlanItem[];
+  slots?: Array<{
+    time: string;
+    label: "morning" | "lunch" | "afternoon" | "dinner";
+    item: TripPlanGuideItem | null;
+    why: string;
+  }>;
 }
 
 export interface TripPlanData {
@@ -91,12 +88,12 @@ const LABELS = {
     budget: "Budget",
     travelers: "voyageur(s)",
     noItem: "Aucun guide item disponible pour ce créneau.",
+    noPlanItem: "Aucune activité disponible pour cette étape.",
     details: "Détails",
     verified: "Vérifié",
-    morning: "Matin",
-    lunch: "Déjeuner",
-    afternoon: "Après-midi",
-    dinner: "Dîner",
+    stop: "Étape",
+    activityOne: "activité",
+    activityOther: "activités",
   },
   en: {
     stay: "Stay",
@@ -105,12 +102,12 @@ const LABELS = {
     budget: "Budget",
     travelers: "traveler(s)",
     noItem: "No guide item available for this slot.",
+    noPlanItem: "No activity available for this stop.",
     details: "Details",
     verified: "Verified",
-    morning: "Morning",
-    lunch: "Lunch",
-    afternoon: "Afternoon",
-    dinner: "Dinner",
+    stop: "Stop",
+    activityOne: "activity",
+    activityOther: "activities",
   },
   ar: {
     stay: "الإقامة",
@@ -119,21 +116,14 @@ const LABELS = {
     budget: "الميزانية",
     travelers: "مسافر",
     noItem: "لا يوجد عنصر دليل متاح لهذا الوقت.",
+    noPlanItem: "لا يوجد نشاط متاح لهذه المحطة.",
     details: "التفاصيل",
     verified: "موثق",
-    morning: "صباح",
-    lunch: "غداء",
-    afternoon: "بعد الظهر",
-    dinner: "عشاء",
+    stop: "محطة",
+    activityOne: "نشاط",
+    activityOther: "أنشطة",
   },
 } as const;
-
-const SLOT_ICONS: Record<TripPlanSlotLabel, React.ReactNode> = {
-  morning: <Sun className="size-3.5" />,
-  lunch: <Utensils className="size-3.5" />,
-  afternoon: <Compass className="size-3.5" />,
-  dinner: <Moon className="size-3.5" />,
-};
 
 function formatMad(value: number, locale: string): string {
   return new Intl.NumberFormat(locale === "ar" ? "ar-MA" : locale, {
@@ -143,11 +133,11 @@ function formatMad(value: number, locale: string): string {
   }).format(value);
 }
 
-function formatSlotLabel(
-  label: TripPlanSlotLabel,
+function formatActivityCount(
+  count: number,
   labels: (typeof LABELS)[keyof typeof LABELS],
 ): string {
-  return labels[label] ?? label;
+  return `${count} ${count === 1 ? labels.activityOne : labels.activityOther}`;
 }
 
 function kindLabel(
@@ -497,79 +487,94 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
             key={day.day}
             className="relative rounded-xl border bg-background p-4 shadow-sm sm:p-5"
           >
-            <div className="mb-4 flex items-center gap-2">
-              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-                {day.day}
-              </span>
-              <h3 className="font-display text-base font-semibold text-foreground">
-                {labels.day} {day.day}
-              </h3>
-            </div>
+            {/*
+              New tool output uses `items`; older trip plans may still send `slots`.
+              Normalize both shapes to the same numbered list UI.
+            */}
+            {(() => {
+              const dayItems =
+                day.items ??
+                day.slots?.map((slot) => ({
+                  item: slot.item,
+                  why: slot.why,
+                })) ??
+                [];
 
-            <div className="relative space-y-4">
-              {day.slots.map((slot, index) => (
-                <div
-                  key={`${day.day}-${slot.time}-${slot.label}-${index}`}
-                  className={cn(
-                    "relative pl-6 sm:pl-7",
-                    !slot.item && "opacity-80",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "absolute top-0 bottom-0 w-px bg-primary/15 last-of-type:hidden",
-                      dir === "rtl"
-                        ? "right-[11px] sm:right-[13px]"
-                        : "left-[11px] sm:left-[13px]",
-                    )}
-                    aria-hidden="true"
-                  />
-                  <div
-                    className={cn(
-                      "absolute top-0.5 z-10 flex size-6 items-center justify-center rounded-full border-2 border-primary/20 bg-background shadow-sm",
-                      dir === "rtl" ? "right-0" : "left-0",
-                    )}
-                  >
-                    <span className="text-primary">
-                      {SLOT_ICONS[slot.label]}
+              return (
+                <>
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
+                      {day.day}
                     </span>
+                    <h3 className="font-display text-base font-semibold text-foreground">
+                      {labels.day} {day.day}
+                    </h3>
+                    <Badge variant="secondary" className="rounded-full">
+                      {formatActivityCount(dayItems.length, labels)}
+                    </Badge>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge
-                        variant="secondary"
-                        className="rounded-full text-[11px]"
+                  <div className="relative space-y-4">
+                    {dayItems.map((planItem, index) => (
+                      <div
+                        key={`${day.day}-${planItem.item?.id ?? "empty"}-${index}`}
+                        className={cn(
+                          "relative pl-6 sm:pl-7",
+                          !planItem.item && "opacity-80",
+                        )}
                       >
-                        <Clock className="me-1 size-3" />
-                        {slot.time}
-                      </Badge>
-                      <span className="text-sm font-medium text-foreground">
-                        {formatSlotLabel(slot.label, labels)}
-                      </span>
-                    </div>
+                        <div
+                          className={cn(
+                            "absolute top-0 bottom-0 w-px bg-primary/15 last-of-type:hidden",
+                            dir === "rtl"
+                              ? "right-[11px] sm:right-[13px]"
+                              : "left-[11px] sm:left-[13px]",
+                          )}
+                          aria-hidden="true"
+                        />
+                        <div
+                          className={cn(
+                            "absolute top-0.5 z-10 flex size-6 items-center justify-center rounded-full border-2 border-primary/20 bg-background shadow-sm",
+                            dir === "rtl" ? "right-0" : "left-0",
+                          )}
+                        >
+                          <span className="text-xs font-semibold text-primary">
+                            {index + 1}
+                          </span>
+                        </div>
 
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      {slot.why}
-                    </p>
+                        <div className="space-y-2">
+                          <Badge
+                            variant="secondary"
+                            className="rounded-full text-[11px]"
+                          >
+                            {labels.stop} {index + 1}
+                          </Badge>
 
-                    {slot.item ? (
-                      <CompactGuideItemPreview
-                        item={slot.item}
-                        labels={labels}
-                        locale={locale}
-                        t={t}
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
-                        <MapPin className="size-3.5" />
-                        {labels.noItem}
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            {planItem.why}
+                          </p>
+
+                          {planItem.item ? (
+                            <CompactGuideItemPreview
+                              item={planItem.item}
+                              labels={labels}
+                              locale={locale}
+                              t={t}
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
+                              <MapPin className="size-3.5" />
+                              {labels.noPlanItem}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
+                </>
+              );
+            })()}
           </section>
         ))}
       </div>

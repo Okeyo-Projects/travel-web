@@ -73,7 +73,6 @@ interface PublicAgentConfigResponse {
 
 type ChatSendSource =
   | "typed"
-  | "welcome_suggestion"
   | "quick_reply"
   | "initial_prompt"
   | "deep_link_bootstrap";
@@ -336,6 +335,9 @@ export function BookingChat({
   const [messageFeedbackById, setMessageFeedbackById] = useState<
     Partial<Record<string, AssistantFeedbackValue>>
   >({});
+  const [queuedMessageText, setQueuedMessageText] = useState<string | null>(
+    null,
+  );
   const [publicAgentConfig, setPublicAgentConfig] =
     useState<PublicAgentConfigResponse | null>(null);
   const pathname = usePathname();
@@ -354,6 +356,10 @@ export function BookingChat({
   const pendingResponseRef = useRef<{
     source: ChatSendSource;
     startedAt: number;
+  } | null>(null);
+  const queuedMessageRef = useRef<{
+    text: string;
+    source: ChatSendSource;
   } | null>(null);
   const previousPathname = useRef(pathname);
   const activeConversationId = initialConversationId || conversationId;
@@ -568,6 +574,8 @@ export function BookingChat({
     hasTrackedDeepLinkFirstReplyRef.current = false;
     hasTrackedInputFocusRef.current = false;
     pendingResponseRef.current = null;
+    queuedMessageRef.current = null;
+    setQueuedMessageText(null);
     setMessageFeedbackById({});
   }, [newConversationNonce, setMessages]);
 
@@ -602,6 +610,8 @@ export function BookingChat({
     hasTrackedDeepLinkFirstReplyRef.current = false;
     hasTrackedInputFocusRef.current = false;
     pendingResponseRef.current = null;
+    queuedMessageRef.current = null;
+    setQueuedMessageText(null);
     setMessageFeedbackById({});
   }, [
     initialDeepLink,
@@ -890,12 +900,18 @@ export function BookingChat({
     const normalizedText = text.trim();
     if (
       !normalizedText ||
-      isLoading ||
       isConversationLocked ||
-      isCreatingConversation ||
-      isSendingRef.current ||
       inFlightTextRef.current === normalizedText
     ) {
+      return;
+    }
+
+    if (isLoading || isCreatingConversation || isSendingRef.current) {
+      if (source !== "deep_link_bootstrap") {
+        queuedMessageRef.current = { text: normalizedText, source };
+        setQueuedMessageText(normalizedText);
+        setInput("");
+      }
       return;
     }
 
@@ -977,16 +993,33 @@ export function BookingChat({
     }
   };
 
+  const sendQueuedMessage = useEffectEvent(
+    (queuedMessage: { text: string; source: ChatSendSource }) => {
+      void sendUserMessage(queuedMessage.text, queuedMessage.source);
+    },
+  );
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    if (
+      isConversationLocked ||
+      isCreatingConversation ||
+      isSendingRef.current
+    ) {
+      return;
+    }
+
+    const queuedMessage = queuedMessageRef.current;
+    if (!queuedMessage) return;
+
+    queuedMessageRef.current = null;
+    setQueuedMessageText(null);
+    sendQueuedMessage(queuedMessage);
+  }, [isConversationLocked, isCreatingConversation, sendQueuedMessage, status]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await sendUserMessage(input);
-  };
-
-  const handleSuggestionClick = async (prompt: string) => {
-    captureEvent(ANALYTICS_EVENT.CHAT_SUGGESTION_CLICKED, {
-      prompt_length: prompt.length,
-    });
-    await sendUserMessage(prompt, "welcome_suggestion");
   };
 
   const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -1235,10 +1268,7 @@ export function BookingChat({
               exit={{ opacity: 0, y: -20 }}
               className="h-full flex flex-col"
             >
-              <ChatWelcome
-                onSelectSuggestion={handleSuggestionClick}
-                disabled={isLoading || isCreatingConversation}
-              />
+              <ChatWelcome />
             </motion.div>
           ) : (
             <motion.div
@@ -1299,6 +1329,7 @@ export function BookingChat({
             onSubmitMessage={() => void sendUserMessage(input)}
             onInputFocus={handleInputFocus}
             isLoading={effectiveIsLoading}
+            queuedMessage={queuedMessageText}
             onRequestLocation={handleRequestLocation}
           />
         )}

@@ -20,6 +20,7 @@ interface ChatInputProps {
   onSubmitMessage: () => void | Promise<void>;
   onInputFocus?: () => void;
   isLoading: boolean;
+  queuedMessage?: string | null;
   onRequestLocation: () => void;
 }
 
@@ -30,6 +31,7 @@ export function ChatInput({
   onSubmitMessage,
   onInputFocus,
   isLoading,
+  queuedMessage,
   onRequestLocation,
 }: ChatInputProps) {
   const { t, dir } = useSiteI18n();
@@ -103,7 +105,7 @@ export function ChatInput({
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (!e.repeat && input.trim() && !isLoading) {
+      if (!e.repeat && input.trim()) {
         void onSubmitMessage();
       }
     }
@@ -163,7 +165,7 @@ export function ChatInput({
             <Button
               type="submit"
               size="icon"
-              disabled={isLoading || !input.trim()}
+              disabled={!input.trim()}
               className={cn(
                 "h-9 w-9 rounded-full transition-all duration-200",
                 input.trim()
@@ -176,6 +178,15 @@ export function ChatInput({
           </div>
         </form>
       </div>
+      {queuedMessage ? (
+        <p className="mt-2 text-center text-[11px] text-primary sm:text-xs">
+          {t("chat.input.queued")}
+        </p>
+      ) : isLoading ? (
+        <p className="mt-2 text-center text-[11px] text-muted-foreground sm:text-xs">
+          {t("chat.input.responding")}
+        </p>
+      ) : null}
       <p className="text-[11px] sm:text-xs text-center text-muted-foreground mt-2">
         {t("chat.input.disclaimer")}
       </p>

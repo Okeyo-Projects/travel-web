@@ -5,30 +5,19 @@ import { Compass } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSiteI18n } from "@/components/site/site-i18n";
 
-interface ChatWelcomeProps {
-  onSelectSuggestion: (suggestion: string) => void;
-  disabled?: boolean;
-}
-
 const MESSAGE_DELAY_MS = 300;
-const SUGGESTION_KEYS = ["one", "two", "three", "four", "five"] as const;
 
-export function ChatWelcome({
-  onSelectSuggestion,
-  disabled = false,
-}: ChatWelcomeProps) {
+export function ChatWelcome() {
   const { t, dir } = useSiteI18n();
   const [isVisible, setIsVisible] = useState(false);
-  const suggestions = SUGGESTION_KEYS.map((key) => ({
-    prompt: t(`chat.welcome.suggestions.${key}.prompt`),
-    label: t(`chat.welcome.suggestions.${key}.label`),
-  }));
   const welcomeParagraphs = useMemo(
     () => [
       t("chat.welcome.greeting"),
       t("chat.welcome.intro"),
       t("chat.welcome.description"),
-      t("chat.welcome.question"),
+      t("chat.welcome.itinerary"),
+      t("chat.welcome.closing"),
+      t("chat.welcome.testPrompt"),
     ],
     [t],
   );
@@ -44,22 +33,6 @@ export function ChatWelcome({
       window.clearTimeout(timeoutId);
     };
   }, []);
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delayChildren: 0.08,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  };
 
   return (
     <div
@@ -92,27 +65,6 @@ export function ChatWelcome({
                 </div>
               </div>
             </div>
-
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="show"
-              className="flex flex-wrap gap-2.5"
-            >
-              {suggestions.map((suggestion) => (
-                <motion.button
-                  key={suggestion.prompt}
-                  type="button"
-                  variants={item}
-                  disabled={disabled}
-                  dir="auto"
-                  onClick={() => onSelectSuggestion(suggestion.prompt)}
-                  className="rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-all hover:border-primary/30 hover:bg-primary/5 disabled:pointer-events-none disabled:opacity-50"
-                >
-                  {suggestion.label}
-                </motion.button>
-              ))}
-            </motion.div>
           </div>
         </motion.div>
       ) : null}

@@ -32,7 +32,7 @@ import { captureEvent } from "@/lib/analytics/posthog";
 import { type AppLocale, getIntlLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { GuideItemChatCardData, GuideItemKind } from "@/types/guide-items";
-import { getImageUrl, IMAGE_BLUR_DATA_URL } from "@/utils/functions";
+import { getImageUrl } from "@/utils/functions";
 
 interface GuideItemCardProps {
   item: GuideItemChatCardData;
@@ -499,10 +499,6 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
     t("chat.guideItemCard.menuImageAlt", { title: item.title, count: i + 1 }),
   );
 
-  const heroImageSrc = item.hero_image_url
-    ? getImageUrl(item.hero_image_url)
-    : null;
-
   const hasVideos = allVideos.length > 0;
   const sourceLabel = item.source_url ? getSourceLabel(item.source_url) : null;
   const contactAuthor =
@@ -533,21 +529,9 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="space-y-3 px-4 pt-4">
-        {(heroImageSrc || hasVideos) && (
+      {hasVideos && (
+        <div className="px-4 pt-4">
           <div className="flex gap-3 overflow-x-auto snap-x scrollbar-hide">
-            {heroImageSrc && (
-              <div className="group relative aspect-video w-[75vw] shrink-0 snap-start overflow-hidden rounded-lg bg-muted sm:w-[340px]">
-                <Image
-                  src={heroImageSrc}
-                  alt={item.title}
-                  fill
-                  placeholder="blur"
-                  blurDataURL={IMAGE_BLUR_DATA_URL}
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-            )}
             {allVideos.map((url, i) => (
               <div
                 key={`${item.id}-video-${url}`}
@@ -574,16 +558,8 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
               </div>
             ))}
           </div>
-        )}
-
-        {!heroImageSrc && !hasVideos && (
-          <div className="flex aspect-video items-center justify-center rounded-lg bg-muted">
-            <span className="text-muted-foreground">
-              {t("chat.guideItemCard.noImage")}
-            </span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Image gallery */}
       {galleryImages.length > 0 && (
@@ -597,7 +573,11 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
                 title: item.title,
                 count: i + 1,
               })}
-              onClick={() => openImageViewer(galleryImages, i, galleryAlts)}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openImageViewer(galleryImages, i, galleryAlts);
+              }}
             >
               <Image
                 src={imgUrl}
@@ -832,7 +812,11 @@ export function GuideItemCard({ item }: GuideItemCardProps) {
                     title: item.title,
                     count: i + 1,
                   })}
-                  onClick={() => openImageViewer(menuImages, i, menuImageAlts)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openImageViewer(menuImages, i, menuImageAlts);
+                  }}
                 >
                   <Image
                     src={imgUrl}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useOptionalChatContext } from "@/contexts/ChatContext";
 
 export type GeoPermissionState =
   | "prompt"
@@ -42,6 +43,7 @@ function haversineKm(
 }
 
 export function useGeoDistance(): UseGeoDistanceResult {
+  const chatContext = useOptionalChatContext();
   const [permission, setPermission] = useState<GeoPermissionState>("prompt");
   const [isRequesting, setIsRequesting] = useState(false);
   const [position, setPosition] = useState<{
@@ -49,8 +51,15 @@ export function useGeoDistance(): UseGeoDistanceResult {
     lng: number;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const sharedPosition = chatContext?.userLocation ?? null;
+  const effectivePosition = sharedPosition ?? position;
 
   useEffect(() => {
+    if (sharedPosition) {
+      setPermission("granted");
+      return;
+    }
+
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       setPermission("unavailable");
       return;
@@ -64,15 +73,19 @@ export function useGeoDistance(): UseGeoDistanceResult {
     navigator.permissions
       .query({ name: "geolocation" })
       .then((status) => {
-        setPermission(status.state as GeoPermissionState);
+        setPermission(
+          sharedPosition ? "granted" : (status.state as GeoPermissionState),
+        );
         status.addEventListener("change", () => {
-          setPermission(status.state as GeoPermissionState);
+          setPermission(
+            sharedPosition ? "granted" : (status.state as GeoPermissionState),
+          );
         });
       })
       .catch(() => {
         // Ignore; will be resolved when the user requests location.
       });
-  }, []);
+  }, [sharedPosition]);
 
   const requestPermission = useCallback(() => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
@@ -90,6 +103,11 @@ export function useGeoDistance(): UseGeoDistanceResult {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
+        chatContext?.setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          timestamp: Date.now(),
+        });
         setPermission("granted");
         setIsRequesting(false);
       },
@@ -106,23 +124,28 @@ export function useGeoDistance(): UseGeoDistanceResult {
           setError("Unable to retrieve your location.");
         }
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
     );
-  }, []);
+  }, [chatContext]);
 
   const getDistanceKm = useCallback(
     (lat: number, lng: number): number | null => {
-      if (!position || permission !== "granted") return null;
-      return haversineKm(position.lat, position.lng, lat, lng);
+      if (!effectivePosition || permission !== "granted") return null;
+      return haversineKm(
+        effectivePosition.lat,
+        effectivePosition.lng,
+        lat,
+        lng,
+      );
     },
-    [position, permission],
+    [effectivePosition, permission],
   );
 
   return {
     permission,
     isRequesting,
-    currentLat: position?.lat ?? null,
-    currentLng: position?.lng ?? null,
+    currentLat: effectivePosition?.lat ?? null,
+    currentLng: effectivePosition?.lng ?? null,
     error,
     requestPermission,
     getDistanceKm,
