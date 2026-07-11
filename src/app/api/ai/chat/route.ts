@@ -48,6 +48,12 @@ import { createClient } from "@/lib/supabase/server";
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
+const MODEL_HISTORY_CHAR_BUDGET = 24_000;
+const MODEL_HISTORY_MAX_MESSAGES = 18;
+const MODEL_MESSAGE_MAX_CHARS = 3_000;
+const MODEL_TOOL_SUMMARY_MAX_CHARS = 1_800;
+const MODEL_TOOL_SUMMARY_MAX_ITEMS = 8;
+
 function dedupeInputMessages(rawMessages: unknown[]) {
   const deduped: unknown[] = [];
   const seenIds = new Set<string>();
@@ -420,6 +426,199 @@ function getMessageText(rawMessage: unknown): string {
     .trim();
 }
 
+function truncateText(value: string, maxLength: number): string {
+  const normalized = value.replaceAll(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+
+  const slice = normalized.slice(0, maxLength - 1);
+  const lastSpace = slice.lastIndexOf(" ");
+  const trimmed = (
+    lastSpace > maxLength * 0.75 ? slice.slice(0, lastSpace) : slice
+  ).trimEnd();
+  return `${trimmed}…`;
+}
+
+function getToolNameFromPart(part: Record<string, unknown>): string {
+  const type = part.type;
+  if (typeof type !== "string" || !type.startsWith("tool-")) {
+    return "tool";
+  }
+
+  return type.slice(5);
+}
+
+function compactLocation(value: Record<string, unknown>): string {
+  return [value.city, value.region]
+    .filter(
+      (part): part is string =>
+        typeof part === "string" && part.trim().length > 0,
+    )
+    .join(", ");
+}
+
+function summarizeNamedRecord(
+  value: unknown,
+  fallbackLabel: string,
+): string | null {
+  if (!isRecord(value)) return null;
+
+  const title =
+    typeof value.title === "string"
+      ? value.title
+      : typeof value.name === "string"
+        ? value.name
+        : fallbackLabel;
+  const id =
+    typeof value.id === "string"
+      ? value.id
+      : typeof value.experience_id === "string"
+        ? value.experience_id
+        : null;
+  const type = typeof value.type === "string" ? value.type : null;
+  const location = compactLocation(value);
+  const details = [
+    id ? `id: ${id}` : null,
+    type ? `type: ${type}` : null,
+    location ? `location: ${location}` : null,
+  ].filter(Boolean);
+
+  return `${title}${details.length > 0 ? ` (${details.join(", ")})` : ""}`;
+}
+
+function summarizeToolOutput(toolName: string, output: unknown): string | null {
+  if (!isRecord(output)) return null;
+
+  if (output.success === false) {
+    const error =
+      typeof output.error === "string"
+        ? output.error
+        : typeof output.message === "string"
+          ? output.message
+          : "failed";
+    return `${toolName}: ${truncateText(error, 240)}`;
+  }
+
+  const listCandidates = [
+    output.results,
+    output.experiences,
+    output.items,
+    output.room_types,
+    output.rooms,
+    output.options,
+  ];
+  const firstList = listCandidates.find(Array.isArray);
+  if (Array.isArray(firstList) && firstList.length > 0) {
+    const rows = firstList
+      .slice(0, MODEL_TOOL_SUMMARY_MAX_ITEMS)
+      .map((item, index) => summarizeNamedRecord(item, `item ${index + 1}`))
+      .filter((item): item is string => Boolean(item));
+
+    if (rows.length > 0) {
+      return [
+        `${toolName} displayed ${firstList.length} item(s):`,
+        ...rows.map((row, index) => `${index + 1}. ${row}`),
+      ].join("\n");
+    }
+  }
+
+  if (isRecord(output.experience)) {
+    const experience = summarizeNamedRecord(output.experience, "experience");
+    if (experience) return `${toolName}: ${experience}`;
+  }
+
+  if (isRecord(output.summary)) {
+    return `${toolName}: ${truncateText(JSON.stringify(output.summary), 600)}`;
+  }
+
+  return `${toolName}: ${truncateText(JSON.stringify(output), 600)}`;
+}
+
+function buildCompactAssistantText(rawMessage: unknown): string {
+  if (!isRecord(rawMessage)) return "";
+
+  const text = getMessageText(rawMessage);
+  if (!Array.isArray(rawMessage.parts)) return text;
+
+  const toolSummaries = rawMessage.parts
+    .map((part) => {
+      if (!isRecord(part)) return null;
+      if (part.state !== "output-available") return null;
+      return summarizeToolOutput(getToolNameFromPart(part), part.output);
+    })
+    .filter((summary): summary is string => Boolean(summary));
+
+  if (toolSummaries.length === 0) return text;
+
+  return [text, ...toolSummaries.map((summary) => `[${summary}]`)]
+    .filter((part) => part.trim().length > 0)
+    .join("\n\n");
+}
+
+function buildModelHistoryMessages(rawMessages: unknown[]) {
+  const compactMessages = rawMessages
+    .map((message, index) => {
+      const role = getMessageRole(message);
+      if (role !== "user" && role !== "assistant" && role !== "system") {
+        return null;
+      }
+
+      const text =
+        role === "assistant"
+          ? buildCompactAssistantText(message)
+          : getMessageText(message);
+      const compactText = truncateText(
+        text,
+        role === "assistant"
+          ? MODEL_MESSAGE_MAX_CHARS + MODEL_TOOL_SUMMARY_MAX_CHARS
+          : MODEL_MESSAGE_MAX_CHARS,
+      );
+
+      if (!compactText) return null;
+
+      return {
+        id:
+          isRecord(message) && typeof message.id === "string"
+            ? message.id
+            : `compact-${index}`,
+        role,
+        parts: [{ type: "text" as const, text: compactText }],
+        charLength: compactText.length,
+      };
+    })
+    .filter((message): message is NonNullable<typeof message> =>
+      Boolean(message),
+    );
+
+  const selectedReversed: typeof compactMessages = [];
+  let charTotal = 0;
+
+  for (let i = compactMessages.length - 1; i >= 0; i -= 1) {
+    const message = compactMessages[i];
+    const nextCharTotal = charTotal + message.charLength;
+
+    if (
+      selectedReversed.length >= MODEL_HISTORY_MAX_MESSAGES ||
+      nextCharTotal > MODEL_HISTORY_CHAR_BUDGET
+    ) {
+      break;
+    }
+
+    selectedReversed.push(message);
+    charTotal = nextCharTotal;
+  }
+
+  const selected = selectedReversed.reverse();
+
+  return {
+    messages: selected.map(
+      ({ charLength: _charLength, ...message }) => message,
+    ),
+    originalMessagesCount: compactMessages.length,
+    compactedMessagesCount: selected.length,
+    compactedCharLength: charTotal,
+  };
+}
+
 function isDeepLinkBootstrapMessage(rawMessage: unknown): boolean {
   if (getMessageRole(rawMessage) !== "user") return false;
   return getMessageText(rawMessage) === CHAT_DEEP_LINK_BOOTSTRAP_MESSAGE;
@@ -554,6 +753,19 @@ async function buildDeepLinkPromptBlock(
   return lines.join("\n");
 }
 
+function getTrustedUserLocation(
+  value: unknown,
+): { lat: number; lng: number } | null {
+  if (!value || typeof value !== "object") return null;
+
+  const { lat, lng } = value as { lat?: unknown; lng?: unknown };
+  if (typeof lat !== "number" || typeof lng !== "number") return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
+  return { lat, lng };
+}
+
 export async function POST(req: Request) {
   try {
     const requestId = crypto.randomUUID().slice(0, 8);
@@ -570,6 +782,7 @@ export async function POST(req: Request) {
     );
     const requestedLanguage = normalizeSupportedLanguage(language);
     const deepLinkRequest = extractDeepLinkRequest(deepLink);
+    const trustedUserLocation = getTrustedUserLocation(userLocation);
 
     aiDebug("chat.route", "request_received", {
       requestId,
@@ -587,8 +800,10 @@ export async function POST(req: Request) {
     });
 
     const offerQuickReplies = createOfferQuickRepliesTool(requestedLanguage);
-    const planTripWithGuideItems =
-      createPlanTripWithGuideItemsTool(requestedLanguage);
+    const planTripWithGuideItems = createPlanTripWithGuideItemsTool(
+      requestedLanguage,
+      trustedUserLocation,
+    );
     const searchGuideItems = createSearchGuideItemsTool(requestedLanguage);
     const suggestDateOptions = createSuggestDateOptionsTool(requestedLanguage);
     const selectRoomType = createSelectRoomTypeTool(requestedLanguage);
@@ -759,15 +974,28 @@ export async function POST(req: Request) {
 
     systemPrompt += `\n\n## LIVE WEATHER RULE\nFor current weather, temperature, rain, wind, or forecast questions, call getWeather before answering. Use the returned current and forecast data, mention the exact date when the user uses relative dates, and do not answer live weather questions from general climate knowledge alone.`;
 
+    systemPrompt += `\n\n## TRIP PLAN MEAL AND DUPLICATE RULES\nFor planTripWithGuideItems, include breakfast, lunch, and dinner by default. Set includeBreakfast, includeLunch, or includeDinner to false only when the user explicitly excludes that meal or asks for activity-only planning. Avoid same-day near-duplicate activities by name/topic, for example two items whose names both contain "bowling".`;
+
     // Add user location context if available
-    if (userLocation?.lat && userLocation?.lng) {
-      systemPrompt += `\n\n## Current User Location\nLatitude: ${userLocation.lat}\nLongitude: ${userLocation.lng}\n\nUse these coordinates for distance-based searches without asking for location again.`;
+    if (trustedUserLocation) {
+      systemPrompt += `\n\n## Current User Location\nLatitude: ${trustedUserLocation.lat}\nLongitude: ${trustedUserLocation.lng}\n\nUse these coordinates for distance-based searches without asking for location again.`;
     }
 
     aiDebug("chat.route", "request_ready_for_model", {
       requestId,
       promptLength: systemPrompt.length,
-      hasUserLocation: Boolean(userLocation?.lat && userLocation?.lng),
+      hasUserLocation: Boolean(trustedUserLocation),
+    });
+
+    const modelHistory = buildModelHistoryMessages(safeMessages);
+    aiDebug("chat.route", "model_history_compacted", {
+      requestId,
+      inputMessagesCount: safeMessages.length,
+      modelMessagesCount: modelHistory.compactedMessagesCount,
+      droppedMessagesCount:
+        modelHistory.originalMessagesCount -
+        modelHistory.compactedMessagesCount,
+      compactedCharLength: modelHistory.compactedCharLength,
     });
 
     const canSetTemperature = supportsTemperature(agentConfig.model);
@@ -783,7 +1011,7 @@ export async function POST(req: Request) {
       model: openai(agentConfig.model),
       system: systemPrompt,
       messages: await convertToModelMessages(
-        safeMessages as Parameters<typeof convertToModelMessages>[0],
+        modelHistory.messages as Parameters<typeof convertToModelMessages>[0],
       ),
       tools: effectiveTools,
       stopWhen: stepCountIs(agentConfig.maxSteps),

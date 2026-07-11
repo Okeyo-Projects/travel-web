@@ -139,7 +139,7 @@ function renderAssistantText(text: string): ReactNode {
   let blockIndex = 0;
 
   const isBulletLine = (line: string) => /^\s*[-*•]\s+/.test(line);
-  const isOrderedLine = (line: string) => /^\s*\d+\.\s+/.test(line);
+  const isOrderedLine = (line: string) => /^\s*\d+[.)]\s+/.test(line);
   const isHeadingLine = (line: string) => /^\s*#{1,3}\s+/.test(line);
 
   while (index < lines.length) {
@@ -216,7 +216,7 @@ function renderAssistantText(text: string): ReactNode {
     if (isOrderedLine(current)) {
       const items: string[] = [];
       while (index < lines.length && isOrderedLine(lines[index].trim())) {
-        items.push(lines[index].trim().replace(/^\s*\d+\.\s+/, ""));
+        items.push(lines[index].trim().replace(/^\s*\d+[.)]\s+/, ""));
         index += 1;
       }
 

@@ -70,6 +70,7 @@ export interface TripPlanData {
   budget_scope: "total" | "per_person" | "per_day" | "unknown";
   pace: "relaxed" | "balanced" | "full";
   near_text: string | null;
+  distance_reference?: "user_location" | null;
   plan: TripPlanDay[];
   source_items: TripPlanGuideItem[];
   transport_options?: TripPlanGuideItem[];
@@ -141,6 +142,14 @@ function formatActivityCount(
   return `${count} ${count === 1 ? labels.activityOne : labels.activityOther}`;
 }
 
+function hideUntrustedDistanceText(value: string): string {
+  return value
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => !/\b\d+(?:\.\d+)?\s*km\b.*reference point/i.test(part))
+    .join("; ");
+}
+
 function kindLabel(
   kind: GuideItemKind,
   t: ReturnType<typeof useSiteI18n>["t"],
@@ -153,11 +162,13 @@ function CompactGuideItemPreview({
   labels,
   locale,
   t,
+  showDistance,
 }: {
   item: TripPlanGuideItem;
   labels: (typeof LABELS)[keyof typeof LABELS];
   locale: string;
   t: ReturnType<typeof useSiteI18n>["t"];
+  showDistance: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const card = item.card;
@@ -302,7 +313,7 @@ function CompactGuideItemPreview({
                 <span className="line-clamp-1">{item.address_text}</span>
               </span>
             )}
-            {item.distance_km !== null && (
+            {showDistance && item.distance_km !== null && (
               <span>{item.distance_km.toFixed(1)} km</span>
             )}
           </div>
@@ -332,9 +343,11 @@ function CompactGuideItemPreview({
 function CompactExperiencePreview({
   experience,
   locale,
+  showDistance,
 }: {
   experience: ExperienceGridItem;
   locale: string;
+  showDistance: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const thumbnailSrc = experience.thumbnail_url
@@ -407,7 +420,7 @@ function CompactExperiencePreview({
               <MapPin className="size-3" />
               {experience.city}
             </span>
-            {typeof experience.distance_km === "number" && (
+            {showDistance && typeof experience.distance_km === "number" && (
               <span>{experience.distance_km.toFixed(1)} km</span>
             )}
           </div>
@@ -432,6 +445,7 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
   const { locale, dir, t } = useSiteI18n();
   const labels = LABELS[locale] ?? LABELS.fr;
   const accommodations = plan.accommodations ?? [];
+  const showDistance = plan.distance_reference === "user_location";
 
   return (
     <div
@@ -487,6 +501,7 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
                   key={experience.id}
                   experience={experience}
                   locale={locale}
+                  showDistance={showDistance}
                 />
               ))}
             </div>
@@ -530,62 +545,71 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
                   </div>
 
                   <div className="relative space-y-4">
-                    {dayItems.map((planItem, index) => (
-                      <div
-                        key={`${day.day}-${planItem.item?.id ?? "empty"}-${index}`}
-                        className={cn(
-                          "relative pl-6 sm:pl-7",
-                          !planItem.item && "opacity-80",
-                        )}
-                      >
+                    {dayItems.map((planItem, index) => {
+                      const whyText = showDistance
+                        ? planItem.why
+                        : hideUntrustedDistanceText(planItem.why);
+
+                      return (
                         <div
+                          key={`${day.day}-${planItem.item?.id ?? "empty"}-${index}`}
                           className={cn(
-                            "absolute top-0 bottom-0 w-px bg-primary/15 last-of-type:hidden",
-                            dir === "rtl"
-                              ? "right-[11px] sm:right-[13px]"
-                              : "left-[11px] sm:left-[13px]",
-                          )}
-                          aria-hidden="true"
-                        />
-                        <div
-                          className={cn(
-                            "absolute top-0.5 z-10 flex size-6 items-center justify-center rounded-full border-2 border-primary/20 bg-background shadow-sm",
-                            dir === "rtl" ? "right-0" : "left-0",
+                            "relative pl-6 sm:pl-7",
+                            !planItem.item && "opacity-80",
                           )}
                         >
-                          <span className="text-xs font-semibold text-primary">
-                            {index + 1}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Badge
-                            variant="secondary"
-                            className="rounded-full text-[11px]"
+                          <div
+                            className={cn(
+                              "absolute top-0 bottom-0 w-px bg-primary/15 last-of-type:hidden",
+                              dir === "rtl"
+                                ? "right-[11px] sm:right-[13px]"
+                                : "left-[11px] sm:left-[13px]",
+                            )}
+                            aria-hidden="true"
+                          />
+                          <div
+                            className={cn(
+                              "absolute top-0.5 z-10 flex size-6 items-center justify-center rounded-full border-2 border-primary/20 bg-background shadow-sm",
+                              dir === "rtl" ? "right-0" : "left-0",
+                            )}
                           >
-                            {labels.stop} {index + 1}
-                          </Badge>
+                            <span className="text-xs font-semibold text-primary">
+                              {index + 1}
+                            </span>
+                          </div>
 
-                          <p className="text-xs leading-relaxed text-muted-foreground">
-                            {planItem.why}
-                          </p>
+                          <div className="space-y-2">
+                            <Badge
+                              variant="secondary"
+                              className="rounded-full text-[11px]"
+                            >
+                              {labels.stop} {index + 1}
+                            </Badge>
 
-                          {planItem.item ? (
-                            <CompactGuideItemPreview
-                              item={planItem.item}
-                              labels={labels}
-                              locale={locale}
-                              t={t}
-                            />
-                          ) : (
-                            <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
-                              <MapPin className="size-3.5" />
-                              {labels.noPlanItem}
-                            </div>
-                          )}
+                            {whyText && (
+                              <p className="text-xs leading-relaxed text-muted-foreground">
+                                {whyText}
+                              </p>
+                            )}
+
+                            {planItem.item ? (
+                              <CompactGuideItemPreview
+                                item={planItem.item}
+                                labels={labels}
+                                locale={locale}
+                                t={t}
+                                showDistance={showDistance}
+                              />
+                            ) : (
+                              <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
+                                <MapPin className="size-3.5" />
+                                {labels.noPlanItem}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               );

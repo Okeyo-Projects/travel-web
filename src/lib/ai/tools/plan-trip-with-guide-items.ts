@@ -108,7 +108,30 @@ const planTripWithGuideItemsSchema = z.object({
     .boolean()
     .optional()
     .default(true)
-    .describe("Whether to include lunch/dinner restaurant slots."),
+    .describe(
+      "Legacy restaurant switch. Meals are included by default unless the user asks to exclude meals.",
+    ),
+  includeBreakfast: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Include breakfast slots by default unless the user explicitly excludes breakfast or asks for activity-only planning.",
+    ),
+  includeLunch: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Include lunch slots by default unless the user explicitly excludes lunch or asks for activity-only planning.",
+    ),
+  includeDinner: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Include dinner slots by default unless the user explicitly excludes dinner or asks for activity-only planning.",
+    ),
   includeTransport: z
     .boolean()
     .optional()
@@ -117,6 +140,11 @@ const planTripWithGuideItemsSchema = z.object({
 });
 
 type PlanTripInput = z.infer<typeof planTripWithGuideItemsSchema>;
+
+type TrustedUserLocation = {
+  lat: number;
+  lng: number;
+};
 
 type PlanCandidate = {
   id: string;
@@ -145,27 +173,12 @@ type PlanItem = {
   why: string;
 };
 
-type DailyPlanStepKind = "activity" | "meal";
+type DailyPlanStepKind = "activity" | "breakfast" | "lunch" | "dinner";
 
-const DAILY_STEP_TEMPLATES: Record<
-  PlanTripInput["pace"],
-  {
-    withRestaurants: DailyPlanStepKind[];
-    withoutRestaurants: DailyPlanStepKind[];
-  }
-> = {
-  relaxed: {
-    withRestaurants: ["activity", "activity", "meal"],
-    withoutRestaurants: ["activity", "activity"],
-  },
-  balanced: {
-    withRestaurants: ["activity", "activity", "meal", "activity"],
-    withoutRestaurants: ["activity", "activity", "activity"],
-  },
-  full: {
-    withRestaurants: ["activity", "activity", "meal", "activity", "meal"],
-    withoutRestaurants: ["activity", "activity", "activity", "activity"],
-  },
+const DAILY_ACTIVITY_COUNTS: Record<PlanTripInput["pace"], number> = {
+  relaxed: 2,
+  balanced: 3,
+  full: 4,
 };
 
 function normalizeOptionalString(value: string | undefined): string | null {
@@ -316,16 +329,132 @@ function getCandidateSignature(candidate: PlanCandidate): string {
   return `${candidate.kind}:${title}:${address}`;
 }
 
+const GENERIC_ACTIVITY_TOKENS = new Set([
+  "activity",
+  "activities",
+  "experience",
+  "experiences",
+  "place",
+  "places",
+  "tour",
+  "tours",
+  "visit",
+  "visits",
+  "morocco",
+  "moroccan",
+  "marrakech",
+  "essaouira",
+  "agadir",
+  "casablanca",
+  "rabat",
+  "fes",
+  "fez",
+  "tangier",
+  "local",
+  "guide",
+  "guided",
+  "restaurant",
+  "restaurants",
+  "cafe",
+  "coffee",
+  "food",
+  "breakfast",
+  "lunch",
+  "dinner",
+  "near",
+  "best",
+  "top",
+  "the",
+  "and",
+  "for",
+  "with",
+  "dans",
+  "avec",
+  "pour",
+  "les",
+  "des",
+  "une",
+]);
+
+function getCandidateTopicTokens(candidate: PlanCandidate): Set<string> {
+  const text = normalizeCandidateToken(candidate.title);
+  const tokens = text
+    .split(" ")
+    .filter(
+      (token) =>
+        token.length >= 4 &&
+        !GENERIC_ACTIVITY_TOKENS.has(token) &&
+        !/^\d+$/.test(token),
+    );
+
+  return new Set(tokens);
+}
+
+function hasSameDayTopicOverlap(
+  candidate: PlanCandidate,
+  usedDayTopicTokens: Set<string>,
+): boolean {
+  for (const token of getCandidateTopicTokens(candidate)) {
+    if (usedDayTopicTokens.has(token)) return true;
+  }
+
+  return false;
+}
+
+function rememberDayTopic(
+  candidate: PlanCandidate,
+  usedDayTopicTokens: Set<string>,
+) {
+  for (const token of getCandidateTopicTokens(candidate)) {
+    usedDayTopicTokens.add(token);
+  }
+}
+
 function takeNext(
   candidates: PlanCandidate[],
   usedSignatures: Set<string>,
+  usedDayTopicTokens?: Set<string>,
+  avoidSameDayTopic = false,
 ): PlanCandidate | null {
   const candidate = candidates.find(
-    (item) => !usedSignatures.has(getCandidateSignature(item)),
+    (item) =>
+      !usedSignatures.has(getCandidateSignature(item)) &&
+      (!avoidSameDayTopic ||
+        !usedDayTopicTokens ||
+        !hasSameDayTopicOverlap(item, usedDayTopicTokens)),
   );
   if (!candidate) return null;
   usedSignatures.add(getCandidateSignature(candidate));
+  if (usedDayTopicTokens) {
+    rememberDayTopic(candidate, usedDayTopicTokens);
+  }
   return candidate;
+}
+
+function buildDailyTemplate(
+  pace: PlanTripInput["pace"],
+  mealSteps: Exclude<DailyPlanStepKind, "activity">[],
+): DailyPlanStepKind[] {
+  const activityCount = DAILY_ACTIVITY_COUNTS[pace];
+  const steps: DailyPlanStepKind[] = [];
+  const lunchIndex = activityCount > 2 ? 1 : 0;
+
+  if (mealSteps.includes("breakfast")) {
+    steps.push("breakfast");
+  }
+
+  for (let index = 0; index < activityCount; index += 1) {
+    steps.push("activity");
+    if (mealSteps.includes("lunch") && index === lunchIndex) {
+      steps.push("lunch");
+    }
+  }
+
+  if (mealSteps.includes("dinner")) {
+    steps.push("dinner");
+  }
+
+  return steps;
 }
 
 function whyForPlanItem(
@@ -455,6 +584,7 @@ function uniqueCandidates(groups: PlanCandidate[][]): PlanCandidate[] {
 
 export function createPlanTripWithGuideItemsTool(
   defaultLocale: AppLocale = "fr",
+  trustedUserLocation: TrustedUserLocation | null = null,
 ) {
   return tool({
     description: `Build a catalog-backed, day-by-day trip itinerary using curated guide_items.
@@ -469,6 +599,16 @@ The tool returns structured source items, card data, and a draft schedule for th
           input.interests?.map((item) => item.trim()).filter(Boolean) ?? [];
         const nearText = normalizeOptionalString(input.nearText);
         const preferredKinds = input.preferredKinds ?? [];
+        const distanceReference = trustedUserLocation ? "user_location" : null;
+        const centerLat = trustedUserLocation?.lat;
+        const centerLng = trustedUserLocation?.lng;
+        const mealSteps: Exclude<DailyPlanStepKind, "activity">[] = [
+          input.includeBreakfast ? "breakfast" : null,
+          input.includeLunch ? "lunch" : null,
+          input.includeDinner ? "dinner" : null,
+        ].filter((step): step is Exclude<DailyPlanStepKind, "activity"> =>
+          Boolean(step),
+        );
         const requestedActivityKinds = preferredKinds.filter(
           (kind) => kind !== "restaurant" && kind !== "transport",
         );
@@ -478,11 +618,12 @@ The tool returns structured source items, card data, and a draft schedule for th
             : ["activity", "museum", "shopping", "wellness", "other"];
 
         const dailyActivityLimit = Math.min(Math.max(input.days * 3, 8), 20);
-        const dailyRestaurantLimit = Math.min(Math.max(input.days * 2, 6), 16);
+        const dailyMealLimit = Math.min(Math.max(input.days, 4), 12);
 
         const [
           morningItems,
           afternoonItems,
+          breakfastItems,
           lunchItems,
           dinnerItems,
           transportItems,
@@ -499,8 +640,8 @@ The tool returns structured source items, card data, and a draft schedule for th
             kinds: activityKinds,
             limit: dailyActivityLimit,
             locale: defaultLocale,
-            centerLat: input.centerLat,
-            centerLng: input.centerLng,
+            centerLat,
+            centerLng,
           }),
           searchBucket({
             city,
@@ -514,10 +655,27 @@ The tool returns structured source items, card data, and a draft schedule for th
             kinds: activityKinds,
             limit: dailyActivityLimit,
             locale: defaultLocale,
-            centerLat: input.centerLat,
-            centerLng: input.centerLng,
+            centerLat,
+            centerLng,
           }),
-          input.includeRestaurants
+          input.includeBreakfast
+            ? searchBucket({
+                city,
+                citySlug,
+                interests,
+                nearText,
+                budgetMad: input.budgetMad,
+                budgetScope: input.budgetScope,
+                travelParty: input.travelParty,
+                bucket: "restaurant cafe breakfast brunch morning food",
+                kinds: ["restaurant"],
+                limit: dailyMealLimit,
+                locale: defaultLocale,
+                centerLat,
+                centerLng,
+              })
+            : Promise.resolve([]),
+          input.includeLunch
             ? searchBucket({
                 city,
                 citySlug,
@@ -528,13 +686,13 @@ The tool returns structured source items, card data, and a draft schedule for th
                 travelParty: input.travelParty,
                 bucket: "restaurant lunch casual local food midday",
                 kinds: ["restaurant"],
-                limit: dailyRestaurantLimit,
+                limit: dailyMealLimit,
                 locale: defaultLocale,
-                centerLat: input.centerLat,
-                centerLng: input.centerLng,
+                centerLat,
+                centerLng,
               })
             : Promise.resolve([]),
-          input.includeRestaurants
+          input.includeDinner
             ? searchBucket({
                 city,
                 citySlug,
@@ -546,10 +704,10 @@ The tool returns structured source items, card data, and a draft schedule for th
                 bucket:
                   "restaurant dinner rooftop romantic traditional food evening",
                 kinds: ["restaurant"],
-                limit: dailyRestaurantLimit,
+                limit: dailyMealLimit,
                 locale: defaultLocale,
-                centerLat: input.centerLat,
-                centerLng: input.centerLng,
+                centerLat,
+                centerLng,
               })
             : Promise.resolve([]),
           input.includeTransport
@@ -565,8 +723,8 @@ The tool returns structured source items, card data, and a draft schedule for th
                 kinds: ["transport"],
                 limit: 4,
                 locale: defaultLocale,
-                centerLat: input.centerLat,
-                centerLng: input.centerLng,
+                centerLat,
+                centerLng,
               })
             : Promise.resolve([]),
         ]);
@@ -575,17 +733,28 @@ The tool returns structured source items, card data, and a draft schedule for th
           morningItems,
           afternoonItems,
         ]);
-        const mealItems = interleaveCandidates([lunchItems, dinnerItems]);
-        const dailyTemplate = input.includeRestaurants
-          ? DAILY_STEP_TEMPLATES[input.pace].withRestaurants
-          : DAILY_STEP_TEMPLATES[input.pace].withoutRestaurants;
+        const mealItemsByStep = {
+          breakfast: breakfastItems,
+          lunch: lunchItems,
+          dinner: dinnerItems,
+        } satisfies Record<
+          Exclude<DailyPlanStepKind, "activity">,
+          PlanCandidate[]
+        >;
+        const dailyTemplate = buildDailyTemplate(input.pace, mealSteps);
         const usedSignatures = new Set<string>();
         const days = Array.from({ length: input.days }, (_, index) => {
+          const usedDayTopicTokens = new Set<string>();
           const items: PlanItem[] = dailyTemplate.map((stepKind) => {
             const nextItem =
-              stepKind === "meal"
-                ? takeNext(mealItems, usedSignatures)
-                : takeNext(activityItems, usedSignatures);
+              stepKind === "activity"
+                ? takeNext(
+                    activityItems,
+                    usedSignatures,
+                    usedDayTopicTokens,
+                    true,
+                  )
+                : takeNext(mealItemsByStep[stepKind], usedSignatures);
 
             return {
               item: nextItem,
@@ -602,6 +771,7 @@ The tool returns structured source items, card data, and a draft schedule for th
         const sourceItems = uniqueCandidates([
           morningItems,
           afternoonItems,
+          breakfastItems,
           lunchItems,
           dinnerItems,
           transportItems,
@@ -619,11 +789,13 @@ The tool returns structured source items, card data, and a draft schedule for th
           budget_scope: input.budgetScope,
           pace: input.pace,
           near_text: nearText,
+          distance_reference: distanceReference,
           accuracy_rules: [
             "Only use returned guide-item facts for names, prices, payment notes, addresses, ratings, and distance.",
             "Do not invent opening hours or exact travel times unless present in item data.",
             "If budget is restrictive and item prices are missing, label the plan as budget-aware but not price-guaranteed.",
-            "Do not propose the same guide item twice in the same day; prefer unique options across the trip when the catalog allows it.",
+            "Breakfast, lunch, and dinner are included by default unless the user explicitly excluded that meal or asked for activity-only planning.",
+            "Do not propose the same guide item twice in the same day; avoid same-day near-duplicates by activity topic/name.",
             "If important plan items have null results, ask one targeted follow-up or explain the catalog gap.",
           ],
           plan: days,

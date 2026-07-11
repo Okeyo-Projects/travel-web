@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSiteI18n } from "@/components/site/site-i18n";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +50,8 @@ interface VideoThumbnailPreviewProps {
   src: string;
   alt: string;
 }
+
+const GUIDE_ITEM_VIDEO_PLAY_EVENT = "travel-guide-item-video-play";
 
 function getSourceLabel(sourceUrl: string): string {
   try {
@@ -152,6 +154,7 @@ function InlineGuideItemVideoCard({
   unmuteLabel: string;
   captionsLabel: string;
 }) {
+  const videoInstanceId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
   const shouldAutoPlayRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -215,6 +218,11 @@ function InlineGuideItemVideoCard({
     const handlePlay = () => {
       setIsPlaying(true);
       shouldAutoPlayRef.current = false;
+      window.dispatchEvent(
+        new CustomEvent(GUIDE_ITEM_VIDEO_PLAY_EVENT, {
+          detail: { id: videoInstanceId },
+        }),
+      );
       captureEvent(ANALYTICS_EVENT.VIDEO_PLAYED, {
         src,
         context: "chat_guide_item_card",
@@ -245,7 +253,29 @@ function InlineGuideItemVideoCard({
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("canplay", handleCanPlay);
     };
-  }, [src]);
+  }, [src, videoInstanceId]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleOtherVideoPlay = (event: Event) => {
+      const detail = (event as CustomEvent<{ id?: string }>).detail;
+      if (detail?.id === videoInstanceId) return;
+
+      shouldAutoPlayRef.current = false;
+      video.pause();
+    };
+
+    window.addEventListener(GUIDE_ITEM_VIDEO_PLAY_EVENT, handleOtherVideoPlay);
+
+    return () => {
+      window.removeEventListener(
+        GUIDE_ITEM_VIDEO_PLAY_EVENT,
+        handleOtherVideoPlay,
+      );
+    };
+  }, [videoInstanceId]);
 
   useEffect(() => {
     const video = videoRef.current;

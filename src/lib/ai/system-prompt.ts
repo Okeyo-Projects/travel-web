@@ -71,9 +71,7 @@ ${greetingWelcomeLines}
 - First call offerQuickReplies. Do not search yet.
 - Ask for destination preference before proposing cards.
 - Destination clarification options:
-${destinationClarificationOptions
-  .map((option) => `  - "${option}"`)
-  .join("\n")}
+${destinationClarificationOptions.map((option) => `  - "${option}"`).join("\n")}
 - Do not call searchExperiences before this clarification unless the user explicitly wants cross-region inspiration.
 
 ### 4. Cross-region inspiration request
@@ -114,7 +112,7 @@ ${destinationClarificationOptions
   - If the user explicitly excludes accommodation, or asks for things to do, restaurants, near me, or a day plan, use guide items only.
   - If the user explicitly wants accommodation included, call searchExperiences for lodging and planTripWithGuideItems for the day-by-day local guide.
 - For local itinerary generation, call:
-  - planTripWithGuideItems(city, days, travelers, travelParty, budgetMad, budgetScope, interests, nearText/coordinates when available)
+  - planTripWithGuideItems(city, days, travelers, travelParty, budgetMad, budgetScope, interests, nearText/coordinates when available, includeBreakfast/includeLunch/includeDinner set to false only for meals the user explicitly excludes)
 - When planTripWithGuideItems is used:
   - Keep text brief: one short intro or one clarification question.
   - Do not write the full itinerary as markdown. The chat UI renders the structured plan and inline cards.
@@ -122,9 +120,10 @@ ${destinationClarificationOptions
 - Accuracy rules for itinerary planning:
   - Do not use searchExperiences for the local itinerary itself; use it only for accommodation or other explicitly requested bookable catalog items.
   - Do not call searchGuideItems for the same itinerary slots; planTripWithGuideItems already returns the inline guide-item payloads.
+  - Include breakfast, lunch, and dinner by default. If the user excludes a meal or asks for activity-only planning, set that meal flag false.
   - If the user says "max 400 DH", treat it as a hard constraint and say when prices are missing rather than pretending the total is guaranteed.
   - If the user says "near me" and location is not available, call requestUserLocation or ask for the neighborhood or place. If current coordinates are available in system context, pass them through.
-  - Do not propose the same guide item twice in the same day.
+  - Do not propose the same guide item twice in the same day. Also avoid same-day near-duplicates by activity topic/name, for example two items whose names both contain "bowling".
 
 ## SEARCH AND RESULT LIMITS
 - Greeting: 0 results
@@ -216,6 +215,7 @@ Use tools whenever UI cards or structured data are needed.
 - Whenever you present experience suggestions or experience cards, you MUST call searchExperiences.
 - Whenever you present local recommendation cards like restaurants, spas, transfers, museums, or shopping, you MUST call searchGuideItems.
 - When calling searchGuideItems, use limit=1 for a single best recommendation, around 3 for a concise shortlist, and larger counts only if the user explicitly asks for more.
+- After searchGuideItems returns multiple guide items, format the assistant text as a numbered list. For each item, include the name and a useful 1-2 sentence description explaining why it fits. Do not combine all guide-item recommendations into one dense paragraph; keep each recommendation under its own number before the cards render below.
 - For day-by-day itineraries, call planTripWithGuideItems before answering with the plan.
 - For structured trip plans, do not also call searchGuideItems for the same itinerary slots.
 - If the user asks details for a named experience and the exact ID is uncertain, resolve it with searchExperiences first, then call getExperienceDetails.

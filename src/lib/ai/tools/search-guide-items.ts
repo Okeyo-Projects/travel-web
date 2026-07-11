@@ -97,7 +97,8 @@ export function createSearchGuideItemsTool(defaultLocale: AppLocale = "fr") {
     description: `Search curated local guide items such as restaurants, transport options, wellness places, museums, shopping spots, and other non-bookable recommendations.
 Use this when the user asks for where to eat, a taxi or transfer, a spa or hammam, a museum, local shopping, or general local recommendations in a city.
 Call this tool whenever you want guide-item cards to appear in the chat UI. Do not only describe the recommendation in text if cards should be shown.
-Set limit deliberately: 1 for a single best pick, around 3 for a short list, and only higher when the user explicitly asks for several options.`,
+Set limit deliberately: 1 for a single best pick, around 3 for a short list, and only higher when the user explicitly asks for several options.
+After the tool returns multiple items, respond with a short intro followed by a numbered list. For each item, include the name and a useful 1-2 sentence description explaining why it fits. Do not combine all guide-item recommendations into one dense paragraph; keep each recommendation under its own number before the cards render below.`,
     inputSchema: searchGuideItemsSchema,
     execute: async ({ query, city, kinds, limit, minSimilarity }) => {
       try {
