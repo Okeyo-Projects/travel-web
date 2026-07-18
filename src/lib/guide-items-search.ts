@@ -26,6 +26,13 @@ interface GuideItemSearchCandidate {
   relevance_score: number | null;
 }
 
+export type GuideItemNameMatchStatus = "found" | "ambiguous" | "not_found";
+
+export interface SearchGuideItemsByNameResult {
+  status: GuideItemNameMatchStatus;
+  results: GuideItemSearchResult[];
+}
+
 export interface SearchGuideItemsResult {
   results: GuideItemSearchResult[];
   usedFallback: boolean;
@@ -92,6 +99,39 @@ function normalizeSearchText(value: string): string {
     .replace(/[^a-z0-9\s]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function getLocalizedTitleText(row: GuideItemRow): string {
+  return flattenJsonText(row.title_i18n);
+}
+
+function scoreGuideItemName(row: GuideItemRow, name: string): number {
+  const normalizedName = normalizeSearchText(name);
+  const normalizedTitle = normalizeSearchText(getLocalizedTitleText(row));
+  const normalizedSlug = normalizeSearchText(row.slug);
+
+  if (!normalizedName || (!normalizedTitle && !normalizedSlug)) return 0;
+  if (normalizedTitle === normalizedName) return 1;
+  if (normalizedTitle.startsWith(`${normalizedName} `)) return 0.97;
+  if (normalizedTitle.includes(normalizedName)) return 0.95;
+  if (normalizedSlug.startsWith(`${normalizedName} `)) return 0.93;
+  if (normalizedSlug.includes(normalizedName)) return 0.91;
+
+  const nameTokens = tokenize(normalizedName);
+  if (nameTokens.length === 0) return 0;
+
+  const titleTokens = new Set(tokenize(normalizedTitle));
+  const slugTokens = new Set(tokenize(normalizedSlug));
+  const titleMatches = nameTokens.filter((token) =>
+    titleTokens.has(token),
+  ).length;
+  const slugMatches = nameTokens.filter((token) =>
+    slugTokens.has(token),
+  ).length;
+  const bestTokenRatio =
+    Math.max(titleMatches, slugMatches) / nameTokens.length;
+
+  return bestTokenRatio === 1 ? 0.88 : 0;
 }
 
 function tokenize(value: string): string[] {
@@ -322,6 +362,74 @@ async function fallbackGuideItemSearch(
     .map((candidate) =>
       toGuideItemSearchResult(candidate.row, candidate.relevance_score),
     );
+}
+
+export async function searchGuideItemsByName(
+  supabase: GuideItemSearchClient,
+  params: {
+    name: string;
+    citySlug: string | null;
+    limit: number;
+  },
+): Promise<SearchGuideItemsByNameResult> {
+  const normalizedName = normalizeSearchText(params.name);
+  if (!normalizedName) {
+    return { status: "not_found", results: [] };
+  }
+
+  const citySlug = normalizeGuideItemCitySlug(params.citySlug);
+  let query = supabase
+    .from("guide_items")
+    .select(GUIDE_ITEM_FALLBACK_SELECT)
+    .eq("status", "published")
+    .is("deleted_at", null);
+
+  if (citySlug) {
+    query = query.eq("city_slug", citySlug);
+  }
+
+  const { data, error } = await query.limit(1000);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const candidates = (
+    (data ?? []) as Array<GuideItemRow & { updated_at: string }>
+  )
+    .map((row) => ({ row, score: scoreGuideItemName(row, params.name) }))
+    .filter((candidate) => candidate.score >= 0.88)
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      if (right.row.verified !== left.row.verified) {
+        return Number(right.row.verified) - Number(left.row.verified);
+      }
+      if (right.row.reviews_count !== left.row.reviews_count) {
+        return right.row.reviews_count - left.row.reviews_count;
+      }
+      return (right.row.rating_avg ?? -1) - (left.row.rating_avg ?? -1);
+    });
+
+  if (candidates.length === 0) {
+    return { status: "not_found", results: [] };
+  }
+
+  const topScore = candidates[0].score;
+  const equallyStrongCandidates = candidates.filter(
+    (candidate) => topScore - candidate.score <= 0.02,
+  );
+  const status: GuideItemNameMatchStatus =
+    equallyStrongCandidates.length > 1 ? "ambiguous" : "found";
+  const selected =
+    status === "ambiguous" ? equallyStrongCandidates : candidates.slice(0, 1);
+
+  return {
+    status,
+    results: selected
+      .slice(0, params.limit)
+      .map((candidate) =>
+        toGuideItemSearchResult(candidate.row, candidate.score),
+      ),
+  };
 }
 
 export async function searchGuideItemsWithFallback(

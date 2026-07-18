@@ -4,8 +4,14 @@ import { useSiteI18n } from "@/components/site/site-i18n";
 import type { GuideItemChatCardData } from "@/types/guide-items";
 import { GuideItemCard } from "./GuideItemCard";
 
+export interface GuideItemCardsPresentation {
+  intro: string;
+  follow_up_question?: string;
+}
+
 export interface GuideItemCardsGridProps {
   items: GuideItemChatCardData[];
+  presentation?: GuideItemCardsPresentation;
   onSelectItem?: (itemId: string) => void;
   onShareItem?: (itemId: string) => void;
 }
@@ -24,6 +30,7 @@ function getItemContext(item: GuideItemChatCardData): string | null {
 
 export function GuideItemCardsGrid({
   items,
+  presentation,
   onSelectItem,
   onShareItem,
 }: GuideItemCardsGridProps) {
@@ -38,6 +45,15 @@ export function GuideItemCardsGrid({
 
   return (
     <div className="space-y-4">
+      {presentation?.intro ? (
+        <p
+          dir="auto"
+          className="text-[15px] leading-relaxed text-foreground sm:text-base"
+        >
+          {presentation.intro}
+        </p>
+      ) : null}
+
       {!isSingle && (
         <div className="text-sm text-muted-foreground">
           {items.length === 1
@@ -78,6 +94,15 @@ export function GuideItemCardsGrid({
           );
         })}
       </div>
+
+      {presentation?.follow_up_question ? (
+        <p
+          dir="auto"
+          className="pt-1 text-[15px] leading-relaxed text-foreground sm:text-base"
+        >
+          {presentation.follow_up_question}
+        </p>
+      ) : null}
     </div>
   );
 }

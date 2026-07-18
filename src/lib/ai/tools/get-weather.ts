@@ -32,12 +32,13 @@ function describeWeatherCode(code: number): string {
 export const getWeather = tool({
   description: `Get current weather and a 7-day forecast for any city or location.
 Use this when the user asks about weather conditions, temperature, rain, or climate at a destination.
+The location argument must always use the English name of the city or location. Translate names supplied in French, Arabic, or any other language to English before calling this tool.
 Supports any city worldwide but is especially useful for Moroccan destinations like Marrakech, Chefchaouen, Essaouira, Fès, Agadir, etc.`,
   inputSchema: z.object({
     location: z
       .string()
       .describe(
-        'City or location name to get weather for (e.g., "Marrakech", "Chefchaouen", "Imlil")',
+        'City or location name in English. Translate the user-provided name to English before calling this tool (e.g., "Londres" → "London", "Marrakech" → "Marrakech").',
       ),
     days: z
       .number()

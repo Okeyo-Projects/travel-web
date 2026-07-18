@@ -14,20 +14,11 @@ import {
 } from "@/components/ui/select";
 import type { AppLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type {
-  GuideItemKind,
-  GuideItemSearchFilters,
+import {
+  GUIDE_ITEM_KINDS,
+  type GuideItemKind,
+  type GuideItemSearchFilters,
 } from "@/types/guide-items";
-
-const GUIDE_ITEM_KINDS: GuideItemKind[] = [
-  "restaurant",
-  "transport",
-  "wellness",
-  "shopping",
-  "museum",
-  "activity",
-  "other",
-];
 
 interface CityOption {
   slug: string;

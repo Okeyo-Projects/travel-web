@@ -2,14 +2,33 @@ import type { Database } from "./supabase";
 
 export type GuideItemStatus = "draft" | "published" | "archived";
 
-export type GuideItemKind =
-  | "restaurant"
-  | "transport"
-  | "wellness"
-  | "shopping"
-  | "museum"
-  | "activity"
-  | "other";
+export const GUIDE_ITEM_KINDS = [
+  "restaurant",
+  "transport",
+  "wellness",
+  "shopping",
+  "museum",
+  "activity",
+  "coffee",
+  "bakery",
+  "nightlife",
+  "beach",
+  "nature",
+  "viewpoint",
+  "market",
+  "family",
+  "religious",
+  "coworking",
+  "parking",
+  "pharmacy",
+  "money_exchange",
+  "tourist_info",
+  "rooftop",
+  "pub",
+  "other",
+] as const;
+
+export type GuideItemKind = (typeof GUIDE_ITEM_KINDS)[number];
 
 export interface GuideItemReview {
   name: string;

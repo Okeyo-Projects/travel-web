@@ -28,7 +28,10 @@ import {
   type ExperienceOptionDetailsData,
   ExperienceOptionDetailsPanel,
 } from "./ExperienceOptionDetailsPanel";
-import { GuideItemCardsGrid } from "./GuideItemCardsGrid";
+import {
+  GuideItemCardsGrid,
+  type GuideItemCardsPresentation,
+} from "./GuideItemCardsGrid";
 import { LocationRequest } from "./LocationRequest";
 import { QuickReplies } from "./QuickReplies";
 import { type RoomTypeOptionItem, RoomTypeSelector } from "./RoomTypeSelector";
@@ -305,6 +308,26 @@ function extractGuideItemCards(
       typeof item.city_slug === "string" &&
       typeof item.title === "string",
   );
+}
+
+function extractGuideItemPresentation(
+  output: unknown,
+): GuideItemCardsPresentation | undefined {
+  if (!isRecord(output) || !isRecord(output.presentation)) return undefined;
+  if (typeof output.presentation.intro !== "string") return undefined;
+
+  const intro = output.presentation.intro.trim();
+  if (!intro) return undefined;
+
+  const followUpQuestion =
+    typeof output.presentation.follow_up_question === "string"
+      ? output.presentation.follow_up_question.trim()
+      : "";
+
+  return {
+    intro,
+    ...(followUpQuestion ? { follow_up_question: followUpQuestion } : {}),
+  };
 }
 
 function extractTripPlan(output: unknown): TripPlanData | null {
@@ -587,12 +610,16 @@ function isExperienceCardsData(
   );
 }
 
-function isGuideItemCardsData(
-  data: unknown,
-): data is { items: GuideItemChatCardData[] } {
+function isGuideItemCardsData(data: unknown): data is {
+  items: GuideItemChatCardData[];
+  presentation?: GuideItemCardsPresentation;
+} {
   return (
     isRecord(data) &&
     Array.isArray(data.items) &&
+    (data.presentation === undefined ||
+      (isRecord(data.presentation) &&
+        typeof data.presentation.intro === "string")) &&
     data.items.every(
       (item) =>
         isRecord(item) &&
@@ -839,6 +866,17 @@ function MessageItem({
     "booking_confirm",
   ]);
   const textBlocks = parsedContent.filter((block) => block.type === "text");
+  const hasStructuredGuideItemPresentation = parsedContent.some(
+    (block) =>
+      block.type === "ui" &&
+      block.content.component === "guide_item_cards" &&
+      isRecord(block.content.data) &&
+      isRecord(block.content.data.presentation) &&
+      typeof block.content.data.presentation.intro === "string",
+  );
+  const visibleTextBlocks = hasStructuredGuideItemPresentation
+    ? []
+    : textBlocks;
   const afterMessageUIBlocks = parsedContent.filter(
     (block) =>
       block.type === "ui" &&
@@ -868,7 +906,7 @@ function MessageItem({
 
       <div className="flex-1 space-y-4 overflow-hidden">
         <div ref={isLastMessage ? textEndRef : undefined} className="space-y-3">
-          {textBlocks.map((block) => (
+          {visibleTextBlocks.map((block) => (
             <div
               key={block.key}
               dir="auto"
@@ -1093,6 +1131,7 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
       if (hasTripPlan) continue;
       const items = extractGuideItemCards(part.output);
       if (!items || items.length === 0) continue;
+      const presentation = extractGuideItemPresentation(part.output);
 
       const ids = items.map((item) => item.id).filter(Boolean);
       const signature =
@@ -1106,7 +1145,7 @@ function extractAssistantBlocks(message: Message): ParsedBlock[] {
           type: "ui",
           content: {
             component: "guide_item_cards",
-            data: { items },
+            data: { items, ...(presentation ? { presentation } : {}) },
           },
         },
         signature,
@@ -1379,7 +1418,12 @@ function UIBlock({
   switch (component) {
     case "guide_item_cards":
       if (!isGuideItemCardsData(data)) return null;
-      return <GuideItemCardsGrid items={data.items} />;
+      return (
+        <GuideItemCardsGrid
+          items={data.items}
+          presentation={data.presentation}
+        />
+      );
 
     case "experience_cards":
       if (!isExperienceCardsData(data)) return null;

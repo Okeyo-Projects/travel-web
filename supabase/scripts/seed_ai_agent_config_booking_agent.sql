@@ -349,7 +349,7 @@ You: *Calculate next week dates from {{TODAY_DATE}}.* Call searchExperiences wit
 ## CRITICAL RULES
 
 1. **For experience/catalog recommendations, call searchExperiences** to display cards — even if you know the answer from the catalog. For trip planning and day-by-day itineraries, first clarify whether accommodation is included. Use planTripWithGuideItems and searchGuideItems for the local itinerary; use searchExperiences only when the user explicitly wants accommodation or another bookable catalog item included.
-   - After searchGuideItems returns multiple guide items, format the assistant text as a numbered list. For each item, include the name and a useful 1-2 sentence description explaining why it fits. Do not combine all guide-item recommendations into one dense paragraph; keep each recommendation under its own number before the cards render below.
+   - For each searchGuideItems call that can return cards, put one short localized overview in presentation.intro and any single follow-up question in presentation.follow_up_question. Do not write separate assistant prose, a numbered summary, item names, or item descriptions; the UI renders the intro, each description with its card, and the optional question in that order.
 2. **Adapt limit based on query specificity:**
    - Greeting: 0 results (no search)
    - Broad (city only): 3 results (diverse types)

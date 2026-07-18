@@ -658,7 +658,9 @@ function buildFirstUserTurnWelcomeContext(
       .map((line) => `- ${line}`)
       .join("\n"),
     `If the user's first message is a short affirmation like ${yesByLanguage[language]}, "oui", "yes", "ok", or "نعم", interpret it as accepting the quick Essaouira test from that welcome text.`,
-    "For that case, continue in the user's language and start a concise Essaouira-focused test: recommend a practical mix of restaurants, activities, places to visit, hidden gems, and optionally ask one useful follow-up about budget or trip style.",
+    "Use that test preset ONLY when the entire user message is a short standalone affirmation. If the message names a destination, category, place, preference, or any concrete request, handle that request normally and never use the preset.",
+    'For that affirmation case, you MUST call searchGuideItems exactly once with preset="essaouira_intro_mix". Do not call offerQuickReplies or any other recommendation tool.',
+    "The tool generates the localized introduction. Do not output any separate assistant text, repeat or paraphrase the welcome, list or describe the recommendations, or ask a question.",
     "Do not ask what they mean by the affirmation.",
   ].join("\n");
 }
@@ -848,8 +850,18 @@ export async function POST(req: Request) {
       ),
     );
 
-    const effectiveTools =
+    const catalogTools =
       Object.keys(enabledTools).length > 0 ? enabledTools : allTools;
+    // Web search is a core fallback rather than a configurable catalog tool:
+    // older saved agent configs must still be able to answer when our own data
+    // does not contain the factual travel information the user needs.
+    const effectiveTools = {
+      ...catalogTools,
+      web_search: openai.tools.webSearch({
+        externalWebAccess: true,
+        searchContextSize: "medium",
+      }),
+    };
 
     aiDebug("chat.route", "runtime_config_loaded", {
       requestId,
@@ -972,9 +984,15 @@ export async function POST(req: Request) {
       systemPrompt += `\n\n## USER AUTH STATUS\nThe user is NOT authenticated. If they attempt to book, tell them they need to log in or create an account first using the auth actions available in the UI.\nWhen they show clear interest in a specific stay or experience, you may gently encourage sign-in or registration with value-based phrasing such as "Create an account to save this stay and come back to it later" or "Sign in so you do not lose this accommodation."\nDo NOT ask the user to type their email address into the chat. Instead, direct them to the sign-in or registration flow.\nKeep this nudge light and natural. Use it when relevant, not in every message.`;
     }
 
-    systemPrompt += `\n\n## LIVE WEATHER RULE\nFor current weather, temperature, rain, wind, or forecast questions, call getWeather before answering. Use the returned current and forecast data, mention the exact date when the user uses relative dates, and do not answer live weather questions from general climate knowledge alone.`;
+    systemPrompt += `\n\n## LIVE WEATHER RULE\nFor current weather, temperature, rain, wind, or forecast questions, call getWeather before answering. Always translate the requested city or location to its English name for the getWeather location argument, even when the user writes in French, Arabic, or another language. Keep the final answer in the user's requested language. Use the returned current and forecast data, mention the exact date when the user uses relative dates, and do not answer live weather questions from general climate knowledge alone.`;
 
     systemPrompt += `\n\n## TRIP PLAN MEAL AND DUPLICATE RULES\nFor planTripWithGuideItems, include breakfast, lunch, and dinner by default. Set includeBreakfast, includeLunch, or includeDinner to false only when the user explicitly excludes that meal or asks for activity-only planning. Avoid same-day near-duplicate activities by name/topic, for example two items whose names both contain "bowling".`;
+
+    systemPrompt += `\n\n## GUIDE ITEM PRESENTATION RULE\nWhenever searchGuideItems can return cards, set presentation.intro to one short localized overview of the result set without naming or describing individual items. If a useful follow-up is needed, set presentation.follow_up_question to exactly one localized question; the UI renders it after the final card. Do not write separate assistant prose, a numbered list, item names, or item descriptions when cards are returned. The guide-item UI already renders each item's description directly above its card. If no cards are returned, explain the empty or error result normally in assistant text.`;
+
+    systemPrompt += `\n\n## GUIDE ITEM NAME LOOKUP RULE\nWhen the user asks whether you know, recognize, or have information about a specifically named local place, you MUST call searchGuideItems with searchMode="name" and query set to the place name before answering. Do not pass kinds in name mode, even if the name contains a word such as coffee, restaurant, spa, or museum. Treat matchStatus="found" as a confirmed catalog match. For "ambiguous", ask which returned city or location they mean. A "not_found" result means only that the place is absent from the Okeyo catalog: use web_search or reliable general knowledge to answer the user's actual question. Ask for the city, neighborhood, or spelling only when it is genuinely needed to identify the place. Never say that a named guide item is absent before this lookup. For generic café or coffee-shop discovery, use kinds=["coffee"], not restaurant.`;
+
+    systemPrompt += `\n\n## EXTERNAL KNOWLEDGE FALLBACK\nOkeyo catalog data is the first source for Okeyo guide items, experiences, cards, bookable inventory, prices, amenities, promotions, and availability. However, an empty or incomplete searchGuideItems, searchExperiences, getCityInformation, or getTopicInformation result is not the end of the answer. When the user needs travel information that our tools did not return, answer the necessary question from reliable general knowledge; call web_search first whenever the fact may be current, local, specific, or uncertain (for example a named place, opening hours, transport details, entry rules, events, or recent conditions). Give the useful answer directly instead of leading with "we do not have this information" or asking for spelling/location merely because it is absent from Okeyo. Clearly distinguish external recommendations from bookable Okeyo inventory, and never create an Okeyo card or claim Okeyo availability, price, amenity, promotion, partnership, or booking support unless an Okeyo tool returned it. If reliable information still cannot be established after web search, state the narrow uncertainty and provide the most useful safe alternative.`;
 
     // Add user location context if available
     if (trustedUserLocation) {

@@ -8,21 +8,14 @@ import {
 } from "@/lib/guide-items-search";
 import type { AppLocale } from "@/lib/i18n";
 import { createServiceRoleClientOrThrow } from "@/lib/supabase/service-role";
-import type {
-  GuideItemChatCardData,
-  GuideItemKind,
-  GuideItemSearchResult,
+import {
+  GUIDE_ITEM_KINDS,
+  type GuideItemChatCardData,
+  type GuideItemKind,
+  type GuideItemSearchResult,
 } from "@/types/guide-items";
 
-const guideItemKindSchema = z.enum([
-  "restaurant",
-  "transport",
-  "wellness",
-  "shopping",
-  "museum",
-  "activity",
-  "other",
-]);
+const guideItemKindSchema = z.enum(GUIDE_ITEM_KINDS);
 
 const travelPartySchema = z.enum([
   "solo",
@@ -610,12 +603,38 @@ The tool returns structured source items, card data, and a draft schedule for th
           Boolean(step),
         );
         const requestedActivityKinds = preferredKinds.filter(
-          (kind) => kind !== "restaurant" && kind !== "transport",
+          (kind) =>
+            ![
+              "restaurant",
+              "coffee",
+              "bakery",
+              "rooftop",
+              "pub",
+              "transport",
+              "parking",
+              "pharmacy",
+              "money_exchange",
+              "tourist_info",
+            ].includes(kind),
         );
         const activityKinds: GuideItemKind[] =
           requestedActivityKinds.length > 0
             ? requestedActivityKinds
-            : ["activity", "museum", "shopping", "wellness", "other"];
+            : [
+                "activity",
+                "museum",
+                "shopping",
+                "wellness",
+                "nightlife",
+                "beach",
+                "nature",
+                "viewpoint",
+                "market",
+                "family",
+                "religious",
+                "coworking",
+                "other",
+              ];
 
         const dailyActivityLimit = Math.min(Math.max(input.days * 3, 8), 20);
         const dailyMealLimit = Math.min(Math.max(input.days, 4), 12);
@@ -668,7 +687,7 @@ The tool returns structured source items, card data, and a draft schedule for th
                 budgetScope: input.budgetScope,
                 travelParty: input.travelParty,
                 bucket: "restaurant cafe breakfast brunch morning food",
-                kinds: ["restaurant"],
+                kinds: ["restaurant", "coffee", "bakery", "rooftop"],
                 limit: dailyMealLimit,
                 locale: defaultLocale,
                 centerLat,
@@ -685,7 +704,7 @@ The tool returns structured source items, card data, and a draft schedule for th
                 budgetScope: input.budgetScope,
                 travelParty: input.travelParty,
                 bucket: "restaurant lunch casual local food midday",
-                kinds: ["restaurant"],
+                kinds: ["restaurant", "coffee", "bakery", "rooftop"],
                 limit: dailyMealLimit,
                 locale: defaultLocale,
                 centerLat,
@@ -703,7 +722,7 @@ The tool returns structured source items, card data, and a draft schedule for th
                 travelParty: input.travelParty,
                 bucket:
                   "restaurant dinner rooftop romantic traditional food evening",
-                kinds: ["restaurant"],
+                kinds: ["restaurant", "rooftop", "pub"],
                 limit: dailyMealLimit,
                 locale: defaultLocale,
                 centerLat,
