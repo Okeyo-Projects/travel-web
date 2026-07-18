@@ -315,7 +315,7 @@ export function createSearchGuideItemsTool(
     description: `Search curated local guide items such as restaurants, transport options, wellness places, museums, shopping spots, and other non-bookable recommendations.
 Use this when the user asks for where to eat, a taxi or transfer, a spa or hammam, a museum, local shopping, or general local recommendations in a city.
 Whenever the user asks whether you know, recognize, or have details about one specifically named place, you MUST call this tool with searchMode="name" and query set to the place name. Do not add a kinds filter in name mode, even when the name contains words like coffee, restaurant, spa, or museum.
-Name mode returns matchStatus="found", "ambiguous", or "not_found". Treat suggested=true items only as possible corrections and ask the user to confirm them. Never claim a named place is absent before using name mode, and never present discovery alternatives as if they matched the requested name.
+Name mode returns matchStatus="found", "ambiguous", or "not_found". Treat suggested=true items only as possible corrections and ask the user to confirm them. A not_found result means only that the place is missing from the Okeyo catalog; it does not mean information about the place is unavailable. After not_found with no reliable suggestion, continue with web_search and answer from external information. Never present external information or discovery alternatives as Okeyo catalog data.
 Call this tool whenever you want guide-item cards to appear in the chat UI. Do not only describe the recommendation in text if cards should be shown.
 For every search that can return cards, set presentation.intro to one short localized overview without item names or descriptions. Put an optional question in presentation.follow_up_question so the UI renders it after the final card. Do not write separate assistant prose, a numbered list, or descriptions of the returned items; the card UI already renders each item's description immediately above its card.
 ${allowIntroPreset ? 'The server confirmed that the current message is a standalone affirmation accepting the quick Essaouira test. Call this tool once with preset="essaouira_intro_mix"; its localized introduction is generated automatically and it must not have a follow-up question.' : 'The Essaouira introduction preset is NOT available for the current message. Never send preset="essaouira_intro_mix". Handle the user\'s concrete request with searchMode="name" or "discovery".'}
@@ -350,54 +350,46 @@ The tool result is the complete visible response whenever cards are returned.`,
       try {
         if (preset === INTRO_MIX_PRESET) {
           if (!allowIntroPreset) {
-            aiDebug("tool.searchGuideItems", "intro_preset_rejected", {
+            aiDebug("tool.searchGuideItems", "intro_preset_ignored", {
               requestId: options.requestId ?? null,
               searchTraceId,
               query,
               searchMode,
             });
+          } else {
+            const results = await searchEssaouiraIntroMix(minSimilarity);
+            const items = results.map((result) =>
+              mapGuideItemSearchRowToChatCardData(result, defaultLocale),
+            );
+
+            aiDebug("tool.searchGuideItems", "intro_preset_success", {
+              requestId: options.requestId ?? null,
+              searchTraceId,
+              count: items.length,
+              items: items.map((item) => ({
+                id: item.id,
+                slug: item.slug,
+                kind: item.kind_slug,
+                city: item.city_slug,
+              })),
+            });
+
             return {
-              success: false,
+              success: true,
               type: "guide_item_cards",
-              count: 0,
-              items: [],
-              error: "intro_preset_not_allowed_for_current_message",
-              note: 'Retry searchGuideItems without preset. Use searchMode="name" for a specifically named place or "discovery" for a generic request.',
+              count: items.length,
+              items,
+              presentation: {
+                intro:
+                  defaultLocale === "ar"
+                    ? "إليك مجموعة أولى لاكتشاف الصويرة 👇"
+                    : defaultLocale === "en"
+                      ? "Here is a first selection for discovering Essaouira 👇"
+                      : "Voici une première sélection pour découvrir Essaouira 👇",
+              },
+              note: "Mixed Essaouira introduction recommendations.",
             };
           }
-
-          const results = await searchEssaouiraIntroMix(minSimilarity);
-          const items = results.map((result) =>
-            mapGuideItemSearchRowToChatCardData(result, defaultLocale),
-          );
-
-          aiDebug("tool.searchGuideItems", "intro_preset_success", {
-            requestId: options.requestId ?? null,
-            searchTraceId,
-            count: items.length,
-            items: items.map((item) => ({
-              id: item.id,
-              slug: item.slug,
-              kind: item.kind_slug,
-              city: item.city_slug,
-            })),
-          });
-
-          return {
-            success: true,
-            type: "guide_item_cards",
-            count: items.length,
-            items,
-            presentation: {
-              intro:
-                defaultLocale === "ar"
-                  ? "إليك مجموعة أولى لاكتشاف الصويرة 👇"
-                  : defaultLocale === "en"
-                    ? "Here is a first selection for discovering Essaouira 👇"
-                    : "Voici une première sélection pour découvrir Essaouira 👇",
-            },
-            note: "Mixed Essaouira introduction recommendations.",
-          };
         }
 
         const textQuery = normalizeOptionalString(query);
@@ -522,7 +514,7 @@ The tool result is the complete visible response whenever cards are returned.`,
             note:
               items.length > 0
                 ? "No lexical name match. These are possible semantic corrections only; ask the user to confirm."
-                : "No named guide item or reliable semantic correction found. Ask for the city, neighborhood, or spelling before offering alternatives.",
+                : "No named guide item or reliable semantic correction was found in the Okeyo catalog. This is not a final answer: call web_search now and give the user a useful in-chat summary, including verified address, phone/WhatsApp, hours, category/cuisine, price indication, and official website/map links when available. Do not merely redirect to external sites, do not invent missing fields, do not lead with the catalog miss, and do not ask for city, neighborhood, or spelling unless web search cannot identify the place.",
           };
         }
 

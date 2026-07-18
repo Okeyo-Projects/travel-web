@@ -89,7 +89,9 @@ type TextPart = { type: "text"; text: string };
 type ToolPart = { type?: string; state?: string; output?: unknown };
 
 function renderInlineMarkdown(text: string): ReactNode[] {
-  const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).filter(Boolean);
+  const tokens = text
+    .split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g)
+    .filter(Boolean);
   const keyCounts = new Map<string, number>();
   const getKey = (prefix: string, value: string) => {
     const baseKey = `${prefix}-${value}`;
@@ -99,6 +101,21 @@ function renderInlineMarkdown(text: string): ReactNode[] {
   };
 
   return tokens.map((token) => {
+    const linkMatch = token.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (linkMatch) {
+      return (
+        <a
+          key={getKey("link", token)}
+          href={linkMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary underline underline-offset-2 break-words"
+        >
+          {linkMatch[1]}
+        </a>
+      );
+    }
+
     if (token.startsWith("**") && token.endsWith("**") && token.length > 4) {
       return (
         <strong key={getKey("strong", token)}>{token.slice(2, -2)}</strong>
