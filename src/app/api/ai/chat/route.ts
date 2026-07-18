@@ -637,6 +637,41 @@ function isFirstVisibleUserTurn(rawMessages: unknown[]): boolean {
   return visibleUserMessageCount === 1;
 }
 
+function getFirstVisibleUserMessageText(rawMessages: unknown[]): string {
+  for (const message of rawMessages) {
+    if (getMessageRole(message) !== "user") continue;
+    if (isDeepLinkBootstrapMessage(message)) continue;
+    return getMessageText(message);
+  }
+
+  return "";
+}
+
+function normalizeStandaloneAffirmation(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{M}+/gu, "")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+function isStandaloneWelcomeAffirmation(value: string): boolean {
+  const normalized = normalizeStandaloneAffirmation(value);
+  return new Set([
+    "oui",
+    "ouais",
+    "yes",
+    "yeah",
+    "yep",
+    "ok",
+    "okay",
+    "d accord",
+    "نعم",
+    "اجل",
+  ]).has(normalized);
+}
+
 function buildFirstUserTurnWelcomeContext(
   language: ReturnType<typeof normalizeSupportedLanguage>,
   welcomeText: string,
@@ -785,6 +820,13 @@ export async function POST(req: Request) {
     const requestedLanguage = normalizeSupportedLanguage(language);
     const deepLinkRequest = extractDeepLinkRequest(deepLink);
     const trustedUserLocation = getTrustedUserLocation(userLocation);
+    const firstVisibleUserTurn = isFirstVisibleUserTurn(safeMessages);
+    const firstVisibleUserMessage = firstVisibleUserTurn
+      ? getFirstVisibleUserMessageText(safeMessages)
+      : "";
+    const acceptsWelcomeTest =
+      firstVisibleUserTurn &&
+      isStandaloneWelcomeAffirmation(firstVisibleUserMessage);
 
     aiDebug("chat.route", "request_received", {
       requestId,
@@ -794,6 +836,9 @@ export async function POST(req: Request) {
       language: requestedLanguage,
       rawMessagesCount: Array.isArray(messages) ? messages.length : 0,
       dedupedMessagesCount: safeMessages.length,
+      firstVisibleUserTurn,
+      acceptsWelcomeTest,
+      firstVisibleUserMessagePreview: firstVisibleUserMessage.slice(0, 160),
     });
 
     const agentConfig = await loadAgentRuntimeConfig({
@@ -806,7 +851,10 @@ export async function POST(req: Request) {
       requestedLanguage,
       trustedUserLocation,
     );
-    const searchGuideItems = createSearchGuideItemsTool(requestedLanguage);
+    const searchGuideItems = createSearchGuideItemsTool(requestedLanguage, {
+      allowIntroPreset: acceptsWelcomeTest,
+      requestId,
+    });
     const suggestDateOptions = createSuggestDateOptionsTool(requestedLanguage);
     const selectRoomType = createSelectRoomTypeTool(requestedLanguage);
 
@@ -941,7 +989,16 @@ export async function POST(req: Request) {
       });
     }
 
-    if (isFirstVisibleUserTurn(safeMessages)) {
+    aiDebug("chat.route", "first_user_turn_classified", {
+      requestId,
+      isFirstVisibleUserTurn: firstVisibleUserTurn,
+      normalizedMessage: normalizeStandaloneAffirmation(
+        firstVisibleUserMessage,
+      ).slice(0, 160),
+      acceptsWelcomeTest,
+    });
+
+    if (acceptsWelcomeTest) {
       systemPrompt += buildFirstUserTurnWelcomeContext(
         requestedLanguage,
         greetingTemplate,

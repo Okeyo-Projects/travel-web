@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { aiDebug } from "@/lib/ai/debug-log";
 import { embedQuery } from "@/lib/embeddings";
 import { mapGuideItemSearchRowToChatCardData } from "@/lib/guide-items";
 import {
@@ -20,6 +21,11 @@ const INTRO_MIX_PRESET = "essaouira_intro_mix" as const;
 interface GuideItemPresentation {
   intro: string;
   follow_up_question?: string;
+}
+
+interface SearchGuideItemsToolOptions {
+  allowIntroPreset?: boolean;
+  requestId?: string;
 }
 
 const INTRO_MIX_SEARCHES = [
@@ -299,7 +305,12 @@ function normalizeKinds(input: GuideItemKind[] | undefined) {
   return [...new Set(input)];
 }
 
-export function createSearchGuideItemsTool(defaultLocale: AppLocale = "fr") {
+export function createSearchGuideItemsTool(
+  defaultLocale: AppLocale = "fr",
+  options: SearchGuideItemsToolOptions = {},
+) {
+  const allowIntroPreset = options.allowIntroPreset === true;
+
   return tool({
     description: `Search curated local guide items such as restaurants, transport options, wellness places, museums, shopping spots, and other non-bookable recommendations.
 Use this when the user asks for where to eat, a taxi or transfer, a spa or hammam, a museum, local shopping, or general local recommendations in a city.
@@ -307,7 +318,7 @@ Whenever the user asks whether you know, recognize, or have details about one sp
 Name mode returns matchStatus="found", "ambiguous", or "not_found". Treat suggested=true items only as possible corrections and ask the user to confirm them. Never claim a named place is absent before using name mode, and never present discovery alternatives as if they matched the requested name.
 Call this tool whenever you want guide-item cards to appear in the chat UI. Do not only describe the recommendation in text if cards should be shown.
 For every search that can return cards, set presentation.intro to one short localized overview without item names or descriptions. Put an optional question in presentation.follow_up_question so the UI renders it after the final card. Do not write separate assistant prose, a numbered list, or descriptions of the returned items; the card UI already renders each item's description immediately above its card.
-When the user's entire first message is only a short standalone affirmation accepting the quick Essaouira test, call this tool once with preset="essaouira_intro_mix". Never use the preset for a message that names a destination, category, place, preference, or concrete request. The preset's localized introduction is generated automatically and it must not have a follow-up question.
+${allowIntroPreset ? 'The server confirmed that the current message is a standalone affirmation accepting the quick Essaouira test. Call this tool once with preset="essaouira_intro_mix"; its localized introduction is generated automatically and it must not have a follow-up question.' : 'The Essaouira introduction preset is NOT available for the current message. Never send preset="essaouira_intro_mix". Handle the user\'s concrete request with searchMode="name" or "discovery".'}
 Set limit deliberately: 1 for a single best pick, around 3 for a short list, and only higher when the user explicitly asks for several options.
 The tool result is the complete visible response whenever cards are returned.`,
     inputSchema: searchGuideItemsSchema,
@@ -321,12 +332,56 @@ The tool result is the complete visible response whenever cards are returned.`,
       minSimilarity,
       presentation,
     }) => {
+      const searchTraceId = crypto.randomUUID().slice(0, 8);
+
+      aiDebug("tool.searchGuideItems", "start", {
+        requestId: options.requestId ?? null,
+        searchTraceId,
+        preset: preset ?? null,
+        searchMode,
+        query,
+        city: city ?? null,
+        kinds: kinds ?? null,
+        limit,
+        minSimilarity,
+        allowIntroPreset,
+      });
+
       try {
         if (preset === INTRO_MIX_PRESET) {
+          if (!allowIntroPreset) {
+            aiDebug("tool.searchGuideItems", "intro_preset_rejected", {
+              requestId: options.requestId ?? null,
+              searchTraceId,
+              query,
+              searchMode,
+            });
+            return {
+              success: false,
+              type: "guide_item_cards",
+              count: 0,
+              items: [],
+              error: "intro_preset_not_allowed_for_current_message",
+              note: 'Retry searchGuideItems without preset. Use searchMode="name" for a specifically named place or "discovery" for a generic request.',
+            };
+          }
+
           const results = await searchEssaouiraIntroMix(minSimilarity);
           const items = results.map((result) =>
             mapGuideItemSearchRowToChatCardData(result, defaultLocale),
           );
+
+          aiDebug("tool.searchGuideItems", "intro_preset_success", {
+            requestId: options.requestId ?? null,
+            searchTraceId,
+            count: items.length,
+            items: items.map((item) => ({
+              id: item.id,
+              slug: item.slug,
+              kind: item.kind_slug,
+              city: item.city_slug,
+            })),
+          });
 
           return {
             success: true,
@@ -350,6 +405,10 @@ The tool result is the complete visible response whenever cards are returned.`,
 
         if (searchMode === "name") {
           if (!textQuery) {
+            aiDebug("tool.searchGuideItems", "name_query_missing", {
+              requestId: options.requestId ?? null,
+              searchTraceId,
+            });
             return {
               success: true,
               type: "guide_item_cards",
@@ -365,6 +424,22 @@ The tool result is the complete visible response whenever cards are returned.`,
             name: textQuery,
             citySlug,
             limit,
+          });
+
+          aiDebug("tool.searchGuideItems", "name_lexical_result", {
+            requestId: options.requestId ?? null,
+            searchTraceId,
+            query: textQuery,
+            citySlug,
+            matchStatus: nameMatch.status,
+            count: nameMatch.results.length,
+            matches: nameMatch.results.map((result) => ({
+              id: result.id,
+              slug: result.slug,
+              kind: result.kind_slug,
+              city: result.city_slug,
+              relevanceScore: result.relevance_score,
+            })),
           });
 
           if (nameMatch.status !== "not_found") {
@@ -405,6 +480,23 @@ The tool result is the complete visible response whenever cards are returned.`,
           const possibleMatches = semanticResults.filter((result) => {
             const score = result.semantic_score ?? result.relevance_score ?? 0;
             return score >= minSimilarity;
+          });
+
+          aiDebug("tool.searchGuideItems", "name_semantic_fallback", {
+            requestId: options.requestId ?? null,
+            searchTraceId,
+            query: textQuery,
+            citySlug,
+            rawCount: semanticResults.length,
+            acceptedCount: possibleMatches.length,
+            matches: possibleMatches.map((result) => ({
+              id: result.id,
+              slug: result.slug,
+              kind: result.kind_slug,
+              city: result.city_slug,
+              semanticScore: result.semantic_score,
+              relevanceScore: result.relevance_score,
+            })),
           });
           const items = possibleMatches.map((result) =>
             mapGuideItemSearchRowToChatCardData(result, defaultLocale),
@@ -451,6 +543,24 @@ The tool result is the complete visible response whenever cards are returned.`,
           includeUnpublished: false,
         });
 
+        aiDebug("tool.searchGuideItems", "discovery_result", {
+          requestId: options.requestId ?? null,
+          searchTraceId,
+          query: textQuery,
+          citySlug,
+          kinds: normalizedKinds,
+          count: results.length,
+          matches: results.map((result) => ({
+            id: result.id,
+            slug: result.slug,
+            kind: result.kind_slug,
+            city: result.city_slug,
+            semanticScore: result.semantic_score,
+            textRank: result.text_rank,
+            relevanceScore: result.relevance_score,
+          })),
+        });
+
         if (results.length === 0) {
           return {
             success: true,
@@ -485,6 +595,11 @@ The tool result is the complete visible response whenever cards are returned.`,
         };
       } catch (error) {
         console.error("searchGuideItems tool error:", error);
+        aiDebug("tool.searchGuideItems", "exception", {
+          requestId: options.requestId ?? null,
+          searchTraceId,
+          error: error instanceof Error ? error.message : String(error),
+        });
         return {
           success: false,
           type: "guide_item_cards",
