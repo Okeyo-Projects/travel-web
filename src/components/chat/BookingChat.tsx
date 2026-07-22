@@ -266,6 +266,22 @@ function extractMessageText(message: ChatMessage): string {
   return extractTextFromParts(message.parts);
 }
 
+// A late stream failure (Vercel max-duration kill, aborted connection, or an
+// error during stream teardown) still triggers useChat's onError even though
+// the assistant answer already rendered. In that case the error toast is a
+// false alarm, so only surface it when nothing visible was delivered.
+function latestAssistantHasRenderableContent(messages: ChatMessage[]): boolean {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message.role !== "assistant") continue;
+
+    const content = typeof message.content === "string" ? message.content : "";
+    return hasRenderableAssistantContent(content, message.parts);
+  }
+
+  return false;
+}
+
 function shouldPersistMessage(
   message: ChatMessage,
   status: "submitted" | "streaming" | "ready" | "error",
@@ -394,16 +410,29 @@ export function BookingChat({
     },
     onError: (error) => {
       console.error("Chat stream error:", error);
-      toast.error(t("chat.input.sendError"));
+      const deliveredContent = latestAssistantHasRenderableContent(
+        messagesRef.current,
+      );
+      // Only alarm the user when nothing usable was delivered; a late stream
+      // failure after a rendered answer is logged and tracked silently.
+      if (!deliveredContent) {
+        toast.error(t("chat.input.sendError"));
+      }
       captureEvent(ANALYTICS_EVENT.CHAT_MESSAGE_FAILED, {
         error_message: error.message,
         source: pendingResponseRef.current?.source ?? "unknown",
+        delivered_content: deliveredContent,
       });
       isSendingRef.current = false;
       inFlightTextRef.current = null;
       pendingResponseRef.current = null;
     },
   });
+
+  const messagesRef = useRef<ChatMessage[]>(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const browserLanguage = useMemo(() => {
     if (!mounted || typeof navigator === "undefined") return null;

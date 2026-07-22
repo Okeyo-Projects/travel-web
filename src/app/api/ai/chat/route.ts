@@ -45,8 +45,9 @@ import { type AppLocale, getLocalizedDescription } from "@/lib/i18n";
 import { fetchExperienceData } from "@/lib/routing/experience-resolver";
 import { createClient } from "@/lib/supabase/server";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+// Allow streaming responses up to 60 seconds (multi-step trip planning
+// performs several embedding + catalog searches before the final answer).
+export const maxDuration = 60;
 
 const MODEL_HISTORY_CHAR_BUDGET = 24_000;
 const MODEL_HISTORY_MAX_MESSAGES = 18;
@@ -1094,46 +1095,68 @@ export async function POST(req: Request) {
       stopWhen: stepCountIs(Math.max(agentConfig.maxSteps, 3)),
       ...(canSetTemperature ? { temperature: agentConfig.temperature } : {}),
       onFinish: async ({ usage, finishReason }) => {
-        // Log usage for monitoring (optional)
-        console.log("Chat completion finished:", {
-          requestId,
-          sessionId,
-          configVersionId: agentConfig.versionId,
-          model: agentConfig.model,
-          usage,
-          finishReason,
-          timestamp: new Date().toISOString(),
-        });
-        aiDebug("chat.route", "completion_finished", {
-          requestId,
-          finishReason,
-          totalTokens: usage?.totalTokens ?? null,
-          promptTokens:
-            (usage as (typeof usage & { promptTokens?: number }) | undefined)
-              ?.promptTokens ?? null,
-          completionTokens:
-            (
-              usage as
-                | (typeof usage & { completionTokens?: number })
-                | undefined
-            )?.completionTokens ?? null,
-        });
-
-        const posthog = getPostHogClient();
-        posthog?.capture({
-          distinctId: currentUser?.id ?? sessionId ?? "anonymous",
-          event: ANALYTICS_EVENT.AI_CHAT_COMPLETED,
-          properties: {
+        // Telemetry must never poison stream teardown: a failure here would
+        // surface as a stream error AFTER the answer was already delivered.
+        try {
+          // Log usage for monitoring (optional)
+          console.log("Chat completion finished:", {
+            requestId,
+            sessionId,
+            configVersionId: agentConfig.versionId,
             model: agentConfig.model,
-            finish_reason: finishReason,
-            total_tokens: usage?.totalTokens ?? null,
-            session_id: typeof sessionId === "string" ? sessionId : null,
-          },
-        });
+            usage,
+            finishReason,
+            timestamp: new Date().toISOString(),
+          });
+          aiDebug("chat.route", "completion_finished", {
+            requestId,
+            finishReason,
+            totalTokens: usage?.totalTokens ?? null,
+            promptTokens:
+              (usage as (typeof usage & { promptTokens?: number }) | undefined)
+                ?.promptTokens ?? null,
+            completionTokens:
+              (
+                usage as
+                  | (typeof usage & { completionTokens?: number })
+                  | undefined
+              )?.completionTokens ?? null,
+          });
+
+          const posthog = getPostHogClient();
+          posthog?.capture({
+            distinctId: currentUser?.id ?? sessionId ?? "anonymous",
+            event: ANALYTICS_EVENT.AI_CHAT_COMPLETED,
+            properties: {
+              model: agentConfig.model,
+              finish_reason: finishReason,
+              total_tokens: usage?.totalTokens ?? null,
+              session_id: typeof sessionId === "string" ? sessionId : null,
+            },
+          });
+        } catch (telemetryError) {
+          console.warn("Chat completion telemetry failed:", {
+            requestId,
+            error:
+              telemetryError instanceof Error
+                ? telemetryError.message
+                : String(telemetryError),
+          });
+        }
       },
     });
 
-    return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse({
+      // Keep raw provider/stream errors out of the client payload; the client
+      // already distinguishes "nothing delivered" from "late stream failure".
+      onError: (error) => {
+        console.error("Chat stream error:", {
+          requestId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return "Okeyo hit a temporary issue while streaming the answer.";
+      },
+    });
   } catch (error) {
     console.error("Chat API error:", error);
     return new Response(
