@@ -457,6 +457,33 @@ export async function searchGuideItemsWithFallback(
     );
 
     if (results.length > 0) {
+      if (results.length >= params.limit) {
+        return {
+          results,
+          usedFallback: false,
+        };
+      }
+
+      // Top up partial semantic results with the text fallback so
+      // callers receive up to `limit` candidates when the catalog has them.
+      if (citySlug || (params.kinds?.length ?? 0) > 0) {
+        const seenIds = new Set(results.map((result) => result.id));
+        const fallbackResults = await fallbackGuideItemSearch(supabase, {
+          ...params,
+          citySlug,
+        });
+        const topUp = fallbackResults.filter(
+          (result) => !seenIds.has(result.id),
+        );
+
+        if (topUp.length > 0) {
+          return {
+            results: [...results, ...topUp].slice(0, params.limit),
+            usedFallback: true,
+          };
+        }
+      }
+
       return {
         results,
         usedFallback: false,

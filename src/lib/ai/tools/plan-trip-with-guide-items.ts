@@ -548,7 +548,7 @@ async function searchBucket({
     citySlug,
     kinds,
     limit,
-    minSimilarity: 0.55,
+    minSimilarity: 0.35,
     includeUnpublished: false,
   });
 
@@ -636,8 +636,14 @@ The tool returns structured source items, card data, and a draft schedule for th
                 "other",
               ];
 
-        const dailyActivityLimit = Math.min(Math.max(input.days * 3, 8), 20);
-        const dailyMealLimit = Math.min(Math.max(input.days, 4), 12);
+        // Fetch with margin: global signature dedup (an item can only be used
+        // once per trip, across all buckets) shrinks effective pools below
+        // the raw limits, which previously left plan slots empty.
+        const dailyActivityLimit = Math.min(
+          Math.max(input.days * 4 + 4, 10),
+          30,
+        );
+        const dailyMealLimit = Math.min(Math.max(input.days + 4, 8), 16);
 
         const [
           morningItems,
@@ -761,6 +767,13 @@ The tool returns structured source items, card data, and a draft schedule for th
           PlanCandidate[]
         >;
         const dailyTemplate = buildDailyTemplate(input.pace, mealSteps);
+        // Cross-meal-bucket reserve pool: any unused restaurant/cafe can fill
+        // a breakfast, lunch, or dinner slot whose dedicated bucket ran dry.
+        const mealLeftovers = uniqueCandidates([
+          breakfastItems,
+          lunchItems,
+          dinnerItems,
+        ]);
         const usedSignatures = new Set<string>();
         const days = Array.from({ length: input.days }, (_, index) => {
           const usedDayTopicTokens = new Set<string>();
@@ -773,7 +786,8 @@ The tool returns structured source items, card data, and a draft schedule for th
                     usedDayTopicTokens,
                     true,
                   )
-                : takeNext(mealItemsByStep[stepKind], usedSignatures);
+                : (takeNext(mealItemsByStep[stepKind], usedSignatures) ??
+                  takeNext(mealLeftovers, usedSignatures));
 
             return {
               item: nextItem,
