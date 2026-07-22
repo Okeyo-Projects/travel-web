@@ -163,8 +163,11 @@ type PlanCandidate = {
 
 type PlanItem = {
   item: PlanCandidate | null;
+  slot: DailyPlanStepKind;
   why: string;
 };
+
+type PlanCoverage = "full" | "partial" | "none";
 
 type DailyPlanStepKind = "activity" | "breakfast" | "lunch" | "dinner";
 
@@ -455,8 +458,11 @@ function whyForPlanItem(
   nearText: string | null,
   budgetMad?: number,
 ): string {
+  // Keep empty: gap slots are completed by the model from general knowledge
+  // or web search (see catalog_gap_instructions), so there is no
+  // user-facing "missing item" text.
   if (!item) {
-    return "No matching catalog-backed guide item found for this slot.";
+    return "";
   }
 
   const parts = [item.summary || `${item.kind} option from the local guide`];
@@ -470,6 +476,39 @@ function whyForPlanItem(
   }
 
   return parts.join("; ");
+}
+
+function buildCatalogGapInstructions({
+  coverage,
+  city,
+  days,
+  totalSlots,
+  filledSlots,
+}: {
+  coverage: PlanCoverage;
+  city: string;
+  days: number;
+  totalSlots: number;
+  filledSlots: number;
+}): string | null {
+  if (coverage === "full") return null;
+
+  const sharedRules =
+    "Present those completions as local suggestions from your travel knowledge, not as Okeyo catalog items: do not attach Okeyo prices, ratings, availability, or booking support to them. Call web_search first for current, local, or specific facts (named places, opening hours, price indications). Never tell the user that catalog data is missing, that a slot is empty, or that you lack information; write the itinerary naturally and confidently.";
+
+  if (coverage === "none") {
+    return [
+      `The Okeyo catalog has no guide items for "${city}". The structured plan was intentionally left empty and will not be displayed.`,
+      `Instead, write the complete ${days}-day itinerary for ${city} directly in assistant text from your own travel knowledge, following the requested pace and including breakfast, lunch, and dinner suggestions unless the user excluded them.`,
+      sharedRules,
+    ].join(" ");
+  }
+
+  return [
+    `The Okeyo catalog covered ${filledSlots} of ${totalSlots} plan slots for "${city}". Slots whose item is null (with their slot kind: activity, breakfast, lunch, or dinner) are catalog gaps.`,
+    "Complete every null slot in your assistant text from your own travel knowledge so each day reads as a full itinerary; the plan UI only displays the catalog-backed cards.",
+    sharedRules,
+  ].join(" ");
 }
 
 function interleaveCandidates(groups: PlanCandidate[][]): PlanCandidate[] {
@@ -791,6 +830,7 @@ The tool returns structured source items, card data, and a draft schedule for th
 
             return {
               item: nextItem,
+              slot: stepKind,
               why: whyForPlanItem(nextItem, nearText, input.budgetMad),
             };
           });
@@ -799,6 +839,26 @@ The tool returns structured source items, card data, and a draft schedule for th
             day: index + 1,
             items,
           };
+        });
+
+        const totalSlots = days.reduce((sum, day) => sum + day.items.length, 0);
+        const filledSlots = days.reduce(
+          (sum, day) =>
+            sum + day.items.filter((planItem) => planItem.item).length,
+          0,
+        );
+        const coverage: PlanCoverage =
+          filledSlots === 0
+            ? "none"
+            : filledSlots < totalSlots
+              ? "partial"
+              : "full";
+        const catalogGapInstructions = buildCatalogGapInstructions({
+          coverage,
+          city,
+          days: input.days,
+          totalSlots,
+          filledSlots,
         });
 
         const sourceItems = uniqueCandidates([
@@ -823,15 +883,20 @@ The tool returns structured source items, card data, and a draft schedule for th
           pace: input.pace,
           near_text: nearText,
           distance_reference: distanceReference,
+          coverage,
+          catalog_gap_instructions: catalogGapInstructions,
           accuracy_rules: [
             "Only use returned guide-item facts for names, prices, payment notes, addresses, ratings, and distance.",
             "Do not invent opening hours or exact travel times unless present in item data.",
             "If budget is restrictive and item prices are missing, label the plan as budget-aware but not price-guaranteed.",
             "Breakfast, lunch, and dinner are included by default unless the user explicitly excluded that meal or asked for activity-only planning.",
             "Do not propose the same guide item twice in the same day; avoid same-day near-duplicates by activity topic/name.",
-            "If important plan items have null results, ask one targeted follow-up or explain the catalog gap.",
+            "Complete every slot whose item is null from your own travel knowledge (call web_search first for current or local specifics), present those as local suggestions rather than Okeyo catalog items, and never tell the user that catalog data is missing or that a slot is empty.",
           ],
-          plan: days,
+          // With zero catalog coverage the structured plan is withheld so the
+          // UI does not render an empty shell; the model writes the full
+          // itinerary in assistant text instead.
+          plan: coverage === "none" ? [] : days,
           transport_options: transportItems,
           source_items: sourceItems,
           note: "",

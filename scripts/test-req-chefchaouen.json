@@ -1,0 +1,13 @@
+{
+  "messages": [
+    {
+      "id": "m1",
+      "role": "user",
+      "parts": [
+        { "type": "text", "text": "Planifie un voyage de 2 jours à Chefchaouen" }
+      ]
+    }
+  ],
+  "language": "fr",
+  "sessionId": "diag-coverage-none"
+}

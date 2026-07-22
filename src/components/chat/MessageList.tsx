@@ -149,6 +149,68 @@ function stripCheckoutUrls(text: string): string {
     .trim();
 }
 
+interface QuestionCardContent {
+  question: string;
+  options: string[];
+}
+
+function normalizeForQuestionMatch(value: string): string {
+  return value.replaceAll("**", "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/**
+ * When a quick-reply / date-options / room-selector card is rendered for a
+ * message, the card already displays the question and its options as bubbles.
+ * Remove any duplicated question lines and option bullet lists from the text
+ * so they are not shown twice.
+ */
+function stripQuestionCardDuplication(
+  text: string,
+  questionCards: QuestionCardContent[],
+): string {
+  const questionKeys = new Set(
+    questionCards.map((card) => normalizeForQuestionMatch(card.question)),
+  );
+  const optionKeys = new Set(
+    questionCards
+      .flatMap((card) => card.options)
+      .map((option) => normalizeForQuestionMatch(option)),
+  );
+  if (questionKeys.size === 0 && optionKeys.size === 0) return text;
+
+  const lines = text.split("\n");
+  const kept: string[] = [];
+  let removedOptionLine = false;
+
+  for (const line of lines) {
+    const withoutMarkers = line
+      .trim()
+      .replace(/^[-*•]\s+/, "")
+      .replace(/^\d+[.)]\s+/, "");
+    const normalized = normalizeForQuestionMatch(withoutMarkers);
+    if (normalized && optionKeys.has(normalized)) {
+      removedOptionLine = true;
+      continue;
+    }
+    if (normalized && questionKeys.has(normalized)) {
+      continue;
+    }
+    kept.push(line);
+  }
+
+  // If the text listed the card's options, the question introducing that list
+  // is also duplicated in the card header — drop a trailing question line.
+  if (removedOptionLine) {
+    while (kept.length > 0 && !kept[kept.length - 1].trim()) kept.pop();
+    if (kept.length > 0 && /[?؟]\s*$/.test(kept[kept.length - 1].trim())) {
+      kept.pop();
+      while (kept.length > 0 && !kept[kept.length - 1].trim()) kept.pop();
+    }
+  }
+
+  return kept.join("\n").trim();
+}
+
 function renderAssistantText(text: string): ReactNode {
   const normalized = stripCheckoutUrls(text).replaceAll("\r\n", "\n").trim();
   if (!normalized) return null;
@@ -891,9 +953,51 @@ function MessageItem({
       isRecord(block.content.data.presentation) &&
       typeof block.content.data.presentation.intro === "string",
   );
+
+  // Question cards (quick replies, date options, room selector) already show
+  // the question and its options as bubbles — strip any duplication from text.
+  const questionCardContents: QuestionCardContent[] = [];
+  for (const block of parsedContent) {
+    if (block.type !== "ui") continue;
+    const { component, data } = block.content;
+    if (component === "quick_replies" && isQuickRepliesData(data)) {
+      questionCardContents.push({
+        question: data.question,
+        options: data.options,
+      });
+    } else if (component === "date_options" && isDateOptionsData(data)) {
+      questionCardContents.push({
+        question: data.question,
+        options: data.options.flatMap((option) => [
+          option.label,
+          option.reply_text,
+        ]),
+      });
+    } else if (
+      component === "room_type_selector" &&
+      isRoomTypeSelectorData(data)
+    ) {
+      questionCardContents.push({
+        question: data.question,
+        options: data.rooms.flatMap((room) => [room.name, room.reply_text]),
+      });
+    }
+  }
+
   const visibleTextBlocks = hasStructuredGuideItemPresentation
     ? []
-    : textBlocks;
+    : textBlocks
+        .map((block) => {
+          if (questionCardContents.length === 0) return block;
+          const stripped = stripQuestionCardDuplication(
+            block.content,
+            questionCardContents,
+          );
+          return stripped ? { ...block, content: stripped } : null;
+        })
+        .filter((block): block is ParsedBlock & { type: "text" } =>
+          Boolean(block),
+        );
   const afterMessageUIBlocks = parsedContent.filter(
     (block) =>
       block.type === "ui" &&

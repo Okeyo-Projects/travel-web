@@ -45,6 +45,7 @@ export interface TripPlanGuideItem {
 
 export interface TripPlanItem {
   item: TripPlanGuideItem | null;
+  slot?: "activity" | "breakfast" | "lunch" | "dinner";
   why: string;
 }
 
@@ -71,6 +72,7 @@ export interface TripPlanData {
   pace: "relaxed" | "balanced" | "full";
   near_text: string | null;
   distance_reference?: "user_location" | null;
+  coverage?: "full" | "partial" | "none";
   plan: TripPlanDay[];
   source_items: TripPlanGuideItem[];
   transport_options?: TripPlanGuideItem[];
@@ -447,6 +449,31 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
   const accommodations = plan.accommodations ?? [];
   const showDistance = plan.distance_reference === "user_location";
 
+  // Catalog-gap slots (item === null) are completed by the assistant in text;
+  // the structured block only displays catalog-backed cards, and disappears
+  // entirely when there is nothing to show.
+  const visibleDays = plan.plan
+    .map((day) => {
+      const dayItems = (
+        day.items ??
+        day.slots?.map((slot) => ({
+          item: slot.item,
+          why: slot.why,
+        })) ??
+        []
+      ).filter(
+        (planItem): planItem is TripPlanItem & { item: TripPlanGuideItem } =>
+          Boolean(planItem.item),
+      );
+
+      return { day: day.day, items: dayItems };
+    })
+    .filter((day) => day.items.length > 0);
+
+  if (visibleDays.length === 0 && accommodations.length === 0) {
+    return null;
+  }
+
   return (
     <div
       dir={dir}
@@ -509,114 +536,90 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
         </>
       )}
 
-      <Separator />
+      {visibleDays.length > 0 && (
+        <>
+          <Separator />
 
-      <div className="space-y-5">
-        {plan.plan.map((day, _dayIndex) => (
-          <section
-            key={day.day}
-            className="relative rounded-xl border bg-background p-4 shadow-sm sm:p-5"
-          >
-            {/*
-              New tool output uses `items`; older trip plans may still send `slots`.
-              Normalize both shapes to the same numbered list UI.
-            */}
-            {(() => {
-              const dayItems =
-                day.items ??
-                day.slots?.map((slot) => ({
-                  item: slot.item,
-                  why: slot.why,
-                })) ??
-                [];
+          <div className="space-y-5">
+            {visibleDays.map((day) => (
+              <section
+                key={day.day}
+                className="relative rounded-xl border bg-background p-4 shadow-sm sm:p-5"
+              >
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
+                    {day.day}
+                  </span>
+                  <h3 className="font-display text-base font-semibold text-foreground">
+                    {labels.day} {day.day}
+                  </h3>
+                  <Badge variant="secondary" className="rounded-full">
+                    {formatActivityCount(day.items.length, labels)}
+                  </Badge>
+                </div>
 
-              return (
-                <>
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-                      {day.day}
-                    </span>
-                    <h3 className="font-display text-base font-semibold text-foreground">
-                      {labels.day} {day.day}
-                    </h3>
-                    <Badge variant="secondary" className="rounded-full">
-                      {formatActivityCount(dayItems.length, labels)}
-                    </Badge>
-                  </div>
+                <div className="relative space-y-4">
+                  {day.items.map((planItem, index) => {
+                    const whyText = showDistance
+                      ? planItem.why
+                      : hideUntrustedDistanceText(planItem.why);
 
-                  <div className="relative space-y-4">
-                    {dayItems.map((planItem, index) => {
-                      const whyText = showDistance
-                        ? planItem.why
-                        : hideUntrustedDistanceText(planItem.why);
-
-                      return (
+                    return (
+                      <div
+                        key={`${day.day}-${planItem.item.id}-${index}`}
+                        className="relative pl-6 sm:pl-7"
+                      >
                         <div
-                          key={`${day.day}-${planItem.item?.id ?? "empty"}-${index}`}
                           className={cn(
-                            "relative pl-6 sm:pl-7",
-                            !planItem.item && "opacity-80",
+                            "absolute top-0 bottom-0 w-px bg-primary/15 last-of-type:hidden",
+                            dir === "rtl"
+                              ? "right-[11px] sm:right-[13px]"
+                              : "left-[11px] sm:left-[13px]",
+                          )}
+                          aria-hidden="true"
+                        />
+                        <div
+                          className={cn(
+                            "absolute top-0.5 z-10 flex size-6 items-center justify-center rounded-full border-2 border-primary/20 bg-background shadow-sm",
+                            dir === "rtl" ? "right-0" : "left-0",
                           )}
                         >
-                          <div
-                            className={cn(
-                              "absolute top-0 bottom-0 w-px bg-primary/15 last-of-type:hidden",
-                              dir === "rtl"
-                                ? "right-[11px] sm:right-[13px]"
-                                : "left-[11px] sm:left-[13px]",
-                            )}
-                            aria-hidden="true"
-                          />
-                          <div
-                            className={cn(
-                              "absolute top-0.5 z-10 flex size-6 items-center justify-center rounded-full border-2 border-primary/20 bg-background shadow-sm",
-                              dir === "rtl" ? "right-0" : "left-0",
-                            )}
-                          >
-                            <span className="text-xs font-semibold text-primary">
-                              {index + 1}
-                            </span>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Badge
-                              variant="secondary"
-                              className="rounded-full text-[11px]"
-                            >
-                              {labels.stop} {index + 1}
-                            </Badge>
-
-                            {whyText && (
-                              <p className="text-xs leading-relaxed text-muted-foreground">
-                                {whyText}
-                              </p>
-                            )}
-
-                            {planItem.item ? (
-                              <CompactGuideItemPreview
-                                item={planItem.item}
-                                labels={labels}
-                                locale={locale}
-                                t={t}
-                                showDistance={showDistance}
-                              />
-                            ) : (
-                              <div className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
-                                <MapPin className="size-3.5" />
-                                {labels.noPlanItem}
-                              </div>
-                            )}
-                          </div>
+                          <span className="text-xs font-semibold text-primary">
+                            {index + 1}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
-                </>
-              );
-            })()}
-          </section>
-        ))}
-      </div>
+
+                        <div className="space-y-2">
+                          <Badge
+                            variant="secondary"
+                            className="rounded-full text-[11px]"
+                          >
+                            {labels.stop} {index + 1}
+                          </Badge>
+
+                          {whyText && (
+                            <p className="text-xs leading-relaxed text-muted-foreground">
+                              {whyText}
+                            </p>
+                          )}
+
+                          <CompactGuideItemPreview
+                            item={planItem.item}
+                            labels={labels}
+                            locale={locale}
+                            t={t}
+                            showDistance={showDistance}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </>
+      )}
 
       {plan.note && (
         <p className="rounded-lg border border-dashed bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
