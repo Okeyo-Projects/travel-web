@@ -9,7 +9,12 @@ type PlanOutput = {
   days_requested?: number;
   plan: Array<{
     day: number;
-    items: Array<{ item: { slug: string } | null; slot?: string; why: string }>;
+    items: Array<{
+      item: { slug: string } | null;
+      slot?: string;
+      why: string;
+      suggestion?: { title: string; description: string } | null;
+    }>;
   }>;
   source_items: unknown[];
   error?: string;
@@ -17,7 +22,7 @@ type PlanOutput = {
 
 async function run(city: string, days: number) {
   const tool = createPlanTripWithGuideItemsTool("fr", null);
-  const execute = tool.execute as (
+  const execute = tool.execute as unknown as (
     input: unknown,
     options: unknown,
   ) => Promise<PlanOutput>;
@@ -40,14 +45,25 @@ async function run(city: string, days: number) {
   console.log(`\n=== ${city} (${days} days) ===`);
   console.log(`success=${output.success} coverage=${output.coverage} planDays=${output.plan.length} sourceItems=${output.source_items.length}`);
   if (output.error) console.log(`error: ${output.error}`);
+  let gaps = 0;
+  let suggestions = 0;
   for (const day of output.plan) {
     console.log(
       `  day ${day.day}: ` +
         day.items
-          .map((i) => (i.item ? `${i.slot}=${i.item.slug}` : `${i.slot}=GAP`))
+          .map((i) => {
+            if (i.item) return `${i.slot}=${i.item.slug}`;
+            if (i.suggestion) {
+              suggestions += 1;
+              return `${i.slot}=💡${i.suggestion.title}`;
+            }
+            gaps += 1;
+            return `${i.slot}=GAP`;
+          })
           .join(" | "),
     );
   }
+  console.log(`  => suggestions: ${suggestions}, unfilled GAPs: ${gaps}`);
   if (output.catalog_gap_instructions) {
     console.log(
       `  gap_instructions: ${output.catalog_gap_instructions.slice(0, 220)}…`,

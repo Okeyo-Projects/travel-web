@@ -1,4 +1,5 @@
 import { tool } from "ai";
+import OpenAI from "openai";
 import { z } from "zod";
 import { embedQuery } from "@/lib/embeddings";
 import { mapGuideItemSearchRowToChatCardData } from "@/lib/guide-items";
@@ -161,10 +162,18 @@ type PlanCandidate = {
   card: GuideItemChatCardData;
 };
 
+type PlanSuggestion = {
+  title: string;
+  description: string;
+};
+
 type PlanItem = {
   item: PlanCandidate | null;
   slot: DailyPlanStepKind;
   why: string;
+  // AI-generated local suggestion for slots with no catalog match, so the
+  // trip card always renders a complete itinerary.
+  suggestion?: PlanSuggestion | null;
 };
 
 type PlanCoverage = "full" | "partial" | "none";
@@ -494,21 +503,111 @@ function buildCatalogGapInstructions({
   if (coverage === "full") return null;
 
   const sharedRules =
-    "Present those completions as local suggestions from your travel knowledge, not as Okeyo catalog items: do not attach Okeyo prices, ratings, availability, or booking support to them. Call web_search first for current, local, or specific facts (named places, opening hours, price indications). Never tell the user that catalog data is missing, that a slot is empty, or that you lack information; write the itinerary naturally and confidently.";
+    "Suggestion steps are local tips from travel knowledge, not Okeyo catalog items: never attach Okeyo prices, ratings, availability, or booking support to them. Call web_search first before stating current, local, or specific facts (opening hours, exact prices, events) as certain. ABSOLUTE RULE: never mention the catalog, guide items, tools, searches, coverage, or data availability in your reply — the user must never learn where individual steps came from or that anything was missing. Present one confident, complete itinerary.";
 
   if (coverage === "none") {
     return [
-      `The Okeyo catalog has no guide items for "${city}". The structured plan was intentionally left empty and will not be displayed.`,
-      `Instead, write the complete ${days}-day itinerary for ${city} directly in assistant text from your own travel knowledge, following the requested pace and including breakfast, lunch, and dinner suggestions unless the user excluded them.`,
+      `Every step of this ${days}-day plan for "${city}" is an AI-generated local suggestion (see each slot's suggestion field); none of them are Okeyo catalog items.`,
+      "The structured trip card displays these suggestion steps directly. Present the itinerary in assistant text as your own travel expertise.",
       sharedRules,
     ].join(" ");
   }
 
   return [
-    `The Okeyo catalog covered ${filledSlots} of ${totalSlots} plan slots for "${city}". Slots whose item is null (with their slot kind: activity, breakfast, lunch, or dinner) are catalog gaps.`,
-    "Complete every null slot in your assistant text from your own travel knowledge so each day reads as a full itinerary; the plan UI only displays the catalog-backed cards.",
+    `This plan for "${city}" mixes ${filledSlots} catalog-backed guide items (rendered as rich cards) with ${totalSlots - filledSlots} AI-generated local suggestions (slots with a suggestion field, rendered as simple suggestion steps).`,
+    "Present both kinds as one seamless itinerary from your own travel expertise.",
     sharedRules,
   ].join(" ");
+}
+
+const GAP_SUGGESTION_LANGUAGES: Record<AppLocale, string> = {
+  fr: "French",
+  en: "English",
+  ar: "Moroccan Arabic",
+};
+
+const MAX_GAP_SUGGESTIONS = 40;
+
+type PlanGap = {
+  id: number;
+  day: number;
+  slot: DailyPlanStepKind;
+};
+
+// Generate one real, well-known local suggestion per catalog-gap slot so the
+// trip card never renders an empty step. Best-effort: on failure the gaps
+// stay suggestion-less and are simply not displayed.
+async function generateSlotSuggestions({
+  city,
+  days,
+  pace,
+  interests,
+  locale,
+  gaps,
+}: {
+  city: string;
+  days: number;
+  pace: PlanTripInput["pace"];
+  interests: string[];
+  locale: AppLocale;
+  gaps: PlanGap[];
+}): Promise<Map<number, PlanSuggestion>> {
+  if (gaps.length === 0) return new Map();
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini",
+      temperature: 0.4,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: `You design realistic travel itineraries in Morocco with deep local knowledge. Reply only in ${GAP_SUGGESTION_LANGUAGES[locale]}, as JSON.`,
+        },
+        {
+          role: "user",
+          content: [
+            `Trip: ${days} day(s) in ${city}, Morocco. Pace: ${pace}.${interests.length > 0 ? ` Traveler interests: ${interests.join(", ")}.` : ""}`,
+            "For each gap below, suggest one real, specific, well-known local place or activity that fits the slot kind (breakfast/lunch/dinner = a real cafe or restaurant; activity = a real sight, experience, or neighborhood walk). No duplicates, no generic filler.",
+            `Gaps: ${JSON.stringify(gaps)}`,
+            'Return JSON exactly in this shape: {"suggestions":[{"id":<gap id>,"title":"short place or activity name","description":"one practical sentence"}]}. Cover every gap id.',
+          ].join("\n"),
+        },
+      ],
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "";
+    const parsed = JSON.parse(raw) as {
+      suggestions?: Array<{
+        id?: unknown;
+        title?: unknown;
+        description?: unknown;
+      }>;
+    };
+
+    const suggestions = new Map<number, PlanSuggestion>();
+    for (const entry of parsed.suggestions ?? []) {
+      if (
+        typeof entry.id === "number" &&
+        typeof entry.title === "string" &&
+        entry.title.trim().length > 0
+      ) {
+        suggestions.set(entry.id, {
+          title: entry.title.trim(),
+          description:
+            typeof entry.description === "string"
+              ? entry.description.trim()
+              : "",
+        });
+      }
+    }
+
+    return suggestions;
+  } catch (error) {
+    console.warn("Trip-plan gap suggestion generation failed:", error);
+    return new Map();
+  }
 }
 
 function interleaveCandidates(groups: PlanCandidate[][]): PlanCandidate[] {
@@ -853,6 +952,44 @@ The tool returns structured source items, card data, and a draft schedule for th
             : filledSlots < totalSlots
               ? "partial"
               : "full";
+
+        // Fill catalog-gap slots with AI-generated local suggestions so the
+        // trip card always shows a complete itinerary.
+        if (coverage !== "full") {
+          const gapByPlanItem = new Map<PlanItem, number>();
+          const gaps: PlanGap[] = [];
+          let nextGapId = 0;
+          for (const day of days) {
+            for (const planItem of day.items) {
+              if (planItem.item) continue;
+              nextGapId += 1;
+              if (nextGapId <= MAX_GAP_SUGGESTIONS) {
+                gapByPlanItem.set(planItem, nextGapId);
+                gaps.push({ id: nextGapId, day: day.day, slot: planItem.slot });
+              }
+            }
+          }
+
+          const suggestions = await generateSlotSuggestions({
+            city,
+            days: input.days,
+            pace: input.pace,
+            interests,
+            locale: defaultLocale,
+            gaps,
+          });
+
+          for (const day of days) {
+            for (const planItem of day.items) {
+              const gapId = gapByPlanItem.get(planItem);
+              const suggestion = gapId ? suggestions.get(gapId) : undefined;
+              if (suggestion) {
+                planItem.suggestion = suggestion;
+              }
+            }
+          }
+        }
+
         const catalogGapInstructions = buildCatalogGapInstructions({
           coverage,
           city,
@@ -891,12 +1028,9 @@ The tool returns structured source items, card data, and a draft schedule for th
             "If budget is restrictive and item prices are missing, label the plan as budget-aware but not price-guaranteed.",
             "Breakfast, lunch, and dinner are included by default unless the user explicitly excluded that meal or asked for activity-only planning.",
             "Do not propose the same guide item twice in the same day; avoid same-day near-duplicates by activity topic/name.",
-            "Complete every slot whose item is null from your own travel knowledge (call web_search first for current or local specifics), present those as local suggestions rather than Okeyo catalog items, and never tell the user that catalog data is missing or that a slot is empty.",
+            "Slots with a suggestion field are AI-generated local tips, not Okeyo catalog items: never attach Okeyo prices, ratings, availability, or booking support to them, and never mention the catalog, guide items, tools, searches, or data availability to the user.",
           ],
-          // With zero catalog coverage the structured plan is withheld so the
-          // UI does not render an empty shell; the model writes the full
-          // itinerary in assistant text instead.
-          plan: coverage === "none" ? [] : days,
+          plan: days,
           transport_options: transportItems,
           source_items: sourceItems,
           note: "",

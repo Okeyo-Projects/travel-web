@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronRight,
   MapPin,
+  Sparkles,
   Star,
   Verified,
 } from "lucide-react";
@@ -43,10 +44,16 @@ export interface TripPlanGuideItem {
   card?: GuideItemChatCardData;
 }
 
+export interface TripPlanItemSuggestion {
+  title: string;
+  description: string;
+}
+
 export interface TripPlanItem {
   item: TripPlanGuideItem | null;
   slot?: "activity" | "breakfast" | "lunch" | "dinner";
   why: string;
+  suggestion?: TripPlanItemSuggestion | null;
 }
 
 export interface TripPlanDay {
@@ -91,8 +98,7 @@ const LABELS = {
     open: "Voir",
     budget: "Budget",
     travelers: "voyageur(s)",
-    noItem: "Aucun guide item disponible pour ce créneau.",
-    noPlanItem: "Aucune activité disponible pour cette étape.",
+    suggestion: "Suggestion",
     details: "Détails",
     verified: "Vérifié",
     stop: "Étape",
@@ -105,8 +111,7 @@ const LABELS = {
     open: "Open",
     budget: "Budget",
     travelers: "traveler(s)",
-    noItem: "No guide item available for this slot.",
-    noPlanItem: "No activity available for this stop.",
+    suggestion: "Suggestion",
     details: "Details",
     verified: "Verified",
     stop: "Stop",
@@ -119,8 +124,7 @@ const LABELS = {
     open: "عرض",
     budget: "الميزانية",
     travelers: "مسافر",
-    noItem: "لا يوجد عنصر دليل متاح لهذا الوقت.",
-    noPlanItem: "لا يوجد نشاط متاح لهذه المحطة.",
+    suggestion: "اقتراح",
     details: "التفاصيل",
     verified: "موثق",
     stop: "محطة",
@@ -449,22 +453,20 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
   const accommodations = plan.accommodations ?? [];
   const showDistance = plan.distance_reference === "user_location";
 
-  // Catalog-gap slots (item === null) are completed by the assistant in text;
-  // the structured block only displays catalog-backed cards, and disappears
-  // entirely when there is nothing to show.
+  // Each rendered step is either a catalog-backed guide item (rich card) or
+  // an AI-generated local suggestion; slots with neither are dropped, and the
+  // block disappears entirely when there is nothing to show.
   const visibleDays = plan.plan
     .map((day) => {
-      const dayItems = (
+      const dayItems: TripPlanItem[] = (
         day.items ??
         day.slots?.map((slot) => ({
           item: slot.item,
           why: slot.why,
+          suggestion: null,
         })) ??
         []
-      ).filter(
-        (planItem): planItem is TripPlanItem & { item: TripPlanGuideItem } =>
-          Boolean(planItem.item),
-      );
+      ).filter((planItem) => Boolean(planItem.item || planItem.suggestion));
 
       return { day: day.day, items: dayItems };
     })
@@ -566,7 +568,7 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
 
                     return (
                       <div
-                        key={`${day.day}-${planItem.item.id}-${index}`}
+                        key={`${day.day}-${planItem.item?.id ?? planItem.suggestion?.title ?? "step"}-${index}`}
                         className="relative pl-6 sm:pl-7"
                       >
                         <div
@@ -603,13 +605,39 @@ export function TripPlanBlock({ plan }: TripPlanBlockProps) {
                             </p>
                           )}
 
-                          <CompactGuideItemPreview
-                            item={planItem.item}
-                            labels={labels}
-                            locale={locale}
-                            t={t}
-                            showDistance={showDistance}
-                          />
+                          {planItem.item ? (
+                            <CompactGuideItemPreview
+                              item={planItem.item}
+                              labels={labels}
+                              locale={locale}
+                              t={t}
+                              showDistance={showDistance}
+                            />
+                          ) : planItem.suggestion ? (
+                            <div className="flex gap-3 rounded-xl border bg-muted/20 p-3">
+                              <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                                <Sparkles className="size-4 text-primary" />
+                              </span>
+                              <div className="min-w-0 flex-1 space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="line-clamp-1 font-semibold text-sm text-foreground">
+                                    {planItem.suggestion.title}
+                                  </span>
+                                  <Badge
+                                    variant="secondary"
+                                    className="h-5 rounded-sm text-[10px]"
+                                  >
+                                    {labels.suggestion}
+                                  </Badge>
+                                </div>
+                                {planItem.suggestion.description && (
+                                  <p className="text-xs leading-relaxed text-muted-foreground">
+                                    {planItem.suggestion.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     );
